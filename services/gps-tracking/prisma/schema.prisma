@@ -1,0 +1,26 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model LocationPoint {
+  id              String   @id @default(uuid())
+  vehicleId       String   @map("vehicle_id")
+  routeId         String   @map("route_id")
+  timestamp       DateTime
+  lat             Float
+  lng             Float
+  speedKph        Float?   @map("speed_kph")
+  headingDeg      Float?   @map("heading_deg")
+  accuracyMeters  Float?   @map("accuracy_meters")
+
+  @@index([timestamp])
+  @@map("location_points")
+}

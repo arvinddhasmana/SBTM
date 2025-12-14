@@ -1,0 +1,18 @@
+{
+  "name": "osta-sbms-monorepo",
+  "version": "0.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "services/*",
+    "libs/*"
+  ],
+  "scripts": {
+    "build": "echo 'Build script placeholder'",
+    "test": "echo 'Test script placeholder'",
+    "lint": "echo 'Lint script placeholder'"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

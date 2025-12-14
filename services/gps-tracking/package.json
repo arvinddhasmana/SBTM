@@ -1,0 +1,32 @@
+{
+    "name": "gps-tracking-service",
+    "version": "0.0.0",
+    "main": "src/index.ts",
+    "scripts": {
+        "start": "ts-node src/index.ts",
+        "dev": "dotenv -e .env.local -- nodemon src/index.ts",
+        "migrate:dev": "dotenv -e .env.local -- prisma migrate dev",
+        "migrate:test": "dotenv -e .env.test -- prisma migrate dev --name init_test",
+        "test": "dotenv -e .env.test -- jest"
+    },
+    "dependencies": {
+        "@prisma/client": "^5.22.0",
+        "express": "^4.18.2",
+        "pg": "^8.16.3",
+        "zod": "^4.1.13"
+    },
+    "devDependencies": {
+        "@types/express": "^4.17.17",
+        "@types/jest": "^30.0.0",
+        "@types/node": "^25.0.1",
+        "@types/supertest": "^6.0.3",
+        "dotenv-cli": "^11.0.0",
+        "jest": "^30.2.0",
+        "nodemon": "^3.1.11",
+        "prisma": "^5.22.0",
+        "supertest": "^7.1.4",
+        "ts-jest": "^29.4.6",
+        "ts-node": "^10.9.2",
+        "typescript": "^5.9.3"
+    }
+}
