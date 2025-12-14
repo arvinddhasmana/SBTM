@@ -10,7 +10,9 @@ This version assumes the recommended stack:
 **Goal:** Build a standalone Parent App that allows parents to view their child’s bus location in real time, receive notifications, and manage basic preferences.
 
 This module must be **independent**, **self-contained**, and **deployable on its own**, even though it lives inside a monorepo.
-
+- Use docker for containerization of all services and components
+- Use docker compose for local development and testing
+- Use docker compose for CI/CD pipeline
 ---
 
 # ✅ **SECTION A — Developer Specification (Copilot Developer)**
@@ -268,7 +270,7 @@ Parent App → Auth API → JWT → Secure Requests → Logout clears token
 
 ---
 
-# ✅ **SECTION D — Future Enterprise Upgrade Path**
+# ✅ **SECTION D — Future Enterprise Upgrade Path** (Optional)
 
 ### ✅ **Replace SSE with WebSockets**
 - For high-frequency updates  

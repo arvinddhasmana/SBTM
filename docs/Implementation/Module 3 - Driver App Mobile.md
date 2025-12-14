@@ -1,19 +1,13 @@
-The **full GitHub‑ready template** for **Module 3 — Driver App**, written in the same structure and precision as Modules 1 and 2.  
-You can paste this directly into a GitHub Issue and assign it to Copilot Developer, Reviewer, and Tester agents.
-
 This module is designed to be **independent**, **self‑contained**, and **compatible with the monorepo architecture** you’re building.
-
----
-
-# ✅ **GITHUB ISSUE TEMPLATE — MODULE 3: Driver App (Mobile)**  
-### *(Paste this into a GitHub Issue titled: “Module 3 — Driver App (Mobile)”)*
----
 
 # 🚍 **Module 3 — Driver App (Mobile)**  
 **Goal:** Build a standalone mobile Driver App that allows drivers to log in, select a route, send GPS updates, view navigation, manage student roster, and trigger emergency alerts.
 
 This module must be **independent**, **deployable on its own**, and integrate only through public APIs.
 
+Use docker for containerization of all services and components
+Use docker compose for local development and testing
+Use docker compose for CI/CD pipeline
 ---
 
 # ✅ **SECTION A — Developer Specification (Copilot Developer)**
@@ -314,7 +308,7 @@ Driver Panic → POST /emergency-events → Admin Alert → Notification to Pare
 
 ---
 
-# ✅ **SECTION D — Future Enterprise Upgrade Path**
+# ✅ **SECTION D — Future Enterprise Upgrade Path** (Optional)
 
 ### ✅ **Replace smartphone GPS with telematics**
 - Driver app becomes secondary  
