@@ -1,18 +1,11 @@
-Here’s the complete, GitHub‑ready template for **Module 8 — Cloud Backend / API Gateway**, aligned with everything you’ve already defined. You can paste this directly into a GitHub Issue and assign to Copilot Developer, Reviewer, and Tester agents.
-
----
-
-# ✅ GITHUB ISSUE TEMPLATE — MODULE 8: Cloud Backend / API Gateway  
-### *(Use issue title: “Module 8 — Cloud Backend / API Gateway”)*
-
----
-
 # ☁️ Module 8 — Cloud Backend / API Gateway  
 **Goal:**  
 Build a **central backend layer** that exposes a unified, secure API surface to all clients (Parent App, Driver App, Admin Dashboard), routes requests to underlying services (GPS Tracking, Emergency Alerts, Video, Student Presence, Auth), and enforces cross‑cutting concerns (auth, rate limiting, logging, error handling).
 
 This module must be **independent**, **deployable on its own**, and treat all downstream services as external dependencies accessed via HTTP (or later gRPC/message bus).
-
+- Use docker for containerization of all services and components
+- Use docker compose for local development and testing
+- Use docker compose for CI/CD pipeline
 ---
 
 ## ✅ SECTION A — Developer Specification (Copilot Developer)
@@ -351,7 +344,7 @@ Downstream Error → API Gateway HTTP Client → Throws → Exception Filter →
 
 ---
 
-## ✅ SECTION D — Future Enterprise‑grade Upgrade Path
+## ✅ SECTION D — Future Enterprise‑grade Upgrade Path  (Optional)  
 
 1. **Service mesh integration**
    - Migrate from manual HTTP calls to service mesh (Istio/Linkerd) or API management platform.

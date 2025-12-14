@@ -27,6 +27,9 @@ All services communicate via REST/JSON initially; later can be extended with asy
 ### 1.2 Prototype architecture
 
 **Key decisions:**
+- Use docker for containerization of all services and components
+- Use docker compose for local development and testing
+- Use docker compose for CI/CD pipeline
 
 - Use **smartphones** (driver device) for:
   - GPS tracking  

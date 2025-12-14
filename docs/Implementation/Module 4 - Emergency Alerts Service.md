@@ -1,12 +1,4 @@
-Here it is, Arvind — the **complete GitHub‑ready template** for **Module 4 — Emergency Alerts**, written in the same structure and precision as Modules 1–3.  
-You can paste this directly into a GitHub Issue and assign it to Copilot Developer, Reviewer, and Tester agents.
-
 This module is **independent**, **self‑contained**, and integrates with the GPS Tracking Service, Driver App, Parent App, and Admin Dashboard.
-
----
-
-# ✅ **GITHUB ISSUE TEMPLATE — MODULE 4: Emergency Alerts Service**  
-### *(Paste this into a GitHub Issue titled: “Module 4 — Emergency Alerts Service”)*
 
 ---
 
@@ -14,7 +6,9 @@ This module is **independent**, **self‑contained**, and integrates with the GP
 **Goal:** Build a standalone Emergency Alerts Service that receives emergency events from the Driver App, logs them, triggers notifications, and exposes APIs for Admin and Parent apps to view and respond to alerts.
 
 This module must be **independent**, **deployable on its own**, and integrate only through public APIs.
-
+- Use docker for containerization of all services and components
+- Use docker compose for local development and testing
+- Use docker compose for CI/CD pipeline
 ---
 
 # ✅ **SECTION A — Developer Specification (Copilot Developer)**
@@ -317,7 +311,7 @@ Admin → PATCH /alerts/{id}/resolve → DB Update → Notify Parents → Archiv
 
 ---
 
-# ✅ **SECTION D — Future Enterprise Upgrade Path**
+# ✅ **SECTION D — Future Enterprise Upgrade Path** (Optional)  
 
 ### ✅ **Integrate with telematics hardware**
 - Panic button wired to telematics unit  
