@@ -1,12 +1,4 @@
-Absolutely, Arvind — here is the **complete GitHub‑ready template** for **Module 6 — Student Presence Detection**, written in the same structure and precision as Modules 1–5.  
 This module is designed for **prototype hardware** (Apple AirTags, Samsung SmartTags, Bluetooth scanning via Driver App) while being fully upgradeable to **enterprise‑grade RFID/NFC readers** later.
-
-You can paste this directly into a GitHub Issue and assign it to Copilot Developer, Reviewer, and Tester agents.
-
----
-
-# ✅ **GITHUB ISSUE TEMPLATE — MODULE 6: Student Presence Detection**  
-### *(Paste this into a GitHub Issue titled: “Module 6 — Student Presence Detection”)*
 
 ---
 
@@ -14,7 +6,9 @@ You can paste this directly into a GitHub Issue and assign it to Copilot Develop
 **Goal:** Build a standalone Student Presence Detection Service that logs when students board or exit the bus using prototype hardware (Bluetooth SmartTags) and later supports enterprise RFID/NFC systems.
 
 This module must be **independent**, **deployable on its own**, and integrate only through public APIs.
-
+- Use docker for containerization of all services and components
+- Use docker compose for local development and testing
+- Use docker compose for CI/CD pipeline 
 ---
 
 # ✅ **SECTION A — Developer Specification (Copilot Developer)**
@@ -321,7 +315,7 @@ Driver App → POST /manual → DB Insert → Cache Update → WebSocket Push
 
 ---
 
-# ✅ **SECTION D — Future Enterprise Upgrade Path**
+# ✅ **SECTION D — Future Enterprise Upgrade Path** (Optional)  
 
 ### ✅ **Replace SmartTags with RFID/NFC**
 - Bus-mounted readers  

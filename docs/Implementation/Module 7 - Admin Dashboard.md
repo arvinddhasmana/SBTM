@@ -1,21 +1,11 @@
-Here it is, Arvind — the **complete GitHub‑ready template** for **Module 7 — Admin Dashboard**, written in the same structure and precision as Modules 1–6.  
-You can paste this directly into a GitHub Issue and assign it to Copilot Developer, Reviewer, and Tester agents.
-
-This module is **independent**, **self‑contained**, and integrates with all backend services through public APIs only.
-
----
-
-# ✅ **GITHUB ISSUE TEMPLATE — MODULE 7: Admin Dashboard**  
-### *(Paste this into a GitHub Issue titled: “Module 7 — Admin Dashboard”)*
-
----
-
 # 🖥️ **Module 7 — Admin Dashboard (Web Application)**  
 **Goal:** Build a standalone Admin Dashboard that provides real‑time monitoring, alert management, route visibility, student presence tracking, and video event review.  
 This dashboard is the **central command center** for OSTA operations.
 
 This module must be **independent**, **deployable on its own**, and integrate only through public APIs.
-
+- Use docker for containerization of all services and components
+- Use docker compose for local development and testing
+- Use docker compose for CI/CD pipeline 
 ---
 
 # ✅ **SECTION A — Developer Specification (Copilot Developer)**
@@ -339,7 +329,7 @@ Driver App/Dashcam → Video Service → Admin Dashboard → Playback
 
 ---
 
-# ✅ **SECTION D — Future Enterprise Upgrade Path**
+# ✅ **SECTION D — Future Enterprise Upgrade Path** (Optional)  
 
 ### ✅ **Advanced Analytics**
 - Route efficiency  

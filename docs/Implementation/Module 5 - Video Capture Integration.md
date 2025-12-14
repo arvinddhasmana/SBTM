@@ -1,12 +1,4 @@
-Absolutely, Arvind — here is the **complete GitHub‑ready template** for **Module 5 — Video Capture Integration**, written in the same structure and precision as Modules 1–4.  
-You can paste this directly into a GitHub Issue and assign it to Copilot Developer, Reviewer, and Tester agents.
-
 This module is **independent**, **self‑contained**, and designed to work with **low‑cost prototype hardware** (smartphone camera, dashcam) while being fully upgradeable to **enterprise‑grade multi‑camera DVR systems** later.
-
----
-
-# ✅ **GITHUB ISSUE TEMPLATE — MODULE 5: Video Capture Integration**  
-### *(Paste this into a GitHub Issue titled: “Module 5 — Video Capture Integration”)*
 
 ---
 
@@ -14,7 +6,9 @@ This module is **independent**, **self‑contained**, and designed to work with 
 **Goal:** Build a standalone Video Capture Service that allows the Driver App to record short video clips during emergencies or incidents, upload them securely, store metadata, and expose APIs for Admins to view and manage video events.
 
 This module must be **independent**, **deployable on its own**, and integrate only through public APIs.
-
+- Use docker for containerization of all services and components
+- Use docker compose for local development and testing
+- Use docker compose for CI/CD pipeline
 ---
 
 # ✅ **SECTION A — Developer Specification (Copilot Developer)**
@@ -314,7 +308,7 @@ Dashcam → Local File → Admin Upload → Storage → Metadata → Admin Playb
 
 ---
 
-# ✅ **SECTION D — Future Enterprise Upgrade Path**
+# ✅ **SECTION D — Future Enterprise Upgrade Path** (Optional)  
 
 ### ✅ **Integrate with multi-camera DVR systems**
 - Interior + exterior cameras  
