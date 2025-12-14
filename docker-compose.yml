@@ -18,5 +18,19 @@ services:
     ports:
       - "6379:6379"
 
+  admin-dashboard:
+    build:
+      context: ./apps/admin-dashboard
+      dockerfile: Dockerfile
+      target: base
+    volumes:
+      - ./apps/admin-dashboard:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    command: npm run dev -- --host
+    environment:
+      - VITE_API_URL=http://localhost:3000
+
 volumes:
   postgres_data:
