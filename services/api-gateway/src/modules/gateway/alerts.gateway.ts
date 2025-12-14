@@ -2,7 +2,7 @@ import { Injectable, HttpException } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { catchError, map } from 'rxjs/operators';
-import { lastValueFrom } from 'rxjs';
+import { lastValueFrom, throwError } from 'rxjs';
 
 @Injectable()
 export class AlertsGateway {
@@ -21,7 +21,7 @@ export class AlertsGateway {
             this.httpService.get(url).pipe(
                 map((res) => res.data),
                 catchError((e) => {
-                    throw new HttpException(e.response?.data || 'Downstream Error', e.response?.status || 502);
+                    return throwError(() => new HttpException(e.response?.data || 'Downstream Error', e.response?.status || 502));
                 }),
             )
         );
