@@ -1,0 +1,77 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Leaflet CSS import */
+@import 'leaflet/dist/leaflet.css';
+
+:root {
+  --color-primary: #0ea5e9;
+  --color-secondary: #64748b;
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+  --color-background: #0f172a;
+  --color-surface: #1e293b;
+  --color-border: #334155;
+}
+
+body {
+  @apply bg-dashboard-bg text-white antialiased;
+  margin: 0;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* Premium dark theme styling */
+.glass-card {
+  @apply bg-dashboard-card/80 backdrop-blur-xl border border-dashboard-border rounded-2xl shadow-xl;
+}
+
+.btn-primary {
+  @apply bg-primary-500 hover:bg-primary-600 text-white font-medium px-6 py-2.5 rounded-xl transition-all duration-200 ease-in-out shadow-lg hover:shadow-primary-500/25;
+}
+
+.btn-secondary {
+  @apply bg-dashboard-card hover:bg-slate-700 text-white font-medium px-6 py-2.5 rounded-xl border border-dashboard-border transition-all duration-200;
+}
+
+.input-field {
+  @apply w-full bg-dashboard-bg border border-dashboard-border rounded-xl px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200;
+}
+
+/* Status colors */
+.status-normal {
+  @apply bg-green-500;
+}
+
+.status-delay {
+  @apply bg-yellow-500;
+}
+
+.status-emergency {
+  @apply bg-red-500;
+}
+
+/* Animation utilities */
+@keyframes pulse-slow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-dashboard-bg;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-dashboard-border rounded-full hover:bg-slate-600;
+}
