@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  video-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: video-service
+    ports:
+      - "3005:3005"
+    environment:
+      - NODE_ENV=production
+      - PORT=3005
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=postgres
+      - DB_DATABASE=video_service
+      - DB_SYNCHRONIZE=true
+      - STORAGE_TYPE=minio
+      - MINIO_ENDPOINT=minio
+      - MINIO_PORT=9000
+      - MINIO_USE_SSL=false
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin
+      - MINIO_BUCKET_NAME=videos
+      - PRESIGNED_URL_EXPIRY=3600
+    depends_on:
+      - postgres
+      - minio
+    networks:
+      - video-network
+    volumes:
+      - ./uploads:/app/uploads
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:14-alpine
+    container_name: video-postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=video_service
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - video-network
+    restart: unless-stopped
+
+  minio:
+    image: minio/minio:latest
+    container_name: video-minio
+    command: server /data --console-address ":9001"
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+    networks:
+      - video-network
+    restart: unless-stopped
+
+networks:
+  video-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
+  minio-data:

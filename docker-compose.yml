@@ -32,5 +32,40 @@ services:
     environment:
       - VITE_API_URL=http://localhost:3000
 
+  api-gateway:
+    build:
+      context: ./services/api-gateway
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - JWT_SECRET=dev_secret
+      - GPS_SERVICE_URL=http://gps-tracking:3001
+      - ALERTS_SERVICE_URL=http://emergency-alerts:3004
+      - PRESENCE_SERVICE_URL=http://student-presence:3006
+      - VIDEO_SERVICE_URL=http://video-service:3005
+    depends_on:
+      - redis
+
+  student-presence:
+    build: ./services/student-presence
+    ports:
+      - "3003:3003"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: mysecretpassword
+      DB_DATABASE: sbms
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      PORT: 3003
+    depends_on:
+      - postgres
+      - redis
+
 volumes:
   postgres_data:
+
+
