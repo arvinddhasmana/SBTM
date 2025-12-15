@@ -13,9 +13,6 @@ interface MeResponse {
 }
 
 export const authApi = {
-    /**
-     * Login with email and password
-     */
     async login(email: string, password: string): Promise<LoginResponse> {
         try {
             const response = await axios.post<LoginResponse>(
@@ -24,9 +21,7 @@ export const authApi = {
             );
             return response.data;
         } catch (error) {
-            // For prototype/demo, return mock data if API is not available
             if (axios.isAxiosError(error) && !error.response) {
-                // Simulate login for demo purposes
                 await new Promise(resolve => setTimeout(resolve, 500));
                 return {
                     user: {
@@ -42,9 +37,6 @@ export const authApi = {
         }
     },
 
-    /**
-     * Get current user info
-     */
     async me(token: string): Promise<MeResponse> {
         const response = await axios.get<MeResponse>(`${API_BASE_URL}/auth/me`, {
             headers: { Authorization: `Bearer ${token}` },
