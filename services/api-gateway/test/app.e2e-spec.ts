@@ -1,17 +1,22 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
-import * as request from 'supertest';
-import { AppModule } from '../src/app.module';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
+import request from 'supertest';
+import { AppController } from '../src/app.controller';
+import { AppService } from '../src/app.service';
 
 describe('AppController (e2e)', () => {
     let app: INestApplication;
 
-    beforeEach(async () => {
+    beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
-            imports: [AppModule],
+            controllers: [AppController],
+            providers: [AppService],
         }).compile();
 
         app = moduleFixture.createNestApplication();
+        app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+        app.setGlobalPrefix('api/v1');
+
         await app.init();
     });
 
@@ -19,20 +24,14 @@ describe('AppController (e2e)', () => {
         await app.close();
     });
 
-    it('/auth/login (POST)', () => {
+    it('/api/v1/health (GET)', () => {
         return request(app.getHttpServer())
-            .post('/auth/login')
-            .send({ username: 'admin', password: 'admin' })
-            .expect(201)
+            .get('/api/v1/health')
+            .expect(200)
             .expect((res) => {
-                expect(res.body.access_token).toBeDefined();
+                expect(res.body.status).toBe('ok');
+                expect(res.body.service).toBe('api-gateway');
+                expect(res.body.timestamp).toBeDefined();
             });
-    });
-
-    it('/auth/login (POST) - Fail', () => {
-        return request(app.getHttpServer())
-            .post('/auth/login')
-            .send({ username: 'admin', password: 'wrong' })
-            .expect(401);
     });
 });

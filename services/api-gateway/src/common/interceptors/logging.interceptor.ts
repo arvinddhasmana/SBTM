@@ -1,22 +1,41 @@
-import { Injectable, NestInterceptor, ExecutionContext, CallHandler, Logger } from '@nestjs/common';
+import {
+    Injectable,
+    NestInterceptor,
+    ExecutionContext,
+    CallHandler,
+} from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
+import { Request, Response } from 'express';
 
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {
-    private readonly logger = new Logger(LoggingInterceptor.name);
-
-    intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
+    intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
         const ctx = context.switchToHttp();
-        const request = ctx.getRequest();
-        const method = request.method;
-        const url = request.url;
-        const now = Date.now();
+        const request = ctx.getRequest<Request>();
+        const response = ctx.getResponse<Response>();
+        const startTime = Date.now();
 
-        return next
-            .handle()
-            .pipe(
-                tap(() => this.logger.log(`${method} ${url} ${Date.now() - now}ms`)),
-            );
+        const { method, originalUrl, ip } = request;
+        const userAgent = request.get('user-agent') || '';
+
+        return next.handle().pipe(
+            tap({
+                next: () => {
+                    const duration = Date.now() - startTime;
+                    const { statusCode } = response;
+                    console.log(
+                        `[${new Date().toISOString()}] ${method} ${originalUrl} ${statusCode} ${duration}ms - ${ip} - ${userAgent}`,
+                    );
+                },
+                error: (error) => {
+                    const duration = Date.now() - startTime;
+                    const statusCode = error?.status || 500;
+                    console.error(
+                        `[${new Date().toISOString()}] ${method} ${originalUrl} ${statusCode} ${duration}ms - ${ip} - ${userAgent} - Error: ${error?.message}`,
+                    );
+                },
+            }),
+        );
     }
 }

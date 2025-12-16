@@ -1,16 +1,25 @@
-FROM node:18-alpine
+# Build stage
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
 COPY package*.json ./
-COPY tsconfig*.json ./
-
-RUN npm install
+RUN npm ci
 
 COPY . .
-
 RUN npm run build
 
-EXPOSE 3000
+# Production stage
+FROM node:20-alpine
 
-CMD ["npm", "run", "start:prod"]
+WORKDIR /app
+
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package*.json ./
+
+ENV NODE_ENV=production
+
+EXPOSE 3001
+
+CMD ["node", "dist/main"]
