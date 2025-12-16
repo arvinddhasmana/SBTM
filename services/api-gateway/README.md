@@ -1,86 +1,96 @@
 # API Gateway Service
 
-Cloud Backend / API Gateway for the School Bus Transport Management System (SBMS).
+## 🌐 Overview
 
-## Overview
+The API Gateway is the central entry point for the School Bus Transport Management System (SBMS). It unifies access to all microservices (GPS, Alerts, Presence, Video), handles authentication/authorization, and manages cross-cutting concerns.
 
-The API Gateway is the central entry point for all client applications (Parent App, Driver App, Admin Dashboard). It provides:
+## ✨ Features
 
-- **Authentication & Authorization** - JWT-based auth with role-based access control
-- **Service Routing** - Unified API that proxies requests to underlying microservices
-- **Cross-cutting Concerns** - Rate limiting, logging, timeout handling, CORS
-- **Standardized Errors** - Consistent error response format
+- **Unified API Surface**: Single entry point for all client applications
+- **Authentication & Authorization**: JWT-based auth with RBAC (Admin, Driver, Parent, System)
+- **Service Routing**: Intelligent proxying to downstream microservices
+- **Rate Limiting**: Protection against abuse using Throttler
+- **Standardized Error Handling**: Consistent error responses across all endpoints
+- **Request Logging & Monitoring**: Comprehensive logging of ingress/egress traffic
 
-## Tech Stack
+## 🏗️ Architecture
 
-- **Framework:** NestJS (TypeScript)
-- **Auth:** JWT + Passport
-- **Database:** PostgreSQL with TypeORM
-- **Rate Limiting:** @nestjs/throttler
+### Tech Stack
+- **Framework**: NestJS (TypeScript)
+- **Database**: PostgreSQL (for User management) with TypeORM
+- **Auth**: Passport + JWT
+- **Proxy**: Custom HTTP Client wrappers
+- **Testing**: Jest (Unit & E2E)
 
-## API Endpoints
+### Module Structure
+```
+src/
+├── modules/
+│   ├── auth/             # Authentication & User Management
+│   └── gateway/          # Service Proxies & Controllers
+├── common/               # Shared Guards, Interceptors, Filters
+├── config/               # Environment Configuration
+├── app.module.ts
+└── main.ts
+```
 
-### Auth
-- `POST /api/v1/auth/login` - Login and receive JWT
-- `POST /api/v1/auth/logout` - Logout (client-side token discard)
-- `GET /api/v1/auth/me` - Get current user profile
-
-### GPS (proxies GPS Tracking Service)
-- `GET /api/v1/routes/:routeId/live-location` - Get live bus location
-- `GET /api/v1/routes/:routeId/history` - Get location history
-
-### Alerts (proxies Emergency Alerts Service)
-- `GET /api/v1/alerts/active` - Get active alerts
-- `GET /api/v1/alerts/:id` - Get alert details
-- `POST /api/v1/emergency-events` - Create emergency event
-
-### Presence (proxies Student Presence Service)
-- `GET /api/v1/routes/:routeId/students` - Get students for route
-- `POST /api/v1/student-presence-events` - Create presence event
-
-### Video (proxies Video Service)
-- `GET /api/v1/video-events` - List video events
-- `GET /api/v1/video-events/:id` - Get video event details
-- `POST /api/v1/video-events` - Create video event
-
-### Health
-- `GET /api/v1/health` - Health check
-
-## Getting Started
+## 🚀 Getting Started
 
 ### Prerequisites
 - Node.js 20+
 - Docker & Docker Compose
+- PostgreSQL
 
-### Local Development
+### Installation
 
-1. Copy environment file:
-   ```bash
-   cp .env.example .env
-   ```
+1. **Install dependencies**:
+```bash
+npm install
+```
 
-2. Start infrastructure:
-   ```bash
-   docker compose up -d postgres redis
-   ```
+2. **Configure environment**:
+```bash
+cp .env.example .env
+# Edit variable values
+```
 
-3. Install dependencies:
-   ```bash
-   npm install
-   ```
+3. **Start development server**:
+```bash
+npm run start:dev
+```
 
-4. Start development server:
-   ```bash
-   npm run start:dev
-   ```
-
-### Running with Docker Compose
+### Running with Docker
 
 ```bash
 docker compose up --build api-gateway
 ```
 
-## Testing
+## 📡 API Endpoints
+
+### Auth
+- `POST /api/v1/auth/login` - Login
+- `POST /api/v1/auth/logout` - Logout
+- `GET /api/v1/auth/me` - Get Profile
+
+### GPS
+- `GET /api/v1/routes/:id/live-location` - Live Bus Location
+- `GET /api/v1/routes/:id/history` - Route History
+
+### Alerts
+- `GET /api/v1/alerts/active` - Active Alerts
+- `GET /api/v1/alerts/:id` - Alert Details
+- `POST /api/v1/emergency-events` - Create Emergency
+
+### Presence
+- `GET /api/v1/routes/:id/students` - Route Students
+- `POST /api/v1/student-presence-events` - Report Presence
+
+### Video
+- `GET /api/v1/video-events` - List Events
+- `GET /api/v1/video-events/:id` - Get Event
+- `POST /api/v1/video-events` - Create Event
+
+## 🧪 Testing
 
 ### Unit Tests
 ```bash
@@ -97,38 +107,35 @@ npm run test:e2e
 npm run test:cov
 ```
 
-## Environment Variables
+## 🔧 Configuration
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| PORT | Server port | 3001 |
-| DB_HOST | PostgreSQL host | localhost |
-| DB_PORT | PostgreSQL port | 5433 |
-| DB_USERNAME | Database username | postgres |
-| DB_PASSWORD | Database password | mysecretpassword |
-| DB_DATABASE | Database name | sbms |
-| JWT_SECRET | JWT signing secret | - |
-| JWT_EXPIRATION | Token expiration | 24h |
-| GPS_SERVICE_URL | GPS service URL | http://localhost:3002 |
-| ALERTS_SERVICE_URL | Alerts service URL | http://localhost:3003 |
-| PRESENCE_SERVICE_URL | Presence service URL | http://localhost:3004 |
-| VIDEO_SERVICE_URL | Video service URL | http://localhost:3005 |
+### Environment Variables
 
-## Roles
+| Variable | Description |
+|----------|-------------|
+| `PORT` | Service Port (Default: 3001) |
+| `JWT_SECRET` | Secret key for token signing |
+| `GPS_SERVICE_URL` | URL for GPS Tracking Service |
+| `ALERTS_SERVICE_URL` | URL for Emergency Alerts Service |
+| `PRESENCE_SERVICE_URL` | URL for Student Presence Service |
+| `VIDEO_SERVICE_URL` | URL for Video Service |
 
-- **ADMIN** - Full access to all endpoints and routes
-- **DRIVER** - Access to assigned routes, can create events
-- **PARENT** - Access to children's routes only
-- **SYSTEM** - Service-to-service authentication
+## 🔒 Security
 
-## Error Response Format
+- **JWT Validation**: All protected routes require a valid Bearer token
+- **RBAC**: Strict role checks (ADMIN, DRIVER, PARENT) for endpoints
+- **Input Validation**: DTO validation using `class-validator`
+- **Throttling**: Rate limiting to prevent DoS
 
-```json
-{
-  "error": {
-    "code": "RESOURCE_NOT_FOUND",
-    "message": "Route not found",
-    "details": {}
-  }
-}
-```
+## 🚦 Roadmap
+
+- [x] Core Authentication
+- [x] Service Proxying
+- [x] Rate Limiting
+- [ ] API Versioning Strategy
+- [ ] Websocket Gateway Aggregation
+- [ ] Caching Layer (Redis)
+
+## 📝 License
+
+UNLICENSED - Private project

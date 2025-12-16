@@ -1,175 +1,112 @@
-# Student Presence Detection Service
+# Student Presence Service
 
-## Overview
+## 🎒 Overview
 
-The Student Presence Detection Service is a standalone microservice for tracking when students board and exit school buses using Bluetooth Low Energy (BLE) SmartTags (prototype) or RFID/NFC systems (enterprise).
+The Student Presence Service monitors student boarding and alighting events in the School Bus Transport Management System (SBMS). It integrates with BLE SmartTags to automatically detect when students enter or leave the bus, ensuring child safety.
 
-## Features
+## ✨ Features
 
-- **Student Tag Registration**: Parents/admins can register BLE tags to students
-- **BLE Detection**: Automatically detect student boarding/alighting via driver app BLE scans
-- **Signal Filtering**: Filter weak signals below -80 dBm threshold
-- **Timeout Logic**: Automatically mark students as alighted after 30s of no detection
-- **Manual Override**: Drivers can manually mark students as boarded/alighted
-- **Real-time Updates**: WebSocket broadcasts for admin dashboard
-- **Redis Caching**: Fast presence state lookups
-- **Queue Processing**: Async event processing with BullMQ
+- **BLE SmartTag Integration**: Automatic detection of students
+- **Real-time Dashboard**: Live view of bus occupancy
+- **Notification Support**: Alerts parents when child boards/alights
+- **Historical Logs**: Audit trail of student movements
+- **Manual Overrides**: Driver capability to manually board/alight
 
-## Architecture
+## 🏗️ Architecture
 
+### Tech Stack
 - **Framework**: NestJS (TypeScript)
-- **Database**: PostgreSQL + TypeORM
-- **Cache**: Redis
-- **Queue**: BullMQ
-- **Real-time**: Socket.IO
-- **Testing**: Jest (unit + E2E)
+- **Database**: PostgreSQL with TypeORM
+- **Queue**: BullMQ (Redis-backed)
+- **Real-time**: Socket.IO WebSockets
+- **Testing**: Jest (Unit & E2E)
 
-## API Endpoints
-
-### Tag Registration
-
+### Module Structure
 ```
-POST /api/v1/student-tags
-Content-Type: application/json
-
-{
-  "studentId": "stud-123",
-  "tagId": "ble-xyz-789",
-  "tagType": "SMARTTAG"
-}
+src/
+├── modules/
+│   ├── attendance/       # Core presence logic
+│   ├── scanner/          # SmartTag processing
+│   └── notifications/    # Parent alert system
+├── common/               # Shared logic
+├── app.module.ts
+└── main.ts
 ```
 
-### Process BLE Detections
-
-```
-POST /api/v1/presence-events
-Content-Type: application/json
-
-{
-  "vehicleId": "bus-123",
-  "routeId": "route-456",
-  "timestamp": "2025-01-10T14:10:00Z",
-  "detections": [
-    { "tagId": "ble-xyz-789", "signalStrength": -60 }
-  ]
-}
-```
-
-### Manual Override
-
-```
-POST /api/v1/student-presence-events/manual
-Content-Type: application/json
-
-{
-  "studentId": "stud-123",
-  "vehicleId": "bus-123",
-  "routeId": "route-456",
-  "eventType": "BOARD",
-  "timestamp": "2025-01-10T14:10:00Z"
-}
-```
-
-### Query Presence State
-
-```
-GET /api/v1/routes/{routeId}/students
-```
-
-### WebSocket Events
-
-Connect to `ws://localhost:3003/ws/presence`
-
-Events:
-- `student:boarded` - Student detected on bus
-- `student:alighted` - Student exited bus
-- `presence:updated` - Any presence state change
-
-## BLE Detection Algorithm
-
-1. Driver app scans for BLE tags every 2-5 seconds
-2. Sends detected tag IDs + signal strength to backend
-3. Backend filters signals below -80 dBm threshold
-4. If tag appears and student not on bus → **BOARD** event
-5. If tag not detected for >30s → **ALIGHT** event
-6. Manual override always takes precedence
-
-## Development
+## 🚀 Getting Started
 
 ### Prerequisites
-
 - Node.js 20+
-- PostgreSQL (via docker-compose)
-- Redis (via docker-compose)
+- PostgreSQL
+- Redis
 
-### Setup
+### Installation
 
+1. **Install dependencies**:
 ```bash
-cd services/student-presence
 npm install
 ```
 
-### Run
-
+2. **Configure environment**:
 ```bash
-# Start dependencies
-docker-compose up postgres redis
+cp .env.example .env
+```
 
-# Development mode
+3. **Start development server**:
+```bash
 npm run start:dev
-
-# Production mode
-npm run build
-npm run start:prod
 ```
 
-### Testing
+### Running with Docker
 
 ```bash
-# Unit tests
-npm test
+docker compose up --build student-presence
+```
 
-# E2E tests (requires postgres + redis running)
+## 📡 API Endpoints
+
+### Presence
+- `POST /api/v1/student-presence-events` - Record presence event
+- `GET /api/v1/routes/:id/students` - Get students on bus
+
+### Websockets
+- namespace: `/presence`
+- events: `student-boarded`, `student-alighted`
+
+## 🧪 Testing
+
+### Unit Tests
+```bash
+npm run test
+```
+
+### E2E Tests
+```bash
 npm run test:e2e
-
-# Test coverage
-npm run test:cov
 ```
 
-## Docker
+## 🔧 Configuration
 
-```bash
-# Build image
-docker build -t student-presence .
+### Environment Variables
 
-# Run container
-docker run -p 3003:3003 \
-  -e DB_HOST=postgres \
-  -e REDIS_HOST=redis \
-  student-presence
-```
+| Variable | Description |
+|----------|-------------|
+| `PORT` | Service Port (Default: 3004) |
+| `DB_HOST` | PostgreSQL Host |
+| `REDIS_HOST` | Redis Host |
 
-## Environment Variables
+## 🔒 Security
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `DB_HOST` | PostgreSQL host | `localhost` |
-| `DB_PORT` | PostgreSQL port | `5433` |
-| `DB_USERNAME` | Database username | `postgres` |
-| `DB_PASSWORD` | Database password | `mysecretpassword` |
-| `DB_DATABASE` | Database name | `sbms` |
-| `REDIS_HOST` | Redis host | `localhost` |
-| `REDIS_PORT` | Redis port | `6379` |
-| `PORT` | Service port | `3003` |
+- Verification of Scanner ID
+- Role-based checking for manual overrides
 
-## Future Enhancements
+## 🚦 Roadmap
 
-- [ ] Replace SmartTags with enterprise RFID/NFC readers
-- [ ] Multi-zone detection (front door, rear door, seat-level)
-- [ ] AI-based student counting with camera
-- [ ] School SIS integration for attendance
-- [ ] Safety alerts (student left on bus, missing at stop)
+- [x] Basic Board/Alight Logic
+- [x] Manual Driver Override
+- [ ] NFC Card Support
+- [ ] Absenteeism prediction
 
-## License
+## 📝 License
 
-UNLICENSED
+UNLICENSED - Private project

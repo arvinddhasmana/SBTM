@@ -1,73 +1,80 @@
-# React + TypeScript + Vite
+# Admin Dashboard
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## 🖥️ Overview
 
-Currently, two official plugins are available:
+The Admin Dashboard is the command center for the School Bus Transport Management System (SBMS). It allows school administrators to manage routes, track vehicles in real-time, view alerts, and handle student and driver data.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## ✨ Features
 
-## React Compiler
+- **Real-time Map**: Live tracking of all buses using Leaflet
+- **Fleet Management**: CRUD operations for buses and drivers
+- **Route Optimization**: Creation and modification of bus routes
+- **Alert Monitoring**: Dashboard for active emergency alerts
+- **Analytics**: Charts and graphs for system usage and performance via Recharts
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 🏗️ Architecture
 
-## Expanding the ESLint configuration
+### Tech Stack
+- **Framework**: React 19 (Vite)
+- **Styling**: TailwindCSS
+- **Maps**: React Leaflet
+- **Charts**: Recharts
+- **Icons**: Lucide React
+- **HTTP**: Axios
+- **Testing**: Vitest + React Testing Library
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Module Structure
+```
+src/
+├── components/       # Reusable UI components
+├── pages/            # Page layouts
+├── hooks/            # Custom React hooks
+├── services/         # API integration
+└── utils/            # Helper functions
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 🚀 Getting Started
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### Prerequisites
+- Node.js 20+
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Installation
+
+1. **Install dependencies**:
+```bash
+npm install
 ```
+
+2. **Start development server**:
+```bash
+npm run dev
+```
+
+3. **Build for production**:
+```bash
+npm run build
+```
+
+## 🧪 Testing
+
+### Unit Tests
+```bash
+npm run test
+```
+
+## 🔧 Configuration
+
+### Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| `VITE_API_URL` | API Gateway URL |
+
+## 🔒 Security
+
+- JWT-based authentication
+- Protected routes (Admin role only)
+
+## 📝 License
+
+UNLICENSED - Private project
