@@ -1,23 +1,30 @@
-import { Controller, Request, Post, UseGuards, Get, Body, UnauthorizedException } from '@nestjs/common';
+import { Controller, Post, Get, Body, Request, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { AuthGuard } from '@nestjs/passport';
+import { LoginDto } from './dto/login.dto';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 @Controller('auth')
 export class AuthController {
-    constructor(private authService: AuthService) { }
+    constructor(private readonly authService: AuthService) { }
 
     @Post('login')
-    async login(@Body() body) {
-        const user = await this.authService.validateUser(body.username, body.password);
-        if (!user) {
-            throw new UnauthorizedException();
-        }
-        return this.authService.login(user);
+    @HttpCode(HttpStatus.OK)
+    async login(@Body() loginDto: LoginDto) {
+        return this.authService.login(loginDto);
     }
 
-    @UseGuards(AuthGuard('jwt'))
+    @Post('logout')
+    @UseGuards(JwtAuthGuard)
+    @HttpCode(HttpStatus.OK)
+    async logout() {
+        // For JWT, logout is handled client-side by discarding the token
+        // For enhanced security, implement token blacklisting with Redis
+        return { message: 'Logged out successfully' };
+    }
+
     @Get('me')
-    getProfile(@Request() req) {
-        return req.user;
+    @UseGuards(JwtAuthGuard)
+    async getProfile(@Request() req: { user: { id: string } }) {
+        return this.authService.getProfile(req.user.id);
     }
 }

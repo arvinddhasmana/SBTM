@@ -1,34 +1,45 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { AuthModule } from './modules/auth/auth.module';
 import { GatewayModule } from './modules/gateway/gateway.module';
-import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
-import { HttpExceptionFilter } from './common/filters/http-exception.filter';
-import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
 
 @Module({
     imports: [
         ConfigModule.forRoot({
             isGlobal: true,
         }),
-        ThrottlerModule.forRoot([{
-            ttl: 60,
-            limit: 10,
-        }]),
+        TypeOrmModule.forRootAsync({
+            imports: [ConfigModule],
+            useFactory: (configService: ConfigService) => ({
+                type: 'postgres',
+                host: configService.get<string>('DB_HOST', 'localhost'),
+                port: configService.get<number>('DB_PORT', 5433),
+                username: configService.get<string>('DB_USERNAME', 'postgres'),
+                password: configService.get<string>('DB_PASSWORD', 'mysecretpassword'),
+                database: configService.get<string>('DB_DATABASE', 'sbms'),
+                entities: [__dirname + '/**/*.entity{.ts,.js}'],
+                synchronize: configService.get<string>('NODE_ENV') !== 'production',
+            }),
+            inject: [ConfigService],
+        }),
+        ThrottlerModule.forRootAsync({
+            imports: [ConfigModule],
+            useFactory: (configService: ConfigService) => [
+                {
+                    ttl: configService.get<number>('RATE_LIMIT_TTL', 60000),
+                    limit: configService.get<number>('RATE_LIMIT_MAX', 100),
+                },
+            ],
+            inject: [ConfigService],
+        }),
         AuthModule,
         GatewayModule,
     ],
-    controllers: [],
-    providers: [
-        {
-            provide: APP_FILTER,
-            useClass: HttpExceptionFilter,
-        },
-        {
-            provide: APP_INTERCEPTOR,
-            useClass: LoggingInterceptor,
-        }
-    ],
+    controllers: [AppController],
+    providers: [AppService],
 })
 export class AppModule { }

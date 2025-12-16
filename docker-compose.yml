@@ -12,60 +12,120 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./infra/local/init-test-db.sh:/docker-entrypoint-initdb.d/init-test-db.sh
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:7-alpine
     ports:
       - "6379:6379"
-
-  admin-dashboard:
-    build:
-      context: ./apps/admin-dashboard
-      dockerfile: Dockerfile
-      target: base
-    volumes:
-      - ./apps/admin-dashboard:/app
-      - /app/node_modules
-    ports:
-      - "5173:5173"
-    command: npm run dev -- --host
-    environment:
-      - VITE_API_URL=http://localhost:3000
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   api-gateway:
     build:
       context: ./services/api-gateway
       dockerfile: Dockerfile
     ports:
-      - "3000:3000"
+      - "3001:3001"
     environment:
-      - PORT=3000
-      - JWT_SECRET=dev_secret
-      - GPS_SERVICE_URL=http://gps-tracking:3001
-      - ALERTS_SERVICE_URL=http://emergency-alerts:3004
-      - PRESENCE_SERVICE_URL=http://student-presence:3006
+      - NODE_ENV=development
+      - PORT=3001
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=mysecretpassword
+      - DB_DATABASE=sbms
+      - JWT_SECRET=your-super-secret-jwt-key-change-in-production
+      - JWT_EXPIRATION=24h
+      - RATE_LIMIT_TTL=60000
+      - RATE_LIMIT_MAX=100
+      - HTTP_TIMEOUT=10000
+      - GPS_SERVICE_URL=http://gps-tracking:3002
+      - ALERTS_SERVICE_URL=http://emergency-alerts:3003
+      - PRESENCE_SERVICE_URL=http://student-presence:3004
       - VIDEO_SERVICE_URL=http://video-service:3005
+      - CORS_ORIGINS=http://localhost:3000,http://localhost:5173
     depends_on:
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
 
-  student-presence:
-    build: ./services/student-presence
+  gps-tracking:
+    build:
+      context: ./services/gps-tracking
+      dockerfile: Dockerfile
+    ports:
+      - "3002:3002"
+    environment:
+      - DATABASE_URL=postgresql://postgres:mysecretpassword@postgres:5432/sbms
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  emergency-alerts:
+    build:
+      context: ./services/emergency-alerts
+      dockerfile: Dockerfile
     ports:
       - "3003:3003"
     environment:
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_USERNAME: postgres
-      DB_PASSWORD: mysecretpassword
-      DB_DATABASE: sbms
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      PORT: 3003
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=mysecretpassword
+      - DB_DATABASE=sbms
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  student-presence:
+    build:
+      context: ./services/student-presence
+      dockerfile: Dockerfile
+    ports:
+      - "3004:3004"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=mysecretpassword
+      - DB_DATABASE=sbms
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  video-service:
+    build:
+      context: ./services/video-service
+      dockerfile: Dockerfile
+    ports:
+      - "3005:3005"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=mysecretpassword
+      - DB_DATABASE=sbms
+    depends_on:
+      postgres:
+        condition: service_healthy
 
 volumes:
   postgres_data:
-
-

@@ -1,24 +1,33 @@
 import { Module } from '@nestjs/common';
-import { HttpModule } from '@nestjs/axios';
-import { GpsGateway } from './gps.gateway';
-import { PresenceGateway } from './presence.gateway';
-import { AlertsGateway } from './alerts.gateway';
-import { VideoGateway } from './video.gateway';
-import { RoutesController } from './routes.controller';
-import { AlertsController } from './alerts.controller';
-import { EmergencyEventsController } from './emergency-events.controller';
-import { VideoEventsController } from './video-events.controller';
-import { StudentPresenceEventsController } from './student-presence-events.controller';
+import { CommonModule } from '../../common/common.module';
+import { GpsGatewayService } from './services/gps.gateway.service';
+import { AlertsGatewayService } from './services/alerts.gateway.service';
+import { PresenceGatewayService } from './services/presence.gateway.service';
+import { VideoGatewayService } from './services/video.gateway.service';
+import { GpsController } from './controllers/gps.controller';
+import { AlertsController } from './controllers/alerts.controller';
+import { PresenceController } from './controllers/presence.controller';
+import { VideoController } from './controllers/video.controller';
 
 @Module({
-    imports: [HttpModule],
-    providers: [GpsGateway, PresenceGateway, AlertsGateway, VideoGateway],
+    imports: [CommonModule],
     controllers: [
-        RoutesController,
+        GpsController,
         AlertsController,
-        EmergencyEventsController,
-        VideoEventsController,
-        StudentPresenceEventsController
+        PresenceController,
+        VideoController,
+    ],
+    providers: [
+        GpsGatewayService,
+        AlertsGatewayService,
+        PresenceGatewayService,
+        VideoGatewayService,
+    ],
+    exports: [
+        GpsGatewayService,
+        AlertsGatewayService,
+        PresenceGatewayService,
+        VideoGatewayService,
     ],
 })
 export class GatewayModule { }
