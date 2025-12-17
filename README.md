@@ -74,6 +74,14 @@ Detailed documentation and implementation status reports are available in the `d
 - **[Architecture Overview](./docs/Implementation/ARCHITECTURE.md)**: Deep dive into system design patterns.
 - **[Module Implementation Status](./docs)**: Status reports for individual modules.
 
+### 🎯 Demo & Testing Guides
+
+- **[Demo Setup Guide](./docs/DEMO_SETUP_GUIDE.md)**: Complete guide for setting up the demo environment.
+- **[Live Demo Script](./docs/LIVE_DEMO_SCRIPT.md)**: Step-by-step script for conducting live demos.
+- **[User Journey Document](./docs/USER_JOURNEY.md)**: Detailed user flows for Admin, Driver, and Parent roles.
+- **[QA Testing Guide](./docs/QA_TESTING_GUIDE.md)**: Comprehensive testing guide with test cases and scenarios.
+
+
 ## 🧪 Testing
 
 To run tests across the entire workspace (if configured in root `package.json`):
