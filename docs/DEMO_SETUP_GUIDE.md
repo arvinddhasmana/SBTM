@@ -52,8 +52,8 @@ docker compose up --build -d
 # Check all services are running
 docker compose ps
 
-# Health check
-curl http://localhost:3001/api/v1/health
+# Health check (API Gateway)
+curl http://localhost:3001/health
 ```
 
 ---
@@ -66,7 +66,7 @@ curl http://localhost:3001/api/v1/health
 | **GPS Tracking** | 3002 | http://localhost:3002/health |
 | **Emergency Alerts** | 3003 | http://localhost:3003/health |
 | **Student Presence** | 3004 | http://localhost:3004/health |
-| **Video Service** | 3005 | http://localhost:3005/health |
+| **Video Service** | 3005 | http://localhost:3005/api/v1/health |
 | **Admin Dashboard** | 5173 | http://localhost:5173 |
 | **Parent App** | 3000 | http://localhost:3000 |
 

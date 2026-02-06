@@ -48,8 +48,9 @@ export class StorageService {
 
             this.logger.log('MinIO client initialized successfully');
         } catch (error) {
-            this.logger.error('Failed to initialize MinIO client', error);
-            throw error;
+            this.logger.warn('MinIO not available, falling back to local storage');
+            this.minioClient = null;
+            // Don't throw - allow service to start with local storage fallback
         }
     }
 

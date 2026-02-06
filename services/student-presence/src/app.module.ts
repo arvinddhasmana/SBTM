@@ -25,6 +25,7 @@ import { AppService } from './app.service';
                 database: configService.get<string>('DB_DATABASE', 'sbms'),
                 entities: [__dirname + '/**/*.entity{.ts,.js}'],
                 synchronize: true, // For prototype/development only
+                autoLoadEntities: true,
             }),
             inject: [ConfigService],
         }),
