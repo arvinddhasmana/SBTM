@@ -212,8 +212,8 @@ journey
 | Step | Action | Screen | Expected Outcome |
 |------|--------|--------|------------------|
 | 1 | Open Parent App | Splash | App loads |
-| 2 | Login (if needed) | Login | `parent1@sbtm.demo` / `Parent123!` |
-| 3 | View dashboard | Home | Children listed with bus status |
+| 2 | Login (if needed) | Login | `parent1@sbtm.demo` / `Parent123! ` |
+| 3 | View dashboard | Home | Children (Emma, Liam) listed with bus status |
 | 4 | Select child | Home | Child's bus info displayed |
 | 5 | View live map | Live Map | Bus position shown on map |
 
@@ -339,7 +339,7 @@ stateDiagram-v2
 | 7:36 | Emma | Boards bus (SmartTag) | Parent notified: "Emma boarded" |
 | 7:38 | Driver 2 | Starts Route B on BUS-002 | Second bus tracking begins |
 | 7:40 | Driver 1 | Arrives at Stop 2 | Admin sees both buses on map |
-| 7:41 | Liam | Boards bus (SmartTag) | Parent 2 notified |
+| 7:41 | Liam | Boards bus (SmartTag) | Parent 1 notified: "Liam boarded" |
 | 7:45 | Driver 2 | Panic button pressed | EMERGENCY ALERT to admin |
 | 7:46 | Admin | Views alert, contacts driver | Alert acknowledged |
 | 7:50 | Admin | Resolves alert (false alarm) | Alert closed, operations resume |

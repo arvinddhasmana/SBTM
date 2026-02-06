@@ -54,28 +54,44 @@ fi
 echo -e "${GREEN}  ✓ PostgreSQL container found: $POSTGRES_CONTAINER${NC}"
 
 # =============================================================================
-# 2. Wait for Database
+# 2. Wait for All Services
 # =============================================================================
 
 echo ""
-echo -e "${YELLOW}[2/5] Waiting for database to be ready...${NC}"
+echo -e "${YELLOW}[2/5] Waiting for all services to be healthy...${NC}"
 
-MAX_ATTEMPTS=30
-ATTEMPT=0
+SERVICES=("postgres" "redis" "api-gateway" "gps-tracking" "emergency-alerts" "student-presence" "video-service")
 
-while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
-    ATTEMPT=$((ATTEMPT + 1))
+for SERVICE in "${SERVICES[@]}"; do
+    echo -e "  Wait for $SERVICE..."
+    MAX_ATTEMPTS=60
+    ATTEMPT=0
+    HEALTHY=false
     
-    if docker exec "$POSTGRES_CONTAINER" pg_isready -U "$DATABASE_USER" -d "$DATABASE_NAME" > /dev/null 2>&1; then
-        echo -e "${GREEN}  ✓ Database is ready!${NC}"
-        break
-    else
-        echo "  Attempt $ATTEMPT/$MAX_ATTEMPTS - Waiting..."
+    while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
+        STATUS=$(docker inspect --format='{{json .State.Health.Status}}' "sbtm_antigravity-$SERVICE-1" 2>/dev/null | tr -d '"')
+        if [ "$STATUS" == "healthy" ]; then
+            echo -e "${GREEN}    ✓ $SERVICE is healthy${NC}"
+            HEALTHY=true
+            break
+        fi
+        
+        # Fallback check if no healthcheck defined but running
+        if [ -z "$STATUS" ] || [ "$STATUS" == "null" ]; then
+            if [ "$(docker inspect -f '{{.State.Running}}' "sbtm_antigravity-$SERVICE-1" 2>/dev/null)" == "true" ]; then
+                echo -e "${GREEN}    ✓ $SERVICE is running (no healthcheck)${NC}"
+                HEALTHY=true
+                break
+            fi
+        fi
+        
+        ATTEMPT=$((ATTEMPT + 1))
         sleep 2
-    fi
+    done
     
-    if [ $ATTEMPT -eq $MAX_ATTEMPTS ]; then
-        echo -e "${RED}  ✗ Database did not become ready in time${NC}"
+    if [ "$HEALTHY" == "false" ]; then
+        echo -e "${RED}    ✗ $SERVICE failed to become healthy${NC}"
+        docker compose logs "$SERVICE" | tail -n 20
         exit 1
     fi
 done
@@ -88,14 +104,13 @@ echo ""
 echo -e "${YELLOW}[3/5] Running database migrations...${NC}"
 
 # GPS Tracking migrations (Prisma)
-echo "  → Running GPS Tracking migrations..."
-if [ -d "$PROJECT_ROOT/services/gps-tracking" ]; then
-    cd "$PROJECT_ROOT/services/gps-tracking"
-    export DATABASE_URL="postgresql://${DATABASE_USER}:${DATABASE_PASSWORD}@${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_NAME}"
-    npx prisma migrate deploy 2>/dev/null || echo -e "${YELLOW}  ! GPS migrations already applied${NC}"
-    echo -e "${GREEN}  ✓ GPS Tracking migrations complete${NC}"
-    cd - > /dev/null
-fi
+echo "  → GPS Tracking..."
+docker exec sbtm_antigravity-gps-tracking-1 npx prisma migrate deploy || echo -e "${YELLOW}  ! GPS migrations check failed${NC}"
+
+# API Gateway, Presence, Alerts (TypeORM/MikroORM - these usually run on startup)
+# But we can trigger them or verify tables exist
+echo "  → Verifying other services..."
+sleep 2 # Give a moment for auto-migrations to finish
 
 # =============================================================================
 # 4. Seed Demo Data
@@ -142,12 +157,16 @@ echo -e "${GREEN}============================================${NC}"
 echo ""
 echo -e "${CYAN}Demo Credentials:${NC}"
 echo "  Admin:   admin@sbtm.demo / Admin123!"
-echo "  Driver:  driver1@sbtm.demo / Driver123!"
-echo "  Parent:  parent1@sbtm.demo / Parent123!"
+echo "  Supervisor: supervisor@sbtm.demo / Admin123!"
+echo "  Driver 1: driver1@sbtm.demo / Driver123! (Route A)"
+echo "  Driver 2: driver2@sbtm.demo / Driver123! (Route B)"
+echo "  Parent 1: parent1@sbtm.demo / Parent123! (Route A - Emma/Liam)"
+echo "  Parent 2: parent2@sbtm.demo / Parent123! (Route A/B - Olivia)"
 echo ""
 echo -e "${CYAN}Service URLs:${NC}"
 echo "  API Gateway:      http://localhost:3001"
 echo "  Admin Dashboard:  http://localhost:5173"
 echo "  Parent App:       http://localhost:3000"
 echo ""
-echo -e "${YELLOW}Run 'npm run dev' in each app folder to start frontends.${NC}"
+echo -e "${YELLOW}Visit documentation for more details: docs/DEMO_SETUP_GUIDE.md${NC}"
+echo ""

@@ -83,14 +83,20 @@ DELETE FROM users WHERE email LIKE '%@sbtm.demo';
 -- Insert demo users
 INSERT INTO users (id, email, "passwordHash", role, "firstName", "lastName", "driverId", "childRouteIds", "assignedRouteIds", "createdAt", "updatedAt")
 VALUES
-    -- Admin User
+    -- Admin Users
     (gen_random_uuid(), 'admin@sbtm.demo', '$2b$10$EpIxT98hP.v7.0.0.0.0.0.0.0.0.0.0.0', 'ADMIN', 'System', 'Admin', NULL, NULL, NULL, NOW(), NOW()),
+    (gen_random_uuid(), 'supervisor@sbtm.demo', '$2b$10$EpIxT98hP.v7.0.0.0.0.0.0.0.0.0.0.0', 'ADMIN', 'Fleet', 'Supervisor', NULL, NULL, NULL, NOW(), NOW()),
     
-    -- Driver User (assigned to Route A)
+    -- Driver Users
     (gen_random_uuid(), 'driver1@sbtm.demo', '$2b$10$EpIxT98hP.v7.0.0.0.0.0.0.0.0.0.0.0', 'DRIVER', 'John', 'Driver', 'driver-001', NULL, 'ROUTE-A', NOW(), NOW()),
+    (gen_random_uuid(), 'driver2@sbtm.demo', '$2b$10$EpIxT98hP.v7.0.0.0.0.0.0.0.0.0.0.0', 'DRIVER', 'Mike', 'Schmidt', 'driver-002', NULL, 'ROUTE-B', NOW(), NOW()),
+    (gen_random_uuid(), 'driver3@sbtm.demo', '$2b$10$EpIxT98hP.v7.0.0.0.0.0.0.0.0.0.0.0', 'DRIVER', 'Sarah', 'Lane', 'driver-003', NULL, 'ROUTE-C', NOW(), NOW()),
     
-    -- Parent User (Parent of Emma and Liam)
-    (gen_random_uuid(), 'parent1@sbtm.demo', '$2b$10$EpIxT98hP.v7.0.0.0.0.0.0.0.0.0.0.0', 'PARENT', 'Sarah', 'Smith', NULL, 'ROUTE-A', NULL, NOW(), NOW())
+    -- Parent Users
+    (gen_random_uuid(), 'parent1@sbtm.demo', '$2b$10$EpIxT98hP.v7.0.0.0.0.0.0.0.0.0.0.0', 'PARENT', 'Sarah', 'Smith', NULL, 'ROUTE-A', NULL, NOW(), NOW()),
+    (gen_random_uuid(), 'parent2@sbtm.demo', '$2b$10$EpIxT98hP.v7.0.0.0.0.0.0.0.0.0.0.0', 'PARENT', 'David', 'Johnson', NULL, 'ROUTE-A,ROUTE-B', NULL, NOW(), NOW()),
+    (gen_random_uuid(), 'parent3@sbtm.demo', '$2b$10$EpIxT98hP.v7.0.0.0.0.0.0.0.0.0.0.0', 'PARENT', 'Mary', 'Williams', NULL, 'ROUTE-B', NULL, NOW(), NOW()),
+    (gen_random_uuid(), 'parent4@sbtm.demo', '$2b$10$EpIxT98hP.v7.0.0.0.0.0.0.0.0.0.0.0', 'PARENT', 'Linda', 'Brown', NULL, 'ROUTE-C', NULL, NOW(), NOW())
 ON CONFLICT DO NOTHING;
 
 -- ============================================================================
@@ -107,6 +113,9 @@ CREATE TABLE IF NOT EXISTS route_stops_reference (
     "arrivalTime" TIME
 );
 
+-- Clear existing stops
+TRUNCATE TABLE route_stops_reference;
+
 INSERT INTO route_stops_reference (id, "routeId", "sequenceOrder", "stopName", lat, lng, "arrivalTime")
 VALUES
     -- Route A Stops
@@ -115,10 +124,16 @@ VALUES
     ('STOP-A3', 'ROUTE-A', 3, 'Oak Park', 45.4250, -75.6900, '07:50:00'),
     ('STOP-A4', 'ROUTE-A', 4, 'Lincoln Elementary', 45.4280, -75.6880, '08:00:00'),
 
-    -- Route C Stops (Unassigned)
+    -- Route B Stops
+    ('STOP-B1', 'ROUTE-B', 1, 'South End Mall', 45.3800, -75.7000, '07:35:00'),
+    ('STOP-B2', 'ROUTE-B', 2, 'River Road', 45.3850, -75.7050, '07:45:00'),
+    ('STOP-B3', 'ROUTE-B', 3, 'Pine Street', 45.3900, -75.7100, '07:55:00'),
+    ('STOP-B4', 'ROUTE-B', 4, 'Washington Middle School', 45.4000, -75.7200, '08:10:00'),
+
+    -- Route C Stops
     ('STOP-C1', 'ROUTE-C', 1, 'West End Terminal', 45.4100, -75.7100, '07:50:00'),
     ('STOP-C2', 'ROUTE-C', 2, 'Third Avenue & Fourth Street', 45.4120, -75.7080, '08:00:00'),
-    ('STOP-C3', 'ROUTE-C', 3, 'Washington Elementary School', 45.4150, -75.7050, '08:15:00');
+    ('STOP-C3', 'ROUTE-C', 3, 'Jefferson High', 45.4150, -75.7050, '08:15:00');
 
 -- ============================================================================
 -- 5. STUDENT TAGS & EVENTS (Student Presence)
@@ -143,10 +158,13 @@ END $$;
 
 DO $$
 BEGIN
+    DELETE FROM presence_event WHERE "studentId" LIKE 'STUDENT-%';
+
     INSERT INTO presence_event (id, "studentId", "vehicleId", "routeId", "eventType", timestamp, source, "signalStrength", "createdAt", "updatedAt")
     VALUES
         (gen_random_uuid(), 'STUDENT-001', 'BUS-001', 'ROUTE-A', 'BOARD', NOW() - INTERVAL '25 minutes', 'SMARTTAG', -55.5, NOW(), NOW()),
-        (gen_random_uuid(), 'STUDENT-002', 'BUS-001', 'ROUTE-A', 'BOARD', NOW() - INTERVAL '20 minutes', 'SMARTTAG', -60.2, NOW(), NOW())
+        (gen_random_uuid(), 'STUDENT-002', 'BUS-001', 'ROUTE-A', 'BOARD', NOW() - INTERVAL '20 minutes', 'SMARTTAG', -60.2, NOW(), NOW()),
+        (gen_random_uuid(), 'STUDENT-003', 'BUS-002', 'ROUTE-B', 'BOARD', NOW() - INTERVAL '15 minutes', 'SMARTTAG', -58.0, NOW(), NOW())
     ON CONFLICT DO NOTHING;
 EXCEPTION
     WHEN undefined_table THEN
@@ -159,11 +177,18 @@ END $$;
 
 DO $$
 BEGIN
+    DELETE FROM location_points WHERE vehicle_id IN ('BUS-001', 'BUS-002', 'BUS-003');
+
     INSERT INTO location_points (id, vehicle_id, route_id, timestamp, lat, lng, speed_kph, heading_deg, accuracy_meters)
     VALUES
+        -- BUS-001 on ROUTE-A
         (gen_random_uuid()::text, 'BUS-001', 'ROUTE-A', NOW() - INTERVAL '30 minutes', 45.4215, -75.6972, 35.5, 45, 5),
         (gen_random_uuid()::text, 'BUS-001', 'ROUTE-A', NOW() - INTERVAL '25 minutes', 45.4220, -75.6960, 40.0, 50, 5),
-        (gen_random_uuid()::text, 'BUS-001', 'ROUTE-A', NOW() - INTERVAL '20 minutes', 45.4230, -75.6945, 38.0, 55, 5)
+        (gen_random_uuid()::text, 'BUS-001', 'ROUTE-A', NOW() - INTERVAL '20 minutes', 45.4230, -75.6945, 38.0, 55, 5),
+        -- BUS-002 on ROUTE-B
+        (gen_random_uuid()::text, 'BUS-002', 'ROUTE-B', NOW() - INTERVAL '25 minutes', 45.3800, -75.7000, 30.0, 10, 5),
+        (gen_random_uuid()::text, 'BUS-002', 'ROUTE-B', NOW() - INTERVAL '20 minutes', 45.3810, -75.7010, 32.5, 12, 5),
+        (gen_random_uuid()::text, 'BUS-002', 'ROUTE-B', NOW() - INTERVAL '15 minutes', 45.3825, -75.7025, 35.0, 15, 5)
     ON CONFLICT DO NOTHING;
 EXCEPTION
     WHEN undefined_table THEN

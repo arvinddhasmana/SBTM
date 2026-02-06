@@ -93,10 +93,10 @@ curl http://localhost:3001/health
 ### Parent Users
 | Email | Password | Children |
 |-------|----------|----------|
-| parent1@sbtm.demo | Parent123! | Emma Wilson (Route A) |
-| parent2@sbtm.demo | Parent123! | Liam Johnson (Route A), Olivia Johnson (Route B) |
-| parent3@sbtm.demo | Parent123! | Noah Smith (Route B) |
-| parent4@sbtm.demo | Parent123! | Ava Brown (Route C) |
+| parent1@sbtm.demo | Parent123! | Emma Smith (Route A), Liam Smith (Route A) |
+| parent2@sbtm.demo | Parent123! | Olivia Johnson (Route B) |
+| parent3@sbtm.demo | Parent123! | Noah Williams (Route A) |
+| parent4@sbtm.demo | Parent123! | Ava Brown (Route B) |
 
 ---
 
@@ -209,6 +209,12 @@ docker exec -it sbtm_antigravity-postgres-1 psql -U postgres -d sbms
 
 # Re-run seed
 .\scripts\seed-demo-data.ps1
+```
+
+**Problem:** GPS migrations not applied
+```bash
+# Manually run prisma migrations
+docker exec sbtm_antigravity-gps-tracking-1 npx prisma migrate deploy
 ```
 
 ### API Issues
