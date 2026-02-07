@@ -84,19 +84,19 @@ DELETE FROM users WHERE email LIKE '%@sbtm.demo';
 INSERT INTO users (id, email, "passwordHash", role, "firstName", "lastName", "driverId", "childRouteIds", "assignedRouteIds", "createdAt", "updatedAt")
 VALUES
     -- Admin Users
-    (gen_random_uuid(), 'admin@sbtm.demo', '$2b$10$EpIxT98hP.v7.0.0.0.0.0.0.0.0.0.0.0', 'ADMIN', 'System', 'Admin', NULL, NULL, NULL, NOW(), NOW()),
-    (gen_random_uuid(), 'supervisor@sbtm.demo', '$2b$10$EpIxT98hP.v7.0.0.0.0.0.0.0.0.0.0.0', 'ADMIN', 'Fleet', 'Supervisor', NULL, NULL, NULL, NOW(), NOW()),
+    (gen_random_uuid(), 'admin@sbtm.demo', '$2b$10$681vlhdZCLSj7mruAWHXMeSN5phVF8s.mPNcZNprgDX3UYHa0XDwm', 'ADMIN', 'System', 'Admin', NULL, NULL, NULL, NOW(), NOW()),
+    (gen_random_uuid(), 'supervisor@sbtm.demo', '$2b$10$681vlhdZCLSj7mruAWHXMeSN5phVF8s.mPNcZNprgDX3UYHa0XDwm', 'ADMIN', 'Fleet', 'Supervisor', NULL, NULL, NULL, NOW(), NOW()),
     
     -- Driver Users
-    (gen_random_uuid(), 'driver1@sbtm.demo', '$2b$10$EpIxT98hP.v7.0.0.0.0.0.0.0.0.0.0.0', 'DRIVER', 'John', 'Driver', 'driver-001', NULL, 'ROUTE-A', NOW(), NOW()),
-    (gen_random_uuid(), 'driver2@sbtm.demo', '$2b$10$EpIxT98hP.v7.0.0.0.0.0.0.0.0.0.0.0', 'DRIVER', 'Mike', 'Schmidt', 'driver-002', NULL, 'ROUTE-B', NOW(), NOW()),
-    (gen_random_uuid(), 'driver3@sbtm.demo', '$2b$10$EpIxT98hP.v7.0.0.0.0.0.0.0.0.0.0.0', 'DRIVER', 'Sarah', 'Lane', 'driver-003', NULL, 'ROUTE-C', NOW(), NOW()),
+    (gen_random_uuid(), 'driver1@sbtm.demo', '$2b$10$681vlhdZCLSj7mruAWHXMeSN5phVF8s.mPNcZNprgDX3UYHa0XDwm', 'DRIVER', 'John', 'Driver', 'driver-001', NULL, 'ROUTE-A', NOW(), NOW()),
+    (gen_random_uuid(), 'driver2@sbtm.demo', '$2b$10$681vlhdZCLSj7mruAWHXMeSN5phVF8s.mPNcZNprgDX3UYHa0XDwm', 'DRIVER', 'Mike', 'Schmidt', 'driver-002', NULL, 'ROUTE-B', NOW(), NOW()),
+    (gen_random_uuid(), 'driver3@sbtm.demo', '$2b$10$681vlhdZCLSj7mruAWHXMeSN5phVF8s.mPNcZNprgDX3UYHa0XDwm', 'DRIVER', 'Sarah', 'Lane', 'driver-003', NULL, 'ROUTE-C', NOW(), NOW()),
     
     -- Parent Users
-    (gen_random_uuid(), 'parent1@sbtm.demo', '$2b$10$EpIxT98hP.v7.0.0.0.0.0.0.0.0.0.0.0', 'PARENT', 'Sarah', 'Smith', NULL, 'ROUTE-A', NULL, NOW(), NOW()),
-    (gen_random_uuid(), 'parent2@sbtm.demo', '$2b$10$EpIxT98hP.v7.0.0.0.0.0.0.0.0.0.0.0', 'PARENT', 'David', 'Johnson', NULL, 'ROUTE-A,ROUTE-B', NULL, NOW(), NOW()),
-    (gen_random_uuid(), 'parent3@sbtm.demo', '$2b$10$EpIxT98hP.v7.0.0.0.0.0.0.0.0.0.0.0', 'PARENT', 'Mary', 'Williams', NULL, 'ROUTE-B', NULL, NOW(), NOW()),
-    (gen_random_uuid(), 'parent4@sbtm.demo', '$2b$10$EpIxT98hP.v7.0.0.0.0.0.0.0.0.0.0.0', 'PARENT', 'Linda', 'Brown', NULL, 'ROUTE-C', NULL, NOW(), NOW())
+    (gen_random_uuid(), 'parent1@sbtm.demo', '$2b$10$681vlhdZCLSj7mruAWHXMeSN5phVF8s.mPNcZNprgDX3UYHa0XDwm', 'PARENT', 'Sarah', 'Smith', NULL, 'ROUTE-A', NULL, NOW(), NOW()),
+    (gen_random_uuid(), 'parent2@sbtm.demo', '$2b$10$681vlhdZCLSj7mruAWHXMeSN5phVF8s.mPNcZNprgDX3UYHa0XDwm', 'PARENT', 'David', 'Johnson', NULL, 'ROUTE-A,ROUTE-B', NULL, NOW(), NOW()),
+    (gen_random_uuid(), 'parent3@sbtm.demo', '$2b$10$681vlhdZCLSj7mruAWHXMeSN5phVF8s.mPNcZNprgDX3UYHa0XDwm', 'PARENT', 'Mary', 'Williams', NULL, 'ROUTE-B', NULL, NOW(), NOW()),
+    (gen_random_uuid(), 'parent4@sbtm.demo', '$2b$10$681vlhdZCLSj7mruAWHXMeSN5phVF8s.mPNcZNprgDX3UYHa0XDwm', 'PARENT', 'Linda', 'Brown', NULL, 'ROUTE-C', NULL, NOW(), NOW())
 ON CONFLICT DO NOTHING;
 
 -- ============================================================================

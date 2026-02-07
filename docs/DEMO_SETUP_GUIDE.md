@@ -100,6 +100,33 @@ curl http://localhost:3001/health
 
 ---
 
+## 📱 Mobile App Distribution
+
+The Driver and Parent mobile applications are built using React Native and Expo. For demo purposes, we recommend using the **Expo Go** app for the fastest setup.
+
+### 1. Driver App Installation (Expo Go)
+
+1.  **Install Expo Go**: Download the "Expo Go" app from the Apple App Store or Google Play Store on your mobile device.
+2.  **Start the Metro Bundler**:
+    ```bash
+    cd apps/driver-app
+    npm install
+    npm start
+    ```
+3.  **Scan the QR Code**: 
+    - Ensure your mobile device and computer are on the same Wi-Fi network.
+    - Scan the QR code displayed in your terminal using your phone's camera (iOS) or the Expo Go app (Android).
+4.  **Configure API URL**: If the app fails to connect, ensure `EXPO_PUBLIC_API_URL` in `apps/driver-app/.env` is set to your computer's local IP address (e.g., `http://192.168.1.5:3001/api/v1`).
+
+### 2. Standalone Builds (Optional)
+
+For a more permanent installation, you can build standalone binaries using Expo Application Services (EAS):
+```bash
+npx eas-cli build --platform android --profile preview
+```
+
+---
+
 ## Demo Scenario Setup
 
 ### Scenario: Morning School Run

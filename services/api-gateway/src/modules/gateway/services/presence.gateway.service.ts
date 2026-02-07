@@ -61,7 +61,7 @@ export class PresenceGatewayService {
             throw new ForbiddenException('You can only report presence for your assigned routes');
         }
 
-        const url = `${this.presenceServiceUrl}/api/v1/student-presence-events`;
+        const url = `${this.presenceServiceUrl}/api/v1/student-presence-events/manual`;
         return this.httpClient.post<{ presenceEventId: string }>(url, dto);
     }
 

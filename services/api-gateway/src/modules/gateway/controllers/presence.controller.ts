@@ -3,7 +3,7 @@ import { PresenceGatewayService, CreateStudentPresenceEventDto } from '../servic
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../common/guards/roles.guard';
 
-@Controller()
+@Controller('presence')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class PresenceController {
     constructor(private readonly presenceGatewayService: PresenceGatewayService) { }
@@ -16,7 +16,7 @@ export class PresenceController {
         return this.presenceGatewayService.getStudentsForRoute(routeId, req.user);
     }
 
-    @Post('student-presence-events')
+    @Post('events')
     async createStudentPresenceEvent(
         @Body() dto: CreateStudentPresenceEventDto,
         @Request() req: { user: any },
