@@ -73,6 +73,8 @@ describe('AuthService', () => {
                 sub: 'user-123',
                 email: 'test@example.com',
                 role: Role.PARENT,
+                schoolId: undefined,
+                boardId: undefined,
             });
         });
 

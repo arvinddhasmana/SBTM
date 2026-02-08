@@ -9,6 +9,8 @@ export class UserResponseDto {
     driverId?: string;
     childRouteIds?: string[];
     assignedRouteIds?: string[];
+    schoolId?: string;
+    boardId?: string;
 }
 
 export class LoginResponseDto {

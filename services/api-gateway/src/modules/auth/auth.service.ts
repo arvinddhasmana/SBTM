@@ -11,6 +11,8 @@ export interface JwtPayload {
     sub: string;
     email: string;
     role: string;
+    schoolId?: string;
+    boardId?: string;
 }
 
 @Injectable()
@@ -40,6 +42,8 @@ export class AuthService {
             sub: user.id,
             email: user.email,
             role: user.role,
+            schoolId: user.schoolId,
+            boardId: user.boardId,
         };
 
         const accessToken = this.jwtService.sign(payload);
@@ -96,6 +100,8 @@ export class AuthService {
             driverId: user.driverId,
             childRouteIds: user.childRouteIds,
             assignedRouteIds: user.assignedRouteIds,
+            schoolId: user.schoolId,
+            boardId: user.boardId,
         };
     }
 }

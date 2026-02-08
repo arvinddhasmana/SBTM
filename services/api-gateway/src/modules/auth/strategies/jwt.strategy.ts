@@ -29,6 +29,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
             driverId: user.driverId,
             childRouteIds: user.childRouteIds,
             assignedRouteIds: user.assignedRouteIds,
+            schoolId: user.schoolId,
+            boardId: user.boardId,
         };
     }
 }

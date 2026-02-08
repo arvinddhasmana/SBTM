@@ -5,6 +5,9 @@ export enum Role {
     DRIVER = 'DRIVER',
     PARENT = 'PARENT',
     SYSTEM = 'SYSTEM',
+    OSTA_ADMIN = 'OSTA_ADMIN',
+    BOARD_ADMIN = 'BOARD_ADMIN',
+    SCHOOL_ADMIN = 'SCHOOL_ADMIN',
 }
 
 export const ROLES_KEY = 'roles';

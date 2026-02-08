@@ -1,5 +1,7 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { Role } from '../../../common/decorators/roles.decorator';
+import { School } from './school.entity';
+import { SchoolBoard } from './school-board.entity';
 
 @Entity('users')
 export class User {
@@ -33,6 +35,20 @@ export class User {
 
     @Column('simple-array', { nullable: true })
     assignedRouteIds?: string[];
+
+    @Column({ nullable: true })
+    schoolId?: string;
+
+    @ManyToOne(() => School, (school) => school.users)
+    @JoinColumn({ name: 'schoolId' })
+    school?: School;
+
+    @Column({ nullable: true })
+    boardId?: string;
+
+    @ManyToOne(() => SchoolBoard, (board) => board.users)
+    @JoinColumn({ name: 'boardId' })
+    board?: SchoolBoard;
 
     @CreateDateColumn()
     createdAt: Date;

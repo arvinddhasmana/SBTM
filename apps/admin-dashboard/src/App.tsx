@@ -10,6 +10,8 @@ import {
     Students,
     Videos,
     Settings,
+    BoardsList,
+    SchoolsList,
 } from './pages';
 import './index.css';
 
@@ -71,6 +73,8 @@ const AppRoutes: React.FC = () => {
                 <Route path="/students" element={<Students />} />
                 <Route path="/videos" element={<Videos />} />
                 <Route path="/settings" element={<Settings />} />
+                <Route path="/boards" element={<BoardsList />} />
+                <Route path="/schools" element={<SchoolsList />} />
             </Route>
 
             {/* Default redirect */}

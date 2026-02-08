@@ -28,7 +28,9 @@ export const authApi = {
                         id: 'admin-001',
                         email: email,
                         name: 'Admin User',
-                        role: 'ADMIN',
+                        role: 'OSTA_ADMIN',
+                        schoolId: undefined,
+                        boardId: 'b1a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c',
                     },
                     token: 'mock-jwt-token-' + Date.now(),
                 };

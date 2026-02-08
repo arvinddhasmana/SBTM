@@ -5,3 +5,5 @@ export { default as Routes } from './Routes';
 export { default as Students } from './Students';
 export { default as Videos } from './Videos';
 export { default as Settings } from './Settings';
+export * from './admin/BoardsList';
+export * from './admin/SchoolsList';

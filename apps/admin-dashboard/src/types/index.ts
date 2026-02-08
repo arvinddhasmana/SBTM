@@ -71,13 +71,15 @@ export interface Route {
 }
 
 // User and Auth Types
-export type UserRole = 'ADMIN' | 'DRIVER' | 'PARENT';
+export type UserRole = 'ADMIN' | 'DRIVER' | 'PARENT' | 'OSTA_ADMIN' | 'BOARD_ADMIN' | 'SCHOOL_ADMIN';
 
 export interface User {
     id: string;
     email: string;
     name: string;
     role: UserRole;
+    schoolId?: string;
+    boardId?: string;
 }
 
 export interface AuthState {

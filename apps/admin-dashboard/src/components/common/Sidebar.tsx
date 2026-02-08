@@ -9,6 +9,8 @@ import {
     Settings,
     LogOut,
     Bus,
+    Building2,
+    School,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -24,6 +26,8 @@ const navItems: NavItem[] = [
     { path: '/routes', icon: <Route size={20} />, label: 'Routes' },
     { path: '/students', icon: <Users size={20} />, label: 'Students' },
     { path: '/videos', icon: <Video size={20} />, label: 'Videos' },
+    { path: '/boards', icon: <Building2 size={20} />, label: 'Boards' },
+    { path: '/schools', icon: <School size={20} />, label: 'Schools' },
     { path: '/settings', icon: <Settings size={20} />, label: 'Settings' },
 ];
 
