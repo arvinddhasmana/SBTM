@@ -9,6 +9,11 @@ RUN npm install
 COPY . .
 RUN npm run build
 
+# Test stage
+FROM builder AS tester
+WORKDIR /app
+CMD ["npm", "run", "test"]
+
 # Production stage
 FROM node:20-alpine
 
