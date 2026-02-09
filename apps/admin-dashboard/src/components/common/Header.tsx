@@ -5,17 +5,22 @@ import { useAuth } from '../../context/AuthContext';
 interface HeaderProps {
     title: string;
     subtitle?: string;
+    action?: React.ReactNode;
 }
 
-const Header: React.FC<HeaderProps> = ({ title, subtitle }) => {
+const Header: React.FC<HeaderProps> = ({ title, subtitle, action }) => {
     const { user } = useAuth();
 
     return (
         <header className="h-16 bg-dashboard-card/50 backdrop-blur-xl border-b border-dashboard-border flex items-center justify-between px-6 sticky top-0 z-40">
             {/* Title */}
-            <div>
-                <h2 className="text-xl font-bold text-white">{title}</h2>
-                {subtitle && <p className="text-sm text-slate-400">{subtitle}</p>}
+            <div className="flex items-center gap-6">
+                <div>
+                    <h2 className="text-xl font-bold text-white">{title}</h2>
+                    {subtitle && <p className="text-sm text-slate-400">{subtitle}</p>}
+                </div>
+                {action && <div className="hidden lg:block h-8 w-[1px] bg-dashboard-border" />}
+                {action && <div>{action}</div>}
             </div>
 
             {/* Actions */}

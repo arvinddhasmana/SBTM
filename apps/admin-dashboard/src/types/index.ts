@@ -51,13 +51,23 @@ export interface VideoEvent {
     durationSeconds?: number;
 }
 
+// Fleet Types
+export type VehicleStatus = 'ACTIVE' | 'MAINTENANCE' | 'INACTIVE';
+
+export interface Vehicle {
+    id: string;
+    schoolId: string;
+    licensePlate: string;
+    status: VehicleStatus;
+}
+
 // Route Types
 export interface RouteStop {
     id: string;
-    name: string;
-    position: Position;
+    routeId: string;
     sequence: number;
-    plannedArrivalTime?: string;
+    address: string;
+    location: string; // WKT POINT format
 }
 
 export interface Route {
@@ -65,9 +75,12 @@ export interface Route {
     name: string;
     schoolId: string;
     direction: 'AM' | 'PM';
-    status: 'active' | 'completed' | 'scheduled';
+    vehicleId?: string;
+    vehicle?: Vehicle;
+    startTime: string;
+    estimatedDuration: number;
     stops: RouteStop[];
-    currentLocation?: LiveLocation;
+    status?: 'active' | 'completed' | 'scheduled';
 }
 
 // User and Auth Types

@@ -5,6 +5,8 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { AuthModule } from './modules/auth/auth.module';
 import { GatewayModule } from './modules/gateway/gateway.module';
 import { OrganizationModule } from './modules/organization/organization.module';
+import { FleetModule } from './modules/fleet/fleet.module';
+import { RouteModule } from './modules/route/route.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -41,6 +43,8 @@ import { AppService } from './app.service';
         AuthModule,
         GatewayModule,
         OrganizationModule,
+        FleetModule,
+        RouteModule,
     ],
     controllers: [AppController],
     providers: [AppService],
