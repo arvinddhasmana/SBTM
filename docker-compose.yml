@@ -52,6 +52,7 @@ services:
       - PRESENCE_SERVICE_URL=http://student-presence:3004
       - VIDEO_SERVICE_URL=http://video-service:3005
       - STUDENT_SERVICE_URL=http://student-management:3006
+      - COMPLIANCE_SERVICE_URL=http://compliance-management:3007
       - CORS_ORIGINS=http://localhost:3000,http://localhost:5173
     depends_on:
       postgres:
@@ -161,6 +162,25 @@ services:
     depends_on:
       - api-gateway
       - student-management
+      - compliance-management
+
+  compliance-management:
+    build:
+      context: ./services/compliance-management
+      dockerfile: Dockerfile
+    ports:
+      - "3007:3007"
+    environment:
+      - NODE_ENV=development
+      - PORT=3007
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=mysecretpassword
+      - DB_DATABASE=sbms
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   parent-app:
     build:

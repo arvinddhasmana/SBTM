@@ -12,6 +12,7 @@ import {
     Building2,
     School,
     Wand2,
+    Shield,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -27,6 +28,7 @@ const navItems: NavItem[] = [
     { path: '/routes', icon: <Route size={20} />, label: 'Routes' },
     { path: '/routes/planner', icon: <Wand2 size={20} />, label: 'Planner' },
     { path: '/vehicles', icon: <Bus size={20} />, label: 'Fleet' },
+    { path: '/compliance', icon: <Shield size={20} />, label: 'Compliance' },
     { path: '/students', icon: <Users size={20} />, label: 'Students' },
     { path: '/videos', icon: <Video size={20} />, label: 'Videos' },
     { path: '/boards', icon: <Building2 size={20} />, label: 'Boards' },

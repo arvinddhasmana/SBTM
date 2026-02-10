@@ -4,12 +4,14 @@ import { GpsGatewayService } from './services/gps.gateway.service';
 import { AlertsGatewayService } from './services/alerts.gateway.service';
 import { PresenceGatewayService } from './services/presence.gateway.service';
 import { VideoGatewayService } from './services/video.gateway.service';
+import { StudentGatewayService } from './services/student.gateway.service';
+import { ComplianceGatewayService } from './services/compliance.gateway.service';
 import { GpsController } from './controllers/gps.controller';
 import { AlertsController } from './controllers/alerts.controller';
 import { PresenceController } from './controllers/presence.controller';
 import { VideoController } from './controllers/video.controller';
 import { StudentController } from './controllers/student.controller';
-import { StudentGatewayService } from './services/student.gateway.service';
+import { ComplianceController } from './controllers/compliance.controller';
 
 @Module({
     imports: [CommonModule],
@@ -19,6 +21,7 @@ import { StudentGatewayService } from './services/student.gateway.service';
         PresenceController,
         VideoController,
         StudentController,
+        ComplianceController,
     ],
     providers: [
         GpsGatewayService,
@@ -26,6 +29,7 @@ import { StudentGatewayService } from './services/student.gateway.service';
         PresenceGatewayService,
         VideoGatewayService,
         StudentGatewayService,
+        ComplianceGatewayService,
     ],
     exports: [
         GpsGatewayService,
@@ -33,6 +37,7 @@ import { StudentGatewayService } from './services/student.gateway.service';
         PresenceGatewayService,
         VideoGatewayService,
         StudentGatewayService,
+        ComplianceGatewayService,
     ],
 })
 export class GatewayModule { }

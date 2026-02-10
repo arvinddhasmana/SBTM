@@ -7,5 +7,6 @@ export { default as Videos } from './Videos';
 export { default as Settings } from './Settings';
 export { default as Vehicles } from './Vehicles';
 export { default as RoutePlanner } from './RoutePlanner';
+export { default as Compliance } from './Compliance';
 export * from './admin/BoardsList';
 export * from './admin/SchoolsList';

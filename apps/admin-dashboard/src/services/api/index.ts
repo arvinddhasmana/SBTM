@@ -5,3 +5,4 @@ export { presenceApi } from './presence.api';
 export { videoApi } from './video.api';
 export { studentManagementApi } from './student-management.api';
 export { fleetApi } from './fleet.api';
+export { complianceApi } from './compliance.api';
