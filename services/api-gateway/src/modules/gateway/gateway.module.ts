@@ -8,6 +8,8 @@ import { GpsController } from './controllers/gps.controller';
 import { AlertsController } from './controllers/alerts.controller';
 import { PresenceController } from './controllers/presence.controller';
 import { VideoController } from './controllers/video.controller';
+import { StudentController } from './controllers/student.controller';
+import { StudentGatewayService } from './services/student.gateway.service';
 
 @Module({
     imports: [CommonModule],
@@ -16,18 +18,21 @@ import { VideoController } from './controllers/video.controller';
         AlertsController,
         PresenceController,
         VideoController,
+        StudentController,
     ],
     providers: [
         GpsGatewayService,
         AlertsGatewayService,
         PresenceGatewayService,
         VideoGatewayService,
+        StudentGatewayService,
     ],
     exports: [
         GpsGatewayService,
         AlertsGatewayService,
         PresenceGatewayService,
         VideoGatewayService,
+        StudentGatewayService,
     ],
 })
 export class GatewayModule { }

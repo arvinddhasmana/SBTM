@@ -51,6 +51,7 @@ services:
       - ALERTS_SERVICE_URL=http://emergency-alerts:3003
       - PRESENCE_SERVICE_URL=http://student-presence:3004
       - VIDEO_SERVICE_URL=http://video-service:3005
+      - STUDENT_SERVICE_URL=http://student-management:3006
       - CORS_ORIGINS=http://localhost:3000,http://localhost:5173
     depends_on:
       postgres:
@@ -133,6 +134,24 @@ services:
       postgres:
         condition: service_healthy
 
+  student-management:
+    build:
+      context: ./services/student-management
+      dockerfile: Dockerfile
+    ports:
+      - "3006:3006"
+    environment:
+      - NODE_ENV=development
+      - PORT=3006
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=mysecretpassword
+      - DB_DATABASE=sbms
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   admin-dashboard:
     build:
       context: ./apps/admin-dashboard
@@ -141,6 +160,7 @@ services:
       - "5173:80"
     depends_on:
       - api-gateway
+      - student-management
 
   parent-app:
     build:

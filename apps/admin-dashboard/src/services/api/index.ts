@@ -3,3 +3,5 @@ export { alertsApi } from './alerts.api';
 export { routesApi } from './routes.api';
 export { presenceApi } from './presence.api';
 export { videoApi } from './video.api';
+export { studentManagementApi } from './student-management.api';
+export { fleetApi } from './fleet.api';
