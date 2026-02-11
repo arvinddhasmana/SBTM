@@ -13,17 +13,17 @@
 ## 3. OSTA System-Wide Monitoring
 **Target:** Global dashboard for fleet health, alerts, and performance across boards.
 
-**Current status:** Demo-level. Admin dashboard provides monitoring screens but uses mock fallback data when APIs are unavailable. Board-level aggregation is not implemented.
+**Current status:** Partial. Admin dashboard consumes gateway data. Board-level aggregation and OSTA-wide views are not implemented.
 
 ## 4. Driver Daily Operations
 **Target:** Driver logs in, selects route, starts GPS, records presence, and triggers emergencies.
 
-**Current status:** Partial. Driver app supports login (mock), route selection, GPS updates, roster, and panic button. Integration with real auth and presence services is not complete.
+**Current status:** Partial. Driver app uses gateway auth, fetches schedule, sends GPS updates, and triggers emergencies. Presence events are not wired yet.
 
 ## 5. Parent Tracking and Notifications
 **Target:** Parents track their children, receive notifications, and report absences.
 
-**Current status:** Demo-level. Parent web app uses mock login and simulated location updates. Notification workflows are not wired.
+**Current status:** Partial. Parent web app uses gateway auth and live location polling. Notification workflows are not wired.
 
 ## 6. Student Presence Detection
 **Target:** BLE/RFID detection with manual override and real-time updates.
@@ -33,4 +33,4 @@
 ## 7. Video Event Review
 **Target:** Admin review of video events from emergencies and incidents.
 
-**Current status:** Video service is implemented. Admin UI shows demo data; real playback wiring is pending.
+**Current status:** Video service is implemented and proxied via the gateway. Admin UI lists events; real playback wiring is pending.

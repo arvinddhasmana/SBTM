@@ -7,21 +7,20 @@
 
 ## Scene 1: Admin Overview (5 min)
 1. Open Admin Dashboard.
-2. Log in (any credentials; mock fallback).
-3. Show dashboard metrics, alerts, routes, and videos.
-4. Explain that data is mocked unless API gateway is configured.
+2. Log in with `admin@sbtm.demo` / `Admin123!`.
+3. Show dashboard metrics, alerts, routes, and videos from live gateway data.
 
 ## Scene 2: Driver Starts Route (7 min)
 1. Open Driver App (Expo).
-2. Log in with `driver@test.com` / `password`.
+2. Log in with `driver1@sbtm.demo` / `Admin123!`.
 3. Select the mock route and start GPS tracking.
-4. Trigger panic button to send an emergency event (if API base URL is configured).
+4. Trigger panic button to send an emergency event.
 
 ## Scene 3: Parent Tracking (7 min)
 1. Open Parent Portal (web).
-2. Log in (mock login).
+2. Log in with `parent1@sbtm.demo` / `Admin123!`.
 3. Select a child card.
-4. Show simulated live map movement and ETA changes.
+4. Show live map updates via polling.
 
 ## Scene 4: Presence Events (5 min)
 1. Explain how Student Presence service records BLE/manual events.
@@ -35,9 +34,9 @@ curl -X POST http://localhost:3001/api/v1/student-presence-events \
 
 ## Scene 5: Video Events (5 min)
 1. Describe how video events are created and stored in the Video Service.
-2. Show the Videos page in the Admin Dashboard (demo data).
+2. Show the Videos page in the Admin Dashboard.
 
 ## Wrap-up
-- Highlight that backend services are live and the frontend apps are demo-first.
-- Note that multi-tenant features (boards/schools) are partially implemented in the API gateway.
-- Confirm next steps for integrating parent/driver apps with real APIs.
+- Highlight that backend services are live and the frontend apps use gateway APIs.
+- Note that board/school management UI is pending.
+- Confirm next steps for notifications and route optimization.

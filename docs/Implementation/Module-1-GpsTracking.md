@@ -20,10 +20,9 @@ Implemented and running in Docker Compose.
 - `location_points`: `vehicle_id`, `route_id`, `timestamp`, `lat`, `lng`, telemetry fields
 
 ## Integration Notes
-- API gateway proxies live/history endpoints.
-- Driver app posts to `/locations` when configured.
+- API gateway proxies live/history endpoints and ingests GPS via `/api/v1/routes/locations`.
+- Driver app posts to gateway endpoints when configured.
 
 ## Gaps / Next Steps
-- No `school_id` or tenant isolation.
 - No geofencing or route deviation detection.
 - No aggregation endpoints (route list, live fleet view).

@@ -23,9 +23,9 @@ Implemented and tested (per status report).
 
 ## Integration Notes
 - API gateway proxies video endpoints.
-- Admin dashboard uses mock data for video lists and playback.
+- Admin dashboard lists video events via gateway APIs.
 
 ## Gaps / Next Steps
 - Real playback wiring in admin UI
-- Tenant-aware access controls
+- Tenant-aware access controls are enforced by `school_id`
 - Retention policy enforcement

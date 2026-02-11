@@ -23,9 +23,9 @@ Implemented and running in Docker Compose.
 
 ## Integration Notes
 - API gateway proxies alert endpoints.
-- Admin dashboard consumes alerts with mock fallback.
+- Admin dashboard consumes alerts via gateway APIs.
 
 ## Gaps / Next Steps
 - Parent/driver notification integration
 - Service-to-service authentication
-- Tenant-aware filtering
+- Tenant-aware filtering is enforced by `school_id`

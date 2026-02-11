@@ -23,7 +23,7 @@ The project is built as a monorepo containing multiple microservices and fronten
 |-------------|------|-------------|------------|
 | **[Admin Dashboard](./apps/admin-dashboard)** | `/apps/admin-dashboard` | Command center for fleet & route management | React, Vite, Tailwind |
 | **[Driver App](./apps/driver-app)** | `/apps/driver-app` | Mobile app for navigation & presence logging | React Native, Expo |
-| **[Parent App](./apps/parent-app)** | `/apps/parent-app` | Web portal for tracking children | Next.js, React |
+| **[Parent App](./apps/parent-app)** | `/apps/parent-app` | Web portal for tracking children | React, Vite |
 
 ### ☁️ Cloud Backend & Microservices
 
@@ -34,6 +34,8 @@ The project is built as a monorepo containing multiple microservices and fronten
 | **[Emergency Alerts](./services/emergency-alerts)** | `/services/emergency-alerts` | Real-time critical event handling | NestJS, BullMQ, Redis |
 | **[Student Presence](./services/student-presence)** | `/services/student-presence` | BLE SmartTag processing & attendance | NestJS, Socket.IO |
 | **[Video Service](./services/video-service)** | `/services/video-service` | Secure video upload & metadata management | NestJS, MinIO |
+| **[Student Management](./services/student-management)** | `/services/student-management` | Enrollment and roster management | NestJS, TypeORM |
+| **[Compliance Management](./services/compliance-management)** | `/services/compliance-management` | Inspections and audit logs | NestJS, TypeORM |
 
 ## 🚀 Getting Started
 
@@ -89,13 +91,7 @@ Detailed documentation is available in the `docs/` folder:
 
 ## 🧪 Testing
 
-To run tests across the entire workspace (if configured in root `package.json`):
-
-```bash
-npm run test
-```
-
-Or run tests for specific services:
+Run tests for specific services or apps:
 
 ```bash
 cd services/api-gateway

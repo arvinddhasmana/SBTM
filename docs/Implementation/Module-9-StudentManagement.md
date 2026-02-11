@@ -22,10 +22,8 @@ Implemented and running in Docker Compose.
 - `students` with `school_id`, route and stop references
 
 ## Integration Notes
-- Not proxied through API gateway yet.
-- No authentication or tenant guards at service level.
+- Proxied through API gateway (`/api/v1/students`).
+- Gateway injects `school_id` and enforces tenant scope.
 
 ## Gaps / Next Steps
-- API gateway routes for student management
-- Tenant-aware enforcement
 - Parent/driver integration for roster and presence display

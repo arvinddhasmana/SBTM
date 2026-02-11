@@ -29,18 +29,22 @@ Implemented and running in Docker Compose.
 - `POST /api/v1/routes/optimize` (mock optimization)
 
 ### Proxies
-- GPS: live-location, history
+- GPS: live-location, history, ingest (`POST /routes/locations`)
 - Alerts: active list, detail, create
 - Presence: route students, manual events
 - Video: list, detail, create
+- Students: list, detail, enroll, assignment, bulk import
+- Compliance: inspections, compliance, audit
+- Parent: child list
+- Driver: schedule
 
 ## Data Model
 - `school_boards`, `schools`, `users`, `routes`, `route_stops`, `vehicles`
 
 ## Multi-Tenant Notes
 - Guards enforce `boardId` and `schoolId` on gateway endpoints.
-- Downstream services do not enforce tenant isolation.
+- Downstream services enforce `school_id` tenant isolation.
 
 ## Gaps / Next Steps
-- Proxy routing for student-management and compliance services
-- End-to-end tenant isolation across all services
+- Organization management UI (board/school admin)
+- Map provider integration for route optimization

@@ -27,5 +27,4 @@ SBTM_AntiGravity/
 ```
 
 ## Notes
-- The parent app root `apps/parent-app/package.json` is not used for the Vite web app.
 - `libs/` is present but not used yet.

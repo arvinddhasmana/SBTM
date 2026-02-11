@@ -20,5 +20,5 @@
 
 ## Multi-Tenant Notes
 - Boards, schools, routes, and vehicles exist in the API gateway DB.
-- Downstream services do not enforce tenant isolation.
-- UI does not yet expose board/school management.
+- Downstream services store `school_id` and enforce tenant isolation in queries.
+- UI uses gateway APIs; board/school management views are still pending.

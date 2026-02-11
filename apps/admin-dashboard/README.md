@@ -68,11 +68,11 @@ npm run test
 
 | Variable | Description |
 |----------|-------------|
-| `VITE_API_URL` | API Gateway URL |
+| `VITE_API_URL` | API Gateway base URL (default: `http://localhost:3001`) |
 
 ## 🔒 Security
 
-- JWT-based authentication
+- JWT-based authentication with gateway-backed data
 - Protected routes (Admin role only)
 
 ## 📝 License

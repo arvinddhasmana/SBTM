@@ -18,9 +18,8 @@ Implemented and running in Docker Compose.
 - `driver_compliance`, `vehicle_inspections`, `audit_logs`
 
 ## Integration Notes
-- Not proxied through API gateway yet.
-- No authentication or tenant guards at service level.
+- Proxied through API gateway (`/api/v1/compliance`, `/api/v1/inspections`, `/api/v1/audit`).
+- Gateway injects `school_id` and enforces tenant scope.
 
 ## Gaps / Next Steps
-- API gateway routes for compliance APIs
 - Role-based access and audit policy enforcement

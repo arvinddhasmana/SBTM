@@ -69,7 +69,7 @@ npm run test
 
 | Variable | Description |
 |----------|-------------|
-| `EXPO_PUBLIC_API_URL` | API Gateway URL |
+| `EXPO_PUBLIC_API_URL` | API Gateway base URL (include `/api/v1`) |
 
 ## 🔒 Security
 

@@ -1,7 +1,7 @@
 # Module 2 - Parent App (Web)
 
 ## Status
-Implemented as a demo-first web app with mock data.
+Implemented with live gateway integration.
 
 ## Location
 - `apps/parent-app/web`
@@ -12,17 +12,15 @@ Implemented as a demo-first web app with mock data.
 - React Router + Leaflet
 
 ## Functionality
-- Mock login (any credentials)
+- Gateway login
 - Child cards with status
-- Live map with simulated SSE updates
+- Live map with polling for route location
 
 ## Integration Notes
-- No backend API calls at this time.
-- Intended future integration with API gateway for auth and live tracking.
+- Uses `VITE_API_URL` and calls `/api/v1/auth/login`, `/api/v1/parent/children`, and `/api/v1/routes/:routeId/live-location`.
 
 ## Gaps / Next Steps
-- Real authentication and user provisioning
-- Live data and notifications from backend services
+- Live notifications from backend services
 - Multi-child/multi-school data from student management
 
 ## Mobile App

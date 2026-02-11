@@ -12,15 +12,15 @@
 - Student presence service with BLE/manual events and route-level views.
 - Video capture service with secure upload and access logging.
 - API gateway with JWT auth, RBAC, and proxy routing to services.
-- Organization, school, route, and vehicle management in the API gateway (basic multi-tenant core).
+- Organization, school, route, and vehicle management in the API gateway (multi-tenant core).
+- Tenant-aware filtering across services using `school_id`.
 - Student management service with enrollment and bulk import.
 - Compliance management service with inspections and audit logging.
-- Admin dashboard web app (demo-ready, mock fallback when APIs are unavailable).
-- Driver mobile app (Expo) with route selection, GPS updates, and panic button (mock auth).
-- Parent web portal (Vite) with mock login and simulated live map.
+- Admin dashboard web app with gateway-backed data.
+- Driver mobile app (Expo) with gateway auth, schedule, GPS updates, and panic button.
+- Parent web portal (Vite) with gateway auth and live location polling.
 
 ## Planned / Not Yet Implemented
-- End-to-end multi-tenant data isolation across all microservices.
 - Board/school admin UX for organization management in the admin dashboard.
 - Real map-based route optimization integrated with external map APIs.
 - Geofencing, route deviation detection, and automated escalation.

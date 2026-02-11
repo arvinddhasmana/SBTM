@@ -30,8 +30,7 @@ npm install
 npm run dev
 ```
 - Default URL: http://localhost:5173
-- For real API calls, set `VITE_API_URL` to `http://localhost:3001/api/v1`.
-- Without API, the app uses mock data.
+- Set `VITE_API_URL` to `http://localhost:3001` for API calls.
 
 ### Parent Portal (Web)
 ```powershell
@@ -40,7 +39,7 @@ npm install
 npm run dev
 ```
 - Default URL: http://localhost:5174 (if 5173 is in use)
-- Uses mock login and simulated SSE data.
+- Set `VITE_API_URL` to `http://localhost:3001` for API calls.
 
 ### Driver App (Expo)
 ```powershell
@@ -48,8 +47,8 @@ cd apps/driver-app
 npm install
 npx expo start
 ```
-- Uses mock login (`driver@test.com` / `password`).
-- Update `apps/driver-app/src/services/api.service.ts` to point at `http://<your-ip>:3001/api/v1` if you want live GPS and emergency events.
+- Set `EXPO_PUBLIC_API_URL` to point at `http://<your-ip>:3001/api/v1` for device testing.
+- Android emulator default: `http://10.0.2.2:3001/api/v1`.
 
 ## Optional: Seed Demo Data
 ```powershell
@@ -72,10 +71,12 @@ npx expo start
 | Compliance Management | 3007 | `/compliance`, `/inspections`, `/audit` |
 
 ## Demo Accounts
-- Admin Dashboard: any credentials (mock fallback)
-- Parent Portal: any credentials (mock)
-- Driver App: `driver@test.com` / `password`
+Seed demo users with `scripts/seed-demo-data.ps1` or `scripts/seed-demo-data.sh`.
+
+Suggested demo accounts (password: `Admin123!`):
+- Admin: `admin@sbtm.demo`
+- Driver: `driver1@sbtm.demo`
+- Parent: `parent1@sbtm.demo`
 
 ## Notes
-- The admin dashboard and parent portal are demo-first and fall back to mock data when APIs are unavailable.
-- Multi-tenant features are partially implemented in the API gateway but are not end-to-end enforced across all services.
+- Multi-tenant features are enforced via `school_id` across services.

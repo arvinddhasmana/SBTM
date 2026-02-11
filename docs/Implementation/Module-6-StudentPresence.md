@@ -25,6 +25,5 @@ Implemented and running in Docker Compose.
 - Driver app roster is local-only; no presence API wiring.
 
 ## Gaps / Next Steps
-- Tenant-aware filtering
 - Parent notifications
 - Driver app BLE integration

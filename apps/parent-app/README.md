@@ -14,17 +14,18 @@ The Parent App enables guardians to track their children's school bus journey in
 ## 🏗️ Architecture
 
 ### Tech Stack
-- **Framework**: Next.js (React)
-- **Styling**: CSS Modules / Tailwind (Configurable)
-- **HTTP**: Fetch API / Axios
+- **Framework**: React 19 (Vite)
+- **Styling**: TailwindCSS
+- **HTTP**: Axios
 
 ### Module Structure
 ```
-src/
-├── app/              # Next.js App Router
+web/src/
 ├── components/       # UI Components
-├── lib/              # Utilities
-└── services/         # API calls
+├── context/          # Auth context
+├── pages/            # Routes
+├── services/         # API calls
+└── types/            # Shared types
 ```
 
 ## 🚀 Getting Started
@@ -36,6 +37,7 @@ src/
 
 1. **Install dependencies**:
 ```bash
+cd web
 npm install
 ```
 
@@ -62,7 +64,7 @@ npm run test
 
 | Variable | Description |
 |----------|-------------|
-| `NEXT_PUBLIC_API_URL` | API Gateway URL |
+| `VITE_API_URL` | API Gateway base URL (default: `http://localhost:3001`) |
 
 ## 🔒 Security
 
