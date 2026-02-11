@@ -69,17 +69,22 @@ For developing individual modules, refer to the specific `README.md` in each ser
 
 ## 📚 Documentation
 
-Detailed documentation and implementation status reports are available in the `docs/` folder:
+Detailed documentation is available in the `docs/` folder:
 
-- **[Architecture Overview](./docs/Implementation/ARCHITECTURE.md)**: Deep dive into system design patterns.
-- **[Module Implementation Status](./docs)**: Status reports for individual modules.
+- **[Architecture](./docs/Design/Architecture.md)**: Current system architecture and multi-tenant readiness.
+- **[System Design](./docs/Design/SystemDesign.md)**: Consolidated API, data model, and UI notes.
+- **[Technical Specifications](./docs/Design/TechnicalSpecifications.md)**: Current stack and prototype assumptions.
+- **[Repository Structure](./docs/Design/RepositoryStructure.md)**: Monorepo layout.
+- **[Business Requirements](./docs/Business/Requirements.md)**: Scope and target requirements.
+- **[Features](./docs/Business/Features.md)**: Feature matrix with status.
+- **[Use Cases](./docs/Business/UseCases.md)**: Current vs target use cases.
+- **[User Journey](./docs/Business/UserJourney.md)**: Current user flows.
 
 ### 🎯 Demo & Testing Guides
 
-- **[Demo Setup Guide](./docs/DEMO_SETUP_GUIDE.md)**: Complete guide for setting up the demo environment.
-- **[Live Demo Script](./docs/LIVE_DEMO_SCRIPT.md)**: Step-by-step script for conducting live demos.
-- **[User Journey Document](./docs/USER_JOURNEY.md)**: Detailed user flows for Admin, Driver, and Parent roles.
-- **[QA Testing Guide](./docs/QA_TESTING_GUIDE.md)**: Comprehensive testing guide with test cases and scenarios.
+- **[Demo Setup Guide](./docs/Demo/DemoSetupGuide.md)**: Complete guide for setting up the demo environment.
+- **[Live Demo Script](./docs/Demo/LiveDemoScript.md)**: Step-by-step script for conducting live demos.
+- **[Testing Guide](./docs/Implementation/TestingGuide.md)**: API smoke tests and UI notes.
 
 
 ## 🧪 Testing

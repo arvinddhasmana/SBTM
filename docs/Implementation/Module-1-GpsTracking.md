@@ -1,0 +1,29 @@
+# Module 1 - GPS Tracking Service
+
+## Status
+Implemented and running in Docker Compose.
+
+## Location
+- `services/gps-tracking`
+
+## Tech Stack
+- Express + TypeScript
+- Prisma + PostgreSQL
+- Zod validation
+
+## APIs
+- `POST /api/v1/locations` - ingest GPS point
+- `GET /api/v1/routes/:routeId/live-location` - latest position
+- `GET /api/v1/routes/:routeId/history` - full route history
+
+## Data Model
+- `location_points`: `vehicle_id`, `route_id`, `timestamp`, `lat`, `lng`, telemetry fields
+
+## Integration Notes
+- API gateway proxies live/history endpoints.
+- Driver app posts to `/locations` when configured.
+
+## Gaps / Next Steps
+- No `school_id` or tenant isolation.
+- No geofencing or route deviation detection.
+- No aggregation endpoints (route list, live fleet view).
