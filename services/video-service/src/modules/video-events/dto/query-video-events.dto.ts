@@ -4,6 +4,10 @@ import { VideoEventType, VideoEventStatus } from '../entities/video-event.entity
 export class QueryVideoEventsDto {
     @IsOptional()
     @IsString()
+    schoolId?: string;
+
+    @IsOptional()
+    @IsString()
     vehicleId?: string;
 
     @IsOptional()

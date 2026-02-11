@@ -17,6 +17,7 @@ describe('PresenceService', () => {
         findOne: jest.fn().mockResolvedValue(null),
         createQueryBuilder: jest.fn(() => ({
             where: jest.fn().mockReturnThis(),
+            andWhere: jest.fn().mockReturnThis(),
             orderBy: jest.fn().mockReturnThis(),
             getMany: jest.fn().mockResolvedValue([]),
         })),
@@ -87,6 +88,7 @@ describe('PresenceService', () => {
         mockRedis.get.mockResolvedValue(null); // No existing state
 
         const dto = {
+            schoolId: 'school-001',
             vehicleId: 'bus-123',
             routeId: 'route-456',
             timestamp: '2025-12-14T20:00:00Z',
@@ -111,6 +113,7 @@ describe('PresenceService', () => {
         });
 
         const dto = {
+            schoolId: 'school-001',
             vehicleId: 'bus-123',
             routeId: 'route-456',
             timestamp: '2025-12-14T20:00:00Z',
@@ -127,6 +130,7 @@ describe('PresenceService', () => {
 
     it('should handle manual override', async () => {
         const dto = {
+            schoolId: 'school-001',
             studentId: 'stud-123',
             vehicleId: 'bus-123',
             routeId: 'route-456',
@@ -156,9 +160,9 @@ describe('PresenceService', () => {
 
         mockRedis.get.mockResolvedValue(JSON.stringify(cachedData));
 
-        const result = await service.getRoutePresence('route-456');
+        const result = await service.getRoutePresence('route-456', 'school-001');
 
         expect(result).toEqual(cachedData);
-        expect(mockRedis.get).toHaveBeenCalledWith('route:route-456:students');
+        expect(mockRedis.get).toHaveBeenCalledWith('route:school-001:route-456:students');
     });
 });

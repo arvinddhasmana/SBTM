@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { apiClient } from '../../services/api/api-client';
 
 interface Board {
     id: string;
@@ -14,13 +15,8 @@ export const BoardsList: React.FC = () => {
     useEffect(() => {
         const fetchBoards = async () => {
             try {
-                const response = await fetch('http://localhost:3001/boards', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-                const data = await response.json();
-                setBoards(data);
+                const response = await apiClient.get<Board[]>('/api/v1/boards');
+                setBoards(response.data);
             } catch (error) {
                 console.error('Failed to fetch boards', error);
             } finally {

@@ -54,7 +54,8 @@ export default function ActiveRouteScreen({ navigation }: any) {
                     await EmergencyService.triggerPanic(
                         'bus-123',
                         activeRoute?.id || 'unknown',
-                        { lat: loc.coords.latitude, lng: loc.coords.longitude }
+                        { lat: loc.coords.latitude, lng: loc.coords.longitude },
+                        driver?.id
                     );
                     Alert.alert('Alert Sent', 'Help is on the way.');
                 }

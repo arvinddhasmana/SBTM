@@ -11,6 +11,10 @@ import { VideoEventType } from '../entities/video-event.entity';
 export class CreateVideoEventDto {
     @IsString()
     @IsNotEmpty()
+    schoolId: string;
+
+    @IsString()
+    @IsNotEmpty()
     vehicleId: string;
 
     @IsString()

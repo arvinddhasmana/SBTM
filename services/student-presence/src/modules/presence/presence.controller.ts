@@ -1,5 +1,5 @@
 
-import { Controller, Post, Get, Body, Param } from '@nestjs/common';
+import { Controller, Post, Get, Body, Param, Query } from '@nestjs/common';
 import { PresenceService } from './presence.service';
 import { ProcessPresenceEventsDto } from './dto/process-presence-events.dto';
 import { ManualPresenceEventDto } from './dto/manual-presence-event.dto';
@@ -23,8 +23,11 @@ export class PresenceController {
     }
 
     @Get('routes/:routeId/students')
-    async getRoutePresence(@Param('routeId') routeId: string) {
-        const students = await this.presenceService.getRoutePresence(routeId);
+    async getRoutePresence(
+        @Param('routeId') routeId: string,
+        @Query('schoolId') schoolId?: string,
+    ) {
+        const students = await this.presenceService.getRoutePresence(routeId, schoolId);
         return {
             routeId,
             students,

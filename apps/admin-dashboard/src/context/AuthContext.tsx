@@ -14,11 +14,25 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-    const [authState, setAuthState] = useState<AuthState>({
-        user: null,
-        token: null,
-        isAuthenticated: false,
-        isLoading: false,
+    const [authState, setAuthState] = useState<AuthState>(() => {
+        const storedToken = localStorage.getItem('auth_token');
+        const storedUser = localStorage.getItem('auth_user');
+
+        if (storedToken && storedUser) {
+            return {
+                user: JSON.parse(storedUser),
+                token: storedToken,
+                isAuthenticated: true,
+                isLoading: false,
+            };
+        }
+
+        return {
+            user: null,
+            token: null,
+            isAuthenticated: false,
+            isLoading: false,
+        };
     });
 
     const login = useCallback(async (email: string, password: string) => {
@@ -27,9 +41,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         try {
             const response = await authApi.login(email, password);
 
+            localStorage.setItem('auth_token', response.accessToken);
+            localStorage.setItem('auth_user', JSON.stringify(response.user));
+
             setAuthState({
                 user: response.user,
-                token: response.token,
+                token: response.accessToken,
                 isAuthenticated: true,
                 isLoading: false,
             });
@@ -40,6 +57,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }, []);
 
     const logout = useCallback(() => {
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('auth_user');
         setAuthState({
             user: null,
             token: null,

@@ -12,6 +12,7 @@ datasource db {
 
 model LocationPoint {
   id              String   @id @default(uuid())
+  schoolId        String   @map("school_id")
   vehicleId       String   @map("vehicle_id")
   routeId         String   @map("route_id")
   timestamp       DateTime
@@ -22,5 +23,6 @@ model LocationPoint {
   accuracyMeters  Float?   @map("accuracy_meters")
 
   @@index([timestamp])
+  @@index([schoolId, routeId])
   @@map("location_points")
 }

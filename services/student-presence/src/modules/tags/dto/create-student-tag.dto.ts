@@ -5,6 +5,10 @@ import { TagType } from '../entities/student-tag.entity';
 export class CreateStudentTagDto {
     @IsString()
     @IsNotEmpty()
+    schoolId: string;
+
+    @IsString()
+    @IsNotEmpty()
     studentId: string;
 
     @IsString()

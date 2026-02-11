@@ -5,6 +5,7 @@ import { LocationService } from '../services/locationService';
 const locationService = new LocationService();
 
 const locationSchema = z.object({
+    schoolId: z.string(),
     vehicleId: z.string(),
     routeId: z.string(),
     timestamp: z.string().datetime(),
@@ -33,7 +34,8 @@ export const ingestLocation = async (req: Request, res: any) => {
 export const getLiveLocation = async (req: Request, res: any) => {
     try {
         const { routeId } = req.params;
-        const location = await locationService.getLatestLocation(routeId);
+        const schoolId = req.query.schoolId as string | undefined;
+        const location = await locationService.getLatestLocation(routeId, schoolId);
 
         if (!location) {
             return res.status(404).json({ error: 'Location not found for this route' });
@@ -49,7 +51,8 @@ export const getLiveLocation = async (req: Request, res: any) => {
 export const getRouteHistory = async (req: Request, res: any) => {
     try {
         const { routeId } = req.params;
-        const history = await locationService.getRouteHistory(routeId);
+        const schoolId = req.query.schoolId as string | undefined;
+        const history = await locationService.getRouteHistory(routeId, schoolId);
         res.json(history);
     } catch (error) {
         console.error(error);

@@ -8,15 +8,18 @@ export enum TagType {
 }
 
 @Entity()
-@Index(['tagId'], { unique: true })
+@Index(['schoolId', 'tagId'], { unique: true })
 export class StudentTag {
     @PrimaryGeneratedColumn('uuid')
     id: string;
 
     @Column()
+    schoolId: string;
+
+    @Column()
     studentId: string;
 
-    @Column({ unique: true })
+    @Column()
     tagId: string;
 
     @Column({

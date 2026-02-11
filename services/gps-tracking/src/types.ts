@@ -1,5 +1,6 @@
 export interface LocationPoint {
     id: string;
+    schoolId: string;
     vehicleId: string;
     routeId: string;
     timestamp: Date;
@@ -11,6 +12,7 @@ export interface LocationPoint {
 }
 
 export interface CreateLocationDto {
+    schoolId: string;
     vehicleId: string;
     routeId: string;
     timestamp: string; // ISO string

@@ -56,6 +56,7 @@ describe('AlertsGatewayService', () => {
             expect(result).toEqual(mockAlerts);
             expect(httpClient.get).toHaveBeenCalledWith(
                 'http://alerts-service:3003/api/v1/alerts/active',
+                { params: undefined },
             );
         });
     });
@@ -77,6 +78,7 @@ describe('AlertsGatewayService', () => {
     describe('createEmergencyEvent', () => {
         it('should create emergency event', async () => {
             const dto = {
+                schoolId: 'school-123',
                 vehicleId: 'bus-123',
                 routeId: 'route-456',
                 driverId: 'driver-789',

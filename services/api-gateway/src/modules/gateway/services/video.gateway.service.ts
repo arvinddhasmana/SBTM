@@ -15,6 +15,7 @@ export interface VideoEventDto {
 export interface CreateVideoEventDto {
     vehicleId: string;
     routeId: string;
+    schoolId: string;
     eventType: string;
     timestamp: string;
     durationSeconds: number;
@@ -26,6 +27,7 @@ export interface VideoEventsQueryDto {
     routeId?: string;
     vehicleId?: string;
     eventType?: string;
+    schoolId?: string;
     from?: string;
     to?: string;
     page?: number;
@@ -51,6 +53,7 @@ export class VideoGatewayService {
         if (query.routeId) params.append('routeId', query.routeId);
         if (query.vehicleId) params.append('vehicleId', query.vehicleId);
         if (query.eventType) params.append('eventType', query.eventType);
+        if (query.schoolId) params.append('schoolId', query.schoolId);
         if (query.from) params.append('from', query.from);
         if (query.to) params.append('to', query.to);
         if (query.page) params.append('page', query.page.toString());

@@ -51,6 +51,7 @@ describe('Student Presence Service (e2e)', () => {
             return request(app.getHttpServer())
                 .post('/api/v1/student-tags')
                 .send({
+                    schoolId: 'school-001',
                     studentId: 'stud-e2e-001',
                     tagId: 'ble-e2e-001',
                     tagType: 'SMARTTAG',
@@ -67,6 +68,7 @@ describe('Student Presence Service (e2e)', () => {
             await request(app.getHttpServer())
                 .post('/api/v1/student-tags')
                 .send({
+                    schoolId: 'school-001',
                     studentId: 'stud-e2e-002',
                     tagId: 'ble-e2e-dup',
                     tagType: 'SMARTTAG',
@@ -76,6 +78,7 @@ describe('Student Presence Service (e2e)', () => {
             return request(app.getHttpServer())
                 .post('/api/v1/student-tags')
                 .send({
+                    schoolId: 'school-001',
                     studentId: 'stud-e2e-003',
                     tagId: 'ble-e2e-dup',
                     tagType: 'SMARTTAG',
@@ -90,6 +93,7 @@ describe('Student Presence Service (e2e)', () => {
             await request(app.getHttpServer())
                 .post('/api/v1/student-tags')
                 .send({
+                    schoolId: 'school-001',
                     studentId: 'stud-e2e-100',
                     tagId: 'ble-e2e-100',
                     tagType: 'SMARTTAG',
@@ -100,6 +104,7 @@ describe('Student Presence Service (e2e)', () => {
             return request(app.getHttpServer())
                 .post('/api/v1/presence-events')
                 .send({
+                    schoolId: 'school-001',
                     vehicleId: 'bus-e2e-001',
                     routeId: 'route-e2e-001',
                     timestamp: new Date().toISOString(),
@@ -117,6 +122,7 @@ describe('Student Presence Service (e2e)', () => {
             return request(app.getHttpServer())
                 .post('/api/v1/student-presence-events/manual')
                 .send({
+                    schoolId: 'school-001',
                     studentId: 'stud-e2e-100',
                     vehicleId: 'bus-e2e-001',
                     routeId: 'route-e2e-001',
@@ -135,6 +141,7 @@ describe('Student Presence Service (e2e)', () => {
             await request(app.getHttpServer())
                 .post('/api/v1/student-presence-events/manual')
                 .send({
+                    schoolId: 'school-001',
                     studentId: 'stud-e2e-100',
                     vehicleId: 'bus-e2e-001',
                     routeId: 'route-e2e-query',
@@ -146,7 +153,7 @@ describe('Student Presence Service (e2e)', () => {
             await new Promise(resolve => setTimeout(resolve, 100));
 
             return request(app.getHttpServer())
-                .get('/api/v1/routes/route-e2e-query/students')
+                .get('/api/v1/routes/route-e2e-query/students?schoolId=school-001')
                 .expect(200)
                 .expect((res) => {
                     expect(res.body.routeId).toBe('route-e2e-query');

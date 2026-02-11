@@ -1,14 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { videoApi } from './video.api';
+import { apiClient } from './api-client';
 
-vi.mock('axios', () => ({
-    default: {
+vi.mock('./api-client', () => ({
+    apiClient: {
         get: vi.fn(),
-        isAxiosError: vi.fn((error) => error.isAxiosError),
     },
 }));
-
-import axios from 'axios';
 
 describe('videoApi', () => {
     beforeEach(() => {
@@ -22,13 +20,13 @@ describe('videoApi', () => {
                 { id: 'vid-2', eventType: 'INCIDENT' },
             ];
 
-            vi.mocked(axios.get).mockResolvedValueOnce({ data: mockVideos });
+            vi.mocked(apiClient.get).mockResolvedValueOnce({ data: mockVideos });
 
             const result = await videoApi.getVideoEvents();
 
             expect(result).toEqual(mockVideos);
-            expect(axios.get).toHaveBeenCalledWith(
-                expect.stringContaining('/api/v1/video-events'),
+            expect(apiClient.get).toHaveBeenCalledWith(
+                '/api/v1/video-events',
                 { params: undefined }
             );
         });
@@ -36,12 +34,12 @@ describe('videoApi', () => {
         it('should support filtering by route', async () => {
             const mockVideos = [{ id: 'vid-1', routeId: 'route-1' }];
 
-            vi.mocked(axios.get).mockResolvedValueOnce({ data: mockVideos });
+            vi.mocked(apiClient.get).mockResolvedValueOnce({ data: mockVideos });
 
             await videoApi.getVideoEvents({ routeId: 'route-1' });
 
-            expect(axios.get).toHaveBeenCalledWith(
-                expect.any(String),
+            expect(apiClient.get).toHaveBeenCalledWith(
+                '/api/v1/video-events',
                 { params: { routeId: 'route-1' } }
             );
         });
@@ -51,13 +49,13 @@ describe('videoApi', () => {
         it('should return specific video event', async () => {
             const mockVideo = { id: 'vid-1', eventType: 'PANIC_BUTTON' };
 
-            vi.mocked(axios.get).mockResolvedValueOnce({ data: mockVideo });
+            vi.mocked(apiClient.get).mockResolvedValueOnce({ data: mockVideo });
 
             const result = await videoApi.getVideoEventById('vid-1');
 
             expect(result).toEqual(mockVideo);
-            expect(axios.get).toHaveBeenCalledWith(
-                expect.stringContaining('/api/v1/video-events/vid-1')
+            expect(apiClient.get).toHaveBeenCalledWith(
+                '/api/v1/video-events/vid-1'
             );
         });
     });

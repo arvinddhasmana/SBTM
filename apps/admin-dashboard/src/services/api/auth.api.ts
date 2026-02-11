@@ -1,48 +1,66 @@
-import axios from 'axios';
 import type { User } from '../../types';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+import { apiClient } from './api-client';
 
 interface LoginResponse {
     user: User;
-    token: string;
+    accessToken: string;
 }
 
 interface MeResponse {
     user: User;
 }
 
+interface GatewayUser {
+    id: string;
+    email: string;
+    role: User['role'];
+    firstName?: string;
+    lastName?: string;
+    schoolId?: string;
+    boardId?: string;
+}
+
+interface GatewayLoginResponse {
+    accessToken: string;
+    user: GatewayUser;
+}
+
 export const authApi = {
     async login(email: string, password: string): Promise<LoginResponse> {
-        try {
-            const response = await axios.post<LoginResponse>(
-                `${API_BASE_URL}/auth/login`,
-                { email, password }
-            );
-            return response.data;
-        } catch (error) {
-            if (axios.isAxiosError(error) && !error.response) {
-                await new Promise(resolve => setTimeout(resolve, 500));
-                return {
-                    user: {
-                        id: 'admin-001',
-                        email: email,
-                        name: 'Admin User',
-                        role: 'OSTA_ADMIN',
-                        schoolId: undefined,
-                        boardId: 'b1a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c',
-                    },
-                    token: 'mock-jwt-token-' + Date.now(),
-                };
-            }
-            throw error;
-        }
+        const response = await apiClient.post<GatewayLoginResponse>(
+            '/api/v1/auth/login',
+            { email, password }
+        );
+        const nameParts = [response.data.user.firstName, response.data.user.lastName].filter(Boolean);
+
+        return {
+            accessToken: response.data.accessToken,
+            user: {
+                id: response.data.user.id,
+                email: response.data.user.email,
+                role: response.data.user.role,
+                name: nameParts.length ? nameParts.join(' ') : response.data.user.email,
+                schoolId: response.data.user.schoolId,
+                boardId: response.data.user.boardId,
+            },
+        };
     },
 
     async me(token: string): Promise<MeResponse> {
-        const response = await axios.get<MeResponse>(`${API_BASE_URL}/auth/me`, {
+        const response = await apiClient.get<GatewayUser>('/api/v1/auth/me', {
             headers: { Authorization: `Bearer ${token}` },
         });
-        return response.data;
+        const nameParts = [response.data.firstName, response.data.lastName].filter(Boolean);
+
+        return {
+            user: {
+                id: response.data.id,
+                email: response.data.email,
+                role: response.data.role,
+                name: nameParts.length ? nameParts.join(' ') : response.data.email,
+                schoolId: response.data.schoolId,
+                boardId: response.data.boardId,
+            },
+        };
     },
 };

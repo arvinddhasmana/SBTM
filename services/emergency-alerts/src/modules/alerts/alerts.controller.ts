@@ -1,5 +1,5 @@
 
-import { Controller, Post, Get, Body, Param } from '@nestjs/common';
+import { Controller, Post, Get, Body, Param, Query } from '@nestjs/common';
 import { AlertsService } from './alerts.service';
 import { CreateEmergencyEventDto } from './dto/create-emergency-event.dto';
 
@@ -14,8 +14,8 @@ export class AlertsController {
     }
 
     @Get('alerts/active')
-    async findAllActive() {
-        return this.alertsService.findAllActive();
+    async findAllActive(@Query('schoolId') schoolId?: string) {
+        return this.alertsService.findAllActive(schoolId);
     }
 
     @Get('alerts/:alertId')

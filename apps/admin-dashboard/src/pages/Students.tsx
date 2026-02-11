@@ -25,11 +25,12 @@ const Students: React.FC = () => {
     const fetchData = async () => {
         setIsLoading(true);
         try {
-            const [pData, rData, mData] = await Promise.all([
-                presenceApi.getAllPresence(),
+            const [rData, mData] = await Promise.all([
                 routesApi.getActiveRoutes(),
                 studentManagementApi.getStudents()
             ]);
+
+            const pData = await presenceApi.getAllPresence(rData.map((route) => route.id));
             setPresenceData(pData);
             setRoutes(rData);
             setManagedStudents(mData);

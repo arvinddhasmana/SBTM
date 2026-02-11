@@ -1,5 +1,5 @@
-import { Controller, Get, Param, Query, UseGuards, Request } from '@nestjs/common';
-import { GpsGatewayService, LocationHistoryQueryDto } from '../services/gps.gateway.service';
+import { Controller, Get, Param, Query, UseGuards, Request, Post, Body } from '@nestjs/common';
+import { GpsGatewayService, LocationHistoryQueryDto, CreateLocationDto } from '../services/gps.gateway.service';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../common/guards/roles.guard';
 
@@ -23,5 +23,13 @@ export class GpsController {
         @Request() req: { user: any },
     ) {
         return this.gpsGatewayService.getLocationHistory(routeId, query, req.user);
+    }
+
+    @Post('locations')
+    async ingestLocation(
+        @Body() dto: CreateLocationDto,
+        @Request() req: { user: any },
+    ) {
+        return this.gpsGatewayService.ingestLocation(dto, req.user);
     }
 }

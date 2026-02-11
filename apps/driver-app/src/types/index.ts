@@ -30,6 +30,12 @@ export interface Student {
 }
 
 export interface LoginResponse {
-    token: string;
-    driver: Driver;
+    accessToken: string;
+    user: {
+        id: string;
+        email: string;
+        firstName?: string;
+        lastName?: string;
+        driverId?: string;
+    };
 }

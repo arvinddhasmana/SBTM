@@ -12,6 +12,7 @@ describe('VideoEventsService Integration Tests', () => {
     let module: TestingModule;
 
     beforeAll(async () => {
+        process.env.DB_TYPE = 'sqlite';
         module = await Test.createTestingModule({
             imports: [
                 ConfigModule.forRoot({
@@ -42,6 +43,7 @@ describe('VideoEventsService Integration Tests', () => {
 
         it('should create a video event', async () => {
             const createDto = {
+                schoolId: 'school-integration-test',
                 vehicleId: 'bus-integration-test',
                 routeId: 'route-integration-test',
                 driverId: 'driver-integration-test',
@@ -82,6 +84,7 @@ describe('VideoEventsService Integration Tests', () => {
 
         it('should query video events with filters', async () => {
             const result = await service.findAll({
+                schoolId: 'school-integration-test',
                 vehicleId: 'bus-integration-test',
                 page: '1',
                 limit: '10',
@@ -112,6 +115,7 @@ describe('VideoEventsService Integration Tests', () => {
         it('should log video access', async () => {
             // Create a new event
             const createDto = {
+                schoolId: 'school-access-test',
                 vehicleId: 'bus-access-test',
                 routeId: 'route-access-test',
                 driverId: 'driver-access-test',
@@ -147,6 +151,7 @@ describe('VideoEventsService Integration Tests', () => {
             // Create multiple events for testing
             const events = [
                 {
+                    schoolId: 'school-a',
                     vehicleId: 'bus-001',
                     routeId: 'route-001',
                     driverId: 'driver-001',
@@ -155,6 +160,7 @@ describe('VideoEventsService Integration Tests', () => {
                     durationSeconds: 20,
                 },
                 {
+                    schoolId: 'school-a',
                     vehicleId: 'bus-002',
                     routeId: 'route-001',
                     driverId: 'driver-002',
@@ -163,6 +169,7 @@ describe('VideoEventsService Integration Tests', () => {
                     durationSeconds: 30,
                 },
                 {
+                    schoolId: 'school-b',
                     vehicleId: 'bus-001',
                     routeId: 'route-002',
                     driverId: 'driver-001',
@@ -180,6 +187,11 @@ describe('VideoEventsService Integration Tests', () => {
         it('should filter by vehicleId', async () => {
             const result = await service.findAll({ vehicleId: 'bus-001' });
             expect(result.data.every((e) => e.vehicleId === 'bus-001')).toBe(true);
+        });
+
+        it('should filter by schoolId', async () => {
+            const result = await service.findAll({ schoolId: 'school-a' });
+            expect(result.data.every((e) => e.schoolId === 'school-a')).toBe(true);
         });
 
         it('should filter by routeId', async () => {

@@ -12,6 +12,18 @@ export interface LiveLocationDto {
     deviationFlag?: boolean;
 }
 
+export interface CreateLocationDto {
+    vehicleId: string;
+    routeId: string;
+    timestamp: string;
+    lat: number;
+    lng: number;
+    speedKph?: number;
+    headingDeg?: number;
+    accuracyMeters?: number;
+    schoolId?: string;
+}
+
 export interface LocationHistoryQueryDto {
     from?: string;
     to?: string;
@@ -23,6 +35,7 @@ interface RequestUser {
     role: Role;
     childRouteIds?: string[];
     assignedRouteIds?: string[];
+    schoolId?: string;
 }
 
 @Injectable()
@@ -60,6 +73,18 @@ export class GpsGatewayService {
 
         const url = `${this.gpsServiceUrl}/api/v1/routes/${routeId}/history?${params.toString()}`;
         return this.httpClient.get(url);
+    }
+
+    async ingestLocation(dto: CreateLocationDto, user: RequestUser): Promise<{ status: string }> {
+        if (!user.schoolId && user.role !== Role.ADMIN && user.role !== Role.OSTA_ADMIN) {
+            throw new ForbiddenException('School ID is required to ingest locations');
+        }
+
+        const url = `${this.gpsServiceUrl}/api/v1/locations`;
+        return this.httpClient.post<{ status: string }>(url, {
+            ...dto,
+            schoolId: dto.schoolId || user.schoolId,
+        });
     }
 
     private checkRouteAccess(routeId: string, user: RequestUser): void {

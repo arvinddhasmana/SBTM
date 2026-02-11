@@ -5,6 +5,7 @@ export class LocationService {
     async ingestLocation(data: CreateLocationDto) {
         return await prisma.locationPoint.create({
             data: {
+                schoolId: data.schoolId,
                 vehicleId: data.vehicleId,
                 routeId: data.routeId,
                 timestamp: new Date(data.timestamp),
@@ -17,9 +18,9 @@ export class LocationService {
         });
     }
 
-    async getLatestLocation(routeId: string) {
+    async getLatestLocation(routeId: string, schoolId?: string) {
         const location = await prisma.locationPoint.findFirst({
-            where: { routeId },
+            where: schoolId ? { routeId, schoolId } : { routeId },
             orderBy: { timestamp: 'desc' },
         });
 
@@ -36,9 +37,9 @@ export class LocationService {
         };
     }
 
-    async getRouteHistory(routeId: string) {
+    async getRouteHistory(routeId: string, schoolId?: string) {
         return await prisma.locationPoint.findMany({
-            where: { routeId },
+            where: schoolId ? { routeId, schoolId } : { routeId },
             orderBy: { timestamp: 'asc' },
         });
     }

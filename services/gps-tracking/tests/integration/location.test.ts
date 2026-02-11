@@ -17,6 +17,7 @@ describe('GPS Tracking Service API (Integration)', () => {
         const res = await request(app)
             .post('/api/v1/locations')
             .send({
+                schoolId: 'school-001',
                 vehicleId: 'bus-123',
                 routeId: 'route-456',
                 timestamp: new Date().toISOString(),
@@ -27,7 +28,7 @@ describe('GPS Tracking Service API (Integration)', () => {
 
         // Verify it was stored
         const stored = await prisma.locationPoint.findFirst({
-            where: { vehicleId: 'bus-123' }
+            where: { vehicleId: 'bus-123', schoolId: 'school-001' }
         });
         expect(stored).toBeTruthy();
     });
@@ -36,6 +37,7 @@ describe('GPS Tracking Service API (Integration)', () => {
         // Insert a fresh point
         await prisma.locationPoint.create({
             data: {
+                schoolId: 'school-001',
                 vehicleId: 'bus-123',
                 routeId: 'route-456',
                 timestamp: new Date(),
@@ -44,7 +46,7 @@ describe('GPS Tracking Service API (Integration)', () => {
             }
         });
 
-        const res = await request(app).get('/api/v1/routes/route-456/live-location');
+        const res = await request(app).get('/api/v1/routes/route-456/live-location?schoolId=school-001');
         expect(res.status).toBe(200);
         expect(res.body.vehicleId).toBe('bus-123');
         expect(res.body.position.lat).toBe(15.0);

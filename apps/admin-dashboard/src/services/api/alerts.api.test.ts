@@ -1,16 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { alertsApi } from './alerts.api';
+import { apiClient } from './api-client';
 
-// Mock axios
-vi.mock('axios', () => ({
-    default: {
+vi.mock('./api-client', () => ({
+    apiClient: {
         get: vi.fn(),
         patch: vi.fn(),
-        isAxiosError: vi.fn((error) => error.isAxiosError),
     },
 }));
-
-import axios from 'axios';
 
 describe('alertsApi', () => {
     beforeEach(() => {
@@ -24,23 +21,12 @@ describe('alertsApi', () => {
                 { id: 'alert-2', status: 'ACTIVE', eventType: 'INCIDENT' },
             ];
 
-            vi.mocked(axios.get).mockResolvedValueOnce({ data: mockAlerts });
+            vi.mocked(apiClient.get).mockResolvedValueOnce({ data: mockAlerts });
 
             const result = await alertsApi.getActiveAlerts();
 
             expect(result).toEqual(mockAlerts);
-            expect(axios.get).toHaveBeenCalledWith(expect.stringContaining('/api/v1/alerts/active'));
-        });
-
-        it('should return mock alerts when API is unavailable', async () => {
-            const networkError = { isAxiosError: true, response: undefined };
-            vi.mocked(axios.get).mockRejectedValueOnce(networkError);
-            vi.mocked(axios.isAxiosError).mockReturnValueOnce(true);
-
-            const result = await alertsApi.getActiveAlerts();
-
-            expect(result.length).toBeGreaterThan(0);
-            expect(result.every((a) => a.status === 'ACTIVE')).toBe(true);
+            expect(apiClient.get).toHaveBeenCalledWith('/api/v1/alerts/active');
         });
     });
 
@@ -51,7 +37,7 @@ describe('alertsApi', () => {
                 { id: 'alert-2', status: 'RESOLVED' },
             ];
 
-            vi.mocked(axios.get).mockResolvedValueOnce({ data: mockAlerts });
+            vi.mocked(apiClient.get).mockResolvedValueOnce({ data: mockAlerts });
 
             const result = await alertsApi.getAllAlerts();
 
@@ -63,12 +49,12 @@ describe('alertsApi', () => {
         it('should return specific alert', async () => {
             const mockAlert = { id: 'alert-1', status: 'ACTIVE', eventType: 'PANIC_BUTTON' };
 
-            vi.mocked(axios.get).mockResolvedValueOnce({ data: mockAlert });
+            vi.mocked(apiClient.get).mockResolvedValueOnce({ data: mockAlert });
 
             const result = await alertsApi.getAlertById('alert-1');
 
             expect(result).toEqual(mockAlert);
-            expect(axios.get).toHaveBeenCalledWith(expect.stringContaining('/api/v1/alerts/alert-1'));
+            expect(apiClient.get).toHaveBeenCalledWith('/api/v1/alerts/alert-1');
         });
     });
 
@@ -76,22 +62,12 @@ describe('alertsApi', () => {
         it('should resolve an alert', async () => {
             const mockResolvedAlert = { id: 'alert-1', status: 'RESOLVED' };
 
-            vi.mocked(axios.patch).mockResolvedValueOnce({ data: mockResolvedAlert });
+            vi.mocked(apiClient.patch).mockResolvedValueOnce({ data: mockResolvedAlert });
 
             const result = await alertsApi.resolveAlert('alert-1');
 
             expect(result.status).toBe('RESOLVED');
-            expect(axios.patch).toHaveBeenCalledWith(expect.stringContaining('/api/v1/alerts/alert-1/resolve'));
-        });
-
-        it('should handle resolve when API unavailable', async () => {
-            const networkError = { isAxiosError: true, response: undefined };
-            vi.mocked(axios.patch).mockRejectedValueOnce(networkError);
-            vi.mocked(axios.isAxiosError).mockReturnValueOnce(true);
-
-            const result = await alertsApi.resolveAlert('alert-001');
-
-            expect(result.status).toBe('RESOLVED');
+            expect(apiClient.patch).toHaveBeenCalledWith('/api/v1/alerts/alert-1/resolve');
         });
     });
 });

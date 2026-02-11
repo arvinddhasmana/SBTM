@@ -5,6 +5,10 @@ import { EmergencyEventType } from '../entities/emergency-alert.entity';
 export class CreateEmergencyEventDto {
     @IsString()
     @IsNotEmpty()
+    schoolId: string;
+
+    @IsString()
+    @IsNotEmpty()
     vehicleId: string;
 
     @IsString()

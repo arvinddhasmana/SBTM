@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
-import * as request from 'supertest';
+import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { DataSource } from 'typeorm';
 import { VideoEventType } from '../src/modules/video-events/entities/video-event.entity';
@@ -55,6 +55,7 @@ describe('VideoService (e2e)', () => {
             return request(app.getHttpServer())
                 .post('/api/v1/video-events')
                 .send({
+                    schoolId: 'school-e2e',
                     vehicleId: 'bus-123',
                     routeId: 'route-456',
                     driverId: 'driver-789',
@@ -108,7 +109,7 @@ describe('VideoService (e2e)', () => {
 
         it('/api/v1/video-events (GET) - should filter by vehicleId', () => {
             return request(app.getHttpServer())
-                .get('/api/v1/video-events?vehicleId=bus-123')
+                .get('/api/v1/video-events?vehicleId=bus-123&schoolId=school-e2e')
                 .expect(200)
                 .expect((res) => {
                     expect(res.body.data.every((e) => e.vehicleId === 'bus-123')).toBe(
@@ -129,7 +130,7 @@ describe('VideoService (e2e)', () => {
 
         it('/api/v1/video-events/:id (GET) - should return 404 for non-existent event', () => {
             return request(app.getHttpServer())
-                .get('/api/v1/video-events/non-existent-id')
+                .get('/api/v1/video-events/00000000-0000-0000-0000-000000000000')
                 .expect(404);
         });
 

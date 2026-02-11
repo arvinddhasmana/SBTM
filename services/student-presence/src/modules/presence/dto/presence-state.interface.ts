@@ -1,5 +1,6 @@
 
 export interface StudentPresenceState {
+    schoolId: string;
     studentId: string;
     status: 'BOARDED' | 'ALIGHTED';
     lastSeen: Date;

@@ -1,14 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { routesApi } from './routes.api';
+import { apiClient } from './api-client';
 
-vi.mock('axios', () => ({
-    default: {
+vi.mock('./api-client', () => ({
+    apiClient: {
         get: vi.fn(),
-        isAxiosError: vi.fn((error) => error.isAxiosError),
+        post: vi.fn(),
+        patch: vi.fn(),
+        delete: vi.fn(),
     },
 }));
-
-import axios from 'axios';
 
 describe('routesApi', () => {
     beforeEach(() => {
@@ -22,23 +23,12 @@ describe('routesApi', () => {
                 { id: 'route-2', name: 'Route 202', status: 'active' },
             ];
 
-            vi.mocked(axios.get).mockResolvedValueOnce({ data: mockRoutes });
+            vi.mocked(apiClient.get).mockResolvedValueOnce({ data: mockRoutes });
 
             const result = await routesApi.getActiveRoutes();
 
             expect(result).toEqual(mockRoutes);
-            expect(axios.get).toHaveBeenCalledWith(expect.stringContaining('/api/v1/routes/active'));
-        });
-
-        it('should return mock routes when API unavailable', async () => {
-            const networkError = { isAxiosError: true, response: undefined };
-            vi.mocked(axios.get).mockRejectedValueOnce(networkError);
-            vi.mocked(axios.isAxiosError).mockReturnValueOnce(true);
-
-            const result = await routesApi.getActiveRoutes();
-
-            expect(result.length).toBeGreaterThan(0);
-            expect(result.every((r) => r.status === 'active')).toBe(true);
+            expect(apiClient.get).toHaveBeenCalledWith('/api/v1/routes/active');
         });
     });
 
@@ -50,13 +40,13 @@ describe('routesApi', () => {
                 position: { lat: 45.4215, lng: -75.6972 },
             };
 
-            vi.mocked(axios.get).mockResolvedValueOnce({ data: mockLocation });
+            vi.mocked(apiClient.get).mockResolvedValueOnce({ data: mockLocation });
 
             const result = await routesApi.getLiveLocation('route-1');
 
             expect(result).toEqual(mockLocation);
-            expect(axios.get).toHaveBeenCalledWith(
-                expect.stringContaining('/api/v1/routes/route-1/live-location')
+            expect(apiClient.get).toHaveBeenCalledWith(
+                '/api/v1/routes/route-1/live-location'
             );
         });
     });
@@ -68,7 +58,7 @@ describe('routesApi', () => {
                 { routeId: 'route-2', vehicleId: 'bus-2' },
             ];
 
-            vi.mocked(axios.get).mockResolvedValueOnce({ data: mockLocations });
+            vi.mocked(apiClient.get).mockResolvedValueOnce({ data: mockLocations });
 
             const result = await routesApi.getAllLiveLocations();
 

@@ -36,6 +36,7 @@ describe('TagsService', () => {
 
     it('should create a tag successfully', async () => {
         const dto = {
+            schoolId: 'school-001',
             studentId: 'stud-123',
             tagId: 'ble-xyz-789',
             tagType: 'SMARTTAG' as any,
@@ -50,6 +51,7 @@ describe('TagsService', () => {
         mockRepository.findOne.mockResolvedValueOnce({ id: 'existing', tagId: 'ble-xyz-789' });
 
         const dto = {
+            schoolId: 'school-001',
             studentId: 'stud-123',
             tagId: 'ble-xyz-789',
             tagType: 'SMARTTAG' as any,

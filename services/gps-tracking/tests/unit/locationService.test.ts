@@ -23,6 +23,7 @@ describe('Location Service (Unit)', () => {
 
     it('should ingest location', async () => {
         const data = {
+            schoolId: 'school-001',
             vehicleId: 'bus-123',
             routeId: 'route-456',
             timestamp: new Date().toISOString(),
@@ -36,6 +37,7 @@ describe('Location Service (Unit)', () => {
 
         expect(prisma.locationPoint.create).toHaveBeenCalledWith({
             data: {
+                schoolId: data.schoolId,
                 vehicleId: data.vehicleId,
                 routeId: data.routeId,
                 timestamp: expect.any(Date),
@@ -58,7 +60,7 @@ describe('Location Service (Unit)', () => {
         };
         (prisma.locationPoint.findFirst as jest.Mock).mockResolvedValue(mockLoc);
 
-        const result = await service.getLatestLocation('route-456');
+        const result = await service.getLatestLocation('route-456', 'school-001');
 
         expect(result).toBeTruthy();
         expect(result?.vehicleId).toBe('bus-123');

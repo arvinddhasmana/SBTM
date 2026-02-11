@@ -67,7 +67,7 @@ describe('GPSService', () => {
         const callback = (Location.watchPositionAsync as jest.Mock).mock.calls[0][1];
         await callback(mockLocation);
 
-        expect(api.post).toHaveBeenCalledWith('/locations', expect.objectContaining({
+        expect(api.post).toHaveBeenCalledWith('/routes/locations', expect.objectContaining({
             vehicleId: 'bus-1',
             routeId: 'route-1',
             lat: 10,

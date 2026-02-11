@@ -13,13 +13,18 @@ describe('AlertsController (e2e)', () => {
     let app: INestApplication;
 
     beforeAll(async () => {
+        process.env.DB_HOST = process.env.DB_HOST || 'postgres';
+        process.env.DB_PORT = process.env.DB_PORT || '5432';
+        process.env.REDIS_HOST = process.env.REDIS_HOST || 'redis';
+        process.env.REDIS_PORT = process.env.REDIS_PORT || '6379';
+
         const moduleFixture: TestingModule = await Test.createTestingModule({
             imports: [
                 ConfigModule.forRoot({ isGlobal: true }),
                 TypeOrmModule.forRoot({
                     type: 'postgres',
-                    host: 'localhost',
-                    port: 5433,
+                    host: process.env.DB_HOST,
+                    port: parseInt(process.env.DB_PORT, 10),
                     username: 'postgres',
                     password: 'mysecretpassword',
                     database: 'sbms',
@@ -28,8 +33,8 @@ describe('AlertsController (e2e)', () => {
                 }),
                 BullModule.forRoot({
                     connection: {
-                        host: 'localhost',
-                        port: 6379
+                        host: process.env.REDIS_HOST,
+                        port: parseInt(process.env.REDIS_PORT, 10)
                     }
                 }),
                 AlertsModule,
@@ -48,6 +53,7 @@ describe('AlertsController (e2e)', () => {
         return request(app.getHttpServer())
             .post('/api/v1/emergency-events')
             .send({
+                schoolId: 'school-001',
                 vehicleId: 'bus-123',
                 routeId: 'route-456',
                 driverId: 'driver-789',
@@ -68,6 +74,7 @@ describe('AlertsController (e2e)', () => {
         await request(app.getHttpServer())
             .post('/api/v1/emergency-events')
             .send({
+                schoolId: 'school-001',
                 vehicleId: 'bus-123',
                 routeId: 'route-456',
                 driverId: 'driver-789',

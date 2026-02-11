@@ -49,18 +49,19 @@ export class PresenceService {
             }
 
             // Find student by tag
-            const tag = await this.tagsService.findByTagId(detection.tagId);
+            const tag = await this.tagsService.findByTagId(detection.tagId, dto.schoolId);
             if (!tag) {
                 this.logger.warn(`Unknown tag detected: ${detection.tagId}`);
                 continue;
             }
 
             // Check current presence state
-            const currentState = await this.getPresenceState(tag.studentId, dto.routeId);
+            const currentState = await this.getPresenceState(dto.schoolId, tag.studentId, dto.routeId);
 
             // Determine if this is a BOARD event
             if (!currentState || currentState.status === 'ALIGHTED') {
                 await this.logPresenceEvent({
+                    schoolId: dto.schoolId,
                     studentId: tag.studentId,
                     vehicleId: dto.vehicleId,
                     routeId: dto.routeId,
@@ -72,12 +73,12 @@ export class PresenceService {
                 eventsProcessed++;
             } else {
                 // Student already boarded - just update last seen
-                await this.updateLastSeen(tag.studentId, dto.routeId, dto.vehicleId, detection.signalStrength);
+                await this.updateLastSeen(dto.schoolId, tag.studentId, dto.routeId, dto.vehicleId, detection.signalStrength);
             }
         }
 
         // Check for ALIGHT events (students who were present but not detected)
-        await this.checkForAlightEvents(dto.routeId, dto.vehicleId, dto.detections.map(d => d.tagId));
+        await this.checkForAlightEvents(dto.schoolId, dto.routeId, dto.vehicleId, dto.detections.map(d => d.tagId));
 
         return { status: 'processed', eventsProcessed };
     }
@@ -87,6 +88,7 @@ export class PresenceService {
      */
     async manualOverride(dto: ManualPresenceEventDto): Promise<PresenceEvent> {
         const event = await this.logPresenceEvent({
+            schoolId: dto.schoolId,
             studentId: dto.studentId,
             vehicleId: dto.vehicleId,
             routeId: dto.routeId,
@@ -102,8 +104,8 @@ export class PresenceService {
     /**
      * Get current presence state for a route
      */
-    async getRoutePresence(routeId: string): Promise<StudentPresenceInfo[]> {
-        const cacheKey = `route:${routeId}:students`;
+    async getRoutePresence(routeId: string, schoolId?: string): Promise<StudentPresenceInfo[]> {
+        const cacheKey = `route:${schoolId || 'global'}:${routeId}:students`;
         const cachedData = await this.redis.get(cacheKey);
 
         if (cachedData) {
@@ -114,6 +116,7 @@ export class PresenceService {
         const events = await this.presenceRepo
             .createQueryBuilder('event')
             .where('event.routeId = :routeId', { routeId })
+            .andWhere(schoolId ? 'event.schoolId = :schoolId' : '1=1', { schoolId })
             .orderBy('event.timestamp', 'DESC')
             .getMany();
 
@@ -142,6 +145,7 @@ export class PresenceService {
      * Helper: Log a presence event and update cache
      */
     private async logPresenceEvent(data: {
+        schoolId: string;
         studentId: string;
         vehicleId: string;
         routeId: string;
@@ -156,6 +160,7 @@ export class PresenceService {
 
         // Update Redis cache
         await this.updatePresenceCache(
+            data.schoolId,
             data.studentId,
             data.routeId,
             data.vehicleId,
@@ -184,6 +189,7 @@ export class PresenceService {
      * Helper: Update presence state cache
      */
     private async updatePresenceCache(
+        schoolId: string,
         studentId: string,
         routeId: string,
         vehicleId: string,
@@ -192,6 +198,7 @@ export class PresenceService {
         signalStrength: number | null,
     ): Promise<void> {
         const state: StudentPresenceState = {
+            schoolId,
             studentId,
             status,
             lastSeen,
@@ -200,23 +207,24 @@ export class PresenceService {
             signalStrength,
         };
 
-        const cacheKey = `presence:${studentId}:${routeId}`;
+        const cacheKey = `presence:${schoolId}:${studentId}:${routeId}`;
         await this.redis.setex(cacheKey, 3600, JSON.stringify(state)); // 1 hour TTL
 
         // Invalidate route cache
-        await this.redis.del(`route:${routeId}:students`);
+        await this.redis.del(`route:${schoolId}:${routeId}:students`);
     }
 
     /**
      * Helper: Update last seen timestamp
      */
     private async updateLastSeen(
+        schoolId: string,
         studentId: string,
         routeId: string,
         vehicleId: string,
         signalStrength: number,
     ): Promise<void> {
-        const cacheKey = `presence:${studentId}:${routeId}`;
+        const cacheKey = `presence:${schoolId}:${studentId}:${routeId}`;
         const cachedData = await this.redis.get(cacheKey);
 
         if (cachedData) {
@@ -230,8 +238,8 @@ export class PresenceService {
     /**
      * Helper: Get presence state from cache
      */
-    private async getPresenceState(studentId: string, routeId: string): Promise<StudentPresenceState | null> {
-        const cacheKey = `presence:${studentId}:${routeId}`;
+    private async getPresenceState(schoolId: string, studentId: string, routeId: string): Promise<StudentPresenceState | null> {
+        const cacheKey = `presence:${schoolId}:${studentId}:${routeId}`;
         const cachedData = await this.redis.get(cacheKey);
 
         if (!cachedData) {
@@ -245,20 +253,21 @@ export class PresenceService {
      * Helper: Check for students who have alighted (not detected in latest scan)
      */
     private async checkForAlightEvents(
+        schoolId: string,
         routeId: string,
         vehicleId: string,
         detectedTagIds: string[],
     ): Promise<void> {
         // Get all students currently on this route
-        const routePresence = await this.getRoutePresence(routeId);
+        const routePresence = await this.getRoutePresence(routeId, schoolId);
         const boardedStudents = routePresence.filter(s => s.status === 'BOARDED');
 
         for (const student of boardedStudents) {
-            const state = await this.getPresenceState(student.studentId, routeId);
+            const state = await this.getPresenceState(schoolId, student.studentId, routeId);
             if (!state) continue;
 
             // Find student's tag
-            const studentTags = await this.tagsService.findByStudentId(student.studentId);
+            const studentTags = await this.tagsService.findByStudentId(student.studentId, schoolId);
             const studentTagIds = studentTags.map(t => t.tagId);
 
             // Check if any of student's tags were detected
@@ -270,6 +279,7 @@ export class PresenceService {
                 if (timeSinceLastSeen > ALIGHT_TIMEOUT_MS) {
                     // Log ALIGHT event
                     await this.logPresenceEvent({
+                        schoolId,
                         studentId: student.studentId,
                         vehicleId,
                         routeId,

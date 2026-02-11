@@ -39,7 +39,7 @@ export const GPSService = {
                 console.log('GPS Update:', point);
 
                 try {
-                    await api.post('/locations', {
+                    await api.post('/routes/locations', {
                         vehicleId,
                         routeId,
                         driverId,

@@ -20,8 +20,8 @@ export class MultiTenancyGuard implements CanActivate {
         const query = request.query;
         const body = request.body;
 
-        const schoolId = params.schoolId || query.schoolId || body.schoolId || params.id; // Check common places for schoolId
-        const boardId = params.boardId || query.boardId || body.boardId || params.id;
+        const schoolId = params.schoolId || query.schoolId || body.schoolId;
+        const boardId = params.boardId || query.boardId || body.boardId;
 
         // If user is BOARD_ADMIN, they can only access their board or schools in their board
         if (user.role === Role.BOARD_ADMIN) {

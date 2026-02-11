@@ -5,6 +5,10 @@ import { EventType } from '../entities/presence-event.entity';
 export class ManualPresenceEventDto {
     @IsString()
     @IsNotEmpty()
+    schoolId: string;
+
+    @IsString()
+    @IsNotEmpty()
     studentId: string;
 
     @IsString()

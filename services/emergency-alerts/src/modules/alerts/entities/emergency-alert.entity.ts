@@ -18,6 +18,9 @@ export class EmergencyAlert {
     id: string;
 
     @Column()
+    schoolId: string;
+
+    @Column()
     vehicleId: string;
 
     @Column()

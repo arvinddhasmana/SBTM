@@ -4,32 +4,30 @@ import { Driver, LoginResponse } from '../types';
 
 export const AuthService = {
     login: async (email: string, password: string): Promise<Driver> => {
-        // Mocking for now as backend might not be ready, but structure allows real call
-        // const response = await api.post<LoginResponse>('/auth/login', { email, password });
-        // await SecureStore.setItemAsync('auth_token', response.data.token);
-        // return response.data.driver;
+        const response = await api.post<LoginResponse>('/auth/login', { email, password });
+        await SecureStore.setItemAsync('auth_token', response.data.accessToken);
 
-        // SIMULATED LOGIN
-        if (email === 'driver@test.com' && password === 'password') {
-            const token = 'mock-jwt-token';
-            await SecureStore.setItemAsync('auth_token', token);
-            return {
-                id: 'driver-123',
-                name: 'John Doe',
-                email,
-                assignedRoutes: [
-                    {
-                        id: 'route-456',
-                        name: 'Route 101 - Morning',
-                        schoolId: 'school-1',
-                        startTime: '2025-01-10T07:00:00Z',
-                        endTime: '2025-01-10T08:30:00Z',
-                        direction: 'AM'
-                    }
-                ]
-            };
-        }
-        throw new Error('Invalid credentials');
+        const schedule = await api.get<Array<{ routeId: string; name: string; direction: 'AM' | 'PM'; startTime: string; vehicleId?: string; schoolId: string }>>(
+            '/driver/me/schedule'
+        );
+
+        const user = response.data.user;
+        const nameParts = [user.firstName, user.lastName].filter(Boolean);
+        const name = nameParts.length ? nameParts.join(' ') : user.email;
+
+        return {
+            id: user.driverId || user.id,
+            name,
+            email: user.email,
+            assignedRoutes: schedule.data.map((route) => ({
+                id: route.routeId,
+                name: route.name,
+                schoolId: route.schoolId,
+                startTime: route.startTime,
+                endTime: route.startTime,
+                direction: route.direction,
+            })),
+        };
     },
 
     logout: async () => {

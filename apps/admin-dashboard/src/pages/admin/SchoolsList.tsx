@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { apiClient } from '../../services/api/api-client';
 
 interface School {
     id: string;
@@ -15,18 +16,12 @@ export const SchoolsList: React.FC = () => {
     useEffect(() => {
         const fetchSchools = async () => {
             try {
-                let url = 'http://localhost:3001/schools';
-                if (user?.boardId && user.role === 'BOARD_ADMIN') {
-                    url += `?boardId=${user.boardId}`;
-                }
+                const params = user?.boardId && user.role === 'BOARD_ADMIN'
+                    ? { boardId: user.boardId }
+                    : undefined;
 
-                const response = await fetch(url, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-                const data = await response.json();
-                setSchools(data);
+                const response = await apiClient.get<School[]>('/api/v1/schools', { params });
+                setSchools(response.data);
             } catch (error) {
                 console.error('Failed to fetch schools', error);
             } finally {

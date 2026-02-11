@@ -31,12 +31,15 @@ const Dashboard: React.FC = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [alertsData, locationsData, studentsData, routesData] = await Promise.all([
+                const [alertsData, locationsData, routesData] = await Promise.all([
                     alertsApi.getActiveAlerts(),
                     routesApi.getAllLiveLocations(),
-                    presenceApi.getAllBoardedStudents(),
                     routesApi.getActiveRoutes(),
                 ]);
+
+                const studentsData = await presenceApi.getAllBoardedStudents(
+                    routesData.map((route) => route.id),
+                );
 
                 setAlerts(alertsData);
                 setLocations(locationsData);

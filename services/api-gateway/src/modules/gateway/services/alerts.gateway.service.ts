@@ -15,6 +15,7 @@ export interface CreateEmergencyEventDto {
     vehicleId: string;
     routeId: string;
     driverId: string;
+    schoolId: string;
     timestamp: string;
     lat: number;
     lng: number;
@@ -35,9 +36,10 @@ export class AlertsGatewayService {
         );
     }
 
-    async getActiveAlerts(): Promise<AlertDto[]> {
+    async getActiveAlerts(schoolId?: string): Promise<AlertDto[]> {
         const url = `${this.alertsServiceUrl}/api/v1/alerts/active`;
-        return this.httpClient.get<AlertDto[]>(url);
+        const params = schoolId ? { schoolId } : undefined;
+        return this.httpClient.get<AlertDto[]>(url, { params });
     }
 
     async getAlertById(id: string): Promise<AlertDto> {

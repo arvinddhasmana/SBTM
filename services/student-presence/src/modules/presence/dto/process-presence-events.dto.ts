@@ -14,6 +14,10 @@ export class BLEDetectionDto {
 export class ProcessPresenceEventsDto {
     @IsString()
     @IsNotEmpty()
+    schoolId: string;
+
+    @IsString()
+    @IsNotEmpty()
     vehicleId: string;
 
     @IsString()

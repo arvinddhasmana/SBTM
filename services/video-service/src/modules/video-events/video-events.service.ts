@@ -77,6 +77,10 @@ export class VideoEventsService {
 
         const where: any = {};
 
+        if (queryDto.schoolId) {
+            where.schoolId = queryDto.schoolId;
+        }
+
         if (queryDto.vehicleId) {
             where.vehicleId = queryDto.vehicleId;
         }

@@ -20,6 +20,9 @@ export class PresenceEvent {
     id: string;
 
     @Column()
+    schoolId: string;
+
+    @Column()
     studentId: string;
 
     @Column()

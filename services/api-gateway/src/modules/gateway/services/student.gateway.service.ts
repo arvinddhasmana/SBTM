@@ -18,8 +18,10 @@ export class StudentGatewayService {
     }
 
     async getStudents(query: any, user: any) {
-        // Enforce school isolation for non-admins
-        if (user.role !== Role.ADMIN && user.role !== Role.OSTA_ADMIN) {
+        // Enforce parent scoping
+        if (user.role === Role.PARENT) {
+            query.parent_id = user.id;
+        } else if (user.role !== Role.ADMIN && user.role !== Role.OSTA_ADMIN) {
             if (!user.schoolId) {
                 throw new ForbiddenException('School ID is required for this operation');
             }
@@ -35,7 +37,11 @@ export class StudentGatewayService {
         const student: any = await this.httpClient.get(url);
 
         // Security check: ensure user has access to this student's school
-        if (user.role !== Role.ADMIN && user.role !== Role.OSTA_ADMIN) {
+        if (user.role === Role.PARENT) {
+            if (student.parent_user_id !== user.id) {
+                throw new ForbiddenException('You do not have access to this student');
+            }
+        } else if (user.role !== Role.ADMIN && user.role !== Role.OSTA_ADMIN) {
             if (student.school_id !== user.schoolId) {
                 throw new ForbiddenException('You do not have access to this student');
             }

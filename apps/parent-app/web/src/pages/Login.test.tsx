@@ -4,6 +4,22 @@ import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from '../context/AuthContext';
 import Login from './Login';
 
+vi.mock('../services/api', () => ({
+    parentApi: {
+        login: vi.fn().mockResolvedValue({
+            accessToken: 'test-token',
+            user: {
+                id: 'parent-1',
+                email: 'test@example.com',
+                role: 'PARENT',
+                firstName: 'Test',
+                lastName: 'Parent',
+            },
+        }),
+        getChildren: vi.fn().mockResolvedValue([]),
+    },
+}));
+
 // Mock useNavigate
 const mockedNavigate = vi.fn();
 vi.mock('react-router-dom', async () => {

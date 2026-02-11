@@ -19,6 +19,12 @@ export enum VideoEventStatus {
     FAILED = 'FAILED',
 }
 
+const TIMESTAMP_COLUMN_TYPE =
+    process.env.DB_TYPE === 'sqlite' ? 'datetime' : 'timestamp';
+
+const ENUM_COLUMN_TYPE =
+    process.env.DB_TYPE === 'sqlite' ? 'simple-enum' : 'enum';
+
 @Entity('video_events')
 @Index(['vehicleId', 'timestamp'])
 @Index(['routeId', 'timestamp'])
@@ -26,6 +32,10 @@ export enum VideoEventStatus {
 export class VideoEvent {
     @PrimaryGeneratedColumn('uuid')
     id: string;
+
+    @Column({ name: 'school_id' })
+    @Index()
+    schoolId: string;
 
     @Column({ name: 'vehicle_id' })
     @Index()
@@ -39,12 +49,12 @@ export class VideoEvent {
     @Index()
     driverId: string;
 
-    @Column({ type: 'timestamp' })
+    @Column({ type: TIMESTAMP_COLUMN_TYPE as 'timestamp' | 'datetime' })
     @Index()
     timestamp: Date;
 
     @Column({
-        type: 'enum',
+        type: ENUM_COLUMN_TYPE as 'enum' | 'simple-enum',
         enum: VideoEventType,
         name: 'event_type',
     })
@@ -60,7 +70,7 @@ export class VideoEvent {
     thumbnailUrl: string;
 
     @Column({
-        type: 'enum',
+        type: ENUM_COLUMN_TYPE as 'enum' | 'simple-enum',
         enum: VideoEventStatus,
         default: VideoEventStatus.UPLOADING,
     })

@@ -6,6 +6,9 @@ import {
     Index,
 } from 'typeorm';
 
+const TIMESTAMP_COLUMN_TYPE =
+    process.env.DB_TYPE === 'sqlite' ? 'datetime' : 'timestamp';
+
 @Entity('video_access_logs')
 @Index(['videoEventId', 'timestamp'])
 @Index(['userId', 'timestamp'])
@@ -21,7 +24,7 @@ export class VideoAccessLog {
     @Index()
     userId: string;
 
-    @Column({ type: 'timestamp' })
+    @Column({ type: TIMESTAMP_COLUMN_TYPE as 'timestamp' | 'datetime' })
     @Index()
     timestamp: Date;
 

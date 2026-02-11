@@ -62,6 +62,7 @@ describe('AlertsService', () => {
 
     it('should create an alert', async () => {
         const dto = {
+            schoolId: 'school-001',
             vehicleId: 'v1',
             routeId: 'r1',
             driverId: 'd1',

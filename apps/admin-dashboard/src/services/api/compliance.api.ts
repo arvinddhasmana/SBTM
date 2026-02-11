@@ -1,29 +1,27 @@
-import axios from 'axios';
-
-const BASE_URL = '/compliance-gateway';
+import { apiClient } from './api-client';
 
 export const complianceApi = {
     getAllInspections: async (schoolId?: string) => {
-        const response = await axios.get(`${BASE_URL}/inspections`, {
+        const response = await apiClient.get('/api/v1/inspections', {
             params: { schoolId }
         });
         return response.data;
     },
 
     getDriverCompliance: async (driverId: string) => {
-        const response = await axios.get(`${BASE_URL}/driver/${driverId}`);
+        const response = await apiClient.get(`/api/v1/compliance/driver/${driverId}`);
         return response.data;
     },
 
     getAllCompliance: async (schoolId?: string) => {
-        const response = await axios.get(`${BASE_URL}`, {
+        const response = await apiClient.get('/api/v1/compliance', {
             params: { schoolId }
         });
         return response.data;
     },
 
     getAuditLogs: async (schoolId?: string) => {
-        const response = await axios.get(`${BASE_URL}/audit`, {
+        const response = await apiClient.get('/api/v1/audit', {
             params: { schoolId }
         });
         return response.data;

@@ -29,6 +29,7 @@ describe('Location Controller (Unit)', () => {
         const res = await request(app)
             .post('/api/v1/locations')
             .send({
+                schoolId: 'school-001',
                 vehicleId: 'bus-123',
                 routeId: 'route-456',
                 timestamp: new Date().toISOString(),
@@ -39,13 +40,13 @@ describe('Location Controller (Unit)', () => {
     });
 
     it('GET /live-location should return 200 and data', async () => {
-        const res = await request(app).get('/api/v1/routes/route-456/live-location');
+        const res = await request(app).get('/api/v1/routes/route-456/live-location?schoolId=school-001');
         expect(res.status).toBe(200);
         expect(res.body.vehicleId).toBe('bus-123');
     });
 
     it('GET /live-location should return 404 if not found', async () => {
-        const res = await request(app).get('/api/v1/routes/route-999/live-location');
+        const res = await request(app).get('/api/v1/routes/route-999/live-location?schoolId=school-001');
         expect(res.status).toBe(404);
     });
 });

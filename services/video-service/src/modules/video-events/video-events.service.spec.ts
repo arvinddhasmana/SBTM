@@ -15,6 +15,7 @@ describe('VideoEventsService', () => {
 
     const mockVideoEvent = {
         id: 'test-id-123',
+        schoolId: 'school-123',
         vehicleId: 'bus-123',
         routeId: 'route-456',
         driverId: 'driver-789',
@@ -84,6 +85,7 @@ describe('VideoEventsService', () => {
     describe('create', () => {
         it('should create a video event and return presigned URLs', async () => {
             const createDto = {
+                schoolId: 'school-123',
                 vehicleId: 'bus-123',
                 routeId: 'route-456',
                 driverId: 'driver-789',
@@ -168,6 +170,21 @@ describe('VideoEventsService', () => {
             expect(videoEventRepository.findAndCount).toHaveBeenCalledWith(
                 expect.objectContaining({
                     where: expect.objectContaining({ vehicleId: 'bus-123' }),
+                }),
+            );
+        });
+
+        it('should filter by schoolId', async () => {
+            const mockEvents = [mockVideoEvent];
+            const total = 1;
+
+            jest.spyOn(videoEventRepository, 'findAndCount').mockResolvedValue([mockEvents as any, total]);
+
+            await service.findAll({ schoolId: 'school-123' });
+
+            expect(videoEventRepository.findAndCount).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    where: expect.objectContaining({ schoolId: 'school-123' }),
                 }),
             );
         });

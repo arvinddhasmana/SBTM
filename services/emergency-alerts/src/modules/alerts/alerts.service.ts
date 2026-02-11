@@ -37,8 +37,11 @@ export class AlertsService {
         return savedAlert;
     }
 
-    async findAllActive(): Promise<EmergencyAlert[]> {
-        return this.alertsRepo.find({ where: { status: EmergencyAlertStatus.ACTIVE } });
+    async findAllActive(schoolId?: string): Promise<EmergencyAlert[]> {
+        const where = schoolId
+            ? { status: EmergencyAlertStatus.ACTIVE, schoolId }
+            : { status: EmergencyAlertStatus.ACTIVE };
+        return this.alertsRepo.find({ where });
     }
 
     async findOne(id: string): Promise<EmergencyAlert | null> {

@@ -16,8 +16,9 @@ export interface CreateStudentPresenceEventDto {
     routeId: string;
     eventType: 'BOARD' | 'ALIGHT';
     timestamp: string;
-    source: 'SMART_TAG' | 'MANUAL';
+    source: 'SMARTTAG' | 'MANUAL' | 'RFID';
     signalStrength?: number;
+    schoolId?: string;
 }
 
 interface RequestUser {
@@ -25,6 +26,7 @@ interface RequestUser {
     role: Role;
     childRouteIds?: string[];
     assignedRouteIds?: string[];
+    schoolId?: string;
 }
 
 @Injectable()
@@ -45,7 +47,14 @@ export class PresenceGatewayService {
         this.checkRouteAccess(routeId, user);
 
         const url = `${this.presenceServiceUrl}/api/v1/routes/${routeId}/students`;
-        return this.httpClient.get<StudentPresenceDto[]>(url);
+        const params = user.schoolId ? { schoolId: user.schoolId } : undefined;
+        const response = await this.httpClient.get<any>(url, { params });
+
+        if (response && Array.isArray(response.students)) {
+            return response.students as StudentPresenceDto[];
+        }
+
+        return response as StudentPresenceDto[];
     }
 
     async createStudentPresenceEvent(
@@ -62,7 +71,11 @@ export class PresenceGatewayService {
         }
 
         const url = `${this.presenceServiceUrl}/api/v1/student-presence-events/manual`;
-        return this.httpClient.post<{ presenceEventId: string }>(url, dto);
+        const payload = {
+            ...dto,
+            schoolId: dto.schoolId || user.schoolId,
+        };
+        return this.httpClient.post<{ presenceEventId: string }>(url, payload);
     }
 
     private checkRouteAccess(routeId: string, user: RequestUser): void {

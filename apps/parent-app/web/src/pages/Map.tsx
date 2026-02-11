@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { useAuth } from '../context/AuthContext';
+import { parentApi } from '../services/api';
 import type { BusLocationUpdate, Child } from '../types';
 import { ArrowLeft, Navigation } from 'lucide-react';
 
@@ -62,35 +63,36 @@ const MapPage: React.FC = () => {
 
     useEffect(() => {
         if (!child) return;
+        let isCancelled = false;
 
-        // Mock SSE Connection
-        setIsConnected(true);
-        console.log(`Connecting to SSE for route ${child.routeId}...`);
+        const fetchLocation = async () => {
+            try {
+                const data = await parentApi.getLiveLocation(child.routeId);
+                if (isCancelled) return;
 
-        const startLat = 45.4215;
-        const startLng = -75.6972;
-        let step = 0;
+                setBusLocation({
+                    routeId: data.routeId,
+                    vehicleId: data.vehicleId,
+                    timestamp: data.lastUpdate,
+                    lat: data.position.lat,
+                    lng: data.position.lng,
+                    speed: 0,
+                    heading: 0,
+                    etaToNextStop: data.etaToNextStopMinutes,
+                });
+                setIsConnected(true);
+            } catch (error) {
+                if (!isCancelled) {
+                    setIsConnected(false);
+                }
+            }
+        };
 
-        const interval = setInterval(() => {
-            // Simulate movement
-            step += 0.0005;
-            const newLat = startLat + step;
-            const newLng = startLng + (Math.sin(step * 10) * 0.002);
-
-            setBusLocation({
-                routeId: child.routeId,
-                vehicleId: child.vehicleId,
-                timestamp: new Date().toISOString(),
-                lat: newLat,
-                lng: newLng,
-                speed: 40,
-                heading: 90,
-                etaToNextStop: Math.max(0, 15 - Math.floor(step * 100)) // Decreasing ETA
-            });
-        }, 1000); // Update every second
+        fetchLocation();
+        const interval = setInterval(fetchLocation, 5000);
 
         return () => {
-            console.log('Closing SSE connection');
+            isCancelled = true;
             clearInterval(interval);
             setIsConnected(false);
         };

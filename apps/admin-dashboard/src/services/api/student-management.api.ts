@@ -1,41 +1,28 @@
-import axios from 'axios';
-
-const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3001',
-});
-
-// Add auth header interceptor (assuming it exists in other files)
-api.interceptors.request.use((config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-});
+import { apiClient } from './api-client';
 
 export const studentManagementApi = {
     getStudents: async (params?: any) => {
-        const response = await api.get('/students', { params });
+        const response = await apiClient.get('/api/v1/students', { params });
         return response.data;
     },
 
     getStudentById: async (id: string) => {
-        const response = await api.get(`/students/${id}`);
+        const response = await apiClient.get(`/api/v1/students/${id}`);
         return response.data;
     },
 
     enrollStudent: async (studentData: any) => {
-        const response = await api.post('/students', studentData);
+        const response = await apiClient.post('/api/v1/students', studentData);
         return response.data;
     },
 
     updateStudent: async (id: string, studentData: any) => {
-        const response = await api.patch(`/students/${id}`, studentData);
+        const response = await apiClient.patch(`/api/v1/students/${id}`, studentData);
         return response.data;
     },
 
     assignRoute: async (id: string, assignment: any) => {
-        const response = await api.patch(`/students/${id}/assignment`, assignment);
+        const response = await apiClient.patch(`/api/v1/students/${id}/assignment`, assignment);
         return response.data;
     },
 
@@ -46,7 +33,7 @@ export const studentManagementApi = {
         return new Promise((resolve, reject) => {
             reader.onload = async () => {
                 try {
-                    const response = await api.post('/students/bulk-import', {
+                    const response = await apiClient.post('/api/v1/students/bulk-import', {
                         file: reader.result,
                         school_id: schoolId,
                     });
