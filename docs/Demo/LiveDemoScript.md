@@ -5,10 +5,24 @@
 - Roles: Admin, Driver, Parent
 - Devices: Laptop for admin, phone for driver, browser for parent
 
+## Preparation (2 min)
+Run the simulator after services and seed data are ready:
+
+```powershell
+.\scripts\simulate-demo.ps1 -IntervalSeconds 5 -Laps 3 -WithPresence
+```
+
+This generates live GPS movement, emergency alerts, and a simulated late notice.
+Edit [scripts/demo-gps-track.json](../../scripts/demo-gps-track.json) to adjust routes or waypoints.
+Use `-TrackName seeded-route-a-only` to focus on one route.
+Use `-StrictSeedValidation` to ensure the track matches seeded IDs.
+
 ## Scene 1: Admin Overview (5 min)
 1. Open Admin Dashboard.
 2. Log in with `admin@sbtm.demo` / `Admin123!`.
 3. Show dashboard metrics, alerts, routes, and videos from live gateway data.
+4. Open Compliance > Audit to show route start/completion entries from the simulator.
+5. (Optional) Log out and log in as `board.admin@sbtm.demo` or `school.admin@sbtm.demo` to narrate scope differences.
 
 ## Scene 2: Driver Starts Route (7 min)
 1. Open Driver App (Expo).
@@ -29,7 +43,7 @@
 curl -X POST http://localhost:3001/api/v1/student-presence-events \
   -H "Authorization: Bearer <driver-token>" \
   -H "Content-Type: application/json" \
-  -d '{"studentId":"stud-001","vehicleId":"bus-001","routeId":"route-123","eventType":"BOARD","timestamp":"2026-02-10T08:00:00Z","source":"MANUAL"}'
+  -d '{"studentId":"STUDENT-001","vehicleId":"BUS-001","routeId":"ROUTE-A","eventType":"BOARD","timestamp":"2026-02-11T08:00:00Z","source":"MANUAL"}'
 ```
 
 ## Scene 5: Video Events (5 min)
@@ -40,3 +54,4 @@ curl -X POST http://localhost:3001/api/v1/student-presence-events \
 - Highlight that backend services are live and the frontend apps use gateway APIs.
 - Note that board/school management UI is pending.
 - Confirm next steps for notifications and route optimization.
+- Mention that late notifications are simulated as OTHER alerts in the demo.

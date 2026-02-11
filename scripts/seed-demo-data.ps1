@@ -61,7 +61,12 @@ if (-not $ready) {
 # 5. Seed
 Write-Host "Seeding..."
 $sql = Join-Path $ScriptDir "seed-demo-data.sql"
+$tenantSql = Join-Path $ScriptDir "seed-multi-tenancy.sql"
 docker cp $sql "sbtm_antigravity-postgres-1:/tmp/seed.sql"
+if (Test-Path $tenantSql) {
+    docker cp $tenantSql "sbtm_antigravity-postgres-1:/tmp/seed-multi-tenancy.sql"
+    docker exec sbtm_antigravity-postgres-1 psql -U $DatabaseUser -d $DatabaseName -f /tmp/seed-multi-tenancy.sql > $null
+}
 docker exec sbtm_antigravity-postgres-1 psql -U $DatabaseUser -d $DatabaseName -f /tmp/seed.sql > $null
 
 # 6. Verify

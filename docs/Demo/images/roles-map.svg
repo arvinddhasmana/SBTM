@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="260" viewBox="0 0 920 260">
+  <rect x="20" y="30" width="200" height="60" rx="8" fill="#e0f2fe" stroke="#0369a1" stroke-width="2" />
+  <text x="120" y="65" text-anchor="middle" font-family="Arial" font-size="14" fill="#1f2937">Board Admin</text>
+
+  <rect x="20" y="120" width="200" height="60" rx="8" fill="#dcfce7" stroke="#15803d" stroke-width="2" />
+  <text x="120" y="155" text-anchor="middle" font-family="Arial" font-size="14" fill="#1f2937">School Admin</text>
+
+  <rect x="350" y="30" width="200" height="60" rx="8" fill="#fef3c7" stroke="#b45309" stroke-width="2" />
+  <text x="450" y="65" text-anchor="middle" font-family="Arial" font-size="14" fill="#1f2937">Driver</text>
+
+  <rect x="350" y="120" width="200" height="60" rx="8" fill="#fee2e2" stroke="#b91c1c" stroke-width="2" />
+  <text x="450" y="155" text-anchor="middle" font-family="Arial" font-size="14" fill="#1f2937">Parent</text>
+
+  <rect x="680" y="60" width="210" height="90" rx="10" fill="#e2e8f0" stroke="#1f2937" stroke-width="2" />
+  <text x="785" y="100" text-anchor="middle" font-family="Arial" font-size="14" fill="#1f2937">Gateway + Services</text>
+  <text x="785" y="122" text-anchor="middle" font-family="Arial" font-size="12" fill="#1f2937">Tenant-scoped data</text>
+
+  <line x1="220" y1="60" x2="680" y2="95" stroke="#1f2937" stroke-width="2" />
+  <line x1="220" y1="150" x2="680" y2="115" stroke="#1f2937" stroke-width="2" />
+  <line x1="550" y1="60" x2="680" y2="95" stroke="#1f2937" stroke-width="2" />
+  <line x1="550" y1="150" x2="680" y2="115" stroke="#1f2937" stroke-width="2" />
+</svg>

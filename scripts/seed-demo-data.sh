@@ -128,6 +128,10 @@ fi
 
 # Copy SQL file to container and execute
 docker cp "$SQL_FILE" "${POSTGRES_CONTAINER}:/tmp/seed-demo-data.sql"
+if [ -f "$SCRIPT_DIR/seed-multi-tenancy.sql" ]; then
+    docker cp "$SCRIPT_DIR/seed-multi-tenancy.sql" "${POSTGRES_CONTAINER}:/tmp/seed-multi-tenancy.sql"
+    docker exec "$POSTGRES_CONTAINER" psql -U "$DATABASE_USER" -d "$DATABASE_NAME" -f /tmp/seed-multi-tenancy.sql
+fi
 docker exec "$POSTGRES_CONTAINER" psql -U "$DATABASE_USER" -d "$DATABASE_NAME" -f /tmp/seed-demo-data.sql
 
 echo -e "${GREEN}  ✓ Demo data seeded successfully!${NC}"
@@ -158,10 +162,10 @@ echo ""
 echo -e "${CYAN}Demo Credentials:${NC}"
 echo "  Admin:   admin@sbtm.demo / Admin123!"
 echo "  Supervisor: supervisor@sbtm.demo / Admin123!"
-echo "  Driver 1: driver1@sbtm.demo / Driver123! (Route A)"
-echo "  Driver 2: driver2@sbtm.demo / Driver123! (Route B)"
-echo "  Parent 1: parent1@sbtm.demo / Parent123! (Route A - Emma/Liam)"
-echo "  Parent 2: parent2@sbtm.demo / Parent123! (Route A/B - Olivia)"
+echo "  Driver 1: driver1@sbtm.demo / Admin123! (Route A)"
+echo "  Driver 2: driver2@sbtm.demo / Admin123! (Route B)"
+echo "  Parent 1: parent1@sbtm.demo / Admin123! (Route A - Emma/Liam)"
+echo "  Parent 2: parent2@sbtm.demo / Admin123! (Route A/B - Olivia)"
 echo ""
 echo -e "${CYAN}Service URLs:${NC}"
 echo "  API Gateway:      http://localhost:3001"

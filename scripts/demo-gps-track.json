@@ -1,0 +1,52 @@
+{
+  "defaultTrack": "seeded-main",
+  "tracks": {
+    "seeded-main": {
+      "routes": [
+        {
+          "routeId": "ROUTE-A",
+          "vehicleId": "BUS-001",
+          "driverEmail": "driver1@sbtm.demo",
+          "driverId": "driver-001",
+          "students": ["STUDENT-001", "STUDENT-002"],
+          "waypoints": [
+            { "lat": 45.4215, "lng": -75.6972, "label": "Start" },
+            { "lat": 45.4230, "lng": -75.6950, "label": "Stop 1", "student": "STUDENT-001" },
+            { "lat": 45.4250, "lng": -75.6900, "label": "Stop 2", "student": "STUDENT-002" },
+            { "lat": 45.4280, "lng": -75.6880, "label": "School" }
+          ]
+        },
+        {
+          "routeId": "ROUTE-B",
+          "vehicleId": "BUS-002",
+          "driverEmail": "driver2@sbtm.demo",
+          "driverId": "driver-002",
+          "students": ["STUDENT-003"],
+          "waypoints": [
+            { "lat": 45.3800, "lng": -75.7000, "label": "Start" },
+            { "lat": 45.3850, "lng": -75.7050, "label": "Stop 1", "student": "STUDENT-003" },
+            { "lat": 45.3900, "lng": -75.7100, "label": "Stop 2" },
+            { "lat": 45.4000, "lng": -75.7200, "label": "School" }
+          ]
+        }
+      ]
+    },
+    "seeded-route-a-only": {
+      "routes": [
+        {
+          "routeId": "ROUTE-A",
+          "vehicleId": "BUS-001",
+          "driverEmail": "driver1@sbtm.demo",
+          "driverId": "driver-001",
+          "students": ["STUDENT-001", "STUDENT-002"],
+          "waypoints": [
+            { "lat": 45.4215, "lng": -75.6972, "label": "Start" },
+            { "lat": 45.4230, "lng": -75.6950, "label": "Stop 1", "student": "STUDENT-001" },
+            { "lat": 45.4250, "lng": -75.6900, "label": "Stop 2", "student": "STUDENT-002" },
+            { "lat": 45.4280, "lng": -75.6880, "label": "School" }
+          ]
+        }
+      ]
+    }
+  }
+}

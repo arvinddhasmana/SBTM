@@ -84,7 +84,7 @@ Detailed documentation is available in the `docs/` folder:
 
 ### 🎯 Demo & Testing Guides
 
-- **[Demo Setup Guide](./docs/Demo/DemoSetupGuide.md)**: Complete guide for setting up the demo environment.
+- **[Demo Setup Guide](./docs/Demo/DEMO_SETUP_GUIDE.md)**: Complete guide for setting up the demo environment.
 - **[Live Demo Script](./docs/Demo/LiveDemoScript.md)**: Step-by-step script for conducting live demos.
 - **[Testing Guide](./docs/Implementation/TestingGuide.md)**: API smoke tests and UI notes.
 
