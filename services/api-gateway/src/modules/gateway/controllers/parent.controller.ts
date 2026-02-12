@@ -11,7 +11,7 @@ export class ParentController {
 
     @Get('children')
     @Roles(Role.PARENT)
-    async getChildren(@Request() req: { user: any }) {
+    async getChildren(@Request() req: { user: any }): Promise<unknown> {
         return this.parentGatewayService.getChildrenForParent(req.user);
     }
 }

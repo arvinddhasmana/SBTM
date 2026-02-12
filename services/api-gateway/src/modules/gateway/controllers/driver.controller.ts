@@ -11,7 +11,7 @@ export class DriverController {
 
     @Get('me/schedule')
     @Roles(Role.DRIVER)
-    async getSchedule(@Request() req: { user: any }) {
+    async getSchedule(@Request() req: { user: any }): Promise<unknown> {
         return this.driverGatewayService.getScheduleForDriver(req.user);
     }
 }
