@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { CommonModule } from '../../common/common.module';
 import { GpsGatewayService } from './services/gps.gateway.service';
 import { AlertsGatewayService } from './services/alerts.gateway.service';
@@ -16,9 +17,11 @@ import { StudentController } from './controllers/student.controller';
 import { ComplianceController } from './controllers/compliance.controller';
 import { ParentController } from './controllers/parent.controller';
 import { DriverController } from './controllers/driver.controller';
+import { School } from '../auth/entities/school.entity';
+import { Route } from '../auth/entities/route.entity';
 
 @Module({
-    imports: [CommonModule],
+    imports: [CommonModule, TypeOrmModule.forFeature([School, Route])],
     controllers: [
         GpsController,
         AlertsController,

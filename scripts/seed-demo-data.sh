@@ -130,9 +130,9 @@ fi
 docker cp "$SQL_FILE" "${POSTGRES_CONTAINER}:/tmp/seed-demo-data.sql"
 if [ -f "$SCRIPT_DIR/seed-multi-tenancy.sql" ]; then
     docker cp "$SCRIPT_DIR/seed-multi-tenancy.sql" "${POSTGRES_CONTAINER}:/tmp/seed-multi-tenancy.sql"
-    docker exec "$POSTGRES_CONTAINER" psql -U "$DATABASE_USER" -d "$DATABASE_NAME" -f /tmp/seed-multi-tenancy.sql
+    docker exec "$POSTGRES_CONTAINER" psql -v ON_ERROR_STOP=1 -U "$DATABASE_USER" -d "$DATABASE_NAME" -f /tmp/seed-multi-tenancy.sql
 fi
-docker exec "$POSTGRES_CONTAINER" psql -U "$DATABASE_USER" -d "$DATABASE_NAME" -f /tmp/seed-demo-data.sql
+docker exec "$POSTGRES_CONTAINER" psql -v ON_ERROR_STOP=1 -U "$DATABASE_USER" -d "$DATABASE_NAME" -f /tmp/seed-demo-data.sql
 
 echo -e "${GREEN}  ✓ Demo data seeded successfully!${NC}"
 
@@ -160,8 +160,8 @@ echo -e "${GREEN}  Demo Setup Complete!${NC}"
 echo -e "${GREEN}============================================${NC}"
 echo ""
 echo -e "${CYAN}Demo Credentials:${NC}"
-echo "  Admin:   admin@sbtm.demo / Admin123!"
-echo "  Supervisor: supervisor@sbtm.demo / Admin123!"
+echo "  OSTA Admin:   osta.admin@sbtm.demo / Admin123!"
+echo "  School Admin: school.admin@sbtm.demo / Admin123!"
 echo "  Driver 1: driver1@sbtm.demo / Admin123! (Route A)"
 echo "  Driver 2: driver2@sbtm.demo / Admin123! (Route B)"
 echo "  Parent 1: parent1@sbtm.demo / Admin123! (Route A - Emma/Liam)"
@@ -172,5 +172,5 @@ echo "  API Gateway:      http://localhost:3001"
 echo "  Admin Dashboard:  http://localhost:5173"
 echo "  Parent App:       http://localhost:3000"
 echo ""
-echo -e "${YELLOW}Visit documentation for more details: docs/DEMO_SETUP_GUIDE.md${NC}"
+echo -e "${YELLOW}Visit documentation for more details: docs/Demo/DEMO_SETUP_GUIDE.md${NC}"
 echo ""

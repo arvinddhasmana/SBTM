@@ -19,10 +19,10 @@ Use `-StrictSeedValidation` to ensure the track matches seeded IDs.
 
 ## Scene 1: Admin Overview (5 min)
 1. Open Admin Dashboard.
-2. Log in with `admin@sbtm.demo` / `Admin123!`.
+2. Log in with `osta.admin@sbtm.demo` / `Admin123!`.
 3. Show dashboard metrics, alerts, routes, and videos from live gateway data.
 4. Open Compliance > Audit to show route start/completion entries from the simulator.
-5. (Optional) Log out and log in as `board.admin@sbtm.demo` or `school.admin@sbtm.demo` to narrate scope differences.
+5. (Optional) Log out and log in as `school.admin@sbtm.demo` to narrate scope differences.
 
 ## Scene 2: Driver Starts Route (7 min)
 1. Open Driver App (Expo).
@@ -55,3 +55,4 @@ curl -X POST http://localhost:3001/api/v1/student-presence-events \
 - Note that board/school management UI is pending.
 - Confirm next steps for notifications and route optimization.
 - Mention that late notifications are simulated as OTHER alerts in the demo.
+- Run `./scripts/verify-demo.ps1` to validate seeded data and logins after setup.

@@ -10,7 +10,8 @@
   "scripts": {
     "build": "echo 'Build script placeholder'",
     "test": "echo 'Test script placeholder'",
-    "lint": "echo 'Lint script placeholder'"
+    "lint": "echo 'Lint script placeholder'",
+    "db:init": "powershell -ExecutionPolicy Bypass -File ./scripts/init-db.ps1"
   },
   "devDependencies": {
     "typescript": "^5.0.0"

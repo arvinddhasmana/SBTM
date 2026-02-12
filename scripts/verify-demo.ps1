@@ -1,25 +1,158 @@
 # =============================================================================
-# SBTM Verify (Refined)
+# SBTM Demo Verification
+# Verifies seeded users/roles, tenant entities, and login credentials.
 # =============================================================================
 
 param(
-    [string]$U = "postgres",
-    [string]$D = "sbms"
+    [string]$DatabaseUser = "postgres",
+    [string]$DatabaseName = "sbms",
+    [string]$ApiBase = "http://localhost:3001/api/v1"
 )
 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-Write-Host "--- Verify ---" -ForegroundColor Cyan
+Write-Host "--- SBTM Demo Verification ---" -ForegroundColor Cyan
 
-function Run-Q($l, $s) {
-    Write-Host "$l" -ForegroundColor Yellow
-    $f = Join-Path $ScriptDir "tmpx.sql"
-    $s | Out-File -FilePath $f -Encoding utf8
-    docker cp $f "sbtm_antigravity-postgres-1:/tmp/tmpx.sql"
-    docker exec sbtm_antigravity-postgres-1 psql -U $U -d $D -t -f /tmp/tmpx.sql
+function Run-Q {
+    param(
+        [string]$Label,
+        [string]$Sql
+    )
+    Write-Host $Label -ForegroundColor Yellow
+    $file = Join-Path $ScriptDir "verify.sql"
+    $Sql | Out-File -FilePath $file -Encoding utf8
+    docker cp $file "sbtm_antigravity-postgres-1:/tmp/verify.sql" | Out-Null
+    docker exec sbtm_antigravity-postgres-1 psql -U $DatabaseUser -d $DatabaseName -t -f /tmp/verify.sql
 }
 
-Run-Q "GPS Updates (1m):" "SELECT vehicle_id, COUNT(*) FROM location_points WHERE timestamp > NOW() - INTERVAL '1 minute' GROUP BY vehicle_id;"
-Run-Q "Students Presence (5m):" "SELECT ""studentId"", ""eventType"" FROM presence_event WHERE timestamp > NOW() - INTERVAL '5 minutes' LIMIT 3;"
-Run-Q "Emergency Alerts:" "SELECT ""vehicleId"", ""eventType"", status FROM emergency_alert LIMIT 3;"
+function Test-Login {
+    param([string]$Email)
+    try {
+        $body = @{ email = $Email; password = "Admin123!" } | ConvertTo-Json
+        $res = Invoke-RestMethod -Uri "$ApiBase/auth/login" -Method POST -Body $body -ContentType "application/json"
+        if ($res.accessToken) {
+            Write-Host "  OK: $Email" -ForegroundColor Green
+            return $true
+        }
+    }
+    catch {
+        Write-Host "  FAIL: $Email -> $($_.Exception.Message)" -ForegroundColor Red
+    }
+    return $false
+}
 
-Write-Host "Done." -ForegroundColor Green
+function Get-AuthHeader {
+    param([string]$Email)
+    $body = @{ email = $Email; password = "Admin123!" } | ConvertTo-Json
+    $res = Invoke-RestMethod -Uri "$ApiBase/auth/login" -Method POST -Body $body -ContentType "application/json"
+    return @{ Authorization = "Bearer $($res.accessToken)" }
+}
+
+function Test-ApiList {
+    param(
+        [string]$Label,
+        [string]$Url,
+        [hashtable]$Headers
+    )
+    try {
+        $res = Invoke-RestMethod -Uri $Url -Method GET -Headers $Headers
+        if ($null -eq $res) {
+            Write-Host "  FAIL: $Label -> null" -ForegroundColor Red
+            return $false
+        }
+
+        if ($res -is [System.Array]) {
+            Write-Host "  OK: $Label -> $($res.Count)" -ForegroundColor Green
+            return $true
+        }
+
+        if ($res.items -and ($res.items -is [System.Array])) {
+            Write-Host "  OK: $Label -> $($res.items.Count)" -ForegroundColor Green
+            return $true
+        }
+
+        Write-Host "  WARN: $Label -> unexpected shape" -ForegroundColor Yellow
+        return $true
+    }
+    catch {
+        Write-Host "  FAIL: $Label -> $($_.Exception.Message)" -ForegroundColor Red
+        return $false
+    }
+}
+
+function Wait-ApiHealth {
+    param([string]$Url)
+    for ($i = 0; $i -lt 20; $i++) {
+        try {
+            $health = Invoke-RestMethod -Uri $Url -Method GET
+            if ($health) {
+                return $true
+            }
+        }
+        catch {
+            Start-Sleep -Seconds 2
+        }
+    }
+    return $false
+}
+
+Run-Q -Label "Tenant entities:" -Sql @"
+SELECT 'school_boards', COUNT(*) FROM school_boards;
+SELECT 'schools', COUNT(*) FROM schools;
+"@
+
+Run-Q -Label "Users by role (expected admins: OSTA_ADMIN and SCHOOL_ADMIN only):" -Sql @"
+SELECT role, COUNT(*) FROM users WHERE email LIKE '%@sbtm.demo' GROUP BY role ORDER BY role;
+"@
+
+Run-Q -Label "Seeded demo users:" -Sql @"
+SELECT email, role, "schoolId", "boardId" FROM users WHERE email LIKE '%@sbtm.demo' ORDER BY email;
+"@
+
+Run-Q -Label "Seeded students and references:" -Sql @"
+SELECT 'students_reference', COUNT(*) FROM students_reference;
+SELECT 'presence_event', COUNT(*) FROM presence_event;
+SELECT 'student_tag', COUNT(*) FROM student_tag;
+"@
+
+Write-Host "Login verification (Admin123!):" -ForegroundColor Yellow
+$isApiReady = Wait-ApiHealth -Url "$ApiBase/health"
+if (-not $isApiReady) {
+    Write-Host "  FAIL: API gateway is not reachable at $ApiBase" -ForegroundColor Red
+    exit 1
+}
+
+$emails = @(
+    "osta.admin@sbtm.demo",
+    "school.admin@sbtm.demo",
+    "driver1@sbtm.demo",
+    "parent1@sbtm.demo"
+)
+
+$allPassed = $true
+foreach ($email in $emails) {
+    if (-not (Test-Login -Email $email)) {
+        $allPassed = $false
+    }
+}
+
+Write-Host "API demo data checks (as OSTA admin):" -ForegroundColor Yellow
+try {
+    $headers = Get-AuthHeader -Email "osta.admin@sbtm.demo"
+    $okVehicles = Test-ApiList -Label "/vehicles" -Url "$ApiBase/vehicles" -Headers $headers
+    $okStudents = Test-ApiList -Label "/students" -Url "$ApiBase/students" -Headers $headers
+    if (-not $okVehicles -or -not $okStudents) {
+        $allPassed = $false
+    }
+}
+catch {
+    Write-Host "  FAIL: API checks -> $($_.Exception.Message)" -ForegroundColor Red
+    $allPassed = $false
+}
+
+if ($allPassed) {
+    Write-Host "Verification passed." -ForegroundColor Green
+    exit 0
+}
+
+Write-Host "Verification found issues." -ForegroundColor Red
+exit 1

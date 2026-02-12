@@ -1,1 +1,1 @@
-﻿SELECT 'Users', COUNT(*) FROM users; SELECT 'Students', COUNT(*) FROM students_reference;
+﻿SELECT 'Users', COUNT(*) FROM users WHERE email LIKE '%@sbtm.demo'; SELECT 'Students', COUNT(*) FROM students_reference; SELECT role, COUNT(*) FROM users WHERE email LIKE '%@sbtm.demo' GROUP BY role ORDER BY role;

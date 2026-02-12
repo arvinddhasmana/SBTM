@@ -8,6 +8,16 @@ import { RolesGuard } from '../../../common/guards/roles.guard';
 export class GpsController {
     constructor(private readonly gpsGatewayService: GpsGatewayService) { }
 
+    @Get('active')
+    async getActiveRoutes(@Request() req: { user: any }) {
+        return this.gpsGatewayService.getActiveRoutes(req.user);
+    }
+
+    @Get('locations')
+    async getAllLiveLocations(@Request() req: { user: any }) {
+        return this.gpsGatewayService.getAllLiveLocations(req.user);
+    }
+
     @Get(':routeId/live-location')
     async getLiveLocation(
         @Param('routeId') routeId: string,

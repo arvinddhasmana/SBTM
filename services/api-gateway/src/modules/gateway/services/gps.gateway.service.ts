@@ -2,6 +2,7 @@ import { Injectable, ForbiddenException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpClientService } from '../../../common/utils/http-client.service';
 import { Role } from '../../../common/decorators/roles.decorator';
+import { DataSource } from 'typeorm';
 
 export interface LiveLocationDto {
     routeId: string;
@@ -38,6 +39,24 @@ interface RequestUser {
     schoolId?: string;
 }
 
+interface ReferenceRouteRow {
+    id: string;
+    name: string;
+    vehicleId: string | null;
+    driverId: string | null;
+    schedule: any;
+}
+
+interface ReferenceRouteStopRow {
+    id: string;
+    routeId: string;
+    sequenceOrder: number;
+    stopName: string;
+    lat: number;
+    lng: number;
+    arrivalTime: string;
+}
+
 @Injectable()
 export class GpsGatewayService {
     private readonly gpsServiceUrl: string;
@@ -45,6 +64,7 @@ export class GpsGatewayService {
     constructor(
         private readonly httpClient: HttpClientService,
         private readonly configService: ConfigService,
+        private readonly dataSource: DataSource,
     ) {
         this.gpsServiceUrl = this.configService.get<string>(
             'GPS_SERVICE_URL',
@@ -88,8 +108,8 @@ export class GpsGatewayService {
     }
 
     private checkRouteAccess(routeId: string, user: RequestUser): void {
-        // Admins can access all routes
-        if (user.role === Role.ADMIN) {
+        // System admins can access all routes
+        if (user.role === Role.ADMIN || user.role === Role.OSTA_ADMIN || user.role === Role.BOARD_ADMIN || user.role === Role.SCHOOL_ADMIN) {
             return;
         }
 
@@ -110,5 +130,100 @@ export class GpsGatewayService {
         }
 
         throw new ForbiddenException('Access denied');
+    }
+
+    async getActiveRoutes(user: RequestUser): Promise<any[]> {
+        const routeIds = this.getAccessibleRouteIds(user);
+
+        const whereClause = routeIds && routeIds.length
+            ? 'WHERE r.id = ANY($1)'
+            : '';
+        const params: any[] = routeIds && routeIds.length ? [routeIds] : [];
+
+        const routes = await this.dataSource.query(
+            `SELECT r.id, r.name, r."vehicleId" as "vehicleId", r.schedule
+             FROM routes_reference r
+             ${whereClause}
+             ORDER BY r.id ASC`,
+            params,
+        ) as ReferenceRouteRow[];
+
+        const stops = await this.dataSource.query(
+            `SELECT s.id, s."routeId" as "routeId", s."sequenceOrder" as "sequenceOrder", s."stopName" as "stopName", s.lat, s.lng, s."arrivalTime" as "arrivalTime"
+             FROM route_stops_reference s`,
+        ) as ReferenceRouteStopRow[];
+
+        const stopsByRoute = new Map<string, ReferenceRouteStopRow[]>();
+        for (const stop of stops) {
+            const list = stopsByRoute.get(stop.routeId) ?? [];
+            list.push(stop);
+            stopsByRoute.set(stop.routeId, list);
+        }
+
+        const demoSchoolId = user.schoolId || 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c';
+
+        return routes.map((r) => {
+            const schedule = typeof r.schedule === 'string' ? JSON.parse(r.schedule) : r.schedule;
+            const startTime = schedule?.startTime || '07:30';
+            const routeStops = (stopsByRoute.get(r.id) ?? [])
+                .slice()
+                .sort((a, b) => a.sequenceOrder - b.sequenceOrder)
+                .map((s) => ({
+                    id: s.id,
+                    routeId: r.id,
+                    sequence: s.sequenceOrder,
+                    address: s.stopName,
+                    location: `POINT(${s.lng} ${s.lat})`,
+                }));
+
+            return {
+                id: r.id,
+                name: r.name,
+                schoolId: demoSchoolId,
+                direction: 'AM',
+                vehicleId: r.vehicleId || undefined,
+                startTime,
+                estimatedDuration: 60,
+                stops: routeStops,
+                status: 'active',
+            };
+        });
+    }
+
+    async getAllLiveLocations(user: RequestUser): Promise<LiveLocationDto[]> {
+        const routeIds = this.getAccessibleRouteIds(user);
+
+        const whereClause = routeIds && routeIds.length
+            ? 'WHERE r.id = ANY($1)'
+            : '';
+        const params: any[] = routeIds && routeIds.length ? [routeIds] : [];
+
+        const routes = await this.dataSource.query(
+            `SELECT r.id FROM routes_reference r ${whereClause} ORDER BY r.id ASC`,
+            params,
+        ) as Array<{ id: string }>;
+
+        const results: LiveLocationDto[] = [];
+        for (const r of routes) {
+            try {
+                const live = await this.getLiveLocation(r.id, user);
+                results.push(live);
+            } catch {
+                // Ignore per-route failures; demo UI will just omit that marker
+            }
+        }
+        return results;
+    }
+
+    private getAccessibleRouteIds(user: RequestUser): string[] | undefined {
+        if (user.role === Role.PARENT) return user.childRouteIds || [];
+        if (user.role === Role.DRIVER) return user.assignedRouteIds || [];
+
+        // Admin roles: see all seeded reference routes
+        if (user.role === Role.ADMIN || user.role === Role.OSTA_ADMIN || user.role === Role.BOARD_ADMIN || user.role === Role.SCHOOL_ADMIN) {
+            return undefined;
+        }
+
+        return undefined;
     }
 }

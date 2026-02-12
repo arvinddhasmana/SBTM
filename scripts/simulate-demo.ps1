@@ -22,7 +22,7 @@ param(
 $ErrorActionPreference = "Continue"
 
 $DefaultBoardId = "b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c"
-$DefaultSchoolId = "s0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c"
+$DefaultSchoolId = "c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c"
 $SeededRouteIds = @("ROUTE-A", "ROUTE-B", "ROUTE-C")
 $SeededVehicleIds = @("BUS-001", "BUS-002", "BUS-003")
 $SeededStudentIds = @("STUDENT-001", "STUDENT-002", "STUDENT-003", "STUDENT-004", "STUDENT-005")
@@ -193,7 +193,7 @@ function Validate-TrackRoutes {
 }
 
 Write-Host "Authenticating demo users..." -ForegroundColor Cyan
-$adminAuth = Login-User -Email "admin@sbtm.demo"
+$adminAuth = Login-User -Email "osta.admin@sbtm.demo"
 if (-not $adminAuth) { exit 1 }
 
 $adminToken = $adminAuth.accessToken

@@ -10,7 +10,7 @@ curl http://localhost:3001/api/v1/health
 ```bash
 curl -X POST http://localhost:3001/api/v1/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin@sbtm.demo","password":"Admin123!"}'
+  -d '{"email":"osta.admin@sbtm.demo","password":"Admin123!"}'
 ```
 
 Store the returned `accessToken` and use it for protected calls:

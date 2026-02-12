@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
+import { Repository, In, DataSource } from 'typeorm';
 import { HttpClientService } from '../../../common/utils/http-client.service';
 import { School } from '../../auth/entities/school.entity';
 import { Route } from '../../auth/entities/route.entity';
@@ -18,6 +18,15 @@ interface StudentRecord {
     school_id: string;
     am_route_id?: string;
     pm_route_id?: string;
+}
+
+interface ReferenceStudentRow {
+    id: string;
+    firstName: string;
+    lastName: string;
+    parentId: string;
+    schoolId: string | null;
+    assignedRouteId: string | null;
 }
 
 interface ParentChildDto {
@@ -37,6 +46,7 @@ export class ParentGatewayService {
     constructor(
         private readonly httpClient: HttpClientService,
         private readonly configService: ConfigService,
+        private readonly dataSource: DataSource,
         @InjectRepository(School)
         private readonly schoolRepository: Repository<School>,
         @InjectRepository(Route)
@@ -49,6 +59,57 @@ export class ParentGatewayService {
     }
 
     async getChildrenForParent(user: ParentUser): Promise<ParentChildDto[]> {
+        // Demo-first behavior: use seeded reference tables for parent portal.
+        // This keeps IDs consistent with GPS/presence demo data (ROUTE-A, BUS-001, etc.).
+        let refStudents: ReferenceStudentRow[] = [];
+        try {
+            refStudents = await this.dataSource.query(
+                `SELECT id, "firstName" as "firstName", "lastName" as "lastName", "parentId" as "parentId", "schoolId" as "schoolId", "assignedRouteId" as "assignedRouteId"
+                 FROM students_reference
+                 WHERE "parentId" = $1
+                 ORDER BY id ASC`,
+                [user.id],
+            );
+        } catch {
+            refStudents = [];
+        }
+
+        if (refStudents.length > 0) {
+            const schoolIds = Array.from(new Set(refStudents.map((s) => s.schoolId).filter(Boolean) as string[]));
+            const routeIds = Array.from(new Set(refStudents.map((s) => s.assignedRouteId).filter(Boolean) as string[]));
+
+            const schools = schoolIds.length
+                ? await this.schoolRepository.findBy({ id: In(schoolIds) })
+                : [];
+            const schoolMap = new Map(schools.map((s) => [s.id, s]));
+
+            const routeVehicleRows = routeIds.length
+                ? await this.dataSource.query(
+                    `SELECT id, "vehicleId" as "vehicleId" FROM routes_reference WHERE id = ANY($1)`,
+                    [routeIds],
+                ) as Array<{ id: string; vehicleId: string | null }>
+                : [];
+            const routeToVehicle = new Map(routeVehicleRows.map((r) => [r.id, r.vehicleId || undefined]));
+
+            return refStudents.map((student) => {
+                const school = student.schoolId ? schoolMap.get(student.schoolId) : undefined;
+                const routeId = student.assignedRouteId || undefined;
+                const vehicleId = routeId ? routeToVehicle.get(routeId) : undefined;
+                const name = `${student.firstName} ${student.lastName}`.trim();
+
+                return {
+                    id: student.id,
+                    name,
+                    schoolName: school?.name,
+                    routeId,
+                    vehicleId,
+                    status: 'unknown',
+                    avatarUrl: name ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name)}` : undefined,
+                };
+            });
+        }
+
+        // Fallback: if reference data isn't present, use student-management service
         const url = `${this.studentServiceUrl}/students`;
         const students = await this.httpClient.get<StudentRecord[]>(url, {
             params: { parent_id: user.id },

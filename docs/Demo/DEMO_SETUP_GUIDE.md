@@ -88,38 +88,40 @@ Docker compose up -d --build
 
 Suggested login credentials (all use the same password in demo environments):
 
-- Admin (Board/School): admin@sbtm.demo
 - OSTA Admin: osta.admin@sbtm.demo
-- Board Admin: board.admin@sbtm.demo
 - School Admin: school.admin@sbtm.demo
 - Driver: driver1@sbtm.demo
 - Parent: parent1@sbtm.demo
 
 If login fails, run the seeding script again and use the password printed by the script.
 
-## 4. Start the Demo Apps
+## 4. Access the Demo Apps Started by Docker Compose
+
+`docker compose up -d --build` already starts these web apps and backend services in containers.
 
 ### Admin Dashboard
+- URL: http://localhost:5173
+
+### Parent Portal
+- URL: http://localhost:5174
+
+### Optional Local Frontend Development (instead of Docker app containers)
+
+Use this only when you are actively developing UI locally:
 
 ```powershell
+# Admin Dashboard
 cd apps/admin-dashboard
 npm install
 npm run dev
-```
 
-- URL: http://localhost:5173
-- Set VITE_API_URL to http://localhost:3001
-
-### Parent Portal
-
-```powershell
+# Parent Portal (new terminal)
 cd apps/parent-app/web
 npm install
 npm run dev
 ```
 
-- URL: http://localhost:5174
-- Set VITE_API_URL to http://localhost:3001
+Set `VITE_API_URL` to `http://localhost:3001` for both.
 
 ### Driver App (Expo)
 
@@ -145,7 +147,7 @@ To customize routes and waypoints without editing the script, update:
 
 - [scripts/demo-gps-track.json](../../scripts/demo-gps-track.json)
 
-The simulator loads this file automatically when present. Each route entry should align with seeded IDs (ROUTE-A, BUS-001, driver1@sbtm.demo, Demo School IDs).
+The simulator loads this file automatically when present. Each route entry should align with seeded IDs (ROUTE-A, BUS-001, driver1@sbtm.demo, schoolId c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c).
 The file supports multiple named tracks under `tracks`. Pick one with `-TrackName seeded-main`.
 To use a different file, pass `-TrackConfigPath <path>`.
 
@@ -168,7 +170,7 @@ This story demonstrates the main use cases for Board Admin, School Admin, Driver
 
 ### Step A: Board Admin View (Monitoring)
 
-1) Log in to the Admin Dashboard as admin@sbtm.demo.
+1) Log in to the Admin Dashboard as osta.admin@sbtm.demo.
 2) Open the Dashboard page to view live alerts and fleet status.
 3) Open Students and Compliance pages to show tenant-scoped lists.
 
@@ -179,7 +181,7 @@ Workaround (Board/School management UI is not implemented):
 # Login to get a token
 curl -X POST http://localhost:3001/api/v1/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin@sbtm.demo","password":"Admin123!"}'
+  -d '{"email":"osta.admin@sbtm.demo","password":"Admin123!"}'
 
 # Use the accessToken in these calls
 curl -X POST http://localhost:3001/api/v1/boards \
@@ -201,13 +203,9 @@ Narration tip: Explain that Board Admin would see system-wide metrics, while Sch
 2) Show a seeded route (ROUTE-A) and associated bus (BUS-001).
 3) Show Students list for the school (Emma Smith, Liam Smith, Olivia Johnson).
 
-Workaround (Board/School admin roles in UI):
-- If you need explicit role demo, update a user role in the database:
-
-```bash
-docker exec -it sbtm_antigravity-postgres-1 psql -U postgres -d sbms \
-  -c "UPDATE users SET role='SCHOOL_ADMIN' WHERE email='admin@sbtm.demo';"
-```
+Role switch for demo:
+- Use `osta.admin@sbtm.demo` for OSTA view.
+- Use `school.admin@sbtm.demo` for School view.
 
 ### Step C: Driver Operations (Route + GPS + Emergency)
 
@@ -271,6 +269,7 @@ Use these checks to confirm everything is working with real data:
 - Parent map updates after GPS posts
 - Students list appears under Admin Dashboard
 - Compliance list and inspections from gateway endpoints
+- Run seed verification script: `./scripts/verify-demo.ps1`
 
 ## 9. Reference Links
 
