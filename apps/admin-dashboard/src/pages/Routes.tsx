@@ -28,6 +28,10 @@ const Routes: React.FC = () => {
         };
 
         fetchData();
+
+        // Auto-refresh every 10 seconds to update live locations
+        const interval = setInterval(fetchData, 10000);
+        return () => clearInterval(interval);
     }, []);
 
     const selectedLocation = selectedRoute

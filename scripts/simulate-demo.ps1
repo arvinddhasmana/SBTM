@@ -12,7 +12,7 @@ param(
     [int]$EmergencyEvery = 3,
     [string]$TrackConfigPath = "$PSScriptRoot\demo-gps-track.json",
     [string]$TrackName = "",
-    [switch]$WithPresence,
+    [switch]$NoPresence,
     [switch]$StrictSeedValidation,
     [switch]$NoAudit,
     [switch]$NoLate,
@@ -201,7 +201,7 @@ $adminUser = $adminAuth.user
 if (-not $adminUser.schoolId) { $adminUser.schoolId = $DefaultSchoolId }
 
 $driverAuth = @{}
-foreach ($email in @("driver1@sbtm.demo", "driver2@sbtm.demo")) {
+foreach ($email in @("driver1@sbtm.demo", "driver2@sbtm.demo", "driver3@sbtm.demo")) {
     $driverAuth[$email] = Login-User -Email $email
 }
 
@@ -231,6 +231,18 @@ $routes = @(
             @{ lat = 45.3900; lng = -75.7100; label = "Stop 2" },
             @{ lat = 45.4000; lng = -75.7200; label = "School" }
         )
+    },
+    @{
+        routeId = "ROUTE-C"
+        vehicleId = "BUS-003"
+        driverEmail = "driver3@sbtm.demo"
+        driverId = "driver-003"
+        students = @("STUDENT-005")
+        waypoints = @(
+            @{ lat = 45.4100; lng = -75.7100; label = "Start" },
+            @{ lat = 45.4120; lng = -75.7080; label = "Stop 1"; student = "STUDENT-005" },
+            @{ lat = 45.4150; lng = -75.7050; label = "School" }
+        )
     }
 )
 
@@ -253,6 +265,15 @@ if (-not $maxSteps -or $maxSteps -lt 1) {
 
 Write-Host "Starting demo simulation..." -ForegroundColor Cyan
 Write-Host "GPS interval: $IntervalSeconds sec, laps: $Laps" -ForegroundColor DarkGray
+Write-Host "Presence tracking: $(if ($NoPresence) { 'Disabled' } else { 'Enabled (default)' })" -ForegroundColor DarkGray
+
+# Track route start times for schedule-based late detection
+$routeStartTimes = @{}
+$routeExpectedDurations = @{
+    "ROUTE-A" = 30  # minutes from start to finish
+    "ROUTE-B" = 35
+    "ROUTE-C" = 25
+}
 
 for ($lap = 1; $lap -le $Laps; $lap++) {
     Write-Host "Lap $lap/$Laps" -ForegroundColor Magenta
@@ -269,7 +290,12 @@ for ($lap = 1; $lap -le $Laps; $lap++) {
             $tokenToUse = $driverToken
             if (-not $tokenToUse) { $tokenToUse = $adminToken }
 
+            # Use speedKph from waypoint if available, otherwise default to 30
+            $speedKph = if ($wp.speedKph -ne $null) { $wp.speedKph } else { 30 }
+
+            # Track route start time for schedule-based late detection
             if ($lap -eq 1 -and $step -eq 0) {
+                $routeStartTimes[$route.routeId] = Get-Date
                 Write-AuditLog -Action "ROUTE_STARTED" -Resource "route" -ResourceId $route.routeId -Details @{
                     vehicleId = $route.vehicleId
                     driverId = $route.driverId
@@ -283,7 +309,7 @@ for ($lap = 1; $lap -le $Laps; $lap++) {
                 timestamp = $timestamp
                 lat = $wp.lat
                 lng = $wp.lng
-                speedKph = 30
+                speedKph = $speedKph
             }
 
             try {
@@ -293,7 +319,13 @@ for ($lap = 1; $lap -le $Laps; $lap++) {
                 Write-Host "GPS failed for $($route.vehicleId): $($_.Exception.Message)" -ForegroundColor Red
             }
 
-            if ($WithPresence -and $wp.student) {
+            # Pause at stop if pauseSeconds is specified
+            if ($wp.pauseSeconds -and $wp.pauseSeconds -gt 0) {
+                Write-Host "  Pausing for $($wp.pauseSeconds) seconds..." -ForegroundColor DarkGray
+                Start-Sleep -Seconds $wp.pauseSeconds
+            }
+
+            if (-not $NoPresence -and $wp.student) {
                 $presencePayload = @{
                     studentId = $wp.student
                     vehicleId = $route.vehicleId
@@ -310,27 +342,37 @@ for ($lap = 1; $lap -le $Laps; $lap++) {
                 }
             }
 
-            if (-not $NoLate -and $LateEvery -gt 0 -and ($lap % $LateEvery -eq 0) -and $wp.label -eq "Stop 2") {
-                $latePayload = @{
-                    vehicleId = $route.vehicleId
-                    routeId = $route.routeId
-                    driverId = $route.driverId
-                    timestamp = $timestamp
-                    lat = $wp.lat
-                    lng = $wp.lng
-                    eventType = "OTHER"
-                }
-                try {
-                    Invoke-ApiPost -Url "$ApiBase/emergency-events" -Body $latePayload -Token $tokenToUse | Out-Null
-                    Write-Host "  Late notice (simulated via OTHER alert)" -ForegroundColor Yellow
-                    Write-AuditLog -Action "ROUTE_DELAY" -Resource "route" -ResourceId $route.routeId -Details @{
+            # Schedule-based late detection at labeled stops
+            if (-not $NoLate -and $wp.label -and $wp.label -match "Stop" -and $routeStartTimes.ContainsKey($route.routeId)) {
+                $elapsedMinutes = ((Get-Date) - $routeStartTimes[$route.routeId]).TotalMinutes
+                $expectedMinutes = $routeExpectedDurations[$route.routeId] * ($step / $route.waypoints.Count)
+                $delayMinutes = [Math]::Round($elapsedMinutes - $expectedMinutes, 1)
+
+                # Trigger late notification if delay exceeds 5 minutes
+                if ($delayMinutes -gt 5) {
+                    $latePayload = @{
                         vehicleId = $route.vehicleId
+                        routeId = $route.routeId
                         driverId = $route.driverId
-                        reason = "Simulated delay"
-                        simulated = $true
+                        timestamp = $timestamp
+                        lat = $wp.lat
+                        lng = $wp.lng
+                        eventType = "OTHER"
                     }
-                } catch {
-                    Write-Host "  Late notice failed: $($_.Exception.Message)" -ForegroundColor DarkYellow
+                    try {
+                        Invoke-ApiPost -Url "$ApiBase/emergency-events" -Body $latePayload -Token $tokenToUse | Out-Null
+                        Write-Host "  Late notice: $([Math]::Round($delayMinutes, 0)) min behind schedule" -ForegroundColor Yellow
+                        Write-AuditLog -Action "ROUTE_DELAY" -Resource "route" -ResourceId $route.routeId -Details @{
+                            vehicleId = $route.vehicleId
+                            driverId = $route.driverId
+                            stopName = $wp.label
+                            delayMinutes = $delayMinutes
+                            reason = "Behind schedule"
+                            simulated = $true
+                        }
+                    } catch {
+                        Write-Host "  Late notice failed: $($_.Exception.Message)" -ForegroundColor DarkYellow
+                    }
                 }
             }
 

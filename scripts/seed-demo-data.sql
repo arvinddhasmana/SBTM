@@ -239,8 +239,8 @@ VALUES
     ('STUDENT-001', 'Emma', 'Smith', 3, '10000000-0000-0000-0000-000000000021', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'ROUTE-A', NOW()),
     ('STUDENT-002', 'Liam', 'Smith', 5, '10000000-0000-0000-0000-000000000021', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'ROUTE-A', NOW()),
     ('STUDENT-003', 'Olivia', 'Johnson', 2, '10000000-0000-0000-0000-000000000022', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'ROUTE-B', NOW()),
-    ('STUDENT-004', 'Noah', 'Williams', 4, '10000000-0000-0000-0000-000000000023', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'ROUTE-A', NOW()),
-    ('STUDENT-005', 'Ava', 'Brown', 1, '10000000-0000-0000-0000-000000000024', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'ROUTE-B', NOW());
+    ('STUDENT-004', 'Noah', 'Williams', 4, '10000000-0000-0000-0000-000000000023', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'ROUTE-B', NOW()),
+    ('STUDENT-005', 'Ava', 'Brown', 1, '10000000-0000-0000-0000-000000000024', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'ROUTE-C', NOW());
 
 -- Deterministic UUIDs for demo users (lets other demo tables reference users reliably)
 -- Admins
