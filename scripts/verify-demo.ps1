@@ -108,17 +108,27 @@ function Test-ApiGet {
 
 function Wait-ApiHealth {
     param([string]$Url)
-    for ($i = 0; $i -lt 20; $i++) {
+    Write-Host "  Checking API health at $Url..." -ForegroundColor DarkGray
+    for ($i = 0; $i -lt 30; $i++) {
         try {
-            $health = Invoke-RestMethod -Uri $Url -Method GET
+            $health = Invoke-RestMethod -Uri $Url -Method GET -TimeoutSec 5 -ErrorAction Stop
             if ($health) {
+                Write-Host "  API is healthy!" -ForegroundColor Green
                 return $true
             }
         }
         catch {
-            Start-Sleep -Seconds 2
+            if ($i -eq 0) {
+                Write-Host "  API not ready yet, waiting..." -ForegroundColor DarkGray
+            }
+            if (($i + 1) % 5 -eq 0) {
+                Write-Host "  Still waiting... ($($i + 1)/30)" -ForegroundColor DarkGray
+            }
+            Start-Sleep -Seconds 3
         }
     }
+    Write-Host "  API health check timed out after 90 seconds" -ForegroundColor Red
+    Write-Host "  Check Docker logs: docker compose logs api-gateway" -ForegroundColor Yellow
     return $false
 }
 

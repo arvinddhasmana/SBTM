@@ -30,6 +30,10 @@ DROP TABLE IF EXISTS users CASCADE;
 DROP TABLE IF EXISTS schools CASCADE;
 DROP TABLE IF EXISTS school_boards CASCADE;
 
+-- Drop ENUM types used by presence_event
+DROP TYPE IF EXISTS presence_event_eventtype_enum CASCADE;
+DROP TYPE IF EXISTS presence_event_source_enum CASCADE;
+
 -- --------------------------------------------------------------------------
 -- 2. Create Schema (Gateway & Microservices)
 -- --------------------------------------------------------------------------
@@ -132,15 +136,19 @@ CREATE TABLE student_tag (
 CREATE UNIQUE INDEX "IDX_student_tag_school_tag" ON student_tag ("schoolId", "tagId");
 
 -- Presence Events (Matching student-presence entity)
+-- Create ENUM types to match TypeORM entity definitions
+CREATE TYPE presence_event_eventtype_enum AS ENUM ('BOARD', 'ALIGHT');
+CREATE TYPE presence_event_source_enum AS ENUM ('SMARTTAG', 'MANUAL', 'RFID');
+
 CREATE TABLE presence_event (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     "schoolId" VARCHAR NOT NULL,
     "studentId" VARCHAR NOT NULL,
     "vehicleId" VARCHAR NOT NULL,
     "routeId" VARCHAR NOT NULL,
-    "eventType" VARCHAR NOT NULL,
+    "eventType" presence_event_eventtype_enum NOT NULL,
     "timestamp" TIMESTAMP NOT NULL,
-    "source" VARCHAR DEFAULT 'SMARTTAG',
+    "source" presence_event_source_enum DEFAULT 'SMARTTAG',
     "signalStrength" FLOAT,
     "createdAt" TIMESTAMP DEFAULT NOW(),
     "updatedAt" TIMESTAMP DEFAULT NOW()

@@ -36,6 +36,24 @@
 
 ## Common Issues
 
+### API Gateway Not Reachable During Reset
+**Cause:** Services need time to start and become healthy after reset
+**Fix:** The reset script now waits up to 90 seconds for services. If it still fails:
+```powershell
+# Check service status
+docker compose ps
+
+# Check specific service logs
+docker compose logs api-gateway
+docker compose logs student-presence
+docker compose logs postgres
+
+# If student-presence is failing with ENUM errors, ensure you ran the latest reset
+# If services are crashing, try a full rebuild
+docker compose down -v
+docker compose up -d --build
+```
+
 ### 403 Forbidden on Maps
 **Cause:** Missing childRouteIds for parent users or admin role check issue
 **Fix:** Re-run `.\scripts\reset-demo-db.ps1`
