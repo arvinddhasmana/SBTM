@@ -34,7 +34,7 @@ if ($NoBuild) {
 if ($LASTEXITCODE -ne 0) { throw 'docker compose up failed' }
 
 Write-Host 'Seeding demo data...' -ForegroundColor Yellow
-& "$PSScriptRoot\seed-demo-data.ps1" -NoCompose
+& "$PSScriptRoot\init-db.ps1" -NoCompose
 if ($LASTEXITCODE -ne 0) { throw 'Seeding failed' }
 
 if (-not $SkipVerify) {
