@@ -79,7 +79,8 @@ export class PresenceGatewayService {
     }
 
     private checkRouteAccess(routeId: string, user: RequestUser): void {
-        if (user.role === Role.ADMIN) {
+        // System admins can access all routes
+        if (user.role === Role.ADMIN || user.role === Role.OSTA_ADMIN || user.role === Role.BOARD_ADMIN || user.role === Role.SCHOOL_ADMIN) {
             return;
         }
 

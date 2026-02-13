@@ -220,23 +220,23 @@ INSERT INTO schools (id, name, "boardId") VALUES
     ('c1a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'Demo High School', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c');
 
 -- Users
-INSERT INTO users (id, email, "passwordHash", role, "firstName", "lastName", "driverId", "assignedRouteIds", "schoolId", "boardId") VALUES
+INSERT INTO users (id, email, "passwordHash", role, "firstName", "lastName", "driverId", "childRouteIds", "assignedRouteIds", "schoolId", "boardId") VALUES
     -- Admins
-    ('10000000-0000-0000-0000-000000000001', 'osta.admin@sbtm.demo', crypt('Admin123!', gen_salt('bf')), 'OSTA_ADMIN', 'OSTA', 'Admin', NULL, NULL, 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
-    ('10000000-0000-0000-0000-000000000002', 'school.admin@sbtm.demo', crypt('Admin123!', gen_salt('bf')), 'SCHOOL_ADMIN', 'School', 'Admin', NULL, NULL, 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
+    ('10000000-0000-0000-0000-000000000001', 'osta.admin@sbtm.demo', crypt('Admin123!', gen_salt('bf')), 'OSTA_ADMIN', 'OSTA', 'Admin', NULL, NULL, NULL, 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
+    ('10000000-0000-0000-0000-000000000002', 'school.admin@sbtm.demo', crypt('Admin123!', gen_salt('bf')), 'SCHOOL_ADMIN', 'School', 'Admin', NULL, NULL, NULL, 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
     -- Drivers
-    ('10000000-0000-0000-0000-000000000011', 'driver1@sbtm.demo', crypt('Admin123!', gen_salt('bf')), 'DRIVER', 'John', 'Driver', 'driver-001', 'ROUTE-A', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
-    ('10000000-0000-0000-0000-000000000012', 'driver2@sbtm.demo', crypt('Admin123!', gen_salt('bf')), 'DRIVER', 'Mike', 'Schmidt', 'driver-002', 'ROUTE-B', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
-    ('10000000-0000-0000-0000-000000000013', 'driver3@sbtm.demo', crypt('Admin123!', gen_salt('bf')), 'DRIVER', 'Sarah', 'Lane', 'driver-003', 'ROUTE-C', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
-    ('10000000-0000-0000-0000-000000000014', 'driver4@sbtm.demo', crypt('Admin123!', gen_salt('bf')), 'DRIVER', 'Tom', 'Cruise', 'driver-004', NULL, 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
-    ('10000000-0000-0000-0000-000000000015', 'driver5@sbtm.demo', crypt('Admin123!', gen_salt('bf')), 'DRIVER', 'Jerry', 'Seinfeld', 'driver-005', NULL, 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
-    -- Parents
-    ('10000000-0000-0000-0000-000000000021', 'parent1@sbtm.demo', crypt('Admin123!', gen_salt('bf')), 'PARENT', 'Sarah', 'Smith', NULL, NULL, 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
-    ('10000000-0000-0000-0000-000000000022', 'parent2@sbtm.demo', crypt('Admin123!', gen_salt('bf')), 'PARENT', 'David', 'Johnson', NULL, NULL, 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
-    ('10000000-0000-0000-0000-000000000023', 'parent3@sbtm.demo', crypt('Admin123!', gen_salt('bf')), 'PARENT', 'Mary', 'Williams', NULL, NULL, 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
-    ('10000000-0000-0000-0000-000000000024', 'parent4@sbtm.demo', crypt('Admin123!', gen_salt('bf')), 'PARENT', 'Linda', 'Brown', NULL, NULL, 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
-    ('10000000-0000-0000-0000-000000000025', 'parent5@sbtm.demo', crypt('Admin123!', gen_salt('bf')), 'PARENT', 'New', 'Parent', NULL, NULL, 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
-    ('10000000-0000-0000-0000-000000000026', 'parent6@sbtm.demo', crypt('Admin123!', gen_salt('bf')), 'PARENT', 'Another', 'Parent', NULL, NULL, 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c');
+    ('10000000-0000-0000-0000-000000000011', 'driver1@sbtm.demo', crypt('Admin123!', gen_salt('bf')), 'DRIVER', 'John', 'Driver', 'driver-001', NULL, 'ROUTE-A', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
+    ('10000000-0000-0000-0000-000000000012', 'driver2@sbtm.demo', crypt('Admin123!', gen_salt('bf')), 'DRIVER', 'Mike', 'Schmidt', 'driver-002', NULL, 'ROUTE-B', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
+    ('10000000-0000-0000-0000-000000000013', 'driver3@sbtm.demo', crypt('Admin123!', gen_salt('bf')), 'DRIVER', 'Sarah', 'Lane', 'driver-003', NULL, 'ROUTE-C', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
+    ('10000000-0000-0000-0000-000000000014', 'driver4@sbtm.demo', crypt('Admin123!', gen_salt('bf')), 'DRIVER', 'Tom', 'Cruise', 'driver-004', NULL, NULL, 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
+    ('10000000-0000-0000-0000-000000000015', 'driver5@sbtm.demo', crypt('Admin123!', gen_salt('bf')), 'DRIVER', 'Jerry', 'Seinfeld', 'driver-005', NULL, NULL, 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
+    -- Parents (childRouteIds populated based on students_reference table)
+    ('10000000-0000-0000-0000-000000000021', 'parent1@sbtm.demo', crypt('Admin123!', gen_salt('bf')), 'PARENT', 'Sarah', 'Smith', NULL, 'ROUTE-A', NULL, 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
+    ('10000000-0000-0000-0000-000000000022', 'parent2@sbtm.demo', crypt('Admin123!', gen_salt('bf')), 'PARENT', 'David', 'Johnson', NULL, 'ROUTE-B', NULL, 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
+    ('10000000-0000-0000-0000-000000000023', 'parent3@sbtm.demo', crypt('Admin123!', gen_salt('bf')), 'PARENT', 'Mary', 'Williams', NULL, 'ROUTE-A', NULL, 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
+    ('10000000-0000-0000-0000-000000000024', 'parent4@sbtm.demo', crypt('Admin123!', gen_salt('bf')), 'PARENT', 'Linda', 'Brown', NULL, 'ROUTE-B', NULL, 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
+    ('10000000-0000-0000-0000-000000000025', 'parent5@sbtm.demo', crypt('Admin123!', gen_salt('bf')), 'PARENT', 'New', 'Parent', NULL, 'ROUTE-C', NULL, 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
+    ('10000000-0000-0000-0000-000000000026', 'parent6@sbtm.demo', crypt('Admin123!', gen_salt('bf')), 'PARENT', 'Another', 'Parent', NULL, 'ROUTE-B', NULL, 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c');
 
 -- Operational Data
 INSERT INTO vehicles (id, "schoolId", "licensePlate", status) VALUES

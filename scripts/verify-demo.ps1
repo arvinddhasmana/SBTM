@@ -79,6 +79,33 @@ function Test-ApiList {
     }
 }
 
+function Test-ApiGet {
+    param(
+        [string]$Label,
+        [string]$Url,
+        [hashtable]$Headers,
+        [int]$ExpectedStatus = 200
+    )
+    try {
+        $res = Invoke-RestMethod -Uri $Url -Method GET -Headers $Headers -ErrorAction Stop
+        if ($ExpectedStatus -eq 200) {
+            Write-Host "  OK: $Label" -ForegroundColor Green
+            return $true
+        }
+    }
+    catch {
+        $statusCode = $_.Exception.Response.StatusCode.value__
+        if ($statusCode -eq $ExpectedStatus) {
+            Write-Host "  OK: $Label (expected $ExpectedStatus)" -ForegroundColor Green
+            return $true
+        }
+        Write-Host "  FAIL: $Label -> $statusCode $($_.Exception.Message)" -ForegroundColor Red
+        return $false
+    }
+    Write-Host "  WARN: $Label -> unexpected response" -ForegroundColor Yellow
+    return $false
+}
+
 function Wait-ApiHealth {
     param([string]$Url)
     for ($i = 0; $i -lt 20; $i++) {
@@ -148,6 +175,35 @@ catch {
     Write-Host "  FAIL: API checks -> $($_.Exception.Message)" -ForegroundColor Red
     $allPassed = $false
 }
+
+Write-Host "Authorization checks (live location and students endpoints):" -ForegroundColor Yellow
+try {
+    # Test OSTA Admin access
+    $ostaHeaders = Get-AuthHeader -Email "osta.admin@sbtm.demo"
+    $okOstaLive = Test-ApiGet -Label "OSTA Admin: /routes/locations" -Url "$ApiBase/routes/locations" -Headers $ostaHeaders
+    $okOstaStudents = Test-ApiGet -Label "OSTA Admin: /routes/ROUTE-A/students" -Url "$ApiBase/routes/ROUTE-A/students" -Headers $ostaHeaders
+
+    # Test Parent access (should succeed for their child's route)
+    $parent1Headers = Get-AuthHeader -Email "parent1@sbtm.demo"
+    $okParentLive = Test-ApiGet -Label "Parent1: /routes/ROUTE-A/live-location" -Url "$ApiBase/routes/ROUTE-A/live-location" -Headers $parent1Headers
+
+    # Test Parent access to unassigned route (should fail with 403)
+    $okParentDenied = Test-ApiGet -Label "Parent1: /routes/ROUTE-B/live-location (expect 403)" -Url "$ApiBase/routes/ROUTE-B/live-location" -Headers $parent1Headers -ExpectedStatus 403
+
+    if (-not ($okOstaLive -and $okOstaStudents -and $okParentLive -and $okParentDenied)) {
+        $allPassed = $false
+    }
+}
+catch {
+    Write-Host "  FAIL: Authorization checks -> $($_.Exception.Message)" -ForegroundColor Red
+    $allPassed = $false
+}
+
+Write-Host "GPS data storage verification:" -ForegroundColor Yellow
+Run-Q -Label "Location points in database:" -Sql @"
+SELECT COUNT(*) as location_count FROM location_points;
+SELECT route_id, COUNT(*) as points FROM location_points GROUP BY route_id ORDER BY route_id;
+"@
 
 if ($allPassed) {
     Write-Host "Verification passed." -ForegroundColor Green

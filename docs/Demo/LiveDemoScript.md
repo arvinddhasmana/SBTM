@@ -5,17 +5,23 @@
 - Roles: Admin, Driver, Parent
 - Devices: Laptop for admin, phone for driver, browser for parent
 
-## Preparation (2 min)
-Run the simulator after services and seed data are ready:
+## Preparation (5 min)
 
+### Step 1: Reset the demo database
+This ensures a clean state before the demo:
 ```powershell
-.\scripts\simulate-demo.ps1 -IntervalSeconds 5 -Laps 3 -WithPresence
+.\scripts\reset-demo-db.ps1
 ```
 
-This generates live GPS movement, emergency alerts, and a simulated late notice.
-Edit [scripts/demo-gps-track.json](../../scripts/demo-gps-track.json) to adjust routes or waypoints.
-Use `-TrackName seeded-route-a-only` to focus on one route.
-Use `-StrictSeedValidation` to ensure the track matches seeded IDs.
+Wait for completion and verify all checks pass.
+
+### Step 2: Start the simulator
+Run the simulator to generate live GPS movement, emergency alerts, and presence events:
+```powershell
+.\scripts\simulate-demo.ps1 -IntervalSeconds 5 -Laps 3
+```
+
+Leave this running in a separate terminal window during the demo.
 
 ## Scene 1: Admin Overview (5 min)
 1. Open Admin Dashboard.
@@ -56,3 +62,21 @@ curl -X POST http://localhost:3001/api/v1/student-presence-events \
 - Confirm next steps for notifications and route optimization.
 - Mention that late notifications are simulated as OTHER alerts in the demo.
 - Run `./scripts/verify-demo.ps1` to validate seeded data and logins after setup.
+
+## Troubleshooting During Demo
+
+### Maps Not Showing Bus Movement
+- **Symptoms:** Map displays but no bus markers appear
+- **Check:** Browser console (F12) for 403 Forbidden errors
+- **Fix:** Re-run `.\scripts\reset-demo-db.ps1` to reset authorization data
+
+### Emergency Alerts Not Appearing
+- **Symptoms:** Simulator shows "Emergency PANIC alert sent" but Admin Dashboard doesn't show it
+- **Check:** Verify simulator lap is divisible by EmergencyEvery parameter (default: every 3rd lap)
+- **Fix:** Manually refresh Admin Dashboard page
+
+### Parent Portal Shows "Offline"
+- **Symptoms:** Portal shows "No active route" or "Offline" status
+- **Check:** Verify simulator is running and shows green "BUS-001: Start" messages
+- **Check:** Console for 403 errors on /routes/:routeId/live-location
+- **Fix:** Verify parent user has childRouteIds populated (run verify-demo.ps1)

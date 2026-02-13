@@ -46,45 +46,40 @@ C4Container
   Rel(gateway, db, "Read/Write")
 ```
 
-## 1. One-Command Demo Setup (Recommended)
+## 1. Demo Setup - Complete Reset (Recommended)
+
+This is the **primary recommended approach** for setting up the demo environment. It ensures a clean, consistent state every time.
 
 ### Windows (PowerShell)
 
 ```powershell
-# From repo root
-.\scripts\demo-setup.ps1
+# From repo root - this will reset everything
+.\scripts\reset-demo-db.ps1
 ```
 
-### macOS/Linux (bash)
+This command will:
+1. Stop all containers and delete volumes (`docker compose down -v`)
+2. Rebuild and start all services (`docker compose up -d --build`)
+3. Seed demo data (users, routes, vehicles, students, GPS history)
+4. Run verification checks to ensure everything works
 
-```bash
-# From repo root
-./scripts/demo-setup.sh
+**Optional flags:**
+- `-NoBuild` - Skip Docker rebuild (faster if images are up to date)
+- `-SkipVerify` - Skip verification step (not recommended)
+
+### Verification After Setup
+
+Check that everything is working:
+```powershell
+.\scripts\verify-demo.ps1
 ```
 
-Both commands will:
-1) Start all services with Docker Compose.
-2) Seed demo data (users, routes, vehicles, students).
+This will verify:
+- Database tables and seeded data
+- User login credentials
+- API endpoint authorization (including live location and student presence)
 
-If you do not want to rebuild containers, pass `--no-build` (bash) or `-NoBuild` (PowerShell).
-
-## 2. Two-Command Setup (Fallback)
-
-If the one-command setup fails, use this fallback:
-
-```bash
-# Start all services
-Docker compose up -d --build
-
-# Seed demo data
-# Windows:
-.\scripts\seed-demo-data.ps1
-
-# macOS/Linux:
-./scripts/seed-demo-data.sh
-```
-
-## 3. Demo Credentials (Seeded)
+## 2. Demo Credentials (Seeded)
 
 Suggested login credentials (all use the same password in demo environments):
 
@@ -95,7 +90,7 @@ Suggested login credentials (all use the same password in demo environments):
 
 If login fails, run the seeding script again and use the password printed by the script.
 
-## 4. Access the Demo Apps Started by Docker Compose
+## 3. Access the Demo Apps Started by Docker Compose
 
 `docker compose up -d --build` already starts these web apps and backend services in containers.
 
@@ -134,13 +129,13 @@ npx expo start
 - Set EXPO_PUBLIC_API_URL to http://<your-ip>:3001/api/v1 on physical devices.
 - Android emulator default: http://10.0.2.2:3001/api/v1
 
-## 5. Run the Demo Simulator (GPS + Alerts + Route Events)
+## 4. Run the Demo Simulator (GPS + Alerts + Route Events)
 
 After services are up and data is seeded, run the simulator to generate live GPS movement, emergency alerts, late notices, and route start/complete entries.
 
 ```powershell
 # From repo root
-.\scripts\simulate-demo.ps1 -IntervalSeconds 5 -Laps 3 -WithPresence
+.\scripts\simulate-demo.ps1 -IntervalSeconds 5 -Laps 3
 ```
 
 To customize routes and waypoints without editing the script, update:
@@ -164,7 +159,12 @@ You can tune the pacing:
 - Increase `-Laps` for longer demos.
 - Use `-NoEmergency` or `-NoLate` to mute those events.
 
-## 6. Demo Story (End-to-End Use Cases)
+**Troubleshooting:**
+- If you see "GPS failed" errors: Check that API Gateway is running (`docker ps`)
+- If maps don't update: Check browser console for 403 errors (authentication issue)
+- If GPS posts succeed but maps are empty: Run `.\scripts\verify-demo.ps1` to check authorization
+
+## 5. Demo Story (End-to-End Use Cases)
 
 This story demonstrates the main use cases for Board Admin, School Admin, Driver, and Parent.
 
@@ -252,7 +252,7 @@ curl -X POST http://localhost:3001/api/v1/video-events \
 
 Then open the Videos page in the Admin Dashboard.
 
-## 7. Workarounds and Narration (If Features Are Missing)
+## 6. Workarounds and Narration (If Features Are Missing)
 
 - Board/School management UI: use the API calls above and narrate the UI that will consume them.
 - Route optimization: explain that the API returns a placeholder polyline and will be wired to map providers later.
@@ -260,7 +260,7 @@ Then open the Videos page in the Admin Dashboard.
 - Video playback: show the event list and narrate how playback will be streamed from the Video Service.
 - BLE tags: use manual presence events for now; BLE scanning can be narrated.
 
-## 8. Validation and QA Checks
+## 7. Validation and QA Checks
 
 Use these checks to confirm everything is working with real data:
 
@@ -271,7 +271,7 @@ Use these checks to confirm everything is working with real data:
 - Compliance list and inspections from gateway endpoints
 - Run seed verification script: `./scripts/verify-demo.ps1`
 
-## 9. Reference Links
+## 8. Reference Links
 
 - [docs/Implementation/Module-8-ApiGateway.md](../Implementation/Module-8-ApiGateway.md)
 - [docs/Implementation/Module-7-AdminDashboard.md](../Implementation/Module-7-AdminDashboard.md)
