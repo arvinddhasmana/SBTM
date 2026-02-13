@@ -82,6 +82,21 @@ Detailed documentation is available in the `docs/` folder:
 - **[Use Cases](./docs/Business/UseCases.md)**: Current vs target use cases.
 - **[User Journey](./docs/Business/UserJourney.md)**: Current user flows.
 
+### 📋 Product Requirements (Historical Baseline)
+
+Original specifications as defined in the Phase 1 PRD:
+
+- **[Baseline Architecture](./docs/prd/ARCHITECTURE.md)**
+- **[Phase 1 Requirements](./docs/prd/Requirements%20Phase1.md)**
+- **[Module 1 - GPS Tracking](./docs/prd/Module%201%20GPS%20Tracking%20Service.md)**
+- **[Module 2 - Parent App](./docs/prd/Module%202%20Parent%20App.md)**
+- **[Module 3 - Driver App](./docs/prd/Module%203%20-%20Driver%20App%20Mobile.md)**
+- **[Module 4 - Emergency Alerts](./docs/prd/Module%204%20-%20Emergency%20Alerts%20Service.md)**
+- **[Module 5 - Video Service](./docs/prd/Module%205%20-%20Video%20Capture%20Integration.md)**
+- **[Module 6 - Student Presence](./docs/prd/Module%206%20-%20Student%20Presence%20Detection.md)**
+- **[Module 7 - Admin Dashboard](./docs/prd/Module%207%20-%20Admin%20Dashboard.md)**
+- **[Module 8 - API Gateway](./docs/prd/Module%208%20-%20Cloud%20Backend%20and%20API%20Gateway.md)**
+
 ### 🎯 Demo & Testing Guides
 
 - **[Demo Setup Guide](./docs/Demo/DEMO_SETUP_GUIDE.md)**: Complete guide for setting up the demo environment.
