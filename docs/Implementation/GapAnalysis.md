@@ -3,6 +3,9 @@
 ## Summary
 Multi-tenant concepts exist in the API gateway (boards, schools, roles), and downstream services now enforce `school_id` filtering. This section highlights the remaining deltas between the V2 multi-tenant design and the current implementation.
 
+> **Note**: For a detailed breakdown of core application mock states and a structured rollout plan, refer to the [Functional Gaps Report](./v1/FunctionalGapsReport.md) and [Phase-Wise Implementation Plan](./v1/PhaseWiseImplementationPlan.md).
+
+
 ## Data Model Gaps
 - `board_id` is not stored in downstream services (gateway enforces board scope).
 - No row-level security or database-level tenant enforcement.
