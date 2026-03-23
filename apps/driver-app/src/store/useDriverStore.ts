@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { Driver, Route, Student } from '../types';
 import { AuthService } from '../services/auth.service';
+import { PresenceService } from '../services/presence.service';
 
 interface DriverState {
     driver: Driver | null;
@@ -50,7 +51,7 @@ export const useDriverStore = create<DriverState>((set, get) => ({
     setStudents: (students) => set({ students }),
 
     toggleStudentStatus: (studentId) => {
-        const { students } = get();
+        const { students, activeRoute, driver } = get();
         const updated = students.map((s) => {
             if (s.id === studentId) {
                 const nextStatus = s.status === 'NOT_BOARDED'
@@ -64,7 +65,17 @@ export const useDriverStore = create<DriverState>((set, get) => ({
         });
         set({ students: updated as Student[] });
 
-        // TODO: Call API to update status
-        // api.post('/student-presence-events', ...)
+        const student = updated.find((s) => s.id === studentId);
+        if (student && activeRoute && driver && (student.status === 'BOARDED' || student.status === 'ALIGHTED')) {
+            // TODO: replace hardcoded vehicleId with the driver's assigned vehicle from route data
+            PresenceService.sendPresenceEvent({
+                studentId,
+                vehicleId: 'bus-123',
+                routeId: activeRoute.id,
+                eventType: student.status === 'BOARDED' ? 'BOARD' : 'ALIGHT',
+                source: 'MANUAL',
+                timestamp: new Date().toISOString(),
+            });
+        }
     },
 }));

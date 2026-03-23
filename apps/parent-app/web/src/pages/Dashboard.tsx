@@ -1,12 +1,18 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { MapPin, School, Home, HelpCircle, ArrowRight } from 'lucide-react';
+import { MapPin, School, Home, HelpCircle, ArrowRight, AlertTriangle } from 'lucide-react';
 import type { Child } from '../types';
+import { useAlerts } from '../hooks/useAlerts';
 
 const Dashboard: React.FC = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
+
+    // Collect unique route IDs across all children to detect any active alert
+    const routeIds = user?.children.map((c) => c.routeId) ?? [];
+    const firstRouteId = routeIds[0];
+    const { alert } = useAlerts(firstRouteId);
 
     if (!user) return null;
 
@@ -45,6 +51,16 @@ const Dashboard: React.FC = () => {
     return (
         <div className="px-4 sm:px-0">
             <h1 className="text-2xl font-bold text-gray-900 mb-6">My Children</h1>
+
+            {alert && (
+                <div className="mb-6 flex items-start gap-3 rounded-lg border border-red-300 bg-red-50 p-4 text-red-800">
+                    <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0" />
+                    <div>
+                        <p className="font-semibold">Emergency Alert</p>
+                        <p className="text-sm">{alert.message}</p>
+                    </div>
+                </div>
+            )}
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {user.children.map((child) => (

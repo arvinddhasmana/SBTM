@@ -1,4 +1,9 @@
 import api from './api.service';
+import { OfflineQueueService } from './offline-queue.service';
+
+async function postEvent(endpoint: string, payload: unknown): Promise<void> {
+    await api.post(endpoint, payload);
+}
 
 export const EmergencyService = {
     triggerPanic: async (
@@ -7,19 +12,28 @@ export const EmergencyService = {
         location: { lat: number; lng: number },
         driverId?: string,
     ) => {
+        const body = {
+            vehicleId,
+            routeId,
+            eventType: 'PANIC_BUTTON',
+            timestamp: new Date().toISOString(),
+            location,
+            driverId,
+        };
+
         try {
-            await api.post('/emergency-events', {
-                vehicleId,
-                routeId,
-                eventType: 'PANIC_BUTTON',
-                timestamp: new Date().toISOString(),
-                location,
-                driverId,
-            });
+            await api.post('/emergency-events', body);
             console.log('Emergency event sent');
+            // Flush any previously buffered emergency events now that we're online
+            await OfflineQueueService.flush(postEvent);
         } catch (error) {
-            console.error('Failed to send emergency event', error);
-            // TODO: Queue for retry if offline
+            console.error('Failed to send emergency event, buffering for retry', error);
+            await OfflineQueueService.enqueue('emergency', '/emergency-events', body);
         }
-    }
+    },
+
+    /** Flush buffered emergency events. Call when network connectivity is restored. */
+    flushOfflineQueue: async () => {
+        await OfflineQueueService.flush(postEvent);
+    },
 };
