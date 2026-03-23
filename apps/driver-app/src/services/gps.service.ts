@@ -1,8 +1,13 @@
 import * as Location from 'expo-location';
 import api from './api.service';
 import { LocationPoint } from '../types';
+import { OfflineQueueService } from './offline-queue.service';
 
 let locationSubscription: Location.LocationSubscription | null = null;
+
+async function postLocation(endpoint: string, payload: unknown): Promise<void> {
+    await api.post(endpoint, payload);
+}
 
 export const GPSService = {
     requestPermissions: async () => {
@@ -19,6 +24,9 @@ export const GPSService = {
         if (locationSubscription) {
             locationSubscription.remove();
         }
+
+        // Flush any previously buffered GPS events now that we're online
+        await OfflineQueueService.flush(postLocation);
 
         locationSubscription = await Location.watchPositionAsync(
             {
@@ -38,16 +46,13 @@ export const GPSService = {
 
                 console.log('GPS Update:', point);
 
+                const body = { vehicleId, routeId, driverId, ...point };
+
                 try {
-                    await api.post('/routes/locations', {
-                        vehicleId,
-                        routeId,
-                        driverId,
-                        ...point
-                    });
+                    await api.post('/routes/locations', body);
                 } catch (error) {
-                    console.error('Failed to send GPS location', error);
-                    // TODO: Implement offline buffering here
+                    console.error('Failed to send GPS location, buffering for retry', error);
+                    await OfflineQueueService.enqueue('gps', '/routes/locations', body);
                 }
             }
         );
@@ -62,5 +67,10 @@ export const GPSService = {
 
     getCurrentLocation: async () => {
         return await Location.getCurrentPositionAsync({});
-    }
+    },
+
+    /** Flush buffered GPS events. Call when network connectivity is restored. */
+    flushOfflineQueue: async () => {
+        await OfflineQueueService.flush(postLocation);
+    },
 };

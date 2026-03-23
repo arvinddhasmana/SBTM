@@ -36,6 +36,15 @@ export interface LiveLocationResponse {
     status?: string;
 }
 
+export interface ActiveAlert {
+    id: string;
+    routeId: string;
+    vehicleId: string;
+    eventType: string;
+    message: string;
+    createdAt: string;
+}
+
 export const parentApi = {
     async login(email: string, password: string): Promise<AuthLoginResponse> {
         const response = await apiClient.post<AuthLoginResponse>('/api/v1/auth/login', {
@@ -53,5 +62,13 @@ export const parentApi = {
     async getLiveLocation(routeId: string): Promise<LiveLocationResponse> {
         const response = await apiClient.get<LiveLocationResponse>(`/api/v1/routes/${routeId}/live-location`);
         return response.data;
+    },
+
+    async getActiveAlert(routeId: string): Promise<ActiveAlert | null> {
+        const response = await apiClient.get<{ alertActive: boolean; message: string } & Partial<ActiveAlert>>(
+            `/api/v1/alerts/parent-view/${routeId}`
+        );
+        if (!response.data.alertActive) return null;
+        return response.data as ActiveAlert;
     },
 };
