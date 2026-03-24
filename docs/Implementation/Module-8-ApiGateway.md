@@ -3,6 +3,11 @@
 ## Status
 Implemented and running in Docker Compose.
 
+## Source of Truth
+- Current implementation: this document
+- Upgrade gaps: `docs/prd/v1/UpgradePlan/GapAnalysis.md`
+- Planned delivery phases: `docs/prd/v1/UpgradePlan/PhaseWiseImplementationPlan.md` Phases 4 and 5
+
 ## Location
 - `services/api-gateway`
 
@@ -48,3 +53,4 @@ Implemented and running in Docker Compose.
 ## Gaps / Next Steps
 - Organization management UI (board/school admin)
 - Map provider integration for route optimization
+- Service-to-service trust and deeper tenant hardening remain future work.

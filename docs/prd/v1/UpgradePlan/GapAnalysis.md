@@ -1,13 +1,23 @@
 # SBTM v1 Upgrade Gap Analysis
 
+- Document owner: Product and Engineering
+- Last reviewed: 2026-03-24
+- Primary use: Verified gap inventory between the current implementation and the v1 target
+
 ## Purpose
 This analysis compares the revised v1 design in `docs/Design/v1`, the business and demo expectations in `docs/Business` and `docs/Demo`, and the current implementation across the apps and services. The goal is to identify the remaining deltas that matter for the upgrade plan, while correcting assumptions from earlier gap notes that are no longer accurate.
 
 Related documents:
-- [FunctionalGapsReport.md](./FunctionalGapsReport.md)
 - [PhaseWiseImplementationPlan.md](./PhaseWiseImplementationPlan.md)
+- [../../../Design/v1/Architecture.md](../../../Design/v1/Architecture.md)
+- [../../../Design/v1/EventCatalog.md](../../../Design/v1/EventCatalog.md)
+- [../../../Business/Requirements.md](../../../Business/Requirements.md)
+- [../../../Test/TestingGuide.md](../../../Test/TestingGuide.md)
+- [../../../Demo/DEMO_SETUP_GUIDE.md](../../../Demo/DEMO_SETUP_GUIDE.md)
 
 ## Executive Summary
+The current implementation already delivers a meaningful multi-service prototype: gateway auth and RBAC, GPS ingest and history, emergency alerts, student presence processing, compliance, video, student management, a working admin dashboard, a working parent portal, and a driver app with offline buffering.
+
 The platform is materially ahead of the earlier gap documentation in a few areas:
 - Multi-tenant foundations are in place in the API gateway and downstream services via `school_id` filtering.
 - The driver app already has an AsyncStorage-backed offline queue for GPS, emergency, and presence events.
@@ -56,7 +66,56 @@ The main v1 gaps are now concentrated in end-to-end event consumption, parent-fa
 
 ## Detailed Gap Analysis
 
-### 1. Event-Driven Architecture Is Partial, Not Complete
+### 1. Core Application Workflow Gaps
+
+#### 1.1 Driver App
+Confirmed implemented:
+- Login, route selection, GPS tracking, panic alert submission, and offline queueing.
+- Presence API client for `BOARD` and `ALIGHT` events with offline buffering support.
+
+Confirmed gaps:
+- The roster screen currently changes local student state and is not the definitive presence workflow.
+- BLE and SmartTag scanning is not implemented in the app, despite service-side support for SmartTag detections.
+- Vehicle and route execution state are still partly hardcoded or minimally modeled in the active route flow.
+- Driver operational lifecycle events such as route start, stop progression, and richer driver status telemetry are not fully surfaced.
+
+Impact:
+- Manual safety workflows are inconsistent between UI and backend.
+- The mobile app does not yet function as the reliable presence-capture device envisioned in v1.
+
+#### 1.2 Parent App
+Confirmed implemented:
+- Login, child list retrieval, and live route tracking via polling.
+- Active alert polling for a route.
+
+Confirmed gaps:
+- No push notifications for alert, boarding, alighting, delay, or route-completion events.
+- No SSE client usage even though the alerts backend exposes an SSE stream.
+- No absence reporting or parent-initiated exception workflow.
+- No notification inbox or delivery-state visibility.
+
+Impact:
+- The parent experience remains observational rather than proactive.
+- Safety communication objectives are only partially met.
+
+#### 1.3 Admin Dashboard
+Confirmed implemented:
+- Pages for dashboard, alerts, routes, route planner, students, vehicles, videos, compliance, boards, and schools.
+- Integration with gateway-backed APIs and live alert and presence channels.
+
+Confirmed gaps:
+- Route planning still uses mocked optimization output and placeholder polyline data.
+- Boards and schools pages provide basic listing only, not full tenant administration.
+- No invitation or user provisioning workflows for board admins, school admins, drivers, or parents.
+- OSTA-wide and board-level cross-tenant operational views are limited.
+
+Impact:
+- The dashboard is viable for internal demos and operations monitoring.
+- It is not yet a complete administration surface for multi-tenant onboarding and operations.
+
+### 2. Platform and Service Gaps
+
+#### 2.1 Event-Driven Architecture Is Partial, Not Complete
 The v1 design assumes business events are first-class integration points. In practice:
 - Emergency alerts publish BullMQ jobs.
 - Presence events publish BullMQ jobs.
@@ -68,60 +127,81 @@ Impact:
 - The system behaves like a mixed synchronous/prototype architecture rather than the event-first architecture described in v1.
 - Downstream capabilities such as parent notifications, analytics, and geofencing cannot be added cleanly without finishing the event pipeline.
 
-### 2. Parent Experience Does Not Yet Meet v1 or Business Expectations
-The parent portal supports basic tracking, but the highest-value safety workflows remain incomplete:
-- No push notifications for alerts, boarding, alighting, or delays.
-- No notification center or history.
-- No absence reporting workflow.
-- No SSE client wiring, even though the alerts service exposes an SSE stream.
+#### 2.2 GPS Intelligence and Geofencing
+Confirmed implemented:
+- GPS tracking service persists location points and supports live and history retrieval.
 
 Impact:
-- The current parent experience is passive and polling-based.
-- Business objectives around safety communication and proactive updates are only partially met.
+- Fleet visibility exists, but operational intelligence is limited.
+- Delay, deviation, and predictive workflows cannot be trusted yet.
 
-### 3. Driver App Is Operational but Not Yet a Full Presence Device
-The driver app has strong groundwork:
-- Offline queue is implemented.
-- GPS tracking is implemented.
-- Emergency event posting is implemented.
-- A presence API client exists.
+Confirmed gaps:
+- No `location.updated` event emission.
+- No geofencing or route-deviation logic.
+- No ETA engine or path adherence analytics.
+- No provider-backed routing engine to replace mocked route optimization.
 
-However, the active mobile workflow is still incomplete:
-- Roster interactions currently toggle local state rather than reliably invoking the presence API flow.
-- BLE/SmartTag scanning is not implemented in the mobile app.
-- Route-state updates and richer route execution telemetry are still limited.
-
-Impact:
-- The service layer supports presence better than the mobile workflow does.
-- Demo and business expectations for boarding/alighting automation are only partially met.
-
-### 4. Administrative Workflows Need to Move Beyond Basic Monitoring
-The admin dashboard is beyond a stub, but still short of the revised target:
-- Basic boards and schools pages already exist.
-- Fleet, route, student, alert, compliance, and video views exist.
-- Route planner remains backed by mocked optimization output.
-- No invitation and provisioning flows exist for real onboarding.
-- OSTA-wide and board-level operational rollups are limited.
+#### 2.3 Multi-Tenancy, Identity, and Provisioning
+Confirmed implemented:
+- Gateway role checks and tenant scoping.
+- `school_id` filtering in downstream services.
+- Board and school data model support in the platform.
 
 Impact:
-- Monitoring is workable for demo and internal development.
-- True tenant administration and multi-level operational control remain incomplete.
+- Multi-tenant structure exists, but operational onboarding still depends on manual or seeded data flows.
 
-### 5. Security and Compliance Are Prototype-Grade
-Current controls are sufficient for controlled demos, not for the v1 operating model:
-- Tenant isolation is implemented at the application layer, not the database layer.
-- Service-to-service trust is not formally enforced.
-- Audit logging is not centralized across services.
-- Retention and deletion workflows are absent.
+Confirmed gaps:
+- No invitation flow for creating and onboarding users.
+- No unified lifecycle management for parent, driver, and admin accounts.
+- No board-aware enforcement in downstream databases beyond application filtering.
+- No database RLS policies.
+
+Impact:
+- Current controls are sufficient for a controlled demo, not for the full v1 operating model.
+
+#### 2.4 Security, Audit, and Data Lifecycle
+Confirmed implemented:
+- JWT-based auth at the gateway.
+- Compliance-specific audit logging.
 
 Impact:
 - The system does not yet satisfy the full non-functional direction implied by PIPEDA/MFIPPA alignment and enterprise multi-tenant deployment.
+
+Confirmed gaps:
+- No service-to-service authentication.
+- No centralized audit pipeline across all services.
+- No defined retention, archival, purge, or privacy-response workflows.
+- No evidence of production observability standards such as centralized tracing and metrics.
+
+## Demo and Documentation Alignment
+The demo documentation assumes a more complete narrative than the current product actually supports. The key mismatches are:
+- Parent notifications are still narrated as future or simulated behavior.
+- Route optimization is demo-safe but still mocked.
+- Board and school management are partially represented in UI but not fully operable.
+- Presence support exists in backend and partially in mobile code, but the main mobile interaction model is not yet authoritative.
+
+These mismatches do not invalidate the demo, but they should be treated as guided-demo limitations rather than production-complete workflows.
 
 ## Corrections to Earlier Gap Assumptions
 - Admin dashboard does expose basic board and school pages; the gap is incomplete management workflow, not complete absence of UI.
 - Emergency alerts SSE support exists in the backend; the gap is client adoption and broader parent delivery.
 - Driver presence posting support exists in the mobile codebase; the gap is that the main roster flow is not fully wired to that path and BLE scanning is still missing.
 - Offline buffering in the driver app is implemented and should move out of the “pending” category.
+
+## Reclassified Items From Earlier Reports
+The following items should no longer be reported as entirely missing:
+- Driver offline resilience.
+- Driver presence API integration layer.
+- Admin board and school UI presence.
+- Alerts SSE backend support.
+
+The following remain genuinely incomplete and should stay in the active gap list:
+- notification delivery,
+- GPS event publication,
+- BLE scanning in the driver app,
+- geofencing and route deviation alerts,
+- account provisioning and invitations,
+- RLS, service-to-service auth, centralized audit, and retention controls.
 
 ## Recommended Upgrade Priorities
 1. Complete the event-consumption and parent notification path.

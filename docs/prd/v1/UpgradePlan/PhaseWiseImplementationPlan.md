@@ -1,6 +1,19 @@
 # Phase-Wise Implementation Plan (Revised v1)
 
+- Document owner: Product and Engineering
+- Last reviewed: 2026-03-24
+- Primary use: Delivery sequencing, scope, and acceptance criteria for the upgrade path
+
 This plan is based on the revised v1 design and a code-verified assessment of the current implementation. It focuses on the shortest path from the current prototype to a coherent, demo-ready, and then production-oriented v1 platform.
+
+## Related Documents
+
+- [GapAnalysis.md](GapAnalysis.md)
+- [../../../Business/Requirements.md](../../../Business/Requirements.md)
+- [../../../Design/v1/Architecture.md](../../../Design/v1/Architecture.md)
+- [../../../Design/v1/TechnicalSpecifications.md](../../../Design/v1/TechnicalSpecifications.md)
+- [../../../Test/TestingGuide.md](../../../Test/TestingGuide.md)
+- [../../../Demo/DEMO_SETUP_GUIDE.md](../../../Demo/DEMO_SETUP_GUIDE.md)
 
 ## Planning Principles
 - Build on what already exists instead of reworking implemented foundations.

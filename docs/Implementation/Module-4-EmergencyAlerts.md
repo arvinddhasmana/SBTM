@@ -3,6 +3,11 @@
 ## Status
 Implemented and running in Docker Compose.
 
+## Source of Truth
+- Current implementation: this document
+- Upgrade gaps: `docs/prd/v1/UpgradePlan/GapAnalysis.md`
+- Planned delivery phase: `docs/prd/v1/UpgradePlan/PhaseWiseImplementationPlan.md` Phase 1
+
 ## Location
 - `services/emergency-alerts`
 
@@ -29,3 +34,4 @@ Implemented and running in Docker Compose.
 - Parent/driver notification integration
 - Service-to-service authentication
 - Tenant-aware filtering is enforced by `school_id`
+- Queue consumers and provider-backed delivery are still incomplete.

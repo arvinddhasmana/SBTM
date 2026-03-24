@@ -3,6 +3,11 @@
 ## Status
 Implemented and running in Docker Compose.
 
+## Source of Truth
+- Current implementation: this document
+- Upgrade gaps: `docs/prd/v1/UpgradePlan/GapAnalysis.md`
+- Planned delivery phase: `docs/prd/v1/UpgradePlan/PhaseWiseImplementationPlan.md` Phase 5
+
 ## Location
 - `services/compliance-management`
 
@@ -23,3 +28,4 @@ Implemented and running in Docker Compose.
 
 ## Gaps / Next Steps
 - Role-based access and audit policy enforcement
+- Centralized cross-service audit pipeline and retention integration

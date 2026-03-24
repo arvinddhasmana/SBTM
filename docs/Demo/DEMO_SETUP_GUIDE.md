@@ -1,6 +1,20 @@
 # SBTM Demo Setup Guide (All Features)
 
+- Document owner: QA and Engineering
+- Last reviewed: 2026-03-24
+- Primary use: Demo environment setup, seeded data, and operator runbook
+
 This guide is for new developers and QA team members. It walks you through a full, end-to-end demo story that covers Board Admin, School Admin, Driver, and Parent roles. It includes one-command setup, seeded data, and workarounds for features that are not implemented yet.
+
+This document is the operational setup guide for demos. For current capability gaps, limitations, and phase sequencing, use `docs/prd/v1/UpgradePlan/GapAnalysis.md` and `docs/prd/v1/UpgradePlan/PhaseWiseImplementationPlan.md`.
+
+## Related Documents
+
+- [LiveDemoScript.md](LiveDemoScript.md)
+- [QUICK_REFERENCE.md](QUICK_REFERENCE.md)
+- [GapAnalysis.md](../prd/v1/UpgradePlan/GapAnalysis.md)
+- [PhaseWiseImplementationPlan.md](../prd/v1/UpgradePlan/PhaseWiseImplementationPlan.md)
+- [TestingGuide.md](../Test/TestingGuide.md)
 
 If you need a shorter walkthrough, use [LiveDemoScript.md](LiveDemoScript.md).
 
@@ -258,6 +272,12 @@ Then open the Videos page in the Admin Dashboard.
 - Route optimization: explain that the API returns a placeholder polyline and will be wired to map providers later.
 - Parent notifications: the simulator uses an alert event type of OTHER to represent a delay.
 - Video playback: show the event list and narrate how playback will be streamed from the Video Service.
+
+## 7. Scope Boundaries
+
+- Keep this guide focused on environment setup, seeded data, simulator usage, and demo execution.
+- Do not treat this guide as the authoritative source for product completeness or upgrade status.
+- When demoing a missing or partially implemented feature, point back to `docs/prd/v1/UpgradePlan/GapAnalysis.md` for the verified limitation.
 - BLE tags: use manual presence events for now; BLE scanning can be narrated.
 
 ## 7. Validation and QA Checks

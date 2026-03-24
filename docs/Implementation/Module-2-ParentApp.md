@@ -3,6 +3,11 @@
 ## Status
 Implemented with live gateway integration.
 
+## Source of Truth
+- Current implementation: this document
+- Upgrade gaps: `docs/prd/v1/UpgradePlan/GapAnalysis.md`
+- Planned delivery phase: `docs/prd/v1/UpgradePlan/PhaseWiseImplementationPlan.md` Phase 1
+
 ## Location
 - `apps/parent-app/web`
 
@@ -21,6 +26,7 @@ Implemented with live gateway integration.
 
 ## Gaps / Next Steps
 - Live notifications from backend services
+- SSE-based alert delivery and notification history
 - Multi-child/multi-school data from student management
 
 ## Mobile App

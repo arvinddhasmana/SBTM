@@ -1,5 +1,19 @@
 # SBTM v1 – Technical Specifications
 
+- Document owner: Engineering
+- Last reviewed: 2026-03-24
+- Primary use: Target-state technical baseline, interfaces, and non-functional design
+
+This document describes the target v1 technical baseline. It should be read with the current-state implementation notes in `docs/Implementation` and the verified upgrade gaps in `docs/prd/v1/UpgradePlan/GapAnalysis.md`.
+
+## Related Documents
+
+- [Architecture.md](Architecture.md)
+- [EventCatalog.md](EventCatalog.md)
+- [GapAnalysis.md](../../prd/v1/UpgradePlan/GapAnalysis.md)
+- [PhaseWiseImplementationPlan.md](../../prd/v1/UpgradePlan/PhaseWiseImplementationPlan.md)
+- [TestingGuide.md](../../Test/TestingGuide.md)
+
 ## 1. Technology Stack
 
 | Layer | Technology | Notes |
@@ -190,3 +204,9 @@ interface OfflineEvent {
 - Driver App tokens are stored in `expo-secure-store` (Keychain / Keystore backed).
 - Parent App tokens are stored in `localStorage` (web); migrate to HttpOnly cookie for production.
 - All events carry `schoolId`; the API gateway validates that the caller's JWT scope includes the target school.
+
+## 7. Prototype and Delivery Notes
+
+- The current implementation already runs the gateway, GPS, alerts, presence, video, student-management, and compliance services in Docker Compose.
+- Parent alert delivery, BLE-backed mobile presence, GPS event publishing, and provider-backed route intelligence remain phased upgrade work rather than completed functionality.
+- Demo and test documents should reference this file for target-state technical direction, not as proof that the implementation is already complete.

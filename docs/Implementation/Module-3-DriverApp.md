@@ -3,6 +3,11 @@
 ## Status
 Implemented with live gateway integration.
 
+## Source of Truth
+- Current implementation: this document
+- Upgrade gaps: `docs/prd/v1/UpgradePlan/GapAnalysis.md`
+- Planned delivery phase: `docs/prd/v1/UpgradePlan/PhaseWiseImplementationPlan.md` Phase 2
+
 ## Location
 - `apps/driver-app`
 
@@ -17,6 +22,7 @@ Implemented with live gateway integration.
 - Schedule and route selection
 - GPS tracking via `expo-location`
 - Panic button posting to emergency endpoint
+- Offline queueing for GPS, emergency, and presence submissions
 - Local roster status toggles
 
 ## Integration Notes
@@ -26,4 +32,4 @@ Implemented with live gateway integration.
 
 ## Gaps / Next Steps
 - Presence event integration
-- Offline buffering and retry queue
+- BLE scanning and authoritative roster-to-presence workflow

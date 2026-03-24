@@ -3,6 +3,11 @@
 ## Status
 Implemented and running in Docker Compose.
 
+## Source of Truth
+- Current implementation: this document
+- Upgrade gaps: `docs/prd/v1/UpgradePlan/GapAnalysis.md`
+- Planned delivery phases: `docs/prd/v1/UpgradePlan/PhaseWiseImplementationPlan.md` Phases 1 and 2
+
 ## Location
 - `services/student-presence`
 
@@ -27,3 +32,4 @@ Implemented and running in Docker Compose.
 ## Gaps / Next Steps
 - Parent notifications
 - Driver app BLE integration
+- Driver roster flow still needs authoritative API wiring.

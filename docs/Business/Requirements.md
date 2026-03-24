@@ -1,5 +1,21 @@
 # SBTM Business Requirements (Current Scope)
 
+- Document owner: Product and Delivery
+- Last reviewed: 2026-03-24
+- Primary use: Business scope, expected outcomes, and non-functional targets
+
+This document captures business scope and desired outcomes. For code-verified current implementation status, use `docs/Implementation/*`. For verified delivery gaps and sequencing, use `docs/prd/v1/UpgradePlan/GapAnalysis.md` and `docs/prd/v1/UpgradePlan/PhaseWiseImplementationPlan.md`.
+
+## Related Documents
+
+- [UseCases.md](UseCases.md)
+- [Features.md](Features.md)
+- [UserJourney.md](UserJourney.md)
+- [GapAnalysis.md](../prd/v1/UpgradePlan/GapAnalysis.md)
+- [PhaseWiseImplementationPlan.md](../prd/v1/UpgradePlan/PhaseWiseImplementationPlan.md)
+- [TestingGuide.md](../Test/TestingGuide.md)
+- [DEMO_SETUP_GUIDE.md](../Demo/DEMO_SETUP_GUIDE.md)
+
 ## Objectives
 - Provide real-time visibility into school bus location and status.
 - Improve student safety with presence tracking and emergency response.
@@ -20,13 +36,19 @@
 - Driver mobile app (Expo) with gateway auth, schedule, GPS updates, and panic button.
 - Parent web portal (Vite) with gateway auth and live location polling.
 
+## In-scope (Partially Implemented)
+- Parent safety communication loop: alerts service SSE exists, but parent-facing push delivery, notification history, and absence workflows are not complete.
+- Driver presence workflow: presence services and API clients exist, but the main roster UX is not yet the authoritative backend-backed flow and BLE capture is not complete in the app.
+- Organization management: board and school models, APIs, and basic listing views exist, but onboarding, invitations, and lifecycle workflows are not complete.
+- Route planning intelligence: route CRUD exists, but optimization output and map geometry remain placeholder quality.
+
 ## Planned / Not Yet Implemented
-- Board/school admin UX for organization management in the admin dashboard.
+- End-to-end notification delivery with provider-backed push, SMS, or email fan-out.
+- Parent-facing notification inbox, delivery-state visibility, and absence reporting.
+- GPS event publication, geofencing, route deviation detection, and ETA or path-intelligence workflows.
 - Real map-based route optimization integrated with external map APIs.
-- Geofencing, route deviation detection, and automated escalation.
-- Real parent notifications (push/SMS/email) and absence reporting.
-- Unified identity and provisioning for parent/driver/admin accounts across services.
-- Production-grade audit logging and retention policies across all services.
+- Invitation-based identity lifecycle and provisioning for parent, driver, school-admin, and board-admin accounts.
+- Database-level tenant hardening, service-to-service trust, centralized audit pipelines, and data-retention controls.
 
 ## Non-Functional Requirements (Target)
 - Data residency in Canada (PIPEDA/MFIPPA alignment).

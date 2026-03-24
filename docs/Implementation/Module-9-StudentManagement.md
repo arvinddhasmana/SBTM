@@ -3,6 +3,11 @@
 ## Status
 Implemented and running in Docker Compose.
 
+## Source of Truth
+- Current implementation: this document
+- Upgrade gaps: `docs/prd/v1/UpgradePlan/GapAnalysis.md`
+- Planned delivery phases: `docs/prd/v1/UpgradePlan/PhaseWiseImplementationPlan.md` Phases 2 and 4
+
 ## Location
 - `services/student-management`
 
@@ -27,3 +32,4 @@ Implemented and running in Docker Compose.
 
 ## Gaps / Next Steps
 - Parent/driver integration for roster and presence display
+- Invitation-aware onboarding and lifecycle integration

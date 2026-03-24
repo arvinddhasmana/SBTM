@@ -1,8 +1,25 @@
 # SBTM v1 – Event-Driven Architecture
 
+- Document owner: Engineering and Architecture
+- Last reviewed: 2026-03-24
+- Primary use: Target-state system architecture and integration model
+
 ## 1. Overview
 
 The v1 architecture evolves the current request/response model into an **event-driven** platform. Core business operations (GPS tracking, student presence, emergency alerts, notifications) become first-class domain events that flow through a central event bus. Services produce and consume events asynchronously, which decouples producers from consumers and enables real-time notification pipelines without tight coupling.
+
+This document describes the target v1 architecture. For the current implementation baseline and confirmed upgrade gaps, use:
+- `docs/Implementation/*`
+- `docs/prd/v1/UpgradePlan/GapAnalysis.md`
+- `docs/prd/v1/UpgradePlan/PhaseWiseImplementationPlan.md`
+
+## Related Documents
+
+- [TechnicalSpecifications.md](TechnicalSpecifications.md)
+- [EventCatalog.md](EventCatalog.md)
+- [Requirements.md](../../Business/Requirements.md)
+- [GapAnalysis.md](../../prd/v1/UpgradePlan/GapAnalysis.md)
+- [PhaseWiseImplementationPlan.md](../../prd/v1/UpgradePlan/PhaseWiseImplementationPlan.md)
 
 ### Design Principles
 - **Event-First**: State changes are expressed as immutable domain events.
@@ -174,3 +191,9 @@ flowchart LR
 | Parent push notifications | `useAlerts` hook + SSE polling; Notification Service fan-out |
 | Service-to-service auth (planned) | Internal JWT signing (Phase 4) |
 | Row-level security (planned) | PostgreSQL RLS (Phase 4) |
+
+## 9. Source-of-Truth Boundaries
+
+- Use `docs/Design/v1` for target-state architecture and technical design.
+- Use `docs/Implementation` for what exists today in code.
+- Use `docs/prd/v1/UpgradePlan` for the delta between current and target state, plus delivery sequencing.

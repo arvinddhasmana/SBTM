@@ -1,5 +1,18 @@
 # SBTM Live Demo Script
 
+- Document owner: Product, QA, and Engineering
+- Last reviewed: 2026-03-24
+- Primary use: Stakeholder-facing demo narrative and walkthrough script
+
+This script is a presentation flow for stakeholders and internal walkthroughs. It is not the source of truth for implementation status. For verified current gaps and planned completion order, use `docs/prd/v1/UpgradePlan/GapAnalysis.md` and `docs/prd/v1/UpgradePlan/PhaseWiseImplementationPlan.md`.
+
+## Related Documents
+
+- [DEMO_SETUP_GUIDE.md](DEMO_SETUP_GUIDE.md)
+- [QUICK_REFERENCE.md](QUICK_REFERENCE.md)
+- [GapAnalysis.md](../prd/v1/UpgradePlan/GapAnalysis.md)
+- [TestingGuide.md](../Test/TestingGuide.md)
+
 ## Demo Overview
 - Duration: 30-40 minutes
 - Roles: Admin, Driver, Parent
@@ -58,8 +71,7 @@ curl -X POST http://localhost:3001/api/v1/student-presence-events \
 
 ## Wrap-up
 - Highlight that backend services are live and the frontend apps use gateway APIs.
-- Note that board/school management UI is pending.
-- Confirm next steps for notifications and route optimization.
+- Note that some workflows shown in the demo are guided limitations rather than completed v1 product flows.
 - Mention that late notifications are simulated as OTHER alerts in the demo.
 - Run `./scripts/verify-demo.ps1` to validate seeded data and logins after setup.
 

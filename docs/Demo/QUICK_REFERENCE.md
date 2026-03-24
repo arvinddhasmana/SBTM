@@ -1,5 +1,18 @@
 # Demo Quick Reference
 
+- Document owner: QA and Engineering
+- Last reviewed: 2026-03-24
+- Primary use: Fast operational checklist for demo setup and troubleshooting
+
+This is the fast operational companion to `DEMO_SETUP_GUIDE.md`. For feature gaps or upgrade status, use `docs/prd/v1/UpgradePlan/GapAnalysis.md`.
+
+## Related Documents
+
+- [DEMO_SETUP_GUIDE.md](DEMO_SETUP_GUIDE.md)
+- [LiveDemoScript.md](LiveDemoScript.md)
+- [GapAnalysis.md](../prd/v1/UpgradePlan/GapAnalysis.md)
+- [TestingGuide.md](../Test/TestingGuide.md)
+
 ## Fast Commands
 
 ### Complete Reset (Most Common)
@@ -138,3 +151,4 @@ docker exec sbtm_antigravity-postgres-1 psql -U postgres -d sbms -c "SELECT emai
 - Full setup guide: [DEMO_SETUP_GUIDE.md](DEMO_SETUP_GUIDE.md)
 - Live demo script: [LiveDemoScript.md](LiveDemoScript.md)
 - Implementation docs: [docs/Implementation/](../Implementation/)
+
