@@ -71,16 +71,31 @@ For developing individual modules, refer to the specific `README.md` in each ser
 
 ## 📚 Documentation
 
-Detailed documentation is available in the `docs/` folder:
+Detailed documentation is available in the `docs/` folder. Start with the documentation index, then follow the domain-specific guides:
 
-- **[Architecture](./docs/Design/Architecture.md)**: Current system architecture and multi-tenant readiness.
-- **[System Design](./docs/Design/SystemDesign.md)**: Consolidated API, data model, and UI notes.
-- **[Technical Specifications](./docs/Design/TechnicalSpecifications.md)**: Current stack and prototype assumptions.
-- **[Repository Structure](./docs/Design/RepositoryStructure.md)**: Monorepo layout.
-- **[Business Requirements](./docs/Business/Requirements.md)**: Scope and target requirements.
-- **[Features](./docs/Business/Features.md)**: Feature matrix with status.
-- **[Use Cases](./docs/Business/UseCases.md)**: Current vs target use cases.
-- **[User Journey](./docs/Business/UserJourney.md)**: Current user flows.
+- **[Documentation Map](./docs/README.md)**: Canonical index and source-of-truth map for business, design, implementation, demo, and test documentation.
+- **[Documentation Policy](./docs/Governance/DocumentationPolicy.md)**: Documentation ownership, metadata, traceability, and update rules.
+- **[Business Requirements](./docs/Business/Requirements.md)**: Scope, expected outcomes, and non-functional targets.
+- **[Business Use Cases](./docs/Business/UseCases.md)**: Stable operational use cases linked to requirements and features.
+- **[Features](./docs/Business/Features.md)**: Business-facing feature matrix with current implementation status.
+- **[User Journey](./docs/Business/UserJourney.md)**: Role-based journeys for Admin, Driver, and Parent experiences.
+- **[v1 Architecture](./docs/Design/v1/Architecture.md)**: Target system architecture and service decomposition.
+- **[System Architecture](./docs/Design/v1/SystemArchitecture.md)**: Actor, application, and service boundaries.
+- **[Data Architecture](./docs/Design/v1/DataArchitecture.md)**: Domain data ownership and tenant boundaries.
+- **[Database Schema](./docs/Design/v1/DatabaseSchema.md)**: Current persisted tables, entities, and tenant-sensitive fields.
+- **[Data Retention](./docs/Design/v1/DataRetention.md)**: Retention and lifecycle guidance for operational and privacy-sensitive data.
+- **[Integration Architecture](./docs/Design/v1/IntegrationArchitecture.md)**: Request, event, and external integration patterns.
+- **[Deployment Architecture](./docs/Design/v1/DeploymentArchitecture.md)**: Local and target deployment topologies.
+- **[Security and Privacy Architecture](./docs/Design/v1/SecurityPrivacyArchitecture.md)**: Identity, tenant isolation, privacy, and trust boundaries.
+- **[Event Catalog](./docs/Design/v1/EventCatalog.md)**: Cross-service event definitions and intended integration model.
+- **[Technical Specifications](./docs/Design/v1/TechnicalSpecifications.md)**: Technology baseline and architectural constraints.
+- **[API Reference](./docs/Reference/APIReference.md)**: Formal gateway-facing endpoint reference.
+- **[Service Contracts](./docs/Reference/ServiceContracts.md)**: Gateway-to-service contract and payload reference.
+- **[User Guides](./docs/UserGuide/README.md)**: Role-based guidance for Parent, Driver, Admin, School Operator, and Compliance/Support workflows.
+- **[Implementation Modules](./docs/Implementation)**: Code-aligned implementation notes for each major module.
+- **[Operations Documentation](./docs/Operations/README.md)**: Deployment, observability, troubleshooting, and runbooks.
+- **[Gap Analysis](./docs/prd/v1/UpgradePlan/GapAnalysis.md)**: Verified delivery gaps between the current system and the v1 target state.
+- **[Phase Plan](./docs/prd/v1/UpgradePlan/PhaseWiseImplementationPlan.md)**: Sequenced roadmap and acceptance criteria.
 
 ### 📋 Product Requirements (Historical Baseline)
 
@@ -101,7 +116,7 @@ Original specifications as defined in the Phase 1 PRD:
 
 - **[Demo Setup Guide](./docs/Demo/DEMO_SETUP_GUIDE.md)**: Complete guide for setting up the demo environment.
 - **[Live Demo Script](./docs/Demo/LiveDemoScript.md)**: Step-by-step script for conducting live demos.
-- **[Testing Guide](./docs/Implementation/TestingGuide.md)**: API smoke tests and UI notes.
+- **[Testing Guide](./docs/Test/TestingGuide.md)**: Operational verification guidance and current smoke-test coverage.
 
 
 ## 🧪 Testing

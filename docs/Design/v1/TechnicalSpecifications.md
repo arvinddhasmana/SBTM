@@ -9,6 +9,11 @@ This document describes the target v1 technical baseline. It should be read with
 ## Related Documents
 
 - [Architecture.md](Architecture.md)
+- [SystemArchitecture.md](SystemArchitecture.md)
+- [DataArchitecture.md](DataArchitecture.md)
+- [IntegrationArchitecture.md](IntegrationArchitecture.md)
+- [DeploymentArchitecture.md](DeploymentArchitecture.md)
+- [SecurityPrivacyArchitecture.md](SecurityPrivacyArchitecture.md)
 - [EventCatalog.md](EventCatalog.md)
 - [GapAnalysis.md](../../prd/v1/UpgradePlan/GapAnalysis.md)
 - [PhaseWiseImplementationPlan.md](../../prd/v1/UpgradePlan/PhaseWiseImplementationPlan.md)

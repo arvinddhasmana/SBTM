@@ -1,199 +1,98 @@
-# SBTM v1 – Event-Driven Architecture
+# SBTM v1 Architecture Overview
 
 - Document owner: Engineering and Architecture
 - Last reviewed: 2026-03-24
-- Primary use: Target-state system architecture and integration model
+- Primary use: Entry point for the split v1 architecture document set
 
-## 1. Overview
-
-The v1 architecture evolves the current request/response model into an **event-driven** platform. Core business operations (GPS tracking, student presence, emergency alerts, notifications) become first-class domain events that flow through a central event bus. Services produce and consume events asynchronously, which decouples producers from consumers and enables real-time notification pipelines without tight coupling.
-
-This document describes the target v1 architecture. For the current implementation baseline and confirmed upgrade gaps, use:
-- `docs/Implementation/*`
-- `docs/prd/v1/UpgradePlan/GapAnalysis.md`
-- `docs/prd/v1/UpgradePlan/PhaseWiseImplementationPlan.md`
+This document is the architectural index for the SBTM v1 target state. It separates the design into focused concerns so business, data, integration, deployment, and privacy decisions can evolve without overloading a single file.
 
 ## Related Documents
 
+- [SystemArchitecture.md](SystemArchitecture.md)
+- [DataArchitecture.md](DataArchitecture.md)
+- [IntegrationArchitecture.md](IntegrationArchitecture.md)
+- [DeploymentArchitecture.md](DeploymentArchitecture.md)
+- [SecurityPrivacyArchitecture.md](SecurityPrivacyArchitecture.md)
 - [TechnicalSpecifications.md](TechnicalSpecifications.md)
 - [EventCatalog.md](EventCatalog.md)
-- [Requirements.md](../../Business/Requirements.md)
-- [GapAnalysis.md](../../prd/v1/UpgradePlan/GapAnalysis.md)
-- [PhaseWiseImplementationPlan.md](../../prd/v1/UpgradePlan/PhaseWiseImplementationPlan.md)
+- [../../Business/Requirements.md](../../Business/Requirements.md)
+- [../../prd/v1/UpgradePlan/GapAnalysis.md](../../prd/v1/UpgradePlan/GapAnalysis.md)
 
-### Design Principles
-- **Event-First**: State changes are expressed as immutable domain events.
-- **Eventual Consistency**: Consumers process events asynchronously; the system remains responsive under load.
-- **Resilience**: Clients queue events locally when offline and flush on reconnect.
-- **Multi-Tenant by Default**: Every event carries `schoolId` (and optionally `boardId`) for tenant isolation.
+## Architecture Intent
 
----
+The v1 architecture evolves the current prototype into a more coherent event-aware platform for school transportation operations. The design goals are:
 
-## 2. C4 Context Diagram
+- Keep tenant boundaries explicit across apps, services, and data.
+- Support field resilience for driver workflows with intermittent connectivity.
+- Improve parent and operator situational awareness through timely event propagation.
+- Preserve a practical path from local Docker Compose delivery to a production-capable deployment model.
+- Treat privacy, auditability, and child-safety workflows as core architectural concerns rather than late additions.
 
-```mermaid
-C4Context
-    title System Context – SBTM v1
+## Document Map
 
-    Person(parent, "Parent", "Tracks child's bus, receives alerts")
-    Person(driver, "Driver", "Operates bus, records events")
-    Person(admin, "Admin / Dispatcher", "Monitors fleet, manages routes")
+| Document | Primary Question It Answers |
+| --- | --- |
+| [SystemArchitecture.md](SystemArchitecture.md) | How do users, applications, services, and core runtime boundaries fit together? |
+| [DataArchitecture.md](DataArchitecture.md) | What data domains exist, who owns them, and how are tenant boundaries expressed? |
+| [DatabaseSchema.md](DatabaseSchema.md) | What persisted tables and entities currently exist across services? |
+| [DataRetention.md](DataRetention.md) | How long should operational and privacy-sensitive data be retained? |
+| [IntegrationArchitecture.md](IntegrationArchitecture.md) | How do requests, events, queues, and external dependencies interact? |
+| [DeploymentArchitecture.md](DeploymentArchitecture.md) | How does the platform run locally today and what is the intended production topology? |
+| [SecurityPrivacyArchitecture.md](SecurityPrivacyArchitecture.md) | How are identity, access control, privacy, audit, and operational trust handled? |
+| [TechnicalSpecifications.md](TechnicalSpecifications.md) | What technologies, interfaces, and technical constraints define v1? |
+| [EventCatalog.md](EventCatalog.md) | What domain events are expected across the event-driven architecture? |
 
-    System(sbtm, "SBTM Platform", "Event-driven school bus transport management")
+## Cross-Cutting Principles
 
-    System_Ext(fcm, "FCM / APNs", "Push notification delivery")
-    System_Ext(maps, "Map Provider", "Geocoding & routing (future)")
+- Event-aware, not event-only: request-response remains important, but state changes that matter operationally should become publishable events.
+- Multi-tenant by design: tenant context is not optional metadata.
+- Operational transparency: health, alerts, and delivery gaps must be observable.
+- Privacy by design: tracking, notification, and audit workflows must minimize avoidable exposure of child-related data.
+- Replace narrative assumptions with traceable artifacts: business requirements, use cases, and architecture should reference one another directly.
 
-    Rel(driver, sbtm, "Sends GPS, presence, panic events", "HTTPS / WebSocket")
-    Rel(parent, sbtm, "Views live location, receives alerts", "HTTPS / SSE")
-    Rel(admin, sbtm, "Manages fleet, views dashboards", "HTTPS / WebSocket")
-    Rel(sbtm, fcm, "Delivers push notifications", "HTTPS")
-    Rel(sbtm, maps, "Route optimisation (planned)", "HTTPS")
-```
-
----
-
-## 3. C4 Container Diagram
-
-```mermaid
-C4Container
-    title Container Diagram – SBTM v1
-
-    Person(driver, "Driver App", "Expo / React Native")
-    Person(parent, "Parent App", "Vite / React")
-    Person(admin, "Admin Dashboard", "Vite / React")
-
-    Container(gateway, "API Gateway", "NestJS", "Auth (JWT/RBAC), multi-tenant guards, reverse proxy")
-    Container(eventbus, "Event Bus", "BullMQ + Redis", "Domain event routing and durable queuing")
-
-    Container(gps, "GPS Tracking Service", "Express / TypeScript", "Ingests location points, serves live/history")
-    Container(alerts, "Emergency Alerts Service", "NestJS", "Creates alerts, notifies admins & parents")
-    Container(presence, "Student Presence Service", "NestJS", "Processes BLE / manual boarding events")
-    Container(video, "Video Service", "NestJS", "Records video event metadata")
-    Container(students, "Student Management Service", "NestJS", "CRUD for students and tag assignments")
-    Container(compliance, "Compliance Service", "NestJS", "Driver records, inspections, audit log")
-    Container(notify, "Notification Service", "NestJS", "Fan-out push/SMS/email to parents")
-
-    ContainerDb(pg, "PostgreSQL", "Relational DB", "Per-service schemas with school_id tenant column")
-    ContainerDb(redis, "Redis", "Cache + Queue broker", "Presence state cache, BullMQ queues")
-
-    Rel(driver, gateway, "REST + WebSocket", "HTTPS")
-    Rel(parent, gateway, "REST + SSE", "HTTPS")
-    Rel(admin, gateway, "REST + WebSocket", "HTTPS")
-
-    Rel(gateway, gps, "Proxy", "HTTP")
-    Rel(gateway, alerts, "Proxy", "HTTP")
-    Rel(gateway, presence, "Proxy", "HTTP")
-    Rel(gateway, video, "Proxy", "HTTP")
-    Rel(gateway, students, "Proxy", "HTTP")
-    Rel(gateway, compliance, "Proxy", "HTTP")
-
-    Rel(gps, eventbus, "Publishes location.updated", "BullMQ")
-    Rel(alerts, eventbus, "Publishes alert.created", "BullMQ")
-    Rel(presence, eventbus, "Publishes presence.boarded / presence.alighted", "BullMQ")
-
-    Rel(eventbus, notify, "Consumes alert.created, presence.alighted", "BullMQ")
-    Rel(notify, pg, "Logs notification records", "TypeORM")
-
-    Rel(gps, pg, "Stores location_points", "Prisma")
-    Rel(alerts, pg, "Stores emergency_alerts", "TypeORM")
-    Rel(presence, pg, "Stores presence_events", "TypeORM")
-    Rel(presence, redis, "Caches presence state", "ioredis")
-    Rel(alerts, redis, "Alert queues", "BullMQ")
-```
-
----
-
-## 4. Event Flow – Emergency Alert
-
-```mermaid
-sequenceDiagram
-    participant Driver as Driver App
-    participant Gateway as API Gateway
-    participant Alerts as Emergency Alerts Service
-    participant Bus as Event Bus (BullMQ)
-    participant Notify as Notification Service
-    participant Parent as Parent App
-
-    Driver->>Gateway: POST /emergency-events
-    Gateway->>Alerts: Forward (tenant-scoped)
-    Alerts->>Alerts: Persist alert (DB)
-    Alerts->>Bus: Publish alert.created
-    Alerts->>Gateway: 201 Created
-    Gateway-->>Driver: 201 Created
-    Bus->>Notify: Consume alert.created
-    Notify->>Parent: Push notification (FCM)
-    Notify->>Notify: Log notification_log (DB)
-```
-
----
-
-## 5. Event Flow – Student Presence (BLE / Manual)
-
-```mermaid
-sequenceDiagram
-    participant Driver as Driver App
-    participant Gateway as API Gateway
-    participant Presence as Student Presence Service
-    participant Redis as Redis Cache
-    participant Bus as Event Bus (BullMQ)
-    participant Notify as Notification Service
-    participant Parent as Parent App
-
-    Driver->>Gateway: POST /student-presence-events
-    Gateway->>Presence: Forward (tenant-scoped)
-    Presence->>Presence: Persist presence_event (DB)
-    Presence->>Redis: Update presence state cache
-    Presence->>Bus: Publish presence.boarded or presence.alighted
-    Presence-->>Driver: 201 Created
-    Bus->>Notify: Consume presence.alighted
-    Notify->>Parent: Push "Your child has alighted"
-```
-
----
-
-## 6. Offline Resilience (Driver App)
-
-The Driver App persists events locally using AsyncStorage when the network is unavailable. A background flush job retries the queue on reconnect.
+## Architecture Summary Diagram
 
 ```mermaid
 flowchart LR
-    GPS["GPS / Emergency\n/ Presence event"] --> Online{Online?}
-    Online -->|Yes| API["POST to API Gateway"]
-    Online -->|No| Queue["AsyncStorage\noffline queue"]
-    Queue --> Flush["Flush on reconnect"]
-    Flush --> API
-    API --> Result{Success?}
-    Result -->|Yes| Done["Remove from queue"]
-    Result -->|No| Retry["Backoff & retry"]
-    Retry --> API
+    subgraph Clients
+        Admin[Admin Dashboard]
+        Driver[Driver App]
+        Parent[Parent App]
+    end
+
+    Gateway[API Gateway]
+    GPS[GPS Tracking]
+    Alerts[Emergency Alerts]
+    Presence[Student Presence]
+    Students[Student Management]
+    Compliance[Compliance]
+    Video[Video Service]
+    Redis[Redis and BullMQ]
+    Postgres[PostgreSQL]
+    Notify[Future Notification Service]
+
+    Admin --> Gateway
+    Driver --> Gateway
+    Parent --> Gateway
+    Gateway --> GPS
+    Gateway --> Alerts
+    Gateway --> Presence
+    Gateway --> Students
+    Gateway --> Compliance
+    Gateway --> Video
+    Alerts --> Redis
+    Presence --> Redis
+    GPS --> Postgres
+    Alerts --> Postgres
+    Presence --> Postgres
+    Students --> Postgres
+    Compliance --> Postgres
+    Video --> Postgres
+    Redis --> Notify
 ```
 
----
+## Source-of-Truth Boundaries
 
-## 7. Architecture Decision Records (ADRs)
-
-| # | Decision | Rationale |
-|---|----------|-----------|
-| 1 | BullMQ over Kafka | Lower ops overhead for prototype scale; Redis already in stack |
-| 2 | Per-service PostgreSQL schema, shared instance | Tenant isolation via `school_id` column; single DB for prototype cost |
-| 3 | AsyncStorage offline queue | No extra native library needed in Expo; survives app restart |
-| 4 | Server-Sent Events for parent alerts | Simpler than WebSockets for read-only alert stream; browser-native |
-
----
-
-## 8. Gap Coverage
-
-| Gap (from v0 analysis) | v1 Solution |
-|---|---|
-| Offline GPS / emergency buffering | AsyncStorage queue in Driver App (`offline-queue.service.ts`) |
-| Student presence not wired | `presence.service.ts` in Driver App + API call in store |
-| Parent push notifications | `useAlerts` hook + SSE polling; Notification Service fan-out |
-| Service-to-service auth (planned) | Internal JWT signing (Phase 4) |
-| Row-level security (planned) | PostgreSQL RLS (Phase 4) |
-
-## 9. Source-of-Truth Boundaries
-
-- Use `docs/Design/v1` for target-state architecture and technical design.
-- Use `docs/Implementation` for what exists today in code.
-- Use `docs/prd/v1/UpgradePlan` for the delta between current and target state, plus delivery sequencing.
+- Use `docs/Design/v1` for target-state design and architectural direction.
+- Use `docs/Implementation` for code-verified current state.
+- Use `docs/prd/v1/UpgradePlan` for the difference between current delivery and the v1 target.

@@ -1,6 +1,17 @@
 # SBTM v1 – Event Catalog
 
-This catalog defines every domain event in the SBTM v1 event-driven architecture. Each entry lists the event name, producer service, consumer services, trigger, and payload schema.
+- Document owner: Engineering and Architecture
+- Last reviewed: 2026-03-24
+- Primary use: Domain event definitions for the event-aware integration model
+
+This catalog defines the domain events in the SBTM v1 architecture. Each entry lists the event name, producer service, consumer services, trigger, and payload shape.
+
+## Related Documents
+
+- [Architecture.md](Architecture.md)
+- [IntegrationArchitecture.md](IntegrationArchitecture.md)
+- [TechnicalSpecifications.md](TechnicalSpecifications.md)
+- [../../Business/Requirements.md](../../Business/Requirements.md)
 
 ---
 
