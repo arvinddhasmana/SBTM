@@ -13,6 +13,7 @@ Use this index to find the authoritative document for each kind of question.
 
 ### Governance
 - [DocumentationPolicy.md](Governance/DocumentationPolicy.md) defines documentation structure, metadata, traceability, and maintenance rules.
+- [SDLCGuidelines.md](Governance/SDLCGuidelines.md) defines the software development lifecycle, coding standards, testing requirements, CI/CD pipeline, and release process.
 
 ### Design
 - [Design v1](Design/v1) defines the target v1 architecture, event model, and technical baseline.
@@ -45,9 +46,9 @@ Use this index to find the authoritative document for each kind of question.
 
 - Product and delivery: [Business requirements](Business/Requirements.md), [feature matrix](Business/Features.md), and [phase plan](prd/v1/UpgradePlan/PhaseWiseImplementationPlan.md)
 - Architects and senior engineers: [v1 architecture](Design/v1/Architecture.md), [system architecture](Design/v1/SystemArchitecture.md), [integration architecture](Design/v1/IntegrationArchitecture.md), and [technical specifications](Design/v1/TechnicalSpecifications.md)
-- Developers: [Implementation](Implementation), [reference docs](Reference/README.md), service `README.md` files, and [gap analysis](prd/v1/UpgradePlan/GapAnalysis.md)
+- Developers: [SDLC guidelines](Governance/SDLCGuidelines.md), [Implementation](Implementation), [reference docs](Reference/README.md), service `README.md` files, and [gap analysis](prd/v1/UpgradePlan/GapAnalysis.md)
 - Demo owners and QA: [demo setup guide](Demo/DEMO_SETUP_GUIDE.md), [live demo script](Demo/LiveDemoScript.md), [testing guide](Test/TestingGuide.md), and [operations docs](Operations/README.md)
-- Documentation maintainers: [documentation policy](Governance/DocumentationPolicy.md)
+- Documentation maintainers: [documentation policy](Governance/DocumentationPolicy.md), [SDLC guidelines](Governance/SDLCGuidelines.md)
 - End users and operators: [user guide index](UserGuide/README.md)
 
 ## Recommended Reading Order
@@ -79,6 +80,7 @@ Use this index to find the authoritative document for each kind of question.
 - [Business feature matrix](Business/Features.md)
 - [Business user journey](Business/UserJourney.md)
 - [documentation policy](Governance/DocumentationPolicy.md)
+- [SDLC guidelines](Governance/SDLCGuidelines.md)
 - [v1 architecture](Design/v1/Architecture.md)
 - [system architecture](Design/v1/SystemArchitecture.md)
 - [data architecture](Design/v1/DataArchitecture.md)

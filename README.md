@@ -75,6 +75,7 @@ Detailed documentation is available in the `docs/` folder. Start with the docume
 
 - **[Documentation Map](./docs/README.md)**: Canonical index and source-of-truth map for business, design, implementation, demo, and test documentation.
 - **[Documentation Policy](./docs/Governance/DocumentationPolicy.md)**: Documentation ownership, metadata, traceability, and update rules.
+- **[SDLC Guidelines](./docs/Governance/SDLCGuidelines.md)**: Development workflow, coding standards, testing requirements, CI/CD pipeline, and release process.
 - **[Business Requirements](./docs/Business/Requirements.md)**: Scope, expected outcomes, and non-functional targets.
 - **[Business Use Cases](./docs/Business/UseCases.md)**: Stable operational use cases linked to requirements and features.
 - **[Features](./docs/Business/Features.md)**: Business-facing feature matrix with current implementation status.
@@ -96,6 +97,11 @@ Detailed documentation is available in the `docs/` folder. Start with the docume
 - **[Operations Documentation](./docs/Operations/README.md)**: Deployment, observability, troubleshooting, and runbooks.
 - **[Gap Analysis](./docs/prd/v1/UpgradePlan/GapAnalysis.md)**: Verified delivery gaps between the current system and the v1 target state.
 - **[Phase Plan](./docs/prd/v1/UpgradePlan/PhaseWiseImplementationPlan.md)**: Sequenced roadmap and acceptance criteria.
+  - [Phase 1: Parent Safety Communication Loop](./docs/prd/v1/UpgradePlan/Phase1-ParentSafetyCommunicationLoop.md)
+  - [Phase 2: Driver Presence Workflow](./docs/prd/v1/UpgradePlan/Phase2-DriverPresenceWorkflow.md)
+  - [Phase 3: GPS Eventing, Geofencing, and Route Intelligence](./docs/prd/v1/UpgradePlan/Phase3-GPSEventingGeofencingRouteIntelligence.md)
+  - [Phase 4: Tenant Administration and User Provisioning](./docs/prd/v1/UpgradePlan/Phase4-TenantAdministrationUserProvisioning.md)
+  - [Phase 5: Security, Compliance, and Production Hardening](./docs/prd/v1/UpgradePlan/Phase5-SecurityComplianceProductionHardening.md)
 
 ### 📋 Product Requirements (Historical Baseline)
 

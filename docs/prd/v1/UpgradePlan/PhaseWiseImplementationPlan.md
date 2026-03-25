@@ -15,6 +15,16 @@ This plan is based on the revised v1 design and a code-verified assessment of th
 - [../../../Test/TestingGuide.md](../../../Test/TestingGuide.md)
 - [../../../Demo/DEMO_SETUP_GUIDE.md](../../../Demo/DEMO_SETUP_GUIDE.md)
 
+## Per-Phase Detail Files
+
+Each phase has a self-contained implementation plan document:
+
+- [Phase 1: Complete the Parent Safety Communication Loop](Phase1-ParentSafetyCommunicationLoop.md)
+- [Phase 2: Finish the Driver Presence Workflow](Phase2-DriverPresenceWorkflow.md)
+- [Phase 3: Add GPS Eventing, Geofencing, and Real Route Intelligence](Phase3-GPSEventingGeofencingRouteIntelligence.md)
+- [Phase 4: Complete Tenant Administration and User Provisioning](Phase4-TenantAdministrationUserProvisioning.md)
+- [Phase 5: Security, Compliance, and Production Hardening](Phase5-SecurityComplianceProductionHardening.md)
+
 ## Planning Principles
 - Build on what already exists instead of reworking implemented foundations.
 - Close end-to-end workflow gaps before adding deeper platform sophistication.
