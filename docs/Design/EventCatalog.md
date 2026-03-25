@@ -30,9 +30,10 @@ Examples: `location.updated`, `alert.created`, `presence.boarded`
 | Field | Value |
 |---|---|
 | **Producer** | GPS Tracking Service |
-| **Consumers** | *(Phase 3: Geofencing / Deviation Alert Service)* |
+| **Consumers** | Geofencing / Deviation Alert Service, Analytics (Phase 3) |
 | **Trigger** | A new GPS location point is ingested via `POST /api/v1/locations` |
 | **Queue** | `gps` (BullMQ) |
+| **Status** | **Implemented — Phase 3** |
 
 **Payload**:
 ```json
@@ -47,6 +48,36 @@ Examples: `location.updated`, `alert.created`, `presence.boarded`
     "accuracyMeters": 5
 }
 ```
+
+---
+
+### `route.deviation`
+
+| Field | Value |
+|---|---|
+| **Producer** | GPS Tracking Service (GeofenceService) |
+| **Consumers** | Emergency Alerts Service, Notification Service (Phase 3+) |
+| **Trigger** | Vehicle position exceeds configured `deviationThresholdMeters` for its route geofence |
+| **Queue** | `gps` (BullMQ) |
+| **Status** | **Implemented — Phase 3** |
+
+**Payload**:
+```json
+{
+    "vehicleId": "uuid",
+    "routeId": "uuid",
+    "schoolId": "uuid",
+    "lat": 43.7100,
+    "lng": -79.5000,
+    "deviationMeters": 450.0,
+    "threshold": 300.0,
+    "timestamp": "2026-03-25T08:30:00Z"
+}
+```
+
+**Downstream actions** (planned):
+- Emergency Alerts Service creates a ROUTE_DEVIATION alert.
+- Notification Service notifies school admin of operational deviation.
 
 ---
 
