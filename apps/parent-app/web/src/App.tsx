@@ -6,6 +6,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import MapPage from './pages/Map';
 import Notifications from './pages/Notifications';
+import AbsenceReport from './pages/AbsenceReport';
 import 'leaflet/dist/leaflet.css';
 
 // Protected Route Wrapper
@@ -39,6 +40,7 @@ function App() {
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="map/:childId" element={<MapPage />} />
             <Route path="notifications" element={<Notifications />} />
+            <Route path="absence" element={<AbsenceReport />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/dashboard" replace />} />

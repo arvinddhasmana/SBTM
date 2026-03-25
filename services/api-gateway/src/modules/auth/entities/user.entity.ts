@@ -11,8 +11,8 @@ export class User {
     @Column({ unique: true })
     email: string;
 
-    @Column()
-    passwordHash: string;
+    @Column({ nullable: true })
+    passwordHash?: string;
 
     @Column({
         type: 'enum',
@@ -49,6 +49,15 @@ export class User {
     @ManyToOne(() => SchoolBoard, (board) => board.users)
     @JoinColumn({ name: 'boardId' })
     board?: SchoolBoard;
+
+    @Column({ default: true })
+    isActive: boolean;
+
+    @Column({ nullable: true, unique: true })
+    invitationToken?: string;
+
+    @Column({ nullable: true, type: 'timestamptz' })
+    invitationExpiresAt?: Date;
 
     @CreateDateColumn()
     createdAt: Date;

@@ -28,8 +28,12 @@ export class AuthService {
             where: { email: loginDto.email },
         });
 
-        if (!user) {
+        if (!user || !user.isActive) {
             throw new UnauthorizedException('Invalid credentials');
+        }
+
+        if (!user.passwordHash) {
+            throw new UnauthorizedException('Account not yet activated');
         }
 
         const isPasswordValid = await bcrypt.compare(loginDto.password, user.passwordHash);
@@ -56,7 +60,7 @@ export class AuthService {
 
     async validateUser(payload: JwtPayload): Promise<User | null> {
         return this.userRepository.findOne({
-            where: { id: payload.sub },
+            where: { id: payload.sub, isActive: true },
         });
     }
 
@@ -84,6 +88,7 @@ export class AuthService {
             email,
             passwordHash,
             role: role as User['role'],
+            isActive: true,
             ...additionalData,
         });
 

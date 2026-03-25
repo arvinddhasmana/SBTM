@@ -6,3 +6,6 @@ export { videoApi } from './video.api';
 export { studentManagementApi } from './student-management.api';
 export { fleetApi } from './fleet.api';
 export { complianceApi } from './compliance.api';
+export { organizationApi } from './organization.api';
+export { provisioningApi } from './provisioning.api';
+export { absenceApi } from './absence.api';
