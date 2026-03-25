@@ -23,6 +23,7 @@ export const AuthService = {
                 id: route.routeId,
                 name: route.name,
                 schoolId: route.schoolId,
+                vehicleId: route.vehicleId ?? '',
                 startTime: route.startTime,
                 endTime: route.startTime,
                 direction: route.direction,

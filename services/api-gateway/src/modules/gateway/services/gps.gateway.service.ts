@@ -31,6 +31,14 @@ export interface LocationHistoryQueryDto {
     granularity?: 'raw' | '1min' | '5min';
 }
 
+export interface RouteLifecycleEventDto {
+    routeId: string;
+    vehicleId: string;
+    eventType: 'ROUTE_STARTED' | 'STOP_REACHED' | 'ROUTE_COMPLETED';
+    timestamp: string;
+    stopId?: string;
+}
+
 interface RequestUser {
     id: string;
     role: Role;
@@ -104,6 +112,35 @@ export class GpsGatewayService {
         return this.httpClient.post<{ status: string }>(url, {
             ...dto,
             schoolId: dto.schoolId || user.schoolId,
+        });
+    }
+
+    async recordRouteLifecycleEvent(
+        dto: RouteLifecycleEventDto,
+        user: RequestUser,
+    ): Promise<{ status: string }> {
+        if (user.role !== Role.DRIVER && user.role !== Role.ADMIN) {
+            throw new ForbiddenException('Only drivers can record route lifecycle events');
+        }
+
+        if (user.role === Role.DRIVER && !user.assignedRouteIds?.includes(dto.routeId)) {
+            throw new ForbiddenException('You can only record lifecycle events for your assigned routes');
+        }
+
+        if (!user.schoolId) {
+            throw new ForbiddenException('School context required');
+        }
+
+        const url = `${this.gpsServiceUrl}/api/v1/routes/lifecycle`;
+        // schoolId always from authenticated user – never from client body
+        return this.httpClient.post<{ status: string }>(url, {
+            schoolId: user.schoolId,
+            routeId: dto.routeId,
+            vehicleId: dto.vehicleId,
+            driverId: user.id,
+            eventType: dto.eventType,
+            timestamp: dto.timestamp,
+            stopId: dto.stopId,
         });
     }
 

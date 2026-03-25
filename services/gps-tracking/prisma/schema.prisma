@@ -26,3 +26,18 @@ model LocationPoint {
   @@index([schoolId, routeId])
   @@map("location_points")
 }
+
+model RouteLifecycleEvent {
+  id          String   @id @default(uuid())
+  schoolId    String   @map("school_id")
+  routeId     String   @map("route_id")
+  vehicleId   String   @map("vehicle_id")
+  driverId    String   @map("driver_id")
+  eventType   String   @map("event_type")
+  stopId      String?  @map("stop_id")
+  timestamp   DateTime
+
+  @@index([routeId])
+  @@index([schoolId, routeId])
+  @@map("route_lifecycle_events")
+}
