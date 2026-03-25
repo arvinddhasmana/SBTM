@@ -5,15 +5,16 @@ import { LocationService } from '../services/locationService';
 const locationService = new LocationService();
 
 const locationSchema = z.object({
-    schoolId: z.string(),
-    vehicleId: z.string(),
-    routeId: z.string(),
+    schoolId: z.string().min(1),
+    vehicleId: z.string().min(1),
+    routeId: z.string().min(1),
     timestamp: z.string().datetime(),
-    lat: z.number(),
-    lng: z.number(),
-    speedKph: z.number().optional(),
-    headingDeg: z.number().optional(),
-    accuracyMeters: z.number().optional(),
+    // Validate coordinate ranges per PostGIS/WGS84 rules
+    lat: z.number().min(-90).max(90),
+    lng: z.number().min(-180).max(180),
+    speedKph: z.number().min(0).optional(),
+    headingDeg: z.number().min(0).max(360).optional(),
+    accuracyMeters: z.number().min(0).optional(),
 });
 
 export const ingestLocation = async (req: Request, res: any) => {

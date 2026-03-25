@@ -1,9 +1,15 @@
 import type { Route, LiveLocation } from '../../types';
 import { apiClient } from './api-client';
 
+export interface GeoJsonLineString {
+    type: 'LineString';
+    coordinates: [number, number][]; // [lng, lat]
+}
+
 export interface OptimizationResult {
     optimizedStops: any[];
     polyline: string;
+    polylineGeoJson: GeoJsonLineString | null;
     totalDistance: number;
     totalDuration: number;
 }

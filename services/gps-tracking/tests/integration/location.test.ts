@@ -2,6 +2,23 @@ import request from 'supertest';
 import app from '../../src/app';
 import prisma from '../../src/prisma';
 
+// Mock event publisher so tests don't require a live Redis connection
+jest.mock('../../src/services/gpsEventPublisher', () => ({
+    gpsEventPublisher: {
+        publishLocationUpdated: jest.fn().mockResolvedValue(undefined),
+    },
+}));
+
+// Mock geofence service so tests don't require PostGIS
+jest.mock('../../src/services/geofenceService', () => ({
+    GeofenceService: jest.fn().mockImplementation(() => ({
+        checkDeviation: jest.fn().mockResolvedValue({ deviated: false, deviationMeters: null }),
+        upsert: jest.fn(),
+        findByRoute: jest.fn().mockResolvedValue(null),
+        getDeviationHistory: jest.fn().mockResolvedValue([]),
+    })),
+}));
+
 describe('GPS Tracking Service API (Integration)', () => {
 
     beforeAll(async () => {
@@ -31,6 +48,20 @@ describe('GPS Tracking Service API (Integration)', () => {
             where: { vehicleId: 'bus-123', schoolId: 'school-001' }
         });
         expect(stored).toBeTruthy();
+    });
+
+    it('should reject invalid coordinates', async () => {
+        const res = await request(app)
+            .post('/api/v1/locations')
+            .send({
+                schoolId: 'school-001',
+                vehicleId: 'bus-123',
+                routeId: 'route-456',
+                timestamp: new Date().toISOString(),
+                lat: 999,   // invalid latitude
+                lng: 20.0
+            });
+        expect(res.status).toBe(400);
     });
 
     it('should retrieve latest location', async () => {

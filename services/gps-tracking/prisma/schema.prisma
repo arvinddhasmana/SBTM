@@ -41,3 +41,41 @@ model RouteLifecycleEvent {
   @@index([schoolId, routeId])
   @@map("route_lifecycle_events")
 }
+
+/// Geofence configuration for a route.
+/// School administrators configure the corridor and stop proximity thresholds here.
+/// All spatial checks are performed in the geofence service using PostGIS queries
+/// against the raw coordinates — NOT stored in this table directly.
+model RouteGeofence {
+  id                       String   @id @default(uuid())
+  schoolId                 String   @map("school_id")
+  routeId                  String   @unique @map("route_id")
+  /// Maximum metres a bus may deviate from the planned polyline before an alert is raised
+  corridorRadiusMeters     Float    @default(200) @map("corridor_radius_meters")
+  /// Radius (metres) within which a bus is considered "at a stop"
+  stopProximityMeters      Float    @default(50)  @map("stop_proximity_meters")
+  /// Minimum deviation (metres) that triggers a route.deviation event
+  deviationThresholdMeters Float    @default(300) @map("deviation_threshold_meters")
+  createdAt                DateTime @default(now()) @map("created_at")
+  updatedAt                DateTime @updatedAt     @map("updated_at")
+
+  @@index([schoolId])
+  @@map("route_geofences")
+}
+
+/// Audit log for route deviation events detected by the geofence service.
+model RouteDeviationEvent {
+  id               String   @id @default(uuid())
+  schoolId         String   @map("school_id")
+  routeId          String   @map("route_id")
+  vehicleId        String   @map("vehicle_id")
+  lat              Float
+  lng              Float
+  deviationMeters  Float    @map("deviation_meters")
+  threshold        Float
+  detectedAt       DateTime @default(now()) @map("detected_at")
+
+  @@index([schoolId, routeId])
+  @@index([detectedAt])
+  @@map("route_deviation_events")
+}
