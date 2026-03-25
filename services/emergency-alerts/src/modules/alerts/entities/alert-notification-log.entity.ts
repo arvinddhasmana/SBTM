@@ -1,40 +1,44 @@
-
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+} from 'typeorm';
 
 export enum NotificationChannel {
-    PUSH = 'PUSH',
-    EMAIL = 'EMAIL',
-    SMS = 'SMS',
+  PUSH = 'PUSH',
+  EMAIL = 'EMAIL',
+  SMS = 'SMS',
 }
 
 export enum NotificationStatus {
-    SENT = 'SENT',
-    FAILED = 'FAILED',
+  SENT = 'SENT',
+  FAILED = 'FAILED',
 }
 
 @Entity()
 export class AlertNotificationLog {
-    @PrimaryGeneratedColumn('uuid')
-    id: string;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
-    @Column()
-    alertId: string;
+  @Column()
+  alertId: string;
 
-    @Column()
-    recipientUserId: string;
+  @Column()
+  recipientUserId: string;
 
-    @Column({
-        type: 'enum',
-        enum: NotificationChannel,
-    })
-    channel: NotificationChannel;
+  @Column({
+    type: 'enum',
+    enum: NotificationChannel,
+  })
+  channel: NotificationChannel;
 
-    @Column({
-        type: 'enum',
-        enum: NotificationStatus,
-    })
-    status: NotificationStatus;
+  @Column({
+    type: 'enum',
+    enum: NotificationStatus,
+  })
+  status: NotificationStatus;
 
-    @CreateDateColumn()
-    timestamp: Date;
+  @CreateDateColumn()
+  timestamp: Date;
 }

@@ -1,7 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In, DataSource } from 'typeorm';
+import { Observable, Subject, finalize } from 'rxjs';
+import type { MessageEvent } from '@nestjs/common';
 import { HttpClientService } from '../../../common/utils/http-client.service';
 import { School } from '../../auth/entities/school.entity';
 import { Route } from '../../auth/entities/route.entity';
@@ -42,6 +44,8 @@ interface ParentChildDto {
 @Injectable()
 export class ParentGatewayService {
     private readonly studentServiceUrl: string;
+    private readonly logger = new Logger(ParentGatewayService.name);
+    private readonly alertSubjects = new Set<Subject<MessageEvent>>();
 
     constructor(
         private readonly httpClient: HttpClientService,
@@ -152,5 +156,83 @@ export class ParentGatewayService {
                 avatarUrl: name ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name)}` : undefined,
             };
         });
+    }
+
+    async getNotificationsForParent(user: ParentUser): Promise<unknown[]> {
+        const alertsUrl = `${this.configService.get<string>('ALERTS_SERVICE_URL', 'http://localhost:3003')}/api/v1/notifications`;
+        const params: Record<string, string> = { parentUserId: user.id };
+        if (user.schoolId) {
+            params.schoolId = user.schoolId;
+        }
+        try {
+            return await this.httpClient.get<unknown[]>(alertsUrl, { params });
+        } catch {
+            return [];
+        }
+    }
+
+    /**
+     * Proxy the emergency-alerts SSE stream for an authenticated parent.
+     * The gateway validates the JWT before forwarding the stream.
+     */
+    getAlertStream(_user: ParentUser): Observable<MessageEvent> {
+        const subject = new Subject<MessageEvent>();
+        this.alertSubjects.add(subject);
+
+        const alertsServiceUrl = this.configService.get<string>(
+            'ALERTS_SERVICE_URL',
+            'http://localhost:3003',
+        );
+        const url = `${alertsServiceUrl}/api/v1/alerts/stream`;
+        this.proxySSE(url, subject);
+
+        return subject.asObservable().pipe(
+            finalize(() => {
+                this.alertSubjects.delete(subject);
+                this.logger.debug('Parent SSE client disconnected');
+            }),
+        );
+    }
+
+    private proxySSE(url: string, subject: Subject<MessageEvent>): void {
+        fetch(url)
+            .then(async (response) => {
+                if (!response.ok || !response.body) {
+                    subject.error(new Error(`Upstream SSE error: ${response.status}`));
+                    return;
+                }
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+
+                const pump = async (): Promise<void> => {
+                    if (subject.closed) return;
+                    const { done, value } = await reader.read();
+                    if (done) {
+                        subject.complete();
+                        return;
+                    }
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop() ?? '';
+                    for (const line of lines) {
+                        if (line.startsWith('data:')) {
+                            const raw = line.slice(5).trim();
+                            try {
+                                subject.next({ data: JSON.parse(raw) } as MessageEvent);
+                            } catch {
+                                subject.next({ data: raw } as MessageEvent);
+                            }
+                        }
+                    }
+                    return pump();
+                };
+
+                return pump();
+            })
+            .catch((err: unknown) => {
+                this.logger.warn(`SSE proxy upstream connection failed: ${(err as Error).message}`);
+                subject.error(err);
+            });
     }
 }
