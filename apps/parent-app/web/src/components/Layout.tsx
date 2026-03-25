@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Outlet, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Bus, LogOut, User, Bell, Menu, X } from 'lucide-react';
+import { Bus, LogOut, User, Bell, Menu, X, ClipboardX } from 'lucide-react';
 import { useAlerts } from '../hooks/useAlerts';
 
 const Layout: React.FC = () => {
@@ -33,6 +33,14 @@ const Layout: React.FC = () => {
                         </div>
 
                         <div className="hidden sm:ml-6 sm:flex sm:items-center space-x-4">
+                            <Link
+                                to="/absence"
+                                className="flex items-center gap-1 text-sm font-medium text-gray-500 hover:text-gray-700"
+                                aria-label="Report an absence"
+                            >
+                                <ClipboardX className="h-5 w-5" />
+                                <span>Report Absence</span>
+                            </Link>
                             <Link
                                 to="/notifications"
                                 className="relative p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
@@ -82,6 +90,13 @@ const Layout: React.FC = () => {
                                 onClick={() => setIsMenuOpen(false)}
                             >
                                 Dashboard
+                            </Link>
+                            <Link
+                                to="/absence"
+                                className="text-gray-600 hover:bg-gray-50 hover:text-gray-900 block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium"
+                                onClick={() => setIsMenuOpen(false)}
+                            >
+                                Report Absence
                             </Link>
                             <Link
                                 to="/notifications"

@@ -20,6 +20,7 @@ describe('AuthService', () => {
         role: Role.PARENT,
         firstName: 'Test',
         lastName: 'User',
+        isActive: true,
     };
 
     const mockRepository = {

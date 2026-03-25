@@ -10,3 +10,6 @@ export { default as RoutePlanner } from './RoutePlanner';
 export { default as Compliance } from './Compliance';
 export * from './admin/BoardsList';
 export * from './admin/SchoolsList';
+export * from './admin/UserManagement';
+export * from './admin/TenantDashboard';
+export * from './admin/AbsenceManagement';

@@ -54,6 +54,24 @@ export interface NotificationRecord {
     timestamp: string;
 }
 
+export interface AbsenceReportPayload {
+    studentId: string;
+    tripDate: string;
+    routeType: 'AM' | 'PM' | 'BOTH';
+    notes?: string;
+}
+
+export interface AbsenceRecord {
+    id: string;
+    studentId: string;
+    guardianUserId: string;
+    schoolId: string;
+    tripDate: string;
+    routeType: 'AM' | 'PM' | 'BOTH';
+    notes?: string;
+    createdAt: string;
+}
+
 export const parentApi = {
     async login(email: string, password: string): Promise<AuthLoginResponse> {
         const response = await apiClient.post<AuthLoginResponse>('/api/v1/auth/login', {
@@ -84,5 +102,14 @@ export const parentApi = {
     async getNotifications(): Promise<NotificationRecord[]> {
         const response = await apiClient.get<NotificationRecord[]>('/api/v1/parent/notifications');
         return response.data;
+    },
+
+    async reportAbsence(payload: AbsenceReportPayload): Promise<AbsenceRecord> {
+        const response = await apiClient.post<AbsenceRecord>('/api/v1/absences', payload);
+        return response.data;
+    },
+
+    async cancelAbsence(absenceId: string): Promise<void> {
+        await apiClient.delete(`/api/v1/absences/${absenceId}`);
     },
 };
