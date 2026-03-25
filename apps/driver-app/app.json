@@ -13,7 +13,11 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSBluetoothAlwaysUsageDescription": "SBTM Driver uses Bluetooth to detect student SmartTags for automated boarding and alighting.",
+        "NSBluetoothPeripheralUsageDescription": "SBTM Driver uses Bluetooth to detect student SmartTags."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -21,10 +25,22 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.BLUETOOTH_SCAN",
+        "android.permission.BLUETOOTH_CONNECT",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      ["react-native-ble-plx", {
+        "isBackgroundEnabled": false,
+        "modes": ["central"],
+        "bluetoothAlwaysPermission": "Allow $(PRODUCT_NAME) to connect to Bluetooth devices for student SmartTag detection."
+      }]
+    ]
   }
 }

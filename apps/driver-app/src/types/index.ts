@@ -9,9 +9,22 @@ export interface Route {
     id: string;
     name: string;
     schoolId: string;
+    vehicleId: string;
     startTime: string; // ISO
     endTime: string; // ISO
     direction: 'AM' | 'PM';
+}
+
+export const RouteLifecycleEventType = {
+    ROUTE_STARTED: 'ROUTE_STARTED',
+    STOP_REACHED: 'STOP_REACHED',
+    ROUTE_COMPLETED: 'ROUTE_COMPLETED',
+} as const;
+export type RouteLifecycleEventType = (typeof RouteLifecycleEventType)[keyof typeof RouteLifecycleEventType];
+
+export interface BleDetection {
+    tagId: string;
+    signalStrength: number; // dBm
 }
 
 export interface LocationPoint {
@@ -27,6 +40,8 @@ export interface Student {
     id: string;
     name: string;
     status: 'NOT_BOARDED' | 'BOARDED' | 'ALIGHTED';
+    serverConfirmed?: boolean; // true once backend has acknowledged the state
+    pendingSync?: boolean;     // true while an offline event is queued
 }
 
 export interface LoginResponse {

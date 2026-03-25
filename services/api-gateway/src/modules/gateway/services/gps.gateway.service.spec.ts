@@ -4,6 +4,7 @@ import { HttpClientService } from '../../../common/utils/http-client.service';
 import { ConfigService } from '@nestjs/config';
 import { ForbiddenException } from '@nestjs/common';
 import { Role } from '../../../common/decorators/roles.decorator';
+import { DataSource } from 'typeorm';
 
 describe('GpsGatewayService', () => {
     let service: GpsGatewayService;
@@ -11,6 +12,7 @@ describe('GpsGatewayService', () => {
 
     const mockHttpClient = {
         get: jest.fn(),
+        post: jest.fn(),
     };
 
     const mockConfigService = {
@@ -18,6 +20,10 @@ describe('GpsGatewayService', () => {
             if (key === 'GPS_SERVICE_URL') return 'http://gps-service:3002';
             return defaultValue;
         }),
+    };
+
+    const mockDataSource = {
+        query: jest.fn(),
     };
 
     const adminUser = {
@@ -52,6 +58,10 @@ describe('GpsGatewayService', () => {
                 {
                     provide: ConfigService,
                     useValue: mockConfigService,
+                },
+                {
+                    provide: DataSource,
+                    useValue: mockDataSource,
                 },
             ],
         }).compile();

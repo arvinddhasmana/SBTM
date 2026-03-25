@@ -4,11 +4,16 @@ import MapView, { Marker, Polyline } from 'react-native-maps';
 import { useDriverStore } from '../store/useDriverStore';
 import { GPSService } from '../services/gps.service';
 import { EmergencyService } from '../services/emergency.service';
+import { useBleScanning } from '../hooks/useBleScanning';
 
 export default function ActiveRouteScreen({ navigation }: any) {
     const activeRoute = useDriverStore((state) => state.activeRoute);
     const driver = useDriverStore((state) => state.driver);
     const endRoute = useDriverStore((state) => state.endRoute);
+
+    // vehicleId is sourced from the authenticated route assignment – never hardcoded
+    const vehicleId = activeRoute?.vehicleId ?? '';
+    const schoolId = activeRoute?.schoolId ?? '';
 
     const [region, setRegion] = useState({
         latitude: 37.78825,
@@ -16,6 +21,14 @@ export default function ActiveRouteScreen({ navigation }: any) {
         latitudeDelta: 0.0922,
         longitudeDelta: 0.0421,
     });
+
+    // BLE scanning – enabled only while an active route is running (NFR-BATT-001)
+    const { scanState } = useBleScanning(
+        activeRoute?.id ?? '',
+        vehicleId,
+        schoolId,
+        Boolean(activeRoute),
+    );
 
     useEffect(() => {
         startGps();
@@ -34,12 +47,12 @@ export default function ActiveRouteScreen({ navigation }: any) {
                 longitude: current.coords.longitude,
             });
 
-            if (activeRoute && driver) {
-                // In a real app, vehicleId comes from selection or assignment. Hardcoding for MVP.
-                await GPSService.startTracking(activeRoute.id, 'bus-123', driver.id);
+            if (activeRoute && driver && vehicleId) {
+                await GPSService.startTracking(activeRoute.id, vehicleId, driver.id);
             }
-        } catch (e: any) {
-            Alert.alert('GPS Error', e.message);
+        } catch (e: unknown) {
+            const message = e instanceof Error ? e.message : 'GPS unavailable';
+            Alert.alert('GPS Error', message);
         }
     };
 
@@ -52,8 +65,8 @@ export default function ActiveRouteScreen({ navigation }: any) {
                 onPress: async () => {
                     const loc = await GPSService.getCurrentLocation();
                     await EmergencyService.triggerPanic(
-                        'bus-123',
-                        activeRoute?.id || 'unknown',
+                        vehicleId,
+                        activeRoute?.id ?? 'unknown',
                         { lat: loc.coords.latitude, lng: loc.coords.longitude },
                         driver?.id
                     );
@@ -64,7 +77,7 @@ export default function ActiveRouteScreen({ navigation }: any) {
     };
 
     const handleEndRoute = () => {
-        endRoute();
+        void endRoute();
         navigation.popToTop();
     };
 
@@ -83,6 +96,12 @@ export default function ActiveRouteScreen({ navigation }: any) {
                 <View style={styles.infoPanel}>
                     <Text style={styles.routeTitle}>{activeRoute.name}</Text>
                     <Text style={styles.nextStop}>Next: Central Station (ETA 5m)</Text>
+                    {scanState === 'scanning' && (
+                        <Text style={styles.bleStatus}>BLE Scanning Active</Text>
+                    )}
+                    {scanState === 'permission_denied' && (
+                        <Text style={styles.bleWarning}>Bluetooth permission denied – manual roster only</Text>
+                    )}
                 </View>
 
                 <View style={styles.buttonRow}>
@@ -134,6 +153,17 @@ const styles = StyleSheet.create({
     nextStop: {
         fontSize: 16,
         color: '#666',
+    },
+    bleStatus: {
+        fontSize: 13,
+        color: '#34C759',
+        marginTop: 4,
+    },
+    bleWarning: {
+        fontSize: 13,
+        color: '#FF9500',
+        marginTop: 4,
+        textAlign: 'center',
     },
     buttonRow: {
         flexDirection: 'row',

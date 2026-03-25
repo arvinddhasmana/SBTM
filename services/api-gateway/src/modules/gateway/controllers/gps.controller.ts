@@ -1,7 +1,13 @@
 import { Controller, Get, Param, Query, UseGuards, Request, Post, Body } from '@nestjs/common';
-import { GpsGatewayService, LocationHistoryQueryDto, CreateLocationDto } from '../services/gps.gateway.service';
+import {
+    GpsGatewayService,
+    LocationHistoryQueryDto,
+    CreateLocationDto,
+    RouteLifecycleEventDto,
+} from '../services/gps.gateway.service';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../common/guards/roles.guard';
+import { Roles, Role } from '../../../common/decorators/roles.decorator';
 
 @Controller('routes')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -41,5 +47,18 @@ export class GpsController {
         @Request() req: { user: any },
     ) {
         return this.gpsGatewayService.ingestLocation(dto, req.user);
+    }
+
+    /**
+     * Records a route lifecycle event (start, stop progression, completion).
+     * schoolId is derived from the authenticated JWT – never trusted from the body.
+     */
+    @Post('lifecycle-events')
+    @Roles(Role.DRIVER, Role.ADMIN)
+    async recordLifecycleEvent(
+        @Body() dto: RouteLifecycleEventDto,
+        @Request() req: { user: any },
+    ) {
+        return this.gpsGatewayService.recordRouteLifecycleEvent(dto, req.user);
     }
 }

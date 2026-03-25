@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Param, UseGuards, Request } from '@nestjs/common';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../common/guards/roles.guard';
 import { Roles, Role } from '../../../common/decorators/roles.decorator';
@@ -13,5 +13,18 @@ export class DriverController {
     @Roles(Role.DRIVER)
     async getSchedule(@Request() req: { user: any }): Promise<unknown> {
         return this.driverGatewayService.getScheduleForDriver(req.user);
+    }
+
+    /**
+     * Returns the full student roster for a route, merged with server-confirmed presence states.
+     * Accessible only to the assigned driver.
+     */
+    @Get('me/routes/:routeId/students')
+    @Roles(Role.DRIVER)
+    async getRouteStudents(
+        @Param('routeId') routeId: string,
+        @Request() req: { user: any },
+    ): Promise<unknown> {
+        return this.driverGatewayService.getRouteStudents(routeId, req.user);
     }
 }

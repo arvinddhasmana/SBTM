@@ -21,6 +21,18 @@ export interface CreateStudentPresenceEventDto {
     schoolId?: string;
 }
 
+export interface BleDetectionItemDto {
+    tagId: string;
+    signalStrength: number;
+}
+
+export interface ProcessBleDetectionsDto {
+    vehicleId: string;
+    routeId: string;
+    timestamp: string;
+    detections: BleDetectionItemDto[];
+}
+
 interface RequestUser {
     id: string;
     role: Role;
@@ -76,6 +88,34 @@ export class PresenceGatewayService {
             schoolId: dto.schoolId || user.schoolId,
         };
         return this.httpClient.post<{ presenceEventId: string }>(url, payload);
+    }
+
+    async processBleDetections(
+        dto: ProcessBleDetectionsDto,
+        user: RequestUser,
+    ): Promise<{ status: string; eventsProcessed: number }> {
+        if (user.role !== Role.DRIVER && user.role !== Role.ADMIN) {
+            throw new ForbiddenException('Only drivers can submit BLE detections');
+        }
+
+        if (user.role === Role.DRIVER && !user.assignedRouteIds?.includes(dto.routeId)) {
+            throw new ForbiddenException('You can only submit BLE data for your assigned routes');
+        }
+
+        if (!user.schoolId) {
+            throw new ForbiddenException('School context is required');
+        }
+
+        const url = `${this.presenceServiceUrl}/api/v1/presence-events`;
+        // schoolId is always sourced from authenticated user – never from the client body
+        const payload = {
+            schoolId: user.schoolId,
+            vehicleId: dto.vehicleId,
+            routeId: dto.routeId,
+            timestamp: dto.timestamp,
+            detections: dto.detections,
+        };
+        return this.httpClient.post<{ status: string; eventsProcessed: number }>(url, payload);
     }
 
     private checkRouteAccess(routeId: string, user: RequestUser): void {
