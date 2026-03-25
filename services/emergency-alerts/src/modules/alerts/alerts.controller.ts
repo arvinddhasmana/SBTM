@@ -1,30 +1,29 @@
-
 import { Controller, Post, Get, Body, Param, Query } from '@nestjs/common';
 import { AlertsService } from './alerts.service';
 import { CreateEmergencyEventDto } from './dto/create-emergency-event.dto';
 
 @Controller('api/v1')
 export class AlertsController {
-    constructor(private readonly alertsService: AlertsService) { }
+  constructor(private readonly alertsService: AlertsService) {}
 
-    @Post('emergency-events')
-    async create(@Body() createDto: CreateEmergencyEventDto) {
-        const alert = await this.alertsService.create(createDto);
-        return { status: 'received', alertId: alert.id };
-    }
+  @Post('emergency-events')
+  async create(@Body() createDto: CreateEmergencyEventDto) {
+    const alert = await this.alertsService.create(createDto);
+    return { status: 'received', alertId: alert.id };
+  }
 
-    @Get('alerts/active')
-    async findAllActive(@Query('schoolId') schoolId?: string) {
-        return this.alertsService.findAllActive(schoolId);
-    }
+  @Get('alerts/active')
+  async findAllActive(@Query('schoolId') schoolId?: string) {
+    return this.alertsService.findAllActive(schoolId);
+  }
 
-    @Get('alerts/:alertId')
-    async findOne(@Param('alertId') alertId: string) {
-        return this.alertsService.findOne(alertId);
-    }
+  @Get('alerts/:alertId')
+  async findOne(@Param('alertId') alertId: string) {
+    return this.alertsService.findOne(alertId);
+  }
 
-    @Get('alerts/parent-view/:routeId')
-    async findForRoute(@Param('routeId') routeId: string) {
-        return this.alertsService.findForRoute(routeId);
-    }
+  @Get('alerts/parent-view/:routeId')
+  async findForRoute(@Param('routeId') routeId: string) {
+    return this.alertsService.findForRoute(routeId);
+  }
 }

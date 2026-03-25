@@ -45,6 +45,15 @@ export interface ActiveAlert {
     createdAt: string;
 }
 
+export interface NotificationRecord {
+    id: string;
+    alertId: string;
+    recipientUserId: string;
+    channel: string;
+    status: 'SENT' | 'FAILED';
+    timestamp: string;
+}
+
 export const parentApi = {
     async login(email: string, password: string): Promise<AuthLoginResponse> {
         const response = await apiClient.post<AuthLoginResponse>('/api/v1/auth/login', {
@@ -70,5 +79,10 @@ export const parentApi = {
         );
         if (!response.data.alertActive) return null;
         return response.data as ActiveAlert;
+    },
+
+    async getNotifications(): Promise<NotificationRecord[]> {
+        const response = await apiClient.get<NotificationRecord[]>('/api/v1/parent/notifications');
+        return response.data;
     },
 };

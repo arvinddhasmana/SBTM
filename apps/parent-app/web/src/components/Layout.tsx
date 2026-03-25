@@ -2,11 +2,17 @@ import React, { useState } from 'react';
 import { Outlet, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Bus, LogOut, User, Bell, Menu, X } from 'lucide-react';
+import { useAlerts } from '../hooks/useAlerts';
 
 const Layout: React.FC = () => {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+    // Show a dot on the bell when there is an active emergency alert on the parent's first route
+    const firstRouteId = user?.children?.[0]?.routeId;
+    const { alert: activeAlert } = useAlerts(firstRouteId);
+    const hasUnread = !!activeAlert;
 
     const handleLogout = () => {
         logout();
@@ -27,10 +33,16 @@ const Layout: React.FC = () => {
                         </div>
 
                         <div className="hidden sm:ml-6 sm:flex sm:items-center space-x-4">
-                            <button className="p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                                <span className="sr-only">View notifications</span>
+                            <Link
+                                to="/notifications"
+                                className="relative p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                aria-label="View notifications"
+                            >
                                 <Bell className="h-6 w-6" />
-                            </button>
+                                {hasUnread && (
+                                    <span className="absolute top-0 right-0 block h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white" aria-label="Unread alert" />
+                                )}
+                            </Link>
 
                             <div className="ml-3 relative flex items-center">
                                 <span className="mr-2 text-sm font-medium text-gray-700">{user?.name}</span>
@@ -71,6 +83,18 @@ const Layout: React.FC = () => {
                             >
                                 Dashboard
                             </Link>
+                            <Link
+                                to="/notifications"
+                                className="text-gray-600 hover:bg-gray-50 hover:text-gray-900 block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium"
+                                onClick={() => setIsMenuOpen(false)}
+                            >
+                                Notifications
+                                {hasUnread && (
+                                    <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                        Alert
+                                    </span>
+                                )}
+                            </Link>
                         </div>
                         <div className="pt-4 pb-4 border-t border-gray-200">
                             <div className="flex items-center px-4">
@@ -83,10 +107,16 @@ const Layout: React.FC = () => {
                                     <div className="text-base font-medium text-gray-800">{user?.name}</div>
                                     <div className="text-sm font-medium text-gray-500">{user?.email}</div>
                                 </div>
-                                <button className="ml-auto flex-shrink-0 p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                                    <span className="sr-only">View notifications</span>
+                                <Link
+                                    to="/notifications"
+                                    className="ml-auto flex-shrink-0 relative p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                    aria-label="View notifications"
+                                >
                                     <Bell className="h-6 w-6" />
-                                </button>
+                                    {hasUnread && (
+                                        <span className="absolute top-0 right-0 block h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white" />
+                                    )}
+                                </Link>
                             </div>
                             <div className="mt-3 space-y-1">
                                 <button

@@ -5,6 +5,7 @@ import Layout from './components/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import MapPage from './pages/Map';
+import Notifications from './pages/Notifications';
 import 'leaflet/dist/leaflet.css';
 
 // Protected Route Wrapper
@@ -37,6 +38,7 @@ function App() {
             <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="map/:childId" element={<MapPage />} />
+            <Route path="notifications" element={<Notifications />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
