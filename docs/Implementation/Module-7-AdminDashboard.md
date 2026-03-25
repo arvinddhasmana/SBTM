@@ -5,8 +5,8 @@ Implemented with live gateway integration.
 
 ## Source of Truth
 - Current implementation: this document
-- Upgrade gaps: `docs/prd/v1/UpgradePlan/GapAnalysis.md`
-- Planned delivery phases: `docs/prd/v1/UpgradePlan/PhaseWiseImplementationPlan.md` Phases 3 and 4
+- Upgrade gaps: `docs/prd/GapAnalysis.md`
+- Planned delivery phases: `docs/prd/PhaseWiseImplementationPlan.md` Phases 3 and 4
 
 ## Location
 - `apps/admin-dashboard`

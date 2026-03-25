@@ -5,8 +5,8 @@ Implemented with live gateway integration.
 
 ## Source of Truth
 - Current implementation: this document
-- Upgrade gaps: `docs/prd/v1/UpgradePlan/GapAnalysis.md`
-- Planned delivery phase: `docs/prd/v1/UpgradePlan/PhaseWiseImplementationPlan.md` Phase 2
+- Upgrade gaps: `docs/prd/GapAnalysis.md`
+- Planned delivery phase: `docs/prd/PhaseWiseImplementationPlan.md` Phase 2
 
 ## Location
 - `apps/driver-app`

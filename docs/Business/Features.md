@@ -4,15 +4,15 @@
 - Last reviewed: 2026-03-24
 - Primary use: Traceable feature inventory with dependencies, status, and requirement coverage
 
-This catalog translates the requirements baseline into business-facing capabilities with stable feature identifiers. For code-verified delivery gaps, use `docs/prd/v1/UpgradePlan/GapAnalysis.md`.
+This catalog translates the requirements baseline into business-facing capabilities with stable feature identifiers. For code-verified delivery gaps, use `docs/prd/GapAnalysis.md`.
 
 ## Related Documents
 
 - [Requirements.md](Requirements.md)
 - [UseCases.md](UseCases.md)
 - [UserJourney.md](UserJourney.md)
-- [../Design/v1/Architecture.md](../Design/v1/Architecture.md)
-- [../prd/v1/UpgradePlan/GapAnalysis.md](../prd/v1/UpgradePlan/GapAnalysis.md)
+- [../Design/Architecture.md](../Design/Architecture.md)
+- [../prd/GapAnalysis.md](../prd/GapAnalysis.md)
 
 ## Feature Dependency Overview
 

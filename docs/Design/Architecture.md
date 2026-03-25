@@ -16,7 +16,7 @@ This document is the architectural index for the SBTM v1 target state. It separa
 - [TechnicalSpecifications.md](TechnicalSpecifications.md)
 - [EventCatalog.md](EventCatalog.md)
 - [../../Business/Requirements.md](../../Business/Requirements.md)
-- [../../prd/v1/UpgradePlan/GapAnalysis.md](../../prd/v1/UpgradePlan/GapAnalysis.md)
+- [../../prd/GapAnalysis.md](../../prd/GapAnalysis.md)
 
 ## Architecture Intent
 
@@ -93,6 +93,6 @@ flowchart LR
 
 ## Source-of-Truth Boundaries
 
-- Use `docs/Design/v1` for target-state design and architectural direction.
+- Use `docs/Design` for target-state design and architectural direction.
 - Use `docs/Implementation` for code-verified current state.
-- Use `docs/prd/v1/UpgradePlan` for the difference between current delivery and the v1 target.
+- Use `docs/prd` for the difference between current delivery and the v1 target.

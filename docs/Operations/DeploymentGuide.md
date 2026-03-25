@@ -76,6 +76,6 @@ Before production rollout, the deployment model should include:
 
 ## Related Documents
 
-- [../Design/v1/DeploymentArchitecture.md](../Design/v1/DeploymentArchitecture.md)
+- [../Design/DeploymentArchitecture.md](../Design/DeploymentArchitecture.md)
 - [Observability.md](Observability.md)
 - [Runbooks.md](Runbooks.md)

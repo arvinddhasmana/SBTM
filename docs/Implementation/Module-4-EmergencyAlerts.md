@@ -5,8 +5,8 @@ Implemented and running in Docker Compose.
 
 ## Source of Truth
 - Current implementation: this document
-- Upgrade gaps: `docs/prd/v1/UpgradePlan/GapAnalysis.md`
-- Planned delivery phase: `docs/prd/v1/UpgradePlan/PhaseWiseImplementationPlan.md` Phase 1
+- Upgrade gaps: `docs/prd/GapAnalysis.md`
+- Planned delivery phase: `docs/prd/PhaseWiseImplementationPlan.md` Phase 1
 
 ## Location
 - `services/emergency-alerts`

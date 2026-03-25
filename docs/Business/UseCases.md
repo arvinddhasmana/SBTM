@@ -11,10 +11,10 @@ This document is the index for the SBTM use case set. Each use case now lives in
 - [Requirements.md](Requirements.md)
 - [Features.md](Features.md)
 - [UserJourney.md](UserJourney.md)
-- [../Design/v1/SystemArchitecture.md](../Design/v1/SystemArchitecture.md)
-- [../Design/v1/IntegrationArchitecture.md](../Design/v1/IntegrationArchitecture.md)
-- [../prd/v1/UpgradePlan/GapAnalysis.md](../prd/v1/UpgradePlan/GapAnalysis.md)
-- [../prd/v1/UpgradePlan/PhaseWiseImplementationPlan.md](../prd/v1/UpgradePlan/PhaseWiseImplementationPlan.md)
+- [../Design/SystemArchitecture.md](../Design/SystemArchitecture.md)
+- [../Design/IntegrationArchitecture.md](../Design/IntegrationArchitecture.md)
+- [../prd/GapAnalysis.md](../prd/GapAnalysis.md)
+- [../prd/PhaseWiseImplementationPlan.md](../prd/PhaseWiseImplementationPlan.md)
 
 ## Use Case Index
 

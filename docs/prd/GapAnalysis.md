@@ -5,15 +5,16 @@
 - Primary use: Verified gap inventory between the current implementation and the v1 target
 
 ## Purpose
-This analysis compares the revised v1 design in `docs/Design/v1`, the business and demo expectations in `docs/Business` and `docs/Demo`, and the current implementation across the apps and services. The goal is to identify the remaining deltas that matter for the upgrade plan, while correcting assumptions from earlier gap notes that are no longer accurate.
+This analysis compares the revised v1 design in `docs/Design`, the business and demo expectations in `docs/Business` and `docs/Demo`, and the current implementation across the apps and services. The goal is to identify the remaining deltas that matter for the upgrade plan, while correcting assumptions from earlier gap notes that are no longer accurate.
 
 Related documents:
 - [PhaseWiseImplementationPlan.md](./PhaseWiseImplementationPlan.md)
-- [../../../Design/v1/Architecture.md](../../../Design/v1/Architecture.md)
-- [../../../Design/v1/EventCatalog.md](../../../Design/v1/EventCatalog.md)
-- [../../../Business/Requirements.md](../../../Business/Requirements.md)
-- [../../../Test/TestingGuide.md](../../../Test/TestingGuide.md)
-- [../../../Demo/DEMO_SETUP_GUIDE.md](../../../Demo/DEMO_SETUP_GUIDE.md)
+- [UpgradePlan/](UpgradePlan/) — Self-contained phase plans (Phase 1–5)
+- [../Design/Architecture.md](../Design/Architecture.md)
+- [../Design/EventCatalog.md](../Design/EventCatalog.md)
+- [../Business/Requirements.md](../Business/Requirements.md)
+- [../Test/TestingGuide.md](../Test/TestingGuide.md)
+- [../Demo/DEMO_SETUP_GUIDE.md](../Demo/DEMO_SETUP_GUIDE.md)
 
 ## Executive Summary
 The current implementation already delivers a meaningful multi-service prototype: gateway auth and RBAC, GPS ingest and history, emergency alerts, student presence processing, compliance, video, student management, a working admin dashboard, a working parent portal, and a driver app with offline buffering.

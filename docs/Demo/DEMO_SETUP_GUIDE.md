@@ -6,23 +6,57 @@
 
 This guide is for new developers and QA team members. It walks you through a full, end-to-end demo story that covers Board Admin, School Admin, Driver, and Parent roles. It includes one-command setup, seeded data, and workarounds for features that are not implemented yet.
 
-This document is the operational setup guide for demos. For current capability gaps, limitations, and phase sequencing, use `docs/prd/v1/UpgradePlan/GapAnalysis.md` and `docs/prd/v1/UpgradePlan/PhaseWiseImplementationPlan.md`.
+This document is the operational setup guide for demos. For current capability gaps, limitations, and phase sequencing, use `docs/prd/GapAnalysis.md` and `docs/prd/PhaseWiseImplementationPlan.md`.
 
 ## Related Documents
 
 - [LiveDemoScript.md](LiveDemoScript.md)
 - [QUICK_REFERENCE.md](QUICK_REFERENCE.md)
-- [GapAnalysis.md](../prd/v1/UpgradePlan/GapAnalysis.md)
-- [PhaseWiseImplementationPlan.md](../prd/v1/UpgradePlan/PhaseWiseImplementationPlan.md)
+- [GapAnalysis.md](../prd/GapAnalysis.md)
+- [PhaseWiseImplementationPlan.md](../prd/PhaseWiseImplementationPlan.md)
 - [TestingGuide.md](../Test/TestingGuide.md)
 
 If you need a shorter walkthrough, use [LiveDemoScript.md](LiveDemoScript.md).
 
 ## Visual Overview
 
-![Demo flow](images/demo-flow.svg)
+The C4 diagrams below replace the previous SVG images and show the demo-relevant system context and container architecture.
 
-![Roles map](images/roles-map.svg)
+### Demo Flow
+
+```mermaid
+graph LR
+    subgraph "1. Setup"
+        RESET[Reset & Seed<br/>reset-demo-db.ps1] --> VERIFY[Verify Services<br/>Health Checks]
+    end
+    subgraph "2. Demo Roles"
+        ADMIN[Board/School Admin<br/>Admin Dashboard] 
+        DRIVER[Driver<br/>Driver App]
+        PARENT[Parent<br/>Parent Portal]
+    end
+    subgraph "3. Demo Flow"
+        DRIVER -->|Start Route<br/>GPS Tracking| ADMIN
+        DRIVER -->|Board Students<br/>Presence Events| PARENT
+        DRIVER -->|Trigger Alert<br/>Emergency| ADMIN
+        DRIVER -->|Trigger Alert<br/>Emergency| PARENT
+    end
+    VERIFY --> ADMIN & DRIVER & PARENT
+```
+
+### Roles Map
+
+```mermaid
+graph TD
+    OSTA[OSTA Admin<br/>Cross-board oversight]
+    BOARD[Board Admin<br/>Board-level management]
+    SCHOOL[School Admin<br/>School-level operations]
+    DRIVER_ROLE[Driver<br/>Route execution, presence]
+    PARENT_ROLE[Parent<br/>Child tracking, alerts]
+    OSTA --> BOARD
+    BOARD --> SCHOOL
+    SCHOOL --> DRIVER_ROLE
+    SCHOOL --> PARENT_ROLE
+```
 
 ### C4 Diagram (Demo Context)
 
@@ -277,7 +311,7 @@ Then open the Videos page in the Admin Dashboard.
 
 - Keep this guide focused on environment setup, seeded data, simulator usage, and demo execution.
 - Do not treat this guide as the authoritative source for product completeness or upgrade status.
-- When demoing a missing or partially implemented feature, point back to `docs/prd/v1/UpgradePlan/GapAnalysis.md` for the verified limitation.
+- When demoing a missing or partially implemented feature, point back to `docs/prd/GapAnalysis.md` for the verified limitation.
 - BLE tags: use manual presence events for now; BLE scanning can be narrated.
 
 ## 7. Validation and QA Checks

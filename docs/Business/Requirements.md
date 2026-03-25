@@ -4,18 +4,18 @@
 - Last reviewed: 2026-03-24
 - Primary use: Traceable business, privacy, operational, and non-functional requirements for the platform
 
-This document defines the requirements baseline for SBTM_AntiGravity using stable identifiers. It is the business source of truth for what the platform must do and what quality constraints it must satisfy. For code-verified current implementation status, use `docs/Implementation/*`. For prioritized delivery gaps, use `docs/prd/v1/UpgradePlan/GapAnalysis.md` and `docs/prd/v1/UpgradePlan/PhaseWiseImplementationPlan.md`.
+This document defines the requirements baseline for SBTM_AntiGravity using stable identifiers. It is the business source of truth for what the platform must do and what quality constraints it must satisfy. For code-verified current implementation status, use `docs/Implementation/*`. For prioritized delivery gaps, use `docs/prd/GapAnalysis.md` and `docs/prd/PhaseWiseImplementationPlan.md`.
 
 ## Related Documents
 
 - [Features.md](Features.md)
 - [UseCases.md](UseCases.md)
 - [UserJourney.md](UserJourney.md)
-- [../Design/v1/Architecture.md](../Design/v1/Architecture.md)
-- [../Design/v1/SystemArchitecture.md](../Design/v1/SystemArchitecture.md)
-- [../Design/v1/SecurityPrivacyArchitecture.md](../Design/v1/SecurityPrivacyArchitecture.md)
-- [../prd/v1/UpgradePlan/GapAnalysis.md](../prd/v1/UpgradePlan/GapAnalysis.md)
-- [../prd/v1/UpgradePlan/PhaseWiseImplementationPlan.md](../prd/v1/UpgradePlan/PhaseWiseImplementationPlan.md)
+- [../Design/Architecture.md](../Design/Architecture.md)
+- [../Design/SystemArchitecture.md](../Design/SystemArchitecture.md)
+- [../Design/SecurityPrivacyArchitecture.md](../Design/SecurityPrivacyArchitecture.md)
+- [../prd/GapAnalysis.md](../prd/GapAnalysis.md)
+- [../prd/PhaseWiseImplementationPlan.md](../prd/PhaseWiseImplementationPlan.md)
 
 ## Requirement Model
 

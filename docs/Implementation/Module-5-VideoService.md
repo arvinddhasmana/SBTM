@@ -5,8 +5,8 @@ Implemented and tested (per status report).
 
 ## Source of Truth
 - Current implementation: this document
-- Upgrade gaps: `docs/prd/v1/UpgradePlan/GapAnalysis.md`
-- Planned delivery phases: `docs/prd/v1/UpgradePlan/PhaseWiseImplementationPlan.md` Phases 4 and 5
+- Upgrade gaps: `docs/prd/GapAnalysis.md`
+- Planned delivery phases: `docs/prd/PhaseWiseImplementationPlan.md` Phases 4 and 5
 
 ## Location
 - `services/video-service`

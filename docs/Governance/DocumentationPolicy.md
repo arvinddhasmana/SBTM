@@ -20,7 +20,7 @@ Use documentation domains rather than mixing all audiences into one file.
 | Audience | Primary entry point | Expected content |
 |----------|---------------------|------------------|
 | Product, delivery, stakeholders | `docs/Business` | Goals, requirements, feature scope, journeys, and use cases |
-| Architects and senior engineers | `docs/Design/v1` | System context, service decomposition, event model, NFRs |
+| Architects and senior engineers | `docs/Design` | System context, service decomposition, event model, NFRs |
 | Developers | `docs/Implementation`, service `README.md` files | Code-aligned implementation details, module ownership, runtime expectations |
 | Operators, demo owners, QA | `docs/Demo`, `docs/Test` | Demo setup, verification steps, smoke tests, scenario validation |
 | Future compliance and support owners | `docs/Governance`, future operations/security docs | Policy, ownership, privacy controls, operational standards |
@@ -42,11 +42,11 @@ Recommended additions for major documents:
 ## Source-of-Truth Rules
 
 - `docs/Business` defines product intent and expected capabilities.
-- `docs/Design/v1` defines target-state architecture and technical direction.
+- `docs/Design` defines target-state architecture and technical direction.
 - `docs/Implementation` describes the currently verified implementation state by module.
 - Service-level `README.md` files explain how a specific service works today.
-- `docs/prd/v1/UpgradePlan/GapAnalysis.md` is the authoritative gap inventory.
-- `docs/prd/v1/UpgradePlan/PhaseWiseImplementationPlan.md` is the authoritative delivery roadmap.
+- `docs/prd/GapAnalysis.md` is the authoritative gap inventory.
+- `docs/prd/PhaseWiseImplementationPlan.md` is the authoritative delivery roadmap.
 - Demo and test docs must not be treated as proof of full feature completion.
 - Superseded docs must remain clearly marked and should redirect readers to the active replacement.
 
@@ -92,7 +92,7 @@ SBTM documentation must reflect the domain it serves.
 
 - Use `README.md` for directory entry points.
 - Keep business documents under `docs/Business`.
-- Keep target-state architecture under `docs/Design/v1`.
+- Keep target-state architecture under `docs/Design`.
 - Keep implementation-state module notes under `docs/Implementation`.
 - Keep governance policies under `docs/Governance`.
 - Prefer stable names over speculative version churn unless a document truly represents a versioned architecture or plan.

@@ -4,13 +4,13 @@
 - Last reviewed: 2026-03-24
 - Primary use: Fast operational checklist for demo setup and troubleshooting
 
-This is the fast operational companion to `DEMO_SETUP_GUIDE.md`. For feature gaps or upgrade status, use `docs/prd/v1/UpgradePlan/GapAnalysis.md`.
+This is the fast operational companion to `DEMO_SETUP_GUIDE.md`. For feature gaps or upgrade status, use `docs/prd/GapAnalysis.md`.
 
 ## Related Documents
 
 - [DEMO_SETUP_GUIDE.md](DEMO_SETUP_GUIDE.md)
 - [LiveDemoScript.md](LiveDemoScript.md)
-- [GapAnalysis.md](../prd/v1/UpgradePlan/GapAnalysis.md)
+- [GapAnalysis.md](../prd/GapAnalysis.md)
 - [TestingGuide.md](../Test/TestingGuide.md)
 
 ## Fast Commands

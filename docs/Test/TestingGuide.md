@@ -4,19 +4,19 @@
 - Last reviewed: 2026-03-24
 - Primary use: Operational verification, smoke checks, and phase-aligned test focus
 
-This guide is the operational verification reference for the current platform. It complements the upgrade roadmap in `docs/prd/v1/UpgradePlan/PhaseWiseImplementationPlan.md` and the verified gap inventory in `docs/prd/v1/UpgradePlan/GapAnalysis.md`.
+This guide is the operational verification reference for the current platform. It complements the upgrade roadmap in `docs/prd/PhaseWiseImplementationPlan.md` and the verified gap inventory in `docs/prd/GapAnalysis.md`.
 
 ## Related Documents
 
-- [GapAnalysis.md](../prd/v1/UpgradePlan/GapAnalysis.md)
-- [PhaseWiseImplementationPlan.md](../prd/v1/UpgradePlan/PhaseWiseImplementationPlan.md)
+- [GapAnalysis.md](../prd/GapAnalysis.md)
+- [PhaseWiseImplementationPlan.md](../prd/PhaseWiseImplementationPlan.md)
 - [Requirements.md](../Business/Requirements.md)
 - [DEMO_SETUP_GUIDE.md](../Demo/DEMO_SETUP_GUIDE.md)
 
 ## Scope
 
 - Use this guide for smoke checks, integration verification, and demo-environment validation.
-- Use `docs/prd/v1/UpgradePlan/PhaseWiseImplementationPlan.md` for phase acceptance criteria and delivery order.
+- Use `docs/prd/PhaseWiseImplementationPlan.md` for phase acceptance criteria and delivery order.
 - Use `docs/Implementation/*` when you need module-specific current-state context.
 
 ## Current Smoke Tests

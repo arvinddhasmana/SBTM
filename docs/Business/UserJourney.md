@@ -4,14 +4,14 @@
 - Last reviewed: 2026-03-24
 - Primary use: Business-facing walkthrough of the currently deliverable user experience
 
-This document describes the currently deliverable user flow at a business level. For upgrade gaps and phase sequencing, use `docs/prd/v1/UpgradePlan/GapAnalysis.md` and `docs/prd/v1/UpgradePlan/PhaseWiseImplementationPlan.md`.
+This document describes the currently deliverable user flow at a business level. For upgrade gaps and phase sequencing, use `docs/prd/GapAnalysis.md` and `docs/prd/PhaseWiseImplementationPlan.md`.
 
 ## Related Documents
 
 - [Requirements.md](Requirements.md)
 - [UseCases.md](UseCases.md)
 - [Features.md](Features.md)
-- [GapAnalysis.md](../prd/v1/UpgradePlan/GapAnalysis.md)
+- [GapAnalysis.md](../prd/GapAnalysis.md)
 - [LiveDemoScript.md](../Demo/LiveDemoScript.md)
 
 ## Admin Journey (Web)

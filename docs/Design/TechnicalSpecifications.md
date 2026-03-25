@@ -4,7 +4,7 @@
 - Last reviewed: 2026-03-24
 - Primary use: Target-state technical baseline, interfaces, and non-functional design
 
-This document describes the target v1 technical baseline. It should be read with the current-state implementation notes in `docs/Implementation` and the verified upgrade gaps in `docs/prd/v1/UpgradePlan/GapAnalysis.md`.
+This document describes the target v1 technical baseline. It should be read with the current-state implementation notes in `docs/Implementation` and the verified upgrade gaps in `docs/prd/GapAnalysis.md`.
 
 ## Related Documents
 
@@ -15,8 +15,8 @@ This document describes the target v1 technical baseline. It should be read with
 - [DeploymentArchitecture.md](DeploymentArchitecture.md)
 - [SecurityPrivacyArchitecture.md](SecurityPrivacyArchitecture.md)
 - [EventCatalog.md](EventCatalog.md)
-- [GapAnalysis.md](../../prd/v1/UpgradePlan/GapAnalysis.md)
-- [PhaseWiseImplementationPlan.md](../../prd/v1/UpgradePlan/PhaseWiseImplementationPlan.md)
+- [GapAnalysis.md](../prd/GapAnalysis.md)
+- [PhaseWiseImplementationPlan.md](../prd/PhaseWiseImplementationPlan.md)
 - [TestingGuide.md](../../Test/TestingGuide.md)
 
 ## 1. Technology Stack

@@ -4,13 +4,13 @@
 - Last reviewed: 2026-03-24
 - Primary use: Stakeholder-facing demo narrative and walkthrough script
 
-This script is a presentation flow for stakeholders and internal walkthroughs. It is not the source of truth for implementation status. For verified current gaps and planned completion order, use `docs/prd/v1/UpgradePlan/GapAnalysis.md` and `docs/prd/v1/UpgradePlan/PhaseWiseImplementationPlan.md`.
+This script is a presentation flow for stakeholders and internal walkthroughs. It is not the source of truth for implementation status. For verified current gaps and planned completion order, use `docs/prd/GapAnalysis.md` and `docs/prd/PhaseWiseImplementationPlan.md`.
 
 ## Related Documents
 
 - [DEMO_SETUP_GUIDE.md](DEMO_SETUP_GUIDE.md)
 - [QUICK_REFERENCE.md](QUICK_REFERENCE.md)
-- [GapAnalysis.md](../prd/v1/UpgradePlan/GapAnalysis.md)
+- [GapAnalysis.md](../prd/GapAnalysis.md)
 - [TestingGuide.md](../Test/TestingGuide.md)
 
 ## Demo Overview
