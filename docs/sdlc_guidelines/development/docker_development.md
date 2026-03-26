@@ -28,10 +28,7 @@ cd SBTM_AntiGravity
 docker-compose up -d
 
 # Initialize the database
-# On Linux/Mac:
-psql -h localhost -U sbtm -d sbtm -f scripts/init-db.sql
-# On Windows (PowerShell):
-.\scripts\init-db.ps1
+bash scripts/init-db.sh
 
 # Verify services are running
 curl http://localhost:3000/health  # API Gateway
@@ -93,9 +90,7 @@ Load demo data and simulate a school bus route:
 
 ```bash
 # Reset and seed the demo database
-.\scripts\reset-demo-db.ps1    # Windows
-# OR
-psql -h localhost -U sbtm -d sbtm -f scripts/init-db.sql  # Linux/Mac
+./scripts/reset-demo-db.sh
 
 # Simulate a GPS track
 # (Use the demo GPS track data)

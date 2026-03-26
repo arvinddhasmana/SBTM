@@ -27,7 +27,7 @@ The C4 diagrams below replace the previous SVG images and show the demo-relevant
 ```mermaid
 graph LR
     subgraph "1. Setup"
-        RESET[Reset & Seed<br/>reset-demo-db.ps1] --> VERIFY[Verify Services<br/>Health Checks]
+        RESET[Reset & Seed<br/>reset-demo-db.sh] --> VERIFY[Verify Services<br/>Health Checks]
     end
     subgraph "2. Demo Roles"
         ADMIN[Board/School Admin<br/>Admin Dashboard] 
@@ -98,11 +98,11 @@ C4Container
 
 This is the **primary recommended approach** for setting up the demo environment. It ensures a clean, consistent state every time.
 
-### Windows (PowerShell)
+### Reset and Seed
 
-```powershell
+```bash
 # From repo root - this will reset everything
-.\scripts\reset-demo-db.ps1
+./scripts/reset-demo-db.sh
 ```
 
 This command will:
@@ -112,14 +112,14 @@ This command will:
 4. Run verification checks to ensure everything works
 
 **Optional flags:**
-- `-NoBuild` - Skip Docker rebuild (faster if images are up to date)
-- `-SkipVerify` - Skip verification step (not recommended)
+- `--no-build` - Skip Docker rebuild (faster if images are up to date)
+- `--skip-verify` - Skip verification step (not recommended)
 
 ### Verification After Setup
 
 Check that everything is working:
-```powershell
-.\scripts\verify-demo.ps1
+```bash
+./scripts/verify-demo.sh
 ```
 
 This will verify:
@@ -152,7 +152,7 @@ If login fails, run the seeding script again and use the password printed by the
 
 Use this only when you are actively developing UI locally:
 
-```powershell
+```bash
 # Admin Dashboard
 cd apps/admin-dashboard
 npm install
@@ -168,7 +168,7 @@ Set `VITE_API_URL` to `http://localhost:3001` for both.
 
 ### Driver App (Expo)
 
-```powershell
+```bash
 cd apps/driver-app
 npm install
 npx expo start
@@ -181,9 +181,9 @@ npx expo start
 
 After services are up and data is seeded, run the simulator to generate live GPS movement, emergency alerts, late notices, and route start/complete entries.
 
-```powershell
+```bash
 # From repo root
-.\scripts\simulate-demo.ps1 -IntervalSeconds 5 -Laps 3
+./scripts/simulate-demo.sh --interval 5 --laps 3
 ```
 
 To customize routes and waypoints without editing the script, update:
@@ -191,10 +191,10 @@ To customize routes and waypoints without editing the script, update:
 - [scripts/demo-gps-track.json](../../scripts/demo-gps-track.json)
 
 The simulator loads this file automatically when present. Each route entry should align with seeded IDs (ROUTE-A, BUS-001, driver1@sbtm.demo, schoolId c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c).
-The file supports multiple named tracks under `tracks`. Pick one with `-TrackName seeded-main`.
-To use a different file, pass `-TrackConfigPath <path>`.
+The file supports multiple named tracks under `tracks`. Pick one with `--track-name seeded-main`.
+To use a different file, pass `--track-config <path>`.
 
-The simulator validates route, vehicle, driver, and student IDs against seeded demo data. Use `-StrictSeedValidation` to fail fast if any IDs are out of sync.
+The simulator validates route, vehicle, driver, and student IDs against seeded demo data. Use `--strict-seed-validation` to fail fast if any IDs are out of sync.
 
 What this does:
 - Emits GPS updates for ROUTE-A and ROUTE-B (BUS-001, BUS-002).
@@ -203,14 +203,14 @@ What this does:
 - Logs ROUTE_STARTED and ROUTE_COMPLETED entries to Compliance Audit (Admin Dashboard > Compliance > Audit).
 
 You can tune the pacing:
-- Increase `-IntervalSeconds` for slower movement.
-- Increase `-Laps` for longer demos.
-- Use `-NoEmergency` or `-NoLate` to mute those events.
+- Increase `--interval` for slower movement.
+- Increase `--laps` for longer demos.
+- Use `--no-emergency` or `--no-late` to mute those events.
 
 **Troubleshooting:**
 - If you see "GPS failed" errors: Check that API Gateway is running (`docker ps`)
 - If maps don't update: Check browser console for 403 errors (authentication issue)
-- If GPS posts succeed but maps are empty: Run `.\scripts\verify-demo.ps1` to check authorization
+- If GPS posts succeed but maps are empty: Run `./scripts/verify-demo.sh` to check authorization
 
 ## 5. Demo Story (End-to-End Use Cases)
 
@@ -323,7 +323,7 @@ Use these checks to confirm everything is working with real data:
 - Parent map updates after GPS posts
 - Students list appears under Admin Dashboard
 - Compliance list and inspections from gateway endpoints
-- Run seed verification script: `./scripts/verify-demo.ps1`
+- Run seed verification script: `./scripts/verify-demo.sh`
 
 ## 8. Reference Links
 
