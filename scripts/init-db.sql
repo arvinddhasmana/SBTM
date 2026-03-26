@@ -15,6 +15,9 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- Drop existing tables to ensure a clean slate (CASCADE to handle FKs)
+DROP TABLE IF EXISTS route_deviation_events CASCADE;
+DROP TABLE IF EXISTS route_geofences CASCADE;
+DROP TABLE IF EXISTS route_lifecycle_events CASCADE;
 DROP TABLE IF EXISTS location_points CASCADE;
 DROP TABLE IF EXISTS presence_event CASCADE;
 DROP TABLE IF EXISTS student_tag CASCADE;
@@ -55,7 +58,7 @@ CREATE TABLE schools (
 CREATE TABLE users (
   id UUID PRIMARY KEY,
   email TEXT NOT NULL UNIQUE,
-  "passwordHash" TEXT NOT NULL,
+  "passwordHash" TEXT,
   role TEXT NOT NULL,
   "firstName" TEXT NULL,
   "lastName" TEXT NULL,
@@ -64,6 +67,9 @@ CREATE TABLE users (
   "assignedRouteIds" TEXT NULL,
   "schoolId" UUID NULL,
   "boardId" UUID NULL,
+  "isActive" BOOLEAN NOT NULL DEFAULT TRUE,
+  "invitationToken" TEXT NULL UNIQUE,
+  "invitationExpiresAt" TIMESTAMPTZ NULL,
   "createdAt" TIMESTAMP NOT NULL DEFAULT NOW(),
   "updatedAt" TIMESTAMP NOT NULL DEFAULT NOW(),
   CONSTRAINT "FK_users_school" FOREIGN KEY ("schoolId") REFERENCES schools(id) ON DELETE SET NULL,
@@ -169,6 +175,47 @@ CREATE TABLE location_points (
 );
 CREATE INDEX "IDX_location_points_timestamp" ON location_points(timestamp);
 CREATE INDEX "IDX_location_points_school_route" ON location_points(school_id, route_id);
+
+CREATE TABLE route_lifecycle_events (
+  id TEXT PRIMARY KEY,
+  school_id TEXT NOT NULL,
+  route_id TEXT NOT NULL,
+  vehicle_id TEXT NOT NULL,
+  driver_id TEXT NOT NULL,
+  event_type TEXT NOT NULL,
+  stop_id TEXT,
+  timestamp TIMESTAMP(3) NOT NULL
+);
+CREATE INDEX "IDX_route_lifecycle_route" ON route_lifecycle_events(route_id);
+CREATE INDEX "IDX_route_lifecycle_school_route" ON route_lifecycle_events(school_id, route_id);
+
+CREATE TABLE route_geofences (
+  id TEXT PRIMARY KEY,
+  school_id TEXT NOT NULL,
+  route_id TEXT NOT NULL UNIQUE,
+  corridor_radius_meters DOUBLE PRECISION NOT NULL DEFAULT 200,
+  stop_proximity_meters DOUBLE PRECISION NOT NULL DEFAULT 50,
+  deviation_threshold_meters DOUBLE PRECISION NOT NULL DEFAULT 300,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+CREATE INDEX "IDX_route_geofences_school" ON route_geofences(school_id);
+
+CREATE TABLE route_deviation_events (
+  id TEXT PRIMARY KEY,
+  school_id TEXT NOT NULL,
+  route_id TEXT NOT NULL,
+  vehicle_id TEXT NOT NULL,
+  lat DOUBLE PRECISION NOT NULL,
+  lng DOUBLE PRECISION NOT NULL,
+  deviation_meters DOUBLE PRECISION NOT NULL,
+  threshold DOUBLE PRECISION NOT NULL,
+  detected_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+CREATE INDEX "IDX_route_deviation_school_route" ON route_deviation_events(school_id, route_id);
+CREATE INDEX "IDX_route_deviation_detected_at" ON route_deviation_events(detected_at);
+
+
 
 
 -- --------------------------------------------------------------------------

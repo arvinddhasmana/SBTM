@@ -95,18 +95,42 @@ get_school_id_from_response() {
   echo "$1" | grep -oP '"schoolId"\s*:\s*"\K[^"]+' 2>/dev/null || echo ""
 }
 
+# Generate an internal service JWT (HS256, issuer=sbtm-internal) using Node.js built-in crypto
+# The default secret matches InternalServiceAuthGuard's fallback: 'dev_internal_secret'
+INTERNAL_SERVICE_SECRET="${INTERNAL_SERVICE_SECRET:-dev_internal_secret}"
+INTERNAL_SERVICE_TOKEN=""
+if command -v node &> /dev/null; then
+  INTERNAL_SERVICE_TOKEN=$(node -e "
+    const crypto = require('crypto');
+    const encode = s => Buffer.from(s).toString('base64url');
+    const header = encode(JSON.stringify({alg:'HS256',typ:'JWT'}));
+    const payload = encode(JSON.stringify({sub:'demo-simulator',iss:'sbtm-internal',iat:Math.floor(Date.now()/1000)}));
+    const sig = crypto.createHmac('sha256','${INTERNAL_SERVICE_SECRET}').update(header+'.'+payload).digest('base64url');
+    console.log(header+'.'+payload+'.'+sig);
+  " 2>/dev/null) || INTERNAL_SERVICE_TOKEN=""
+fi
+
 write_audit_log() {
   if [ "$NO_AUDIT" = true ]; then return; fi
   local action="$1"
   local resource="$2"
   local resource_id="$3"
-  local details="${4:-{}}"
+  local _default_details="{}"
+  local details="${4:-$_default_details}"
   local payload
   payload="{\"user_id\":\"$ADMIN_USER_ID\",\"school_id\":\"$ADMIN_SCHOOL_ID\",\"action\":\"$action\",\"resource\":\"$resource\",\"resource_id\":\"$resource_id\",\"details\":$details}"
-  curl -sf -X POST "$COMPLIANCE_API/audit" \
-    -H "Content-Type: application/json" \
-    -d "$payload" > /dev/null 2>&1 || \
-    echo -e "  \033[33mAudit log failed\033[0m" >&2
+  if [ -n "$INTERNAL_SERVICE_TOKEN" ]; then
+    curl -sf -X POST "$COMPLIANCE_API/audit" \
+      -H "Content-Type: application/json" \
+      -H "Authorization: Bearer $INTERNAL_SERVICE_TOKEN" \
+      -d "$payload" > /dev/null 2>&1 || \
+      echo -e "  \033[33mAudit log failed\033[0m" >&2
+  else
+    curl -sf -X POST "$COMPLIANCE_API/audit" \
+      -H "Content-Type: application/json" \
+      -d "$payload" > /dev/null 2>&1 || \
+      echo -e "  \033[33mAudit log failed\033[0m" >&2
+  fi
 }
 
 contains_element() {
