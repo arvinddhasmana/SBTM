@@ -23,11 +23,11 @@ $ErrorActionPreference = "Continue"
 
 $DefaultBoardId = "b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c"
 $DefaultSchoolId = "c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c"
-$SeededRouteIds = @("ROUTE-A", "ROUTE-B", "ROUTE-C")
-$SeededVehicleIds = @("BUS-001", "BUS-002", "BUS-003")
-$SeededStudentIds = @("STUDENT-001", "STUDENT-002", "STUDENT-003", "STUDENT-004", "STUDENT-005")
-$SeededDriverEmails = @("driver1@sbtm.demo", "driver2@sbtm.demo", "driver3@sbtm.demo")
-$SeededDriverIds = @("driver-001", "driver-002", "driver-003")
+$SeededRouteIds = @("ROUTE-R01", "ROUTE-R02", "ROUTE-R03", "ROUTE-R04", "ROUTE-R05", "ROUTE-R06", "ROUTE-R07", "ROUTE-R08", "ROUTE-R09", "ROUTE-R10", "ROUTE-R11", "ROUTE-R12", "ROUTE-R13", "ROUTE-R14", "ROUTE-R15", "ROUTE-R16", "ROUTE-R17", "ROUTE-R18", "ROUTE-R19", "ROUTE-R20")
+$SeededVehicleIds = @("BUS-01", "BUS-02", "BUS-03", "BUS-04", "BUS-05", "BUS-06", "BUS-07", "BUS-08", "BUS-09", "BUS-10", "BUS-11", "BUS-12", "BUS-13", "BUS-14", "BUS-15", "BUS-16", "BUS-17", "BUS-18", "BUS-19", "BUS-20")
+$SeededStudentIds = @("STUDENT-001", "STUDENT-002", "STUDENT-003", "STUDENT-004", "STUDENT-005", "STUDENT-006", "STUDENT-007", "STUDENT-008", "STUDENT-009", "STUDENT-010", "STUDENT-011", "STUDENT-012", "STUDENT-013", "STUDENT-014", "STUDENT-015")
+$SeededDriverEmails = @(1..20 | ForEach-Object { "driver$_@sbtm.demo" })
+$SeededDriverIds = @(1..20 | ForEach-Object { "driver-$('{0:D3}' -f $_)" })
 
 function Invoke-ApiPost {
     param(
@@ -201,47 +201,70 @@ $adminUser = $adminAuth.user
 if (-not $adminUser.schoolId) { $adminUser.schoolId = $DefaultSchoolId }
 
 $driverAuth = @{}
-foreach ($email in @("driver1@sbtm.demo", "driver2@sbtm.demo", "driver3@sbtm.demo")) {
+foreach ($i in 1..20) {
+    $email = "driver$i@sbtm.demo"
     $driverAuth[$email] = Login-User -Email $email
 }
 
 $routes = @(
     @{
-        routeId = "ROUTE-A"
-        vehicleId = "BUS-001"
+        routeId = "ROUTE-R01"
+        vehicleId = "BUS-01"
         driverEmail = "driver1@sbtm.demo"
         driverId = "driver-001"
-        students = @("STUDENT-001", "STUDENT-002")
+        students = @("STUDENT-001", "STUDENT-021")
         waypoints = @(
-            @{ lat = 45.4215; lng = -75.6972; label = "Start" },
-            @{ lat = 45.4230; lng = -75.6950; label = "Stop 1"; student = "STUDENT-001" },
-            @{ lat = 45.4250; lng = -75.6900; label = "Stop 2"; student = "STUDENT-002" },
-            @{ lat = 45.4280; lng = -75.6880; label = "School" }
+            @{ lat = 45.3680; lng = -75.6690; label = "Start" },
+            @{ lat = 45.3735; lng = -75.6740; label = "Stop 1"; student = "STUDENT-001" },
+            @{ lat = 45.3770; lng = -75.6800; label = "Stop 2"; student = "STUDENT-021" },
+            @{ lat = 45.3810; lng = -75.6850; label = "Stop 3" },
+            @{ lat = 45.3850; lng = -75.6910; label = "Stop 4" },
+            @{ lat = 45.3876; lng = -75.6960; label = "School" }
         )
     },
     @{
-        routeId = "ROUTE-B"
-        vehicleId = "BUS-002"
+        routeId = "ROUTE-R02"
+        vehicleId = "BUS-02"
         driverEmail = "driver2@sbtm.demo"
         driverId = "driver-002"
-        students = @("STUDENT-003")
+        students = @("STUDENT-002", "STUDENT-022")
         waypoints = @(
-            @{ lat = 45.3800; lng = -75.7000; label = "Start" },
-            @{ lat = 45.3850; lng = -75.7050; label = "Stop 1"; student = "STUDENT-003" },
-            @{ lat = 45.3900; lng = -75.7100; label = "Stop 2" },
-            @{ lat = 45.4000; lng = -75.7200; label = "School" }
+            @{ lat = 45.3820; lng = -75.6980; label = "Start" },
+            @{ lat = 45.3835; lng = -75.6975; label = "Stop 1"; student = "STUDENT-002" },
+            @{ lat = 45.3848; lng = -75.6972; label = "Stop 2"; student = "STUDENT-022" },
+            @{ lat = 45.3860; lng = -75.6968; label = "Stop 3" },
+            @{ lat = 45.3870; lng = -75.6963; label = "Stop 4" },
+            @{ lat = 45.3876; lng = -75.6960; label = "School" }
         )
     },
     @{
-        routeId = "ROUTE-C"
-        vehicleId = "BUS-003"
-        driverEmail = "driver3@sbtm.demo"
-        driverId = "driver-003"
-        students = @("STUDENT-005")
+        routeId = "ROUTE-R11"
+        vehicleId = "BUS-11"
+        driverEmail = "driver11@sbtm.demo"
+        driverId = "driver-011"
+        students = @("STUDENT-011", "STUDENT-031")
         waypoints = @(
-            @{ lat = 45.4100; lng = -75.7100; label = "Start" },
-            @{ lat = 45.4120; lng = -75.7080; label = "Stop 1"; student = "STUDENT-005" },
-            @{ lat = 45.4150; lng = -75.7050; label = "School" }
+            @{ lat = 45.3900; lng = -75.7600; label = "Start" },
+            @{ lat = 45.3912; lng = -75.7520; label = "Stop 1"; student = "STUDENT-011" },
+            @{ lat = 45.3925; lng = -75.7440; label = "Stop 2"; student = "STUDENT-031" },
+            @{ lat = 45.3938; lng = -75.7370; label = "Stop 3" },
+            @{ lat = 45.3950; lng = -75.7330; label = "Stop 4" },
+            @{ lat = 45.3960; lng = -75.7300; label = "School" }
+        )
+    },
+    @{
+        routeId = "ROUTE-R12"
+        vehicleId = "BUS-12"
+        driverEmail = "driver12@sbtm.demo"
+        driverId = "driver-012"
+        students = @("STUDENT-012", "STUDENT-032")
+        waypoints = @(
+            @{ lat = 45.4000; lng = -75.7050; label = "Start" },
+            @{ lat = 45.3992; lng = -75.7110; label = "Stop 1"; student = "STUDENT-012" },
+            @{ lat = 45.3985; lng = -75.7170; label = "Stop 2"; student = "STUDENT-032" },
+            @{ lat = 45.3978; lng = -75.7220; label = "Stop 3" },
+            @{ lat = 45.3970; lng = -75.7265; label = "Stop 4" },
+            @{ lat = 45.3960; lng = -75.7300; label = "School" }
         )
     }
 )
@@ -269,10 +292,9 @@ Write-Host "Presence tracking: $(if ($NoPresence) { 'Disabled' } else { 'Enabled
 
 # Track route start times for schedule-based late detection
 $routeStartTimes = @{}
-$routeExpectedDurations = @{
-    "ROUTE-A" = 30  # minutes from start to finish
-    "ROUTE-B" = 35
-    "ROUTE-C" = 25
+$routeExpectedDurations = @{}
+foreach ($rid in $SeededRouteIds) {
+    $routeExpectedDurations[$rid] = 30
 }
 
 for ($lap = 1; $lap -le $Laps; $lap++) {

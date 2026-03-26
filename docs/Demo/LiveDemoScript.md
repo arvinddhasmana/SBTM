@@ -62,7 +62,7 @@ Leave this running in a separate terminal window during the demo.
 curl -X POST http://localhost:3001/api/v1/student-presence-events \
   -H "Authorization: Bearer <driver-token>" \
   -H "Content-Type: application/json" \
-  -d '{"studentId":"STUDENT-001","vehicleId":"BUS-001","routeId":"ROUTE-A","eventType":"BOARD","timestamp":"2026-02-11T08:00:00Z","source":"MANUAL"}'
+  -d '{"studentId":"STUDENT-001","vehicleId":"BUS-01","routeId":"ROUTE-R01","eventType":"BOARD","timestamp":"2026-02-11T08:00:00Z","source":"MANUAL"}'
 ```
 
 ## Scene 5: Video Events (5 min)
@@ -89,6 +89,6 @@ curl -X POST http://localhost:3001/api/v1/student-presence-events \
 
 ### Parent Portal Shows "Offline"
 - **Symptoms:** Portal shows "No active route" or "Offline" status
-- **Check:** Verify simulator is running and shows green "BUS-001: Start" messages
+- **Check:** Verify simulator is running and shows green "BUS-01: Start" messages
 - **Check:** Console for 403 errors on /routes/:routeId/live-location
 - **Fix:** Verify parent user has childRouteIds populated (run verify-demo.sh)

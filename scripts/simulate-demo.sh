@@ -48,11 +48,13 @@ done
 
 DEFAULT_BOARD_ID="b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c"
 DEFAULT_SCHOOL_ID="c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c"
-SEEDED_ROUTE_IDS=("ROUTE-A" "ROUTE-B" "ROUTE-C")
-SEEDED_VEHICLE_IDS=("BUS-001" "BUS-002" "BUS-003")
-SEEDED_STUDENT_IDS=("STUDENT-001" "STUDENT-002" "STUDENT-003" "STUDENT-004" "STUDENT-005")
-SEEDED_DRIVER_EMAILS=("driver1@sbtm.demo" "driver2@sbtm.demo" "driver3@sbtm.demo")
-SEEDED_DRIVER_IDS=("driver-001" "driver-002" "driver-003")
+SEEDED_ROUTE_IDS=("ROUTE-R01" "ROUTE-R02" "ROUTE-R03" "ROUTE-R04" "ROUTE-R05" "ROUTE-R06" "ROUTE-R07" "ROUTE-R08" "ROUTE-R09" "ROUTE-R10" "ROUTE-R11" "ROUTE-R12" "ROUTE-R13" "ROUTE-R14" "ROUTE-R15" "ROUTE-R16" "ROUTE-R17" "ROUTE-R18" "ROUTE-R19" "ROUTE-R20")
+SEEDED_VEHICLE_IDS=("BUS-01" "BUS-02" "BUS-03" "BUS-04" "BUS-05" "BUS-06" "BUS-07" "BUS-08" "BUS-09" "BUS-10" "BUS-11" "BUS-12" "BUS-13" "BUS-14" "BUS-15" "BUS-16" "BUS-17" "BUS-18" "BUS-19" "BUS-20")
+SEEDED_STUDENT_IDS=("STUDENT-001" "STUDENT-002" "STUDENT-003" "STUDENT-004" "STUDENT-005" "STUDENT-006" "STUDENT-007" "STUDENT-008" "STUDENT-009" "STUDENT-010" "STUDENT-011" "STUDENT-012" "STUDENT-013" "STUDENT-014" "STUDENT-015")
+SEEDED_DRIVER_EMAILS=("driver1@sbtm.demo" "driver2@sbtm.demo" "driver3@sbtm.demo" "driver4@sbtm.demo" "driver5@sbtm.demo" "driver6@sbtm.demo" "driver7@sbtm.demo" "driver8@sbtm.demo" "driver9@sbtm.demo" "driver10@sbtm.demo" "driver11@sbtm.demo" "driver12@sbtm.demo" "driver13@sbtm.demo" "driver14@sbtm.demo" "driver15@sbtm.demo" "driver16@sbtm.demo" "driver17@sbtm.demo" "driver18@sbtm.demo" "driver19@sbtm.demo" "driver20@sbtm.demo")
+SEEDED_DRIVER_IDS=("driver-001" "driver-002" "driver-003" "driver-004" "driver-005" "driver-006" "driver-007" "driver-008" "driver-009" "driver-010" "driver-011" "driver-012" "driver-013" "driver-014" "driver-015" "driver-016" "driver-017" "driver-018" "driver-019" "driver-020")
+# Live driver routes (real GPS from phone app — simulator still runs for when driver is offline)
+LIVE_DRIVER_ROUTES=("ROUTE-R01" "ROUTE-R02" "ROUTE-R11" "ROUTE-R12")
 
 api_post() {
   local url="$1"
@@ -130,7 +132,8 @@ ADMIN_SCHOOL_ID=$(get_school_id_from_response "$ADMIN_AUTH")
 if [ -z "$ADMIN_SCHOOL_ID" ]; then ADMIN_SCHOOL_ID="$DEFAULT_SCHOOL_ID"; fi
 
 declare -A DRIVER_TOKENS
-for email in "driver1@sbtm.demo" "driver2@sbtm.demo" "driver3@sbtm.demo"; do
+for i in $(seq 1 20); do
+  email="driver${i}@sbtm.demo"
   auth_response=$(login_user "$email")
   DRIVER_TOKENS["$email"]=$(get_token_from_response "$auth_response")
 done
@@ -140,9 +143,10 @@ done
 # Built-in demo routes (used if no track config file found)
 # Format: routeId|vehicleId|driverEmail|driverId|students(comma-sep)|waypoints(semicolon-sep, each: lat,lng,label[,student[,speedKph[,pauseSeconds]]])
 BUILTIN_ROUTES=(
-  "ROUTE-A|BUS-001|driver1@sbtm.demo|driver-001|STUDENT-001,STUDENT-002|45.4215,-75.6972,Start;45.4230,-75.6950,Stop 1,STUDENT-001;45.4250,-75.6900,Stop 2,STUDENT-002;45.4280,-75.6880,School"
-  "ROUTE-B|BUS-002|driver2@sbtm.demo|driver-002|STUDENT-003|45.3800,-75.7000,Start;45.3850,-75.7050,Stop 1,STUDENT-003;45.3900,-75.7100,Stop 2;45.4000,-75.7200,School"
-  "ROUTE-C|BUS-003|driver3@sbtm.demo|driver-003|STUDENT-005|45.4100,-75.7100,Start;45.4120,-75.7080,Stop 1,STUDENT-005;45.4150,-75.7050,School"
+  "ROUTE-R01|BUS-01|driver1@sbtm.demo|driver-001|STUDENT-001,STUDENT-021|45.3680,-75.6690,Start;45.3735,-75.6740,Stop 1,STUDENT-001;45.3770,-75.6800,Stop 2,STUDENT-021;45.3810,-75.6850,Stop 3;45.3850,-75.6910,Stop 4;45.3876,-75.6960,School"
+  "ROUTE-R02|BUS-02|driver2@sbtm.demo|driver-002|STUDENT-002,STUDENT-022|45.3820,-75.6980,Start;45.3835,-75.6975,Stop 1,STUDENT-002;45.3848,-75.6972,Stop 2,STUDENT-022;45.3860,-75.6968,Stop 3;45.3870,-75.6963,Stop 4;45.3876,-75.6960,School"
+  "ROUTE-R11|BUS-11|driver11@sbtm.demo|driver-011|STUDENT-011,STUDENT-031|45.3900,-75.7600,Start;45.3912,-75.7520,Stop 1,STUDENT-011;45.3925,-75.7440,Stop 2,STUDENT-031;45.3938,-75.7370,Stop 3;45.3950,-75.7330,Stop 4;45.3960,-75.7300,School"
+  "ROUTE-R12|BUS-12|driver12@sbtm.demo|driver-012|STUDENT-012,STUDENT-032|45.4000,-75.7050,Start;45.3992,-75.7110,Stop 1,STUDENT-012;45.3985,-75.7170,Stop 2,STUDENT-032;45.3978,-75.7220,Stop 3;45.3970,-75.7265,Stop 4;45.3960,-75.7300,School"
 )
 
 # Try to load track config from JSON file
@@ -191,9 +195,9 @@ echo -e "\033[90mPresence tracking: $(if [ "$NO_PRESENCE" = true ]; then echo 'D
 
 # Expected durations (minutes)
 declare -A ROUTE_EXPECTED_DURATIONS
-ROUTE_EXPECTED_DURATIONS["ROUTE-A"]=30
-ROUTE_EXPECTED_DURATIONS["ROUTE-B"]=35
-ROUTE_EXPECTED_DURATIONS["ROUTE-C"]=25
+for rid in "${SEEDED_ROUTE_IDS[@]}"; do
+  ROUTE_EXPECTED_DURATIONS["$rid"]=30
+done
 
 declare -A ROUTE_START_TIMES
 

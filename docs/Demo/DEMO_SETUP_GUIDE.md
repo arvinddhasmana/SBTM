@@ -129,12 +129,28 @@ This will verify:
 
 ## 2. Demo Credentials (Seeded)
 
-Suggested login credentials (all use the same password in demo environments):
+All demo users use password **Admin123!**
 
-- OSTA Admin: osta.admin@sbtm.demo
-- School Admin: school.admin@sbtm.demo
-- Driver: driver1@sbtm.demo
-- Parent: parent1@sbtm.demo
+**Admin users:**
+- OSTA Admin: `osta.admin@sbtm.demo`
+- School Admin (Greenfield Elementary): `school.admin@sbtm.demo`
+- School Admin (Riverside Academy): `school2.admin@sbtm.demo`
+
+**Live drivers (4 — install Driver app on phone for real GPS):**
+- `driver1@sbtm.demo` → ROUTE-R01, BUS-01 (Greenfield Elementary)
+- `driver2@sbtm.demo` → ROUTE-R02, BUS-02 (Greenfield Elementary)
+- `driver11@sbtm.demo` → ROUTE-R11, BUS-11 (Riverside Academy)
+- `driver12@sbtm.demo` → ROUTE-R12, BUS-12 (Riverside Academy)
+
+These 4 routes are highlighted on the admin dashboard with a **gold pulsing border**.
+
+**All drivers:** driver1–driver20@sbtm.demo (all 20 exist in DB)
+
+**Parents (10 logins, tracking 15 kids):**
+- `parent1@sbtm.demo` → kids on ROUTE-R01, ROUTE-R02
+- `parent2@sbtm.demo` → kids on ROUTE-R01, ROUTE-R03
+- `parent3@sbtm.demo` → kids on ROUTE-R11, ROUTE-R12
+- `parent4@sbtm.demo` – `parent10@sbtm.demo` → various routes
 
 If login fails, run the seeding script again and use the password printed by the script.
 
@@ -190,14 +206,14 @@ To customize routes and waypoints without editing the script, update:
 
 - [scripts/demo-gps-track.json](../../scripts/demo-gps-track.json)
 
-The simulator loads this file automatically when present. Each route entry should align with seeded IDs (ROUTE-A, BUS-001, driver1@sbtm.demo, schoolId c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c).
-The file supports multiple named tracks under `tracks`. Pick one with `--track-name seeded-main`.
+The simulator loads this file automatically when present. Each route entry should align with seeded IDs (ROUTE-R01, BUS-01, driver1@sbtm.demo, etc.).
+The file supports multiple named tracks under `tracks`. Pick one with `--track-name ottawa-full`.
 To use a different file, pass `--track-config <path>`.
 
 The simulator validates route, vehicle, driver, and student IDs against seeded demo data. Use `--strict-seed-validation` to fail fast if any IDs are out of sync.
 
 What this does:
-- Emits GPS updates for ROUTE-A and ROUTE-B (BUS-001, BUS-002).
+- Emits GPS updates for all 20 routes (BUS-01 through BUS-20) along Ottawa streets.
 - Sends a PANIC alert periodically.
 - Sends a late notice as an "OTHER" alert (workaround for missing delay endpoint).
 - Logs ROUTE_STARTED and ROUTE_COMPLETED entries to Compliance Audit (Admin Dashboard > Compliance > Audit).
@@ -248,8 +264,8 @@ Narration tip: Explain that Board Admin would see system-wide metrics, while Sch
 ### Step B: School Admin Actions (Operations)
 
 1) In the Admin Dashboard, open Routes and Vehicles.
-2) Show a seeded route (ROUTE-A) and associated bus (BUS-001).
-3) Show Students list for the school (Emma Smith, Liam Smith, Olivia Johnson).
+2) Show a seeded route (ROUTE-R01 — Bank Street South) and associated bus (BUS-01).
+3) Show Students list for the school (500 students across 20 routes).
 
 Role switch for demo:
 - Use `osta.admin@sbtm.demo` for OSTA view.
@@ -267,7 +283,7 @@ If no device GPS is available, simulate GPS from your terminal:
 curl -X POST http://localhost:3001/api/v1/routes/locations \
   -H "Authorization: Bearer <driver-token>" \
   -H "Content-Type: application/json" \
-  -d '{"vehicleId":"BUS-001","routeId":"ROUTE-A","timestamp":"2026-02-11T08:00:00Z","lat":45.4215,"lng":-75.6972}'
+  -d '{"vehicleId":"BUS-01","routeId":"ROUTE-R01","timestamp":"2026-02-11T08:00:00Z","lat":45.3735,"lng":-75.6740}'
 ```
 
 ### Step D: Parent Tracking (Live Location)
@@ -286,7 +302,7 @@ Presence tags are optional in this demo. Use a manual event to simulate a studen
 curl -X POST http://localhost:3001/api/v1/student-presence-events \
   -H "Authorization: Bearer <driver-token>" \
   -H "Content-Type: application/json" \
-  -d '{"studentId":"STUDENT-001","vehicleId":"BUS-001","routeId":"ROUTE-A","eventType":"BOARD","timestamp":"2026-02-11T08:05:00Z","source":"MANUAL"}'
+  -d '{"studentId":"STUDENT-001","vehicleId":"BUS-01","routeId":"ROUTE-R01","eventType":"BOARD","timestamp":"2026-02-11T08:05:00Z","source":"MANUAL"}'
 ```
 
 ### Step F: Video Event (Admin Review)
@@ -295,7 +311,7 @@ curl -X POST http://localhost:3001/api/v1/student-presence-events \
 curl -X POST http://localhost:3001/api/v1/video-events \
   -H "Authorization: Bearer <token>" \
   -H "Content-Type: application/json" \
-  -d '{"routeId":"ROUTE-A","vehicleId":"BUS-001","driverId":"driver-001","eventType":"INCIDENT","timestamp":"2026-02-11T08:10:00Z","durationSeconds":30}'
+  -d '{"routeId":"ROUTE-R01","vehicleId":"BUS-01","driverId":"driver-001","eventType":"INCIDENT","timestamp":"2026-02-11T08:10:00Z","durationSeconds":30}'
 ```
 
 Then open the Videos page in the Admin Dashboard.

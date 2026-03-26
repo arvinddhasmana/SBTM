@@ -191,14 +191,14 @@ try {
     # Test OSTA Admin access
     $ostaHeaders = Get-AuthHeader -Email "osta.admin@sbtm.demo"
     $okOstaLive = Test-ApiGet -Label "OSTA Admin: /routes/locations" -Url "$ApiBase/routes/locations" -Headers $ostaHeaders
-    $okOstaStudents = Test-ApiGet -Label "OSTA Admin: /routes/ROUTE-A/students" -Url "$ApiBase/routes/ROUTE-A/students" -Headers $ostaHeaders
+    $okOstaStudents = Test-ApiGet -Label "OSTA Admin: /routes/ROUTE-R01/students" -Url "$ApiBase/routes/ROUTE-R01/students" -Headers $ostaHeaders
 
     # Test Parent access (should succeed for their child's route)
     $parent1Headers = Get-AuthHeader -Email "parent1@sbtm.demo"
-    $okParentLive = Test-ApiGet -Label "Parent1: /routes/ROUTE-A/live-location" -Url "$ApiBase/routes/ROUTE-A/live-location" -Headers $parent1Headers
+    $okParentLive = Test-ApiGet -Label "Parent1: /routes/ROUTE-R01/live-location" -Url "$ApiBase/routes/ROUTE-R01/live-location" -Headers $parent1Headers
 
     # Test Parent access to unassigned route (should fail with 403)
-    $okParentDenied = Test-ApiGet -Label "Parent1: /routes/ROUTE-B/live-location (expect 403)" -Url "$ApiBase/routes/ROUTE-B/live-location" -Headers $parent1Headers -ExpectedStatus 403
+    $okParentDenied = Test-ApiGet -Label "Parent1: /routes/ROUTE-R11/live-location (expect 403)" -Url "$ApiBase/routes/ROUTE-R11/live-location" -Headers $parent1Headers -ExpectedStatus 403
 
     if (-not ($okOstaLive -and $okOstaStudents -and $okParentLive -and $okParentDenied)) {
         $allPassed = $false

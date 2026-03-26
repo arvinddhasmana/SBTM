@@ -32,14 +32,22 @@ This is the fast operational companion to `DEMO_SETUP_GUIDE.md`. For feature gap
 
 ## Demo Credentials
 
-| Role | Email | Password |
-|------|-------|----------|
-| OSTA Admin | osta.admin@sbtm.demo | Admin123! |
-| School Admin | school.admin@sbtm.demo | Admin123! |
-| Driver 1 | driver1@sbtm.demo | Admin123! |
-| Driver 2 | driver2@sbtm.demo | Admin123! |
-| Driver 3 | driver3@sbtm.demo | Admin123! |
-| Parent 1 | parent1@sbtm.demo | Admin123! |
+| Role | Email | Password | Notes |
+|------|-------|----------|-------|
+| OSTA Admin | osta.admin@sbtm.demo | Admin123! | Cross-board oversight |
+| School Admin (School 1) | school.admin@sbtm.demo | Admin123! | Greenfield Elementary |
+| School Admin (School 2) | school2.admin@sbtm.demo | Admin123! | Riverside Academy |
+| Live Driver 1 | driver1@sbtm.demo | Admin123! | ROUTE-R01 (School 1) ☆ |
+| Live Driver 2 | driver2@sbtm.demo | Admin123! | ROUTE-R02 (School 1) ☆ |
+| Live Driver 11 | driver11@sbtm.demo | Admin123! | ROUTE-R11 (School 2) ☆ |
+| Live Driver 12 | driver12@sbtm.demo | Admin123! | ROUTE-R12 (School 2) ☆ |
+| Parent 1 | parent1@sbtm.demo | Admin123! | Kids on R01, R02 |
+| Parent 2 | parent2@sbtm.demo | Admin123! | Kids on R01, R03 |
+| Parent 3 | parent3@sbtm.demo | Admin123! | Kids on R11, R12 |
+
+☆ = Live driver (install Driver app on phone, use real GPS)
+
+All 20 drivers (driver1–driver20@sbtm.demo) and 10 parents (parent1–parent10@sbtm.demo) exist.
 
 ## Portal URLs (Docker)
 
@@ -89,23 +97,43 @@ docker compose up -d --build
 
 ## Seeded Demo Data
 
-### Routes
-- ROUTE-A (BUS-001, driver1@sbtm.demo) - 4 stops
-- ROUTE-B (BUS-002, driver2@sbtm.demo) - 4 stops
-- ROUTE-C (BUS-003, driver3@sbtm.demo) - 3 stops
+### Schools
+- Greenfield Elementary (Glebe area, 45.3876, -75.6960) — 10 routes, 10 buses
+- Riverside Academy (Westboro area, 45.3960, -75.7300) — 10 routes, 10 buses
+
+### Routes (20 total, 5 stops each, 100 stops total)
+| Routes | Vehicles | School |
+|--------|----------|--------|
+| ROUTE-R01 – ROUTE-R10 | BUS-01 – BUS-10 | Greenfield Elementary |
+| ROUTE-R11 – ROUTE-R20 | BUS-11 – BUS-20 | Riverside Academy |
+
+### Live Driver Routes (highlighted on map with gold pulsing border)
+- ROUTE-R01 (BUS-01, driver1@sbtm.demo) — Bank Street South
+- ROUTE-R02 (BUS-02, driver2@sbtm.demo) — Bronson Avenue
+- ROUTE-R11 (BUS-11, driver11@sbtm.demo) — Richmond Road
+- ROUTE-R12 (BUS-12, driver12@sbtm.demo) — Scott Street
 
 ### Students
-- STUDENT-001, 002, 004, 010 → ROUTE-A
-- STUDENT-003, 005, 008, 009 → ROUTE-B
-- STUDENT-006, 007 → ROUTE-C
+- 500 students (STUDENT-001 – STUDENT-500), 25 per route
+- First 15 students (STUDENT-001 – STUDENT-015) are tracked by parent logins
+
+### Parents (10, tracking 15 kids)
+- parent1: kids on ROUTE-R01, ROUTE-R02
+- parent2: kids on ROUTE-R01, ROUTE-R03
+- parent3: kids on ROUTE-R11, ROUTE-R12
+- parent4–parent10: various routes (see init-db.sql)
 
 ### Parent-Route Mapping
-- parent1@sbtm.demo → ROUTE-A
-- parent2@sbtm.demo → ROUTE-B
-- parent3@sbtm.demo → ROUTE-A
-- parent4@sbtm.demo → ROUTE-B
-- parent5@sbtm.demo → ROUTE-C
-- parent6@sbtm.demo → ROUTE-B
+- parent1@sbtm.demo → ROUTE-R01, ROUTE-R02
+- parent2@sbtm.demo → ROUTE-R01, ROUTE-R03
+- parent3@sbtm.demo → ROUTE-R11, ROUTE-R12
+- parent4@sbtm.demo → ROUTE-R04
+- parent5@sbtm.demo → ROUTE-R05, ROUTE-R06
+- parent6@sbtm.demo → ROUTE-R11
+- parent7@sbtm.demo → ROUTE-R13
+- parent8@sbtm.demo → ROUTE-R07
+- parent9@sbtm.demo → ROUTE-R14, ROUTE-R15
+- parent10@sbtm.demo → ROUTE-R08
 
 ## Troubleshooting Steps
 

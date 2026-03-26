@@ -163,17 +163,17 @@ echo -e "\033[33mAuthorization checks (live location and students endpoints):\03
 if ! test_api_get "OSTA Admin: /routes/locations" "$API_BASE/routes/locations" "$OSTA_TOKEN"; then
   ALL_PASSED=false
 fi
-if ! test_api_get "OSTA Admin: /routes/ROUTE-A/students" "$API_BASE/routes/ROUTE-A/students" "$OSTA_TOKEN"; then
+if ! test_api_get "OSTA Admin: /routes/ROUTE-R01/students" "$API_BASE/routes/ROUTE-R01/students" "$OSTA_TOKEN"; then
   ALL_PASSED=false
 fi
 
-# Parent access
+# Parent access (parent1 has children on ROUTE-R01 and ROUTE-R02)
 PARENT_TOKEN=$(get_token "parent1@sbtm.demo")
 if [ -n "$PARENT_TOKEN" ]; then
-  if ! test_api_get "Parent1: /routes/ROUTE-A/live-location" "$API_BASE/routes/ROUTE-A/live-location" "$PARENT_TOKEN"; then
+  if ! test_api_get "Parent1: /routes/ROUTE-R01/live-location" "$API_BASE/routes/ROUTE-R01/live-location" "$PARENT_TOKEN"; then
     ALL_PASSED=false
   fi
-  if ! test_api_get "Parent1: /routes/ROUTE-B/live-location (expect 403)" "$API_BASE/routes/ROUTE-B/live-location" "$PARENT_TOKEN" "403"; then
+  if ! test_api_get "Parent1: /routes/ROUTE-R11/live-location (expect 403)" "$API_BASE/routes/ROUTE-R11/live-location" "$PARENT_TOKEN" "403"; then
     ALL_PASSED=false
   fi
 fi
