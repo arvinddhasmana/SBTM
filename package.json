@@ -11,7 +11,7 @@
     "build": "echo 'Build script placeholder'",
     "test": "echo 'Test script placeholder'",
     "lint": "echo 'Lint script placeholder'",
-    "db:init": "powershell -ExecutionPolicy Bypass -File ./scripts/init-db.ps1"
+    "db:init": "bash ./scripts/init-db.sh"
   },
   "devDependencies": {
     "typescript": "^5.0.0"

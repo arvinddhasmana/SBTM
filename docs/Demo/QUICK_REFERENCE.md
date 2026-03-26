@@ -16,18 +16,18 @@ This is the fast operational companion to `DEMO_SETUP_GUIDE.md`. For feature gap
 ## Fast Commands
 
 ### Complete Reset (Most Common)
-```powershell
-.\scripts\reset-demo-db.ps1
+```bash
+./scripts/reset-demo-db.sh
 ```
 
 ### Run Simulation
-```powershell
-.\scripts\simulate-demo.ps1 -IntervalSeconds 5 -Laps 3
+```bash
+./scripts/simulate-demo.sh --interval 5 --laps 3
 ```
 
 ### Verify Setup
-```powershell
-.\scripts\verify-demo.ps1
+```bash
+./scripts/verify-demo.sh
 ```
 
 ## Demo Credentials
@@ -52,7 +52,7 @@ This is the fast operational companion to `DEMO_SETUP_GUIDE.md`. For feature gap
 ### API Gateway Not Reachable During Reset
 **Cause:** Services need time to start and become healthy after reset
 **Fix:** The reset script now waits up to 90 seconds for services. If it still fails:
-```powershell
+```bash
 # Check service status
 docker compose ps
 
@@ -69,11 +69,11 @@ docker compose up -d --build
 
 ### 403 Forbidden on Maps
 **Cause:** Missing childRouteIds for parent users or admin role check issue
-**Fix:** Re-run `.\scripts\reset-demo-db.ps1`
+**Fix:** Re-run `./scripts/reset-demo-db.sh`
 
 ### Maps Empty Despite Simulation Running
 **Cause:** GPS data may not be persisted or authorization issue
-**Check:** Run `.\scripts\verify-demo.ps1`
+**Check:** Run `./scripts/verify-demo.sh`
 
 ### Docker Containers Not Starting
 **Cause:** Port conflicts or stale volumes
@@ -85,7 +85,7 @@ docker compose up -d --build
 
 ### Browser Console Shows 403 Errors
 **Cause:** Authorization issues (missing childRouteIds or incomplete admin role checks)
-**Fix:** Run `.\scripts\reset-demo-db.ps1` to apply authorization fixes
+**Fix:** Run `./scripts/reset-demo-db.sh` to apply authorization fixes
 
 ## Seeded Demo Data
 
@@ -113,9 +113,9 @@ docker compose up -d --build
 
 1. **Check browser console (F12)** for 403 errors
 2. **Verify simulator is running** and shows green success messages
-3. **Run verification:** `.\scripts\verify-demo.ps1`
+1. **Run verification:** `./scripts/verify-demo.sh`
 4. **Check authorization tests** in verification output
-5. **If all else fails:** `.\scripts\reset-demo-db.ps1`
+1. **If all else fails:** `./scripts/reset-demo-db.sh`
 
 ### If No Alerts Appear
 
@@ -126,13 +126,13 @@ docker compose up -d --build
 
 ### If Data Looks Wrong
 
-1. **Reset database:** `.\scripts\reset-demo-db.ps1`
+1. **Reset database:** `./scripts/reset-demo-db.sh`
 2. **Verify seed data:** Check verification script output
 3. **Check Docker logs:** `docker compose logs api-gateway`
 
 ## Quick Health Checks
 
-```powershell
+```bash
 # Check if all containers are running
 docker ps
 

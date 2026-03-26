@@ -4,9 +4,45 @@
 - Last reviewed: 2026-03-24
 - Primary use: School-level daily operations, route setup, and incident response
 
-## Who This Is For
+---
 
-This guide is for school-level operators, dispatchers, and school-admin users who need to manage routes, students, fleet readiness, and active operational issues.
+## Your Role in SBTM
+
+As a **School Operator** (School Admin, dispatcher, or operations staff), you manage the day-to-day transport operations for your school. You set up routes, manage student rosters, monitor live bus positions, and respond to incidents.
+
+---
+
+## Your Quick-Start Checklist
+
+Before service hours:
+
+- [ ] Sign in to the Admin Dashboard
+- [ ] Review active routes, students, and vehicle status
+- [ ] Check compliance and inspection readiness
+- [ ] Verify driver assignments are correct
+
+During service hours:
+
+- [ ] Monitor live map and GPS positions
+- [ ] Watch for emergency alerts
+- [ ] Check presence state as buses arrive at schools
+
+---
+
+## What You Can Do Today
+
+| Capability | Status |
+|---|---|
+| Create or edit routes and stops | Available |
+| Assign vehicles to routes | Available |
+| Review student rosters | Available |
+| Monitor live GPS positions | Available |
+| View alerts and emergency events | Available |
+| Review presence state | Available (partial) |
+| Inspect compliance and audit records | Available |
+| Roster bulk import | Planned |
+| Route optimization | Demo quality |
+| Full tenant onboarding and invitations | Planned |
 
 ## Daily Workflow
 
@@ -16,25 +52,11 @@ This guide is for school-level operators, dispatchers, and school-admin users wh
 4. Monitor live map and alerts during service hours.
 5. Investigate incidents, student issues, or route disruptions.
 
-## Operational Tasks
-
-- create or edit routes and stops
-- assign vehicles to routes
-- review student rosters and bulk imports
-- monitor live GPS positions and alerts
-- review presence state where available
-- inspect compliance and audit records relevant to school operations
-
-## Important Current-State Caveats
-
-- Parent communications are still not fully end-to-end.
-- Presence capture in the mobile workflow is still partially incomplete.
-- Route optimization output should be treated as demo-grade.
-- Full tenant onboarding and invitation flows are not yet available.
-
 ## Escalation Triggers
 
-- panic or emergency event from a driver
-- persistent GPS absence during an active route
-- missing or inconsistent student roster data before route start
-- compliance or inspection failure affecting a vehicle or driver
+Act immediately when you see:
+
+- Panic or emergency event from a driver
+- Persistent GPS absence during an active route
+- Missing or inconsistent student roster data before route start
+- Compliance or inspection failure affecting a vehicle or driver

@@ -2,24 +2,182 @@
 
 - Document owner: QA and Engineering
 - Last reviewed: 2026-03-24
-- Primary use: Operational verification, smoke checks, and phase-aligned test focus
+- Primary use: Test pyramid, operational verification, smoke checks, and test scenario index
 
-This guide is the operational verification reference for the current platform. It complements the upgrade roadmap in `docs/prd/PhaseWiseImplementationPlan.md` and the verified gap inventory in `docs/prd/GapAnalysis.md`.
+This guide is the testing reference for the SBTM platform. It covers test layers, coverage targets, scenario indices, and operational verification procedures.
 
 ## Related Documents
 
-- [GapAnalysis.md](../prd/GapAnalysis.md)
-- [PhaseWiseImplementationPlan.md](../prd/PhaseWiseImplementationPlan.md)
+- [GapAnalysis.md](../prd/v1/GapAnalysis.md)
+- [UpgradePlan.md](../prd/v1/UpgradePlan.md)
 - [Requirements.md](../Business/Requirements.md)
 - [DEMO_SETUP_GUIDE.md](../Demo/DEMO_SETUP_GUIDE.md)
 
-## Scope
+---
 
-- Use this guide for smoke checks, integration verification, and demo-environment validation.
-- Use `docs/prd/PhaseWiseImplementationPlan.md` for phase acceptance criteria and delivery order.
-- Use `docs/Implementation/*` when you need module-specific current-state context.
+## 1. Test Pyramid
 
-## Current Smoke Tests
+| Layer | Location | Infrastructure | Coverage Target |
+|---|---|---|---|
+| **Unit Tests** | `services/*/src/**/*.spec.ts` | None (Jest mocks) | 80%+ (90%+ for guards/auth) |
+| **Integration Tests** | `services/*/test/*.e2e-spec.ts` | Docker Compose (Postgres + Redis) | Scenario-complete |
+| **API Smoke Tests** | `scripts/verify-demo.sh` | Full Docker stack | All critical paths |
+| **E2E Tests** | `apps/admin-dashboard/e2e/` (planned) | Playwright + full stack | Critical user flows |
+| **Frontend Unit Tests** | `apps/admin-dashboard/src/**/*.test.ts` | Vitest | 80%+ |
+
+---
+
+## 2. Repository Test Layout
+
+```
+SBTM_AntiGravity/
+├── services/
+│   ├── api-gateway/
+│   │   ├── src/**/*.spec.ts          # Unit tests per module
+│   │   └── test/*.e2e-spec.ts        # Integration tests
+│   ├── gps-tracking/
+│   │   ├── src/**/*.spec.ts
+│   │   └── test/*.e2e-spec.ts
+│   ├── emergency-alerts/
+│   │   ├── src/**/*.spec.ts
+│   │   └── test/*.e2e-spec.ts
+│   ├── student-presence/
+│   │   ├── src/**/*.spec.ts
+│   │   └── test/*.e2e-spec.ts
+│   ├── video-service/
+│   │   ├── src/**/*.spec.ts
+│   │   └── test/*.e2e-spec.ts
+│   ├── student-management/
+│   │   ├── src/**/*.spec.ts
+│   │   └── test/*.e2e-spec.ts
+│   └── compliance-management/
+│       ├── src/**/*.spec.ts
+│       └── test/*.e2e-spec.ts
+├── apps/
+│   ├── admin-dashboard/src/**/*.test.ts  # Vitest frontend unit tests
+│   └── driver-app/src/**/*.test.ts       # Jest React Native tests
+├── scripts/
+│   ├── verify-demo.sh                    # API smoke test suite
+│   └── simulate-demo.sh                  # GPS + events simulation
+└── docker-compose.ci.yml                 # CI test infrastructure
+```
+
+---
+
+## 3. Coverage Requirements
+
+| Component Type | Line Coverage | Notes |
+|---|---|---|
+| Auth guards and RBAC logic | 90%+ | Security-critical |
+| Tenant isolation (school_id filtering) | 90%+ | Privacy-critical |
+| Service controllers and handlers | 85%+ | Core business logic |
+| DTO validation and transforms | 80%+ | Input boundary |
+| Queue producers / consumers | 80%+ | Async pathways |
+| Frontend components | 80%+ | User-facing |
+| Configuration / startup | 75%+ | Bootstrap code |
+| **Global minimum** | **80%** | CI gate |
+
+---
+
+## 4. Test Scenario Index
+
+### Unit Tests (UT01–UT12)
+
+| ID | Service | Validates |
+|---|---|---|
+| UT01 | api-gateway | JWT validation, token expiry, malformed tokens |
+| UT02 | api-gateway | RBAC role-based access (OSTA_ADMIN, BOARD_ADMIN, SCHOOL_ADMIN, DRIVER, PARENT) |
+| UT03 | api-gateway | Tenant guard: school_id isolation |
+| UT04 | gps-tracking | Location point creation and validation |
+| UT05 | gps-tracking | Route live-location query scoping |
+| UT06 | emergency-alerts | Alert creation, event type validation (PANIC_BUTTON, OTHER) |
+| UT07 | emergency-alerts | Queue producer enqueue behavior |
+| UT08 | student-presence | Presence event creation and deduplication |
+| UT09 | student-presence | Event type validation (BOARD, ALIGHT) |
+| UT10 | student-management | Student CRUD with school_id filtering |
+| UT11 | video-service | Video event creation and metadata validation |
+| UT12 | compliance-management | Audit log entry creation |
+
+### Integration Tests (IT01–IT08)
+
+| ID | Service(s) | Validates |
+|---|---|---|
+| IT01 | api-gateway → gps-tracking | GPS location POST through gateway with auth |
+| IT02 | api-gateway → emergency-alerts | Emergency event POST through gateway with auth |
+| IT03 | api-gateway → student-presence | Presence event POST through gateway with auth |
+| IT04 | api-gateway → student-management | Student CRUD through gateway with tenant scoping |
+| IT05 | api-gateway | Cross-tenant access rejection (school_id mismatch) |
+| IT06 | api-gateway | Role-based endpoint access matrix |
+| IT07 | gps-tracking → postgres | Location persistence and spatial queries |
+| IT08 | emergency-alerts → redis | Alert queue enqueue and process |
+
+### Smoke Tests (SM01–SM08)
+
+These are executed by `scripts/verify-demo.sh`:
+
+| ID | Validates |
+|---|---|
+| SM01 | Database tables exist and contain seeded data |
+| SM02 | User authentication for all demo roles |
+| SM03 | GPS location POST via gateway succeeds |
+| SM04 | Student presence event POST via gateway succeeds |
+| SM05 | Emergency alert POST via gateway succeeds |
+| SM06 | Admin can list students (scoped by school_id) |
+| SM07 | Parent can access child routes (authorization check) |
+| SM08 | Driver can post GPS but cannot access admin endpoints |
+
+### Authorization Tests (AZ01–AZ05)
+
+| ID | Validates |
+|---|---|
+| AZ01 | PARENT can read live-location for assigned route only |
+| AZ02 | PARENT cannot read live-location for unassigned route |
+| AZ03 | DRIVER can POST GPS but cannot GET student lists |
+| AZ04 | SCHOOL_ADMIN can read students only for own school_id |
+| AZ05 | Unauthenticated requests return 401 |
+
+---
+
+## 5. Test Data Policy
+
+- **NEVER** use real student, parent, or driver personal data
+- All test fixtures use **synthetic demo data** with Ottawa/Gatineau area coordinates
+- Demo user emails use the `@sbtm.demo` domain
+- Student IDs use the `STUDENT-XXX` format; route IDs use `ROUTE-X`
+- Seeded data is deterministic — `scripts/init-db.sql` is the single source of truth
+- Test isolation: each test run should use `reset-demo-db.sh` to start clean
+
+---
+
+## 6. Mocking Standards
+
+- External dependencies (PostgreSQL, Redis) are mocked at the repository/provider boundary in unit tests
+- Use NestJS `Test.createTestingModule()` with provider overrides for service-level unit tests
+- Integration tests use real Docker containers via `docker-compose.ci.yml`
+- Frontend tests use MSW (Mock Service Worker) for API mocking
+- No mocking of internal service logic — mock only at system boundaries
+
+---
+
+## 7. CI Pipeline Stages
+
+```
+SG-1: Lint       →  SG-2: Build     →  SG-3: Unit Tests  →  SG-4: Integration  →  SG-5: Smoke
+ (eslint,            (tsc, Vite        (jest + 80%          (docker-compose       (verify-demo.sh
+  prettier)           build)            coverage)            + e2e-spec.ts)         POST checks)
+```
+
+| Stage | Blocks PR | Time Budget |
+|---|---|---|
+| Lint & Format | Yes | < 2 min |
+| Build | Yes | < 5 min |
+| Unit Tests + Coverage | Yes | < 5 min |
+| Integration Tests | Yes | < 10 min |
+| Smoke Tests | Warn only | < 5 min |
+
+---
+
+## 8. Current Smoke Tests
 
 ### API Gateway Health
 ```bash
@@ -43,7 +201,7 @@ export TOKEN=<access-token>
 curl -X POST http://localhost:3001/api/v1/routes/locations \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"vehicleId":"bus-001","routeId":"route-123","timestamp":"2026-02-10T08:00:00Z","lat":45.4215,"lng":-75.6972}'
+  -d '{"vehicleId":"BUS-001","routeId":"ROUTE-A","timestamp":"2026-02-10T08:00:00Z","lat":45.4215,"lng":-75.6972}'
 ```
 
 ### Presence (Manual via Gateway)
@@ -51,46 +209,88 @@ curl -X POST http://localhost:3001/api/v1/routes/locations \
 curl -X POST http://localhost:3001/api/v1/student-presence-events \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"studentId":"stud-001","vehicleId":"bus-001","routeId":"route-123","eventType":"BOARD","timestamp":"2026-02-10T08:00:00Z","source":"MANUAL"}'
+  -d '{"studentId":"STUDENT-001","vehicleId":"BUS-001","routeId":"ROUTE-A","eventType":"BOARD","timestamp":"2026-02-10T08:00:00Z","source":"MANUAL"}'
 ```
 
-### Emergency Alerts
-```bash
-curl -X POST http://localhost:3003/api/v1/emergency-events \
-  -H "Content-Type: application/json" \
-  -d '{"vehicleId":"bus-001","routeId":"route-123","driverId":"driver-123","timestamp":"2026-02-10T08:00:00Z","lat":45.4215,"lng":-75.6972,"eventType":"PANIC_BUTTON"}'
-```
-
-To send through the gateway:
+### Emergency Alerts (via Gateway)
 ```bash
 curl -X POST http://localhost:3001/api/v1/emergency-events \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"vehicleId":"bus-001","routeId":"route-123","driverId":"driver-123","timestamp":"2026-02-10T08:00:00Z","lat":45.4215,"lng":-75.6972,"eventType":"PANIC_BUTTON"}'
+  -d '{"vehicleId":"BUS-001","routeId":"ROUTE-A","driverId":"driver-001","timestamp":"2026-02-10T08:00:00Z","lat":45.4215,"lng":-75.6972,"eventType":"PANIC_BUTTON"}'
 ```
 
-## Integration Focus By Upgrade Phase
+---
 
-### Phase 1
-- Verify alert and presence jobs are consumed end to end and become parent-visible notifications.
-- Verify the parent app can receive live alert changes without relying only on polling.
+## 9. Running Tests
 
-### Phase 2
-- Verify roster actions produce durable backend presence events.
-- Verify offline presence actions flush after reconnect.
-- Verify BLE detection payloads are accepted and deduplicated correctly.
+### Run unit tests for a single service
 
-### Phase 3
-- Verify GPS ingest publishes `location.updated` events.
-- Verify route deviation and geofencing scenarios produce testable downstream behavior.
+```bash
+cd services/api-gateway
+npm test
+```
 
-## Current Coverage Gaps
+### Run unit tests with coverage
 
-- No documented queue-consumer integration checks yet.
-- No documented contract tests for event payloads.
-- No documented authorization regression suite for cross-tenant access.
-- No documented mobile BLE verification flow.
+```bash
+cd services/api-gateway
+npm run test:cov
+```
 
-## UI Notes
-- Admin dashboard and parent portal require `VITE_API_URL` pointing at the gateway.
-- Driver app uses `EXPO_PUBLIC_API_URL` (default `http://10.0.2.2:3001/api/v1` on Android).
+### Run integration tests
+
+```bash
+# Start test infrastructure
+docker compose -f docker-compose.ci.yml up -d
+
+# Run integration tests for a service
+cd services/api-gateway
+npm run test:e2e
+
+# Tear down
+docker compose -f docker-compose.ci.yml down -v
+```
+
+### Run all smoke tests
+
+```bash
+./scripts/verify-demo.sh
+```
+
+### Full demo environment test
+
+```bash
+# Reset, seed, verify, and simulate
+./scripts/reset-demo-db.sh
+./scripts/simulate-demo.sh --interval 5 --laps 2
+```
+
+---
+
+## 10. Current Coverage Gaps
+
+- No documented queue-consumer integration checks yet
+- No documented contract tests for event payloads between services
+- No documented authorization regression suite for cross-tenant access
+- No documented mobile BLE verification flow
+- No Playwright E2E tests for admin dashboard or parent portal
+- No performance/load benchmarks for GPS ingest throughput
+
+## 11. Integration Focus By Upgrade Phase
+
+### INC-1 (Rate Limiting & Service Auth Activation)
+- Verify rate limiting returns 429 for excessive requests
+- Verify service-to-service calls include valid auth headers
+
+### INC-2 (Correlation IDs & Observability)
+- Verify correlation IDs propagate through multi-service calls
+- Verify structured log output includes correlation context
+
+### INC-3 (Centralized Audit Pipeline)
+- Verify audit events are published and consumed end-to-end
+- Verify audit query returns entries scoped by school_id
+
+### INC-4 (Data Retention & DSAR)
+- Verify data retention purge jobs remove expired records
+- Verify DSAR export produces correct per-student data extract

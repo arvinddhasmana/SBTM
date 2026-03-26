@@ -22,16 +22,16 @@ This script is a presentation flow for stakeholders and internal walkthroughs. I
 
 ### Step 1: Reset the demo database
 This ensures a clean state before the demo:
-```powershell
-.\scripts\reset-demo-db.ps1
+```bash
+./scripts/reset-demo-db.sh
 ```
 
 Wait for completion and verify all checks pass.
 
 ### Step 2: Start the simulator
 Run the simulator to generate live GPS movement, emergency alerts, and presence events:
-```powershell
-.\scripts\simulate-demo.ps1 -IntervalSeconds 5 -Laps 3
+```bash
+./scripts/simulate-demo.sh --interval 5 --laps 3
 ```
 
 Leave this running in a separate terminal window during the demo.
@@ -73,14 +73,14 @@ curl -X POST http://localhost:3001/api/v1/student-presence-events \
 - Highlight that backend services are live and the frontend apps use gateway APIs.
 - Note that some workflows shown in the demo are guided limitations rather than completed v1 product flows.
 - Mention that late notifications are simulated as OTHER alerts in the demo.
-- Run `./scripts/verify-demo.ps1` to validate seeded data and logins after setup.
+- Run `./scripts/verify-demo.sh` to validate seeded data and logins after setup.
 
 ## Troubleshooting During Demo
 
 ### Maps Not Showing Bus Movement
 - **Symptoms:** Map displays but no bus markers appear
 - **Check:** Browser console (F12) for 403 Forbidden errors
-- **Fix:** Re-run `.\scripts\reset-demo-db.ps1` to reset authorization data
+- **Fix:** Re-run `./scripts/reset-demo-db.sh` to reset authorization data
 
 ### Emergency Alerts Not Appearing
 - **Symptoms:** Simulator shows "Emergency PANIC alert sent" but Admin Dashboard doesn't show it
@@ -91,4 +91,4 @@ curl -X POST http://localhost:3001/api/v1/student-presence-events \
 - **Symptoms:** Portal shows "No active route" or "Offline" status
 - **Check:** Verify simulator is running and shows green "BUS-001: Start" messages
 - **Check:** Console for 403 errors on /routes/:routeId/live-location
-- **Fix:** Verify parent user has childRouteIds populated (run verify-demo.ps1)
+- **Fix:** Verify parent user has childRouteIds populated (run verify-demo.sh)

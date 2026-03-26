@@ -4,16 +4,39 @@
 - Last reviewed: 2026-03-24
 - Primary use: Compliance review, audit support, and operational investigation guidance
 
-## Who This Is For
+---
 
-This guide is intended for users who support compliance checks, audit review, operational support, or incident investigation.
+## Your Role in SBTM
+
+As a **Compliance or Support** user, you review driver certifications, vehicle inspection histories, audit records, and support incident investigations. You ensure regulatory compliance and provide evidence when issues require escalation.
+
+---
+
+## Your Quick-Start Checklist
+
+When conducting a review:
+
+- [ ] Sign in with an authorized admin-capable role
+- [ ] Open the Compliance section in the Admin Dashboard
+- [ ] Review driver certification status and expiry dates
+- [ ] Review vehicle inspection history
+- [ ] Query audit logs for the relevant school or resource
+- [ ] Document findings and escalation actions
+
+---
 
 ## What You Can Do Today
 
-- review driver compliance records
-- review vehicle inspection history
-- query audit logs by school or resource context
-- support incident investigation with compliance and audit evidence
+| Capability | Status |
+|---|---|
+| Review driver compliance records | Available |
+| Review vehicle inspection history | Available |
+| Query audit logs by school or resource | Available |
+| Support incident investigation with audit evidence | Available |
+| Dedicated COMPLIANCE_OFFICER role | Planned |
+| Centralized audit pipeline | Planned |
+| Automated expiry reminders | Planned |
+| DSAR data export | Planned |
 
 ## Typical Workflow
 
@@ -22,12 +45,6 @@ This guide is intended for users who support compliance checks, audit review, op
 3. Review driver certification or expiry information.
 4. Review inspection history for affected vehicles.
 5. Use audit records to understand change history or access patterns.
-
-## Important Current-State Caveats
-
-- There is no distinct `COMPLIANCE_OFFICER` role yet; access is currently mediated through broader admin roles.
-- Audit coverage is service-local rather than fully centralized.
-- Automated expiry reminders and richer support workflows are still planned rather than complete.
 
 ## Privacy and Investigation Notes
 
