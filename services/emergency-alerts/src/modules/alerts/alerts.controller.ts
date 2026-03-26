@@ -1,8 +1,18 @@
-import { Controller, Post, Get, Body, Param, Query } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { AlertsService } from './alerts.service';
 import { CreateEmergencyEventDto } from './dto/create-emergency-event.dto';
+import { InternalServiceAuthGuard } from '../../common/guards/internal-service-auth.guard';
 
 @Controller('api/v1')
+@UseGuards(InternalServiceAuthGuard)
 export class AlertsController {
   constructor(private readonly alertsService: AlertsService) {}
 

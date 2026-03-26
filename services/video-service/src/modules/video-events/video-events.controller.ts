@@ -11,13 +11,16 @@ import {
     Headers,
     Ip,
     Logger,
+    UseGuards,
 } from '@nestjs/common';
 import { VideoEventsService } from './video-events.service';
 import { CreateVideoEventDto } from './dto/create-video-event.dto';
 import { CompleteVideoEventDto } from './dto/complete-video-event.dto';
 import { QueryVideoEventsDto } from './dto/query-video-events.dto';
+import { InternalServiceAuthGuard } from '../../common/guards/internal-service-auth.guard';
 
 @Controller('video-events')
+@UseGuards(InternalServiceAuthGuard)
 export class VideoEventsController {
     private readonly logger = new Logger(VideoEventsController.name);
 

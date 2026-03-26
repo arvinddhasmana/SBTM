@@ -1,7 +1,9 @@
-import { Controller, Get, Post, Body, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Query, UseGuards } from '@nestjs/common';
 import { AuditService } from './audit.service';
+import { InternalServiceAuthGuard } from '../../common/guards/internal-service-auth.guard';
 
 @Controller('audit')
+@UseGuards(InternalServiceAuthGuard)
 export class AuditController {
     constructor(private readonly auditService: AuditService) { }
 

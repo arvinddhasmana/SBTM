@@ -1,60 +1,93 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosError } from 'axios';
+import { ServiceTokenService } from './service-token.service';
+import { CORRELATION_ID_HEADER } from '../middleware/correlation-id.middleware';
 
 @Injectable()
 export class HttpClientService {
     private readonly client: AxiosInstance;
 
-    constructor(private readonly configService: ConfigService) {
+    constructor(
+        private readonly configService: ConfigService,
+        @Optional() private readonly serviceTokenService: ServiceTokenService | null,
+    ) {
         this.client = axios.create({
             timeout: this.configService.get<number>('HTTP_TIMEOUT', 10000),
         });
     }
 
-    async get<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
+    /**
+     * Build internal-call headers: service JWT + correlation ID propagation.
+     * The correlationId is optional; when provided it is forwarded to downstream services.
+     */
+    private internalHeaders(correlationId?: string): Record<string, string> {
+        const headers: Record<string, string> = {};
+
+        if (this.serviceTokenService) {
+            headers['Authorization'] = `Bearer ${this.serviceTokenService.createServiceToken()}`;
+        }
+
+        if (correlationId) {
+            headers[CORRELATION_ID_HEADER] = correlationId;
+        }
+
+        return headers;
+    }
+
+    async get<T>(url: string, config?: AxiosRequestConfig, correlationId?: string): Promise<T> {
         try {
-            const response = await this.client.get<T>(url, config);
+            const response = await this.client.get<T>(url, this.mergeHeaders(config, correlationId));
             return response.data;
         } catch (error) {
             this.handleError(error);
         }
     }
 
-    async post<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> {
+    async post<T>(url: string, data?: unknown, config?: AxiosRequestConfig, correlationId?: string): Promise<T> {
         try {
-            const response = await this.client.post<T>(url, data, config);
+            const response = await this.client.post<T>(url, data, this.mergeHeaders(config, correlationId));
             return response.data;
         } catch (error) {
             this.handleError(error);
         }
     }
 
-    async put<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> {
+    async put<T>(url: string, data?: unknown, config?: AxiosRequestConfig, correlationId?: string): Promise<T> {
         try {
-            const response = await this.client.put<T>(url, data, config);
+            const response = await this.client.put<T>(url, data, this.mergeHeaders(config, correlationId));
             return response.data;
         } catch (error) {
             this.handleError(error);
         }
     }
 
-    async patch<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> {
+    async patch<T>(url: string, data?: unknown, config?: AxiosRequestConfig, correlationId?: string): Promise<T> {
         try {
-            const response = await this.client.patch<T>(url, data, config);
+            const response = await this.client.patch<T>(url, data, this.mergeHeaders(config, correlationId));
             return response.data;
         } catch (error) {
             this.handleError(error);
         }
     }
 
-    async delete<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
+    async delete<T>(url: string, config?: AxiosRequestConfig, correlationId?: string): Promise<T> {
         try {
-            const response = await this.client.delete<T>(url, config);
+            const response = await this.client.delete<T>(url, this.mergeHeaders(config, correlationId));
             return response.data;
         } catch (error) {
             this.handleError(error);
         }
+    }
+
+    private mergeHeaders(config?: AxiosRequestConfig, correlationId?: string): AxiosRequestConfig {
+        return {
+            ...config,
+            headers: {
+                ...(config?.headers as Record<string, string> | undefined),
+                ...this.internalHeaders(correlationId),
+            },
+        };
     }
 
     private handleError(error: unknown): never {

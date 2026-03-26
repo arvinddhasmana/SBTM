@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { JwtModule } from '@nestjs/jwt';
 import { StudentModule } from './modules/student/student.module';
 import { Student } from './modules/student/entities/student.entity';
 
@@ -9,6 +10,8 @@ import { Student } from './modules/student/entities/student.entity';
         ConfigModule.forRoot({
             isGlobal: true,
         }),
+        // JwtModule for InternalServiceAuthGuard — validates service-to-service tokens.
+        JwtModule.register({ global: true }),
         TypeOrmModule.forRootAsync({
             imports: [ConfigModule],
             useFactory: (configService: ConfigService) => ({
@@ -19,7 +22,7 @@ import { Student } from './modules/student/entities/student.entity';
                 password: configService.get<string>('DB_PASSWORD', 'mysecretpassword'),
                 database: configService.get<string>('DB_DATABASE', 'sbms'),
                 entities: [Student],
-                synchronize: true, // For development
+                synchronize: configService.get<string>('NODE_ENV', 'development') !== 'production',
                 autoLoadEntities: true,
             }),
             inject: [ConfigService],
