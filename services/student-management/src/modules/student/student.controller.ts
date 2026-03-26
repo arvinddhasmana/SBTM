@@ -1,9 +1,11 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseInterceptors, UploadedFile, BadRequestException, UseGuards } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { StudentService } from './student.service';
 import { CreateStudentDto, UpdateStudentDto } from './dto/student.dto';
+import { InternalServiceAuthGuard } from '../../common/guards/internal-service-auth.guard';
 
 @Controller('students')
+@UseGuards(InternalServiceAuthGuard)
 export class StudentController {
     constructor(private readonly studentService: StudentService) { }
 

@@ -3,36 +3,67 @@ import {
     NestInterceptor,
     ExecutionContext,
     CallHandler,
+    Logger,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { Request, Response } from 'express';
+import { CORRELATION_ID_HEADER } from '../middleware/correlation-id.middleware';
+
+interface AuthenticatedRequest extends Request {
+    // user shape set by JwtStrategy validate() — may use `id` or `userId` depending on strategy version
+    user?: { id?: string; userId?: string; schoolId?: string; role?: string };
+}
 
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {
+    private readonly logger = new Logger('HTTP');
+
     intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
         const ctx = context.switchToHttp();
-        const request = ctx.getRequest<Request>();
+        const request = ctx.getRequest<AuthenticatedRequest>();
         const response = ctx.getResponse<Response>();
         const startTime = Date.now();
 
-        const { method, originalUrl, ip } = request;
-        const userAgent = request.get('user-agent') || '';
+        const { method, originalUrl } = request;
+        const requestId = (request.headers[CORRELATION_ID_HEADER] as string) ?? 'unknown';
+        // Tenant and user resolved from JWT — never from body
+        const tenantId = request.user?.schoolId ?? null;
+        const userId = request.user?.id ?? request.user?.userId ?? null;
 
         return next.handle().pipe(
             tap({
                 next: () => {
-                    const duration = Date.now() - startTime;
-                    const { statusCode } = response;
-                    console.log(
-                        `[${new Date().toISOString()}] ${method} ${originalUrl} ${statusCode} ${duration}ms - ${ip} - ${userAgent}`,
+                    this.logger.log(
+                        JSON.stringify({
+                            level: 'info',
+                            timestamp: new Date().toISOString(),
+                            service: 'api-gateway',
+                            requestId,
+                            tenantId,
+                            userId,
+                            method,
+                            path: originalUrl,
+                            statusCode: response.statusCode,
+                            durationMs: Date.now() - startTime,
+                        }),
                     );
                 },
-                error: (error) => {
-                    const duration = Date.now() - startTime;
-                    const statusCode = error?.status || 500;
-                    console.error(
-                        `[${new Date().toISOString()}] ${method} ${originalUrl} ${statusCode} ${duration}ms - ${ip} - ${userAgent} - Error: ${error?.message}`,
+                error: (error: { status?: number; message?: string }) => {
+                    this.logger.error(
+                        JSON.stringify({
+                            level: 'error',
+                            timestamp: new Date().toISOString(),
+                            service: 'api-gateway',
+                            requestId,
+                            tenantId,
+                            userId,
+                            method,
+                            path: originalUrl,
+                            statusCode: error?.status ?? 500,
+                            durationMs: Date.now() - startTime,
+                            error: error?.message ?? 'Unknown error',
+                        }),
                     );
                 },
             }),

@@ -1,10 +1,12 @@
 
-import { Controller, Post, Get, Body, Param, Query } from '@nestjs/common';
+import { Controller, Post, Get, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { PresenceService } from './presence.service';
 import { ProcessPresenceEventsDto } from './dto/process-presence-events.dto';
 import { ManualPresenceEventDto } from './dto/manual-presence-event.dto';
+import { InternalServiceAuthGuard } from '../../common/guards/internal-service-auth.guard';
 
 @Controller('api/v1')
+@UseGuards(InternalServiceAuthGuard)
 export class PresenceController {
     constructor(private readonly presenceService: PresenceService) { }
 

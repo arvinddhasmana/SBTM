@@ -1,6 +1,9 @@
 import request from 'supertest';
 import app from '../../src/app';
 import prisma from '../../src/prisma';
+import { makeServiceToken } from '../helpers/serviceToken';
+
+const SERVICE_TOKEN = makeServiceToken();
 
 // Mock event publisher so tests don't require a live Redis connection
 jest.mock('../../src/services/gpsEventPublisher', () => ({
@@ -33,6 +36,7 @@ describe('GPS Tracking Service API (Integration)', () => {
     it('should ingest a location point', async () => {
         const res = await request(app)
             .post('/api/v1/locations')
+            .set('Authorization', `Bearer ${SERVICE_TOKEN}`)
             .send({
                 schoolId: 'school-001',
                 vehicleId: 'bus-123',
@@ -53,6 +57,7 @@ describe('GPS Tracking Service API (Integration)', () => {
     it('should reject invalid coordinates', async () => {
         const res = await request(app)
             .post('/api/v1/locations')
+            .set('Authorization', `Bearer ${SERVICE_TOKEN}`)
             .send({
                 schoolId: 'school-001',
                 vehicleId: 'bus-123',
@@ -77,7 +82,9 @@ describe('GPS Tracking Service API (Integration)', () => {
             }
         });
 
-        const res = await request(app).get('/api/v1/routes/route-456/live-location?schoolId=school-001');
+        const res = await request(app)
+            .get('/api/v1/routes/route-456/live-location?schoolId=school-001')
+            .set('Authorization', `Bearer ${SERVICE_TOKEN}`);
         expect(res.status).toBe(200);
         expect(res.body.vehicleId).toBe('bus-123');
         expect(res.body.position.lat).toBe(15.0);

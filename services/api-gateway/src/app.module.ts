@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ThrottlerModule } from '@nestjs/throttler';
@@ -7,6 +7,8 @@ import { GatewayModule } from './modules/gateway/gateway.module';
 import { OrganizationModule } from './modules/organization/organization.module';
 import { FleetModule } from './modules/fleet/fleet.module';
 import { RouteModule } from './modules/route/route.module';
+import { CommonModule } from './common/common.module';
+import { CorrelationIdMiddleware } from './common/middleware/correlation-id.middleware';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -40,6 +42,7 @@ import { AppService } from './app.service';
             ],
             inject: [ConfigService],
         }),
+        CommonModule,
         AuthModule,
         GatewayModule,
         OrganizationModule,
@@ -49,4 +52,8 @@ import { AppService } from './app.service';
     controllers: [AppController],
     providers: [AppService],
 })
-export class AppModule { }
+export class AppModule implements NestModule {
+    configure(consumer: MiddlewareConsumer): void {
+        consumer.apply(CorrelationIdMiddleware).forRoutes('*');
+    }
+}
