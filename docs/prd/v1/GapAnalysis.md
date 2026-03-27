@@ -1,175 +1,213 @@
-# SBTM v1 Post-Phase-5 Gap Analysis
+# SBTM v1 Upgrade Gap Analysis
 
 - Document owner: Product and Engineering
-- Last reviewed: 2026-03-26
-- Primary use: Verified gap inventory between current implementation and v1 design/business targets after all five upgrade phases
+- Last reviewed: 2026-03-24
+- Primary use: Verified gap inventory between the current implementation and the v1 target
 
 ## Purpose
+This analysis compares the revised v1 design in `docs/Design`, the business and demo expectations in `docs/Business` and `docs/Demo`, and the current implementation across the apps and services. The goal is to identify the remaining deltas that matter for the upgrade plan, while correcting assumptions from earlier gap notes that are no longer accurate.
 
-This analysis reviews the implementation state **after completion of all five upgrade phases** against the revised v1 design in `docs/Design`, the business requirements in `docs/Business`, and the event catalog in `docs/Design/EventCatalog.md`. It identifies remaining deltas that prevent moving from the current state to a fully production-capable v1 platform.
-
-## Related Documents
-
-- [../GapAnalysis.md](../GapAnalysis.md) — Original pre-phase gap analysis
-- [../PhaseWiseImplementationPlan.md](../PhaseWiseImplementationPlan.md) — Original phase plan
-- [UpgradePlan.md](UpgradePlan.md) — New upgrade plan derived from this analysis
-- [../../Design/Architecture.md](../../Design/Architecture.md)
-- [../../Design/SecurityPrivacyArchitecture.md](../../Design/SecurityPrivacyArchitecture.md)
-- [../../Design/EventCatalog.md](../../Design/EventCatalog.md)
-- [../../Business/Requirements.md](../../Business/Requirements.md)
-- [../../Business/Features.md](../../Business/Features.md)
+Related documents:
+- [PhaseWiseImplementationPlan.md](./PhaseWiseImplementationPlan.md)
+- [UpgradePlan/](UpgradePlan/) — Self-contained phase plans (Phase 1–5)
+- [../Design/Architecture.md](../Design/Architecture.md)
+- [../Design/EventCatalog.md](../Design/EventCatalog.md)
+- [../Business/Requirements.md](../Business/Requirements.md)
+- [../Test/TestingGuide.md](../Test/TestingGuide.md)
+- [../Demo/DEMO_SETUP_GUIDE.md](../Demo/DEMO_SETUP_GUIDE.md)
 
 ## Executive Summary
+The current implementation already delivers a meaningful multi-service prototype: gateway auth and RBAC, GPS ingest and history, emergency alerts, student presence processing, compliance, video, student management, a working admin dashboard, a working parent portal, and a driver app with offline buffering.
 
-The five upgrade phases have materially advanced the platform. RLS policies are defined, service-to-service auth guards exist, rate limiting configuration is in place, and GPS event publishing with geofencing has been implemented. However, several Phase 5 deliverables remain partially implemented or are code-present-but-not-activated, and cross-cutting concerns like centralized audit, correlation IDs, data lifecycle, and production observability have not been delivered.
+The platform is materially ahead of the earlier gap documentation in a few areas:
+- Multi-tenant foundations are in place in the API gateway and downstream services via `school_id` filtering.
+- The driver app already has an AsyncStorage-backed offline queue for GPS, emergency, and presence events.
+- The emergency alerts service already exposes both WebSocket broadcast and an SSE stream.
+- The admin dashboard already includes basic board and school listing views.
 
-The remaining gaps cluster into three categories:
+The main v1 gaps are now concentrated in end-to-end event consumption, parent-facing delivery, operational intelligence, and production hardening:
+- Event-driven architecture is only partially implemented. Alerts and presence publish BullMQ jobs, but GPS does not publish `location.updated`, and there is no real notification consumer pipeline.
+- Parent workflows remain incomplete. The parent app polls for alerts and live location, but there is no push delivery, no absence workflow, and no notification history.
+- Driver presence is only partially complete in the mobile app. Presence API posting exists, but the roster flow still toggles local state and BLE scanning is not implemented in the app.
+- Route optimization and geofencing remain mock or unimplemented.
+- Enterprise controls such as row-level security, service-to-service auth, centralized audit pipelines, and retention workflows remain planned rather than delivered.
 
-1. **Activation gaps** — Code exists but guards/middleware are not wired into request pipelines (rate limiting, service-to-service auth).
-2. **Missing infrastructure** — Centralized audit pipeline, correlation ID propagation, OpenTelemetry exporters, and data retention jobs have no implementation.
-3. **Documentation-to-implementation drift** — The upgrade plan and design docs describe these features as planned; the UpgradePlan phases still show status "Planned" despite partial completion.
+## Confirmed Current-State Capabilities
 
-## Gap Matrix (Post-Phase-5)
+### Platform and Services
+- API gateway provides JWT auth, RBAC, multi-tenancy guards, and proxy routes for GPS, alerts, presence, video, students, compliance, parent, and driver workflows.
+- GPS tracking service persists live and historical route locations with `schoolId` filtering.
+- Emergency alerts service persists alerts, pushes BullMQ jobs, broadcasts alerts over WebSocket, and exposes an SSE stream.
+- Student presence service supports manual and SmartTag-style detection processing, persists events, updates Redis-backed state, and publishes BullMQ jobs.
+- Video, student management, and compliance services are implemented and integrated through the gateway.
 
-| Area | v1 Target | Current State | Gap Level | Phase Origin |
-|---|---|---|---|---|
-| Rate limiting activation | Throttler guards applied to all public endpoints | Package installed, config in docker-compose, guard not applied to controllers | Medium | Phase 5 |
-| Service-to-service auth activation | Internal JWT/mTLS validated on all inter-service calls | Guard file exists in student-management; not applied to endpoints in any service | High | Phase 5 |
-| Centralized audit pipeline | Cross-service audit events centrally queryable | No consumer service, no cross-service event schema, compliance service logs locally only | High | Phase 5 |
-| Correlation ID propagation | Requests traceable across service boundaries | No HTTP interceptor or middleware propagating correlation headers | High | Phase 5 |
-| OpenTelemetry instrumentation | Distributed tracing with span generation and export | `@opentelemetry/api` package present; no exporter configuration or span code | Medium | Phase 5 |
-| Data retention and purge | Scheduled purge/archival by data class per retention matrix | No purge job code, no archival workflow | Medium | Phase 5 |
-| DSAR workflow | Data subject access requests fulfilled within 30 days | Not implemented | Medium | Phase 5 |
-| Secret management | Centralized secret management, no hardcoded secrets | Secrets in docker-compose env vars; no vault or managed secret integration | Medium | Phase 5 |
-| CORS origin validation | All services validate CORS origins | Config present in docker-compose; not all services integrate it | Low | Phase 5 |
-| Notification service (end-to-end) | Dedicated notification consumer for parent push/SMS/email | Phase 1 scope — verify consumer is wired and delivering | Verify | Phase 1 |
-| BLE scanning in driver app | Expo BLE scanning producing SmartTag payloads | Phase 2 scope — verify implementation completeness | Verify | Phase 2 |
-| Route deviation alerting | Deviation events produce downstream emergency alerts | Phase 3 scope — verify consumer wiring | Verify | Phase 3 |
-| Tenant onboarding UI | Full CRUD for boards/schools with invitation workflows | Phase 4 scope — verify beyond listing pages | Verify | Phase 4 |
-| Absence reporting | Parent reports absence affecting driver roster | Phase 4 scope — verify endpoint and UI | Verify | Phase 4 |
+### Applications
+- Admin dashboard is connected to live APIs and includes dashboard, alerts, routes, route planner, students, vehicles, videos, compliance, and basic boards and schools pages.
+- Driver app supports auth, route selection, GPS tracking, panic events, and offline buffering.
+- Parent app supports auth, child list, live location polling, and active alert polling.
+
+## Gap Matrix
+
+| Area | v1 Target | Current State | Gap Level | Notes |
+| --- | --- | --- | --- | --- |
+| Event bus | Domain events produced and consumed across services | Alerts and presence publish BullMQ jobs; GPS does not publish; consumers are largely placeholders | High | The architecture is producer-heavy and not yet end-to-end |
+| Notifications | Dedicated notification flow for parents across alert and presence events | Notification logic is a stub inside emergency-alerts; no standalone notification service; no real push/SMS/email delivery | Critical | Blocks a major parent-facing value proposition |
+| Parent real-time delivery | SSE or push-driven alert delivery and event updates | Alerts service has SSE, but parent app still polls and does not subscribe to SSE | High | Backend capability exists; frontend integration is missing |
+| Driver presence workflow | Manual and BLE-backed attendance from the mobile app | Presence API client exists, but the roster screen still updates local state only; BLE scanning is absent in the app | High | Service is ahead of the mobile UI integration |
+| GPS intelligence | `location.updated` events, route deviation detection, geofencing | GPS ingest/history exists only; no event publishing and no geospatial alerting | High | Phase 3 scope has not started in code |
+| Route optimization | Real provider-backed route optimization and map rendering | Optimization service returns mocked ordering and placeholder polyline | Medium | Suitable for demo, not for production operations |
+| Organization management | Board/school onboarding, CRUD, invitations, role provisioning | Basic board/school listing pages exist; add-school action is not wired; no invite/provisioning workflow | Medium | Earlier docs overstated the UI gap, but management workflows are still missing |
+| OSTA and board views | Cross-board and board-level operational dashboards | Tenant data exists, but role-specific aggregated dashboards and filters are limited | Medium | Partial support only |
+| Identity and account provisioning | Unified provisioning for parent, driver, and admin accounts | Login exists; invitation and lifecycle management do not | Medium | Important for real deployments and onboarding |
+| Multi-tenant isolation | App-layer enforcement plus DB-layer RLS | Gateway and services filter by `school_id`; no PostgreSQL RLS policies | Medium | Adequate for prototype, below v1 enterprise target |
+| Service-to-service security | Internal JWT or mTLS between services | Not implemented | Medium | Required before production hardening |
+| Audit and compliance pipeline | Centralized audit trail for critical system mutations | Compliance service logs locally, but no cross-service centralized audit pipeline exists | Medium | Compliance observability remains fragmented |
+| Data lifecycle and privacy | Retention, archival, deletion, and residency controls | Not implemented beyond basic storage choices | Medium | Business requirements call for privacy alignment |
+| Parent absence reporting | Guardians report absences and impact routing/operations | Not implemented | Medium | Called out in business scope, absent from delivered workflows |
 
 ## Detailed Gap Analysis
 
-### 1. Phase 5 Items Not Fully Delivered
+### 1. Core Application Workflow Gaps
 
-#### 1.1 Rate Limiting Guard Not Applied
+#### 1.1 Driver App
+Confirmed implemented:
+- Login, route selection, GPS tracking, panic alert submission, and offline queueing.
+- Presence API client for `BOARD` and `ALIGHT` events with offline buffering support.
 
-**Design requirement**: SR-INPUT-001 mandates input validation and rate limiting on public endpoints. `@nestjs/throttler` is installed and configured via environment variables (`RATE_LIMIT_TTL=60000`, `RATE_LIMIT_MAX=100`), but the `ThrottlerGuard` is not applied as a global guard or at controller level in any service.
+Confirmed gaps:
+- The roster screen currently changes local student state and is not the definitive presence workflow.
+- BLE and SmartTag scanning is not implemented in the app, despite service-side support for SmartTag detections.
+- Vehicle and route execution state are still partly hardcoded or minimally modeled in the active route flow.
+- Driver operational lifecycle events such as route start, stop progression, and richer driver status telemetry are not fully surfaced.
 
-**Impact**: Public API endpoints have no runtime rate limiting despite configuration existing. This is a security hardening gap.
+Impact:
+- Manual safety workflows are inconsistent between UI and backend.
+- The mobile app does not yet function as the reliable presence-capture device envisioned in v1.
 
-**Recommendation**: Apply `ThrottlerGuard` globally in the API Gateway module.
+#### 1.2 Parent App
+Confirmed implemented:
+- Login, child list retrieval, and live route tracking via polling.
+- Active alert polling for a route.
 
-#### 1.2 Service-to-Service Authentication Not Activated
+Confirmed gaps:
+- No push notifications for alert, boarding, alighting, delay, or route-completion events.
+- No SSE client usage even though the alerts backend exposes an SSE stream.
+- No absence reporting or parent-initiated exception workflow.
+- No notification inbox or delivery-state visibility.
 
-**Design requirement**: SR-SVC-001 requires authenticated internal service calls. A guard file `internal-service-auth.guard.ts` exists in the student-management service, but it is not applied to any endpoint or used as middleware in any service.
+Impact:
+- The parent experience remains observational rather than proactive.
+- Safety communication objectives are only partially met.
 
-**Impact**: Inter-service calls remain unauthenticated. Any network-accessible service can call any other without identity.
+#### 1.3 Admin Dashboard
+Confirmed implemented:
+- Pages for dashboard, alerts, routes, route planner, students, vehicles, videos, compliance, boards, and schools.
+- Integration with gateway-backed APIs and live alert and presence channels.
 
-**Recommendation**: 
-- Generate a shared internal JWT signing key for service-to-service calls.
-- Apply the auth guard to all internal endpoints across services.
-- Add service identity headers to outgoing inter-service HTTP calls.
+Confirmed gaps:
+- Route planning still uses mocked optimization output and placeholder polyline data.
+- Boards and schools pages provide basic listing only, not full tenant administration.
+- No invitation or user provisioning workflows for board admins, school admins, drivers, or parents.
+- OSTA-wide and board-level cross-tenant operational views are limited.
 
-#### 1.3 Centralized Audit Pipeline Missing
+Impact:
+- The dashboard is viable for internal demos and operations monitoring.
+- It is not yet a complete administration surface for multi-tenant onboarding and operations.
 
-**Design requirement**: OPS-AUDIT-001 requires critical mutations across all services to be auditable and centrally queryable. The compliance service logs locally, but there is no cross-service audit event schema, no BullMQ consumer for audit events, and no centralized audit storage.
+### 2. Platform and Service Gaps
 
-**Impact**: Audit trail is fragmented. Critical mutations in GPS, presence, alerts, and gateway services are not captured in a unified audit log.
+#### 2.1 Event-Driven Architecture Is Partial, Not Complete
+The v1 design assumes business events are first-class integration points. In practice:
+- Emergency alerts publish BullMQ jobs.
+- Presence events publish BullMQ jobs.
+- GPS events are only written to the database.
+- Presence queue processing is a placeholder and does not drive downstream actions.
+- Notification fan-out is not implemented as a proper consuming service.
 
-**Recommendation**:
-- Define a standard audit event schema (action, resource, resourceId, userId, schoolId, timestamp, details).
-- Add audit event emission to critical mutation endpoints across all services.
-- Create a centralized audit consumer (or extend compliance service) to persist cross-service audit records.
+Impact:
+- The system behaves like a mixed synchronous/prototype architecture rather than the event-first architecture described in v1.
+- Downstream capabilities such as parent notifications, analytics, and geofencing cannot be added cleanly without finishing the event pipeline.
 
-#### 1.4 Correlation ID Propagation Missing
+#### 2.2 GPS Intelligence and Geofencing
+Confirmed implemented:
+- GPS tracking service persists location points and supports live and history retrieval.
 
-**Design requirement**: OPS-TRACE-001 requires requests to be traceable across service boundaries. The coding standards define fields `requestId`, `tenantId`, `userId`, `action`, but no HTTP interceptor or middleware propagates these headers between services.
+Impact:
+- Fleet visibility exists, but operational intelligence is limited.
+- Delay, deviation, and predictive workflows cannot be trusted yet.
 
-**Impact**: Cross-service debugging requires manual log correlation. Incident investigation is slower and less reliable.
+Confirmed gaps:
+- No `location.updated` event emission.
+- No geofencing or route-deviation logic.
+- No ETA engine or path adherence analytics.
+- No provider-backed routing engine to replace mocked route optimization.
 
-**Recommendation**:
-- Add correlation ID middleware to the API Gateway that generates or propagates `X-Request-Id` headers.
-- Propagate correlation headers in all outgoing HTTP calls from the gateway to downstream services.
-- Include correlation ID in all structured log entries.
+#### 2.3 Multi-Tenancy, Identity, and Provisioning
+Confirmed implemented:
+- Gateway role checks and tenant scoping.
+- `school_id` filtering in downstream services.
+- Board and school data model support in the platform.
 
-#### 1.5 OpenTelemetry Not Configured
+Impact:
+- Multi-tenant structure exists, but operational onboarding still depends on manual or seeded data flows.
 
-**Design requirement**: NFR-OBS-001 requires logs, metrics, and traces sufficient to diagnose cross-service issues. `@opentelemetry/api` is installed but no exporter, tracer provider, or span instrumentation exists.
+Confirmed gaps:
+- No invitation flow for creating and onboarding users.
+- No unified lifecycle management for parent, driver, and admin accounts.
+- No board-aware enforcement in downstream databases beyond application filtering.
+- No database RLS policies.
 
-**Impact**: No distributed tracing capability. Production observability is limited to individual service logs.
+Impact:
+- Current controls are sufficient for a controlled demo, not for the full v1 operating model.
 
-**Recommendation**:
-- Configure OpenTelemetry SDK with a tracer provider and exporter (Jaeger, Zipkin, or OTLP).
-- Add automatic HTTP instrumentation for NestJS and Express services.
-- Export traces to a local collector for development; plan for managed collector in production.
+#### 2.4 Security, Audit, and Data Lifecycle
+Confirmed implemented:
+- JWT-based auth at the gateway.
+- Compliance-specific audit logging.
 
-#### 1.6 Data Retention and Purge Not Implemented
+Impact:
+- The system does not yet satisfy the full non-functional direction implied by PIPEDA/MFIPPA alignment and enterprise multi-tenant deployment.
 
-**Design requirement**: PR-RET-001 requires data retained only as long as necessary. The DataRetention.md design document defines explicit retention periods (GPS 90 days, alerts 1 year, presence 90 days, video 30 days, audit 2 years), but no purge jobs, archival workflows, or deletion scheduling exists.
+Confirmed gaps:
+- No service-to-service authentication.
+- No centralized audit pipeline across all services.
+- No defined retention, archival, purge, or privacy-response workflows.
+- No evidence of production observability standards such as centralized tracing and metrics.
 
-**Impact**: Data grows unbounded. Privacy compliance is not achievable for production deployment.
+## Demo and Documentation Alignment
+The demo documentation assumes a more complete narrative than the current product actually supports. The key mismatches are:
+- Parent notifications are still narrated as future or simulated behavior.
+- Route optimization is demo-safe but still mocked.
+- Board and school management are partially represented in UI but not fully operable.
+- Presence support exists in backend and partially in mobile code, but the main mobile interaction model is not yet authoritative.
 
-**Recommendation**:
-- Implement scheduled purge jobs for each data class using cron or BullMQ scheduled jobs.
-- Add archival support for audit logs and alert records.
-- Implement DSAR workflow for personal data retrieval and deletion.
+These mismatches do not invalidate the demo, but they should be treated as guided-demo limitations rather than production-complete workflows.
 
-#### 1.7 Secret Management
+## Corrections to Earlier Gap Assumptions
+- Admin dashboard does expose basic board and school pages; the gap is incomplete management workflow, not complete absence of UI.
+- Emergency alerts SSE support exists in the backend; the gap is client adoption and broader parent delivery.
+- Driver presence posting support exists in the mobile codebase; the gap is that the main roster flow is not fully wired to that path and BLE scanning is still missing.
+- Offline buffering in the driver app is implemented and should move out of the “pending” category.
 
-**Design requirement**: Security architecture calls for separation of secrets from static configuration. Current implementation uses plaintext environment variables in docker-compose.yml.
+## Reclassified Items From Earlier Reports
+The following items should no longer be reported as entirely missing:
+- Driver offline resilience.
+- Driver presence API integration layer.
+- Admin board and school UI presence.
+- Alerts SSE backend support.
 
-**Impact**: Acceptable for local development, but not production-ready.
+The following remain genuinely incomplete and should stay in the active gap list:
+- notification delivery,
+- GPS event publication,
+- BLE scanning in the driver app,
+- geofencing and route deviation alerts,
+- account provisioning and invitations,
+- RLS, service-to-service auth, centralized audit, and retention controls.
 
-**Recommendation**: Plan integration with a secret management solution (HashiCorp Vault, AWS Secrets Manager, or similar) before production deployment.
-
-### 2. Document-to-Implementation Drift
-
-The following documents contain status or claims that need updating:
-
-| Document | Issue |
-|---|---|
-| `docs/prd/UpgradePlan/README.md` | All phases show status "Planned" — should reflect implementation status |
-| `docs/prd/UpgradePlan/Phase-*.md` | All five phases show status "Planned" — acceptance criteria should be checked |
-| `docs/prd/GapAnalysis.md` | Gap matrix shows pre-implementation state — needs post-implementation update |
-| `docs/Business/Features.md` | Feature status (Partial/Planned) needs update for delivered phases |
-| `docs/Design/EventCatalog.md` | `location.updated` and `route.deviation` show "Implemented — Phase 3" but other events need status verification |
-| `docs/UserGuide/*` | Caveats about incomplete features need updating for delivered phases |
-| `docs/Demo/*` | ~~Scripts reference PowerShell (.ps1) — need updating for bash/Ubuntu~~ **RESOLVED** |
-| `docs/Operations/*` | ~~References to PowerShell scripts need updating~~ **RESOLVED** |
-
-### 3. Cross-Cutting Concerns
-
-#### 3.1 Development Environment — RESOLVED
-
-Bash equivalents have been created for all scripts:
-- `init-db.sh` (replaces `init-db.ps1`)
-- `reset-demo-db.sh` (replaces `reset-demo-db.ps1`)
-- `simulate-demo.sh` (replaces `simulate-demo.ps1`)
-- `verify-demo.sh` (replaces `verify-demo.ps1`)
-
-The `package.json` `db:init` script has been updated to use `bash ./scripts/init-db.sh`.
-All documentation references have been updated from PowerShell to bash. The original `.ps1` files are retained for reference.
-
-#### 3.2 Testing Infrastructure — RESOLVED
-
-The testing guide has been expanded to include:
-- Structured test pyramid documentation
-- Test scenario index with IDs (UT01-UT12, IT01-IT08, SM01-SM08, AZ01-AZ05)
-- Coverage requirements by component
-- CI pipeline stage mapping
-- Test data policy and mocking standards
-
-## Recommendations Summary
-
-| Priority | Gap | Effort | Requirement |
-|---|---|---|---|
-| Critical | Centralized audit pipeline | High | OPS-AUDIT-001 |
-| Critical | Correlation ID propagation | Medium | OPS-TRACE-001 |
-| High | Service-to-service auth activation | Low | SR-SVC-001 |
-| High | Rate limiting guard activation | Low | SR-INPUT-001 |
-| Medium | OpenTelemetry configuration | Medium | NFR-OBS-001 |
-| Medium | Data retention/purge jobs | High | PR-RET-001 |
-| Medium | DSAR workflow | Medium | PR-DEL-001 |
-| Medium | Secret management planning | Medium | NFR-DATA-001 |
-| Low | CORS integration across services | Low | SR-INPUT-001 |
+## Recommended Upgrade Priorities
+1. Complete the event-consumption and parent notification path.
+2. Finish the driver presence workflow in the app, including roster-to-API wiring and BLE capture.
+3. Add GPS event publication and geofencing/deviation logic.
+4. Replace mocked route optimization with provider-backed mapping and route services.
+5. Complete tenant administration, provisioning, and cross-tenant operational views.
+6. Harden the platform with RLS, service-to-service auth, centralized audit, and retention controls.
