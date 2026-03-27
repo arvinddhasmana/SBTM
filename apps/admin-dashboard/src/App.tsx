@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Sidebar } from './components/common';
@@ -24,11 +24,15 @@ import './index.css';
 // Protected Route wrapper
 const ProtectedRoute: React.FC = () => {
     const { isAuthenticated, isLoading } = useAuth();
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
     if (isLoading) {
         return (
             <div className="min-h-screen bg-dashboard-bg flex items-center justify-center">
-                <div className="text-white">Loading...</div>
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-10 h-10 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
+                    <div className="text-slate-400 text-sm">Loading…</div>
+                </div>
             </div>
         );
     }
@@ -37,10 +41,15 @@ const ProtectedRoute: React.FC = () => {
         return <Navigate to="/login" replace />;
     }
 
+    const mainMargin = sidebarCollapsed ? 'ml-16' : 'ml-60';
+
     return (
         <div className="min-h-screen bg-dashboard-bg flex">
-            <Sidebar />
-            <main className="flex-1 ml-64">
+            <Sidebar
+                collapsed={sidebarCollapsed}
+                onToggleCollapse={() => setSidebarCollapsed((c) => !c)}
+            />
+            <main className={`flex-1 ${mainMargin} transition-all duration-300 min-w-0`}>
                 <Outlet />
             </main>
         </div>
@@ -107,3 +116,4 @@ const App: React.FC = () => {
 };
 
 export default App;
+
