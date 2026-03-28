@@ -1,7 +1,26 @@
-export { authApi } from './auth.api';
-export { alertsApi } from './alerts.api';
-export { routesApi } from './routes.api';
-export { presenceApi } from './presence.api';
+import { authApi as realAuthApi } from './auth.api';
+import { alertsApi as realAlertsApi } from './alerts.api';
+import { routesApi as realRoutesApi } from './routes.api';
+import { presenceApi as realPresenceApi } from './presence.api';
+import { mockAlertsApi, mockRoutesApi, mockPresenceApi, mockAuthApi } from './mockApi';
+
+const useMock =
+    import.meta.env.VITE_USE_MOCK === 'true' ||
+    localStorage.getItem('VITE_USE_MOCK') === 'true' ||
+    window.location.search.includes('mock=true');
+
+if (useMock) {
+    console.log('--- ADMIN DASHBOARD: MOCK MODE ACTIVE ---');
+    if (window.location.search.includes('mock=true')) {
+        localStorage.setItem('VITE_USE_MOCK', 'true');
+    }
+}
+
+export const authApi = useMock ? mockAuthApi : realAuthApi;
+export const alertsApi = useMock ? mockAlertsApi : realAlertsApi;
+export const routesApi = useMock ? mockRoutesApi : realRoutesApi;
+export const presenceApi = useMock ? mockPresenceApi : realPresenceApi;
+
 export { videoApi } from './video.api';
 export { studentManagementApi } from './student-management.api';
 export { fleetApi } from './fleet.api';

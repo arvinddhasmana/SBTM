@@ -22,7 +22,33 @@ const LiveMap: React.FC<LiveMapProps> = ({ locations, plannedRoute, onMarkerClic
     const [isFullscreen, setIsFullscreen] = useState(false);
 
     useEffect(() => {
-        // Handle map resize when fullscreen or sidebar width changes
+        if (!mapRef.current) return;
+
+        const observer = new ResizeObserver(() => {
+            if (mapInstanceRef.current) {
+                mapInstanceRef.current.invalidateSize();
+            }
+        });
+
+        observer.observe(mapRef.current);
+
+        // Periodically check for the first 5 seconds to handle any late layout shifts
+        const interval = setInterval(() => {
+            if (mapInstanceRef.current) {
+                mapInstanceRef.current.invalidateSize();
+            }
+        }, 1000);
+
+        const timeout = setTimeout(() => clearInterval(interval), 5000);
+
+        return () => {
+            observer.disconnect();
+            clearInterval(interval);
+            clearTimeout(timeout);
+        };
+    }, []);
+
+    useEffect(() => {
         if (mapInstanceRef.current) {
             setTimeout(() => {
                 mapInstanceRef.current?.invalidateSize();
@@ -151,9 +177,9 @@ const LiveMap: React.FC<LiveMapProps> = ({ locations, plannedRoute, onMarkerClic
     }, [locations, plannedRoute, onMarkerClick]);
 
     return (
-        <div className={`transition-all duration-300 ease-in-out ${isFullscreen
-                ? 'fixed inset-0 z-[9999] p-0 rounded-none'
-                : 'relative'
+        <div className={`w-full h-full transition-all duration-300 ease-in-out ${isFullscreen
+            ? 'fixed inset-0 z-[9999] p-0 rounded-none'
+            : 'relative'
             }`}>
             <div
                 ref={mapRef}
@@ -161,7 +187,7 @@ const LiveMap: React.FC<LiveMapProps> = ({ locations, plannedRoute, onMarkerClic
                 className={`w-full h-full bg-slate-900 overflow-hidden ${isFullscreen ? 'rounded-none' : 'rounded-xl'
                     } ${className}`}
                 style={{
-                    minHeight: isFullscreen ? '100vh' : '400px',
+                    minHeight: isFullscreen ? '100vh' : '100%',
                     height: isFullscreen ? '100vh' : '100%'
                 }}
             />
@@ -175,21 +201,7 @@ const LiveMap: React.FC<LiveMapProps> = ({ locations, plannedRoute, onMarkerClic
                 {isFullscreen ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
             </button>
 
-            <div className={`absolute bottom-4 left-4 z-[1000] bg-white/10 backdrop-blur-md border border-white/20 rounded-lg shadow-lg px-3 py-2 text-xs text-white transition-opacity ${isFullscreen ? 'opacity-50 hover:opacity-100' : ''}`}>
-                <div className="font-semibold mb-1">Legend</div>
-                <div className="flex items-center gap-1 mb-0.5">
-                    <span className="inline-block w-3 h-3 rounded-full bg-green-500 border-2 border-white/50" /> Normal
-                </div>
-                <div className="flex items-center gap-1 mb-0.5">
-                    <span className="inline-block w-3 h-3 rounded-full bg-yellow-500 border-2 border-white/50" /> Delayed
-                </div>
-                <div className="flex items-center gap-1 mb-0.5">
-                    <span className="inline-block w-3 h-3 rounded-full bg-red-500 border-2 border-white/50" /> Emergency
-                </div>
-                <div className="flex items-center gap-1">
-                    <span className="inline-block w-3 h-3 rounded-full bg-green-500 border-2 border-amber-500" /> Live Driver
-                </div>
-            </div>
+            {/* Legend is now managed by the Dashboard layout for better alignment */}
         </div>
     );
 };

@@ -11,28 +11,27 @@ const PresenceCard: React.FC<PresenceCardProps> = ({ student }) => {
     const isBoarded = student.status === 'BOARDED';
 
     return (
-        <div className="flex items-center gap-4 p-4 glass-item rounded-xl transition-all duration-300">
+        <div className="flex items-center gap-2 p-1.5 glass-item rounded-lg transition-all duration-300">
             <div
-                className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-lg ${isBoarded
-                    ? 'bg-emerald-500/20 text-emerald-400 shadow-emerald-500/10'
-                    : 'bg-slate-500/20 text-slate-400 shadow-slate-500/10'
+                className={`w-5 h-5 rounded flex items-center justify-center ${isBoarded
+                    ? 'bg-emerald-500/10 text-emerald-400'
+                    : 'bg-slate-500/10 text-slate-400'
                     }`}
             >
-                <User size={18} />
+                <User size={10} />
             </div>
             <div className="flex-1 min-w-0">
-                <p className="font-bold text-white tracking-tight truncate">{student.name}</p>
-                <div className="flex items-center gap-3 mt-1.5">
+                <p className="text-[9px] font-black text-white tracking-tighter truncate leading-none">{student.name}</p>
+                <div className="flex items-center gap-2 mt-0.5 opacity-90">
                     <span
-                        className={`px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider border ${isBoarded
-                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
-                            : 'bg-slate-500/10 text-slate-500 border-white/5'
+                        className={`px-1 rounded text-[7px] font-black uppercase tracking-widest ${isBoarded
+                            ? 'bg-emerald-500/20 text-emerald-500'
+                            : 'bg-slate-800 text-slate-500'
                             }`}
                     >
-                        {student.status}
+                        {student.status.charAt(0)}
                     </span>
-                    <span className="flex items-center gap-1.5 text-[10px] font-medium text-slate-500 uppercase tracking-widest">
-                        <Clock size={10} />
+                    <span className="flex items-center gap-1 text-[7px] font-bold text-slate-500 uppercase tracking-tighter">
                         {formatRelativeTime(student.lastSeen)}
                     </span>
                 </div>

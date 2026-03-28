@@ -14,39 +14,35 @@ const AlertCard: React.FC<AlertCardProps> = ({ alert, onClick }) => {
     return (
         <button
             onClick={onClick}
-            className={`w-full text-left glass-item p-4 rounded-xl group transition-all duration-300 ${isResolved ? 'opacity-60' : 'hover:scale-[1.01]'}`}
+            className={`w-full text-left glass-item p-2 rounded-lg group transition-all duration-300 ${isResolved ? 'opacity-40' : 'hover:bg-white/5'}`}
         >
-            <div className="flex items-start gap-4">
-                <div className={`p-3 rounded-xl shadow-lg ${isPanic
-                    ? 'bg-rose-500/20 text-rose-500 shadow-rose-500/10'
-                    : 'bg-amber-500/20 text-amber-500 shadow-amber-500/10'
-                    }`}>
-                    <AlertTriangle size={20} className={isPanic ? 'animate-pulse' : ''} />
+            <div className="flex items-start gap-2">
+                <div className={`p-1.5 rounded bg-white/5 ${isPanic ? 'text-rose-500' : 'text-amber-500'}`}>
+                    <AlertTriangle size={12} className={isPanic ? 'animate-pulse' : ''} />
                 </div>
 
                 <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2 mb-1">
-                        <span className={`text-sm font-bold tracking-tight uppercase ${isPanic ? 'text-rose-400' : 'text-amber-400'}`}>
+                    <div className="flex items-center justify-between gap-1 mb-0.5">
+                        <span className={`text-[8px] font-black uppercase tracking-tighter ${isPanic ? 'text-rose-400' : 'text-amber-400'}`}>
                             {alert.eventType.replace('_', ' ')}
                         </span>
-                        <span className={`px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider border ${isResolved
-                            ? 'bg-slate-800 text-slate-500 border-white/5'
-                            : 'bg-rose-500/20 text-rose-400 border-rose-500/30'
+                        <span className={`px-1 py-0.5 rounded text-[7px] font-black uppercase tracking-widest ${isResolved
+                            ? 'bg-slate-800 text-slate-500'
+                            : 'bg-rose-500/20 text-rose-500'
                             }`}>
                             {alert.status}
                         </span>
                     </div>
 
-                    <p className="text-sm text-white font-medium line-clamp-1">{alert.description || 'No description provided'}</p>
+                    <p className="text-[9px] text-white font-black line-clamp-1 leading-none">{alert.description || 'Event'}</p>
 
-                    <div className="flex items-center gap-3 mt-3 text-[11px] font-medium text-slate-500 uppercase tracking-widest">
+                    <div className="flex items-center gap-2 mt-1 text-[8px] font-bold text-slate-500 uppercase tracking-tighter">
                         <div className="flex items-center gap-1">
-                            <Bus size={10} />
-                            <span>{alert.vehicleId}</span>
+                            <Bus size={8} />
+                            <span className="text-slate-300">{alert.vehicleId}</span>
                         </div>
-                        <div className="flex items-center gap-1">
-                            <Clock size={10} />
-                            <span>{new Date(alert.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        <div className="flex items-center gap-1 ml-auto">
+                            <span className="text-slate-400">{new Date(alert.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                         </div>
                     </div>
                 </div>
