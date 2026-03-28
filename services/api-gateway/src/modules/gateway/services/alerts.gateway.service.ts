@@ -36,10 +36,21 @@ export class AlertsGatewayService {
         );
     }
 
+    async getAllAlerts(schoolId?: string): Promise<AlertDto[]> {
+        const url = `${this.alertsServiceUrl}/api/v1/alerts`;
+        const params = schoolId ? { schoolId } : undefined;
+        return this.httpClient.get<AlertDto[]>(url, { params });
+    }
+
     async getActiveAlerts(schoolId?: string): Promise<AlertDto[]> {
         const url = `${this.alertsServiceUrl}/api/v1/alerts/active`;
         const params = schoolId ? { schoolId } : undefined;
         return this.httpClient.get<AlertDto[]>(url, { params });
+    }
+
+    async resolveAlert(id: string): Promise<AlertDto> {
+        const url = `${this.alertsServiceUrl}/api/v1/alerts/${id}/resolve`;
+        return this.httpClient.patch<AlertDto>(url, {});
     }
 
     async getAlertById(id: string): Promise<AlertDto> {

@@ -16,15 +16,21 @@ const renderWithProviders = (component: React.ReactNode) => {
 };
 
 describe('Sidebar', () => {
+    const defaultProps = {
+        width: 256,
+        isCollapsed: false,
+        onToggleCollapse: () => { },
+    };
+
     it('renders the logo and title', () => {
-        renderWithProviders(<Sidebar />);
+        renderWithProviders(<Sidebar {...defaultProps} />);
 
         expect(screen.getByText('OSTA Admin')).toBeInTheDocument();
         expect(screen.getByText('Transport Management')).toBeInTheDocument();
     });
 
     it('renders all navigation links', () => {
-        renderWithProviders(<Sidebar />);
+        renderWithProviders(<Sidebar {...defaultProps} />);
 
         expect(screen.getByText('Dashboard')).toBeInTheDocument();
         expect(screen.getByText('Alerts')).toBeInTheDocument();
@@ -35,13 +41,13 @@ describe('Sidebar', () => {
     });
 
     it('renders logout button', () => {
-        renderWithProviders(<Sidebar />);
+        renderWithProviders(<Sidebar {...defaultProps} />);
 
         expect(screen.getByText('Logout')).toBeInTheDocument();
     });
 
     it('navigation links have correct paths', () => {
-        renderWithProviders(<Sidebar />);
+        renderWithProviders(<Sidebar {...defaultProps} />);
 
         expect(screen.getByText('Dashboard').closest('a')).toHaveAttribute('href', '/dashboard');
         expect(screen.getByText('Alerts').closest('a')).toHaveAttribute('href', '/alerts');

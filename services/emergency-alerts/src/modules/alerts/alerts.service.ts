@@ -23,7 +23,7 @@ export class AlertsService {
     @InjectQueue('alerts') private alertsQueue: Queue,
     private wsGateway: WebsocketGateway,
     private notificationsService: NotificationsService,
-  ) {}
+  ) { }
 
   async create(createDto: CreateEmergencyEventDto): Promise<EmergencyAlert> {
     const alert = this.alertsRepo.create(createDto);
@@ -47,11 +47,25 @@ export class AlertsService {
     return savedAlert;
   }
 
+  async findAll(schoolId?: string): Promise<EmergencyAlert[]> {
+    const where = schoolId ? { schoolId } : {};
+    return this.alertsRepo.find({ where, order: { timestamp: 'DESC' } });
+  }
+
   async findAllActive(schoolId?: string): Promise<EmergencyAlert[]> {
     const where = schoolId
       ? { status: EmergencyAlertStatus.ACTIVE, schoolId }
       : { status: EmergencyAlertStatus.ACTIVE };
-    return this.alertsRepo.find({ where });
+    return this.alertsRepo.find({ where, order: { timestamp: 'DESC' } });
+  }
+
+  async resolve(id: string): Promise<EmergencyAlert> {
+    const alert = await this.alertsRepo.findOneBy({ id });
+    if (!alert) {
+      throw new Error('Alert not found');
+    }
+    alert.status = EmergencyAlertStatus.RESOLVED;
+    return this.alertsRepo.save(alert);
   }
 
   async findOne(id: string): Promise<EmergencyAlert | null> {

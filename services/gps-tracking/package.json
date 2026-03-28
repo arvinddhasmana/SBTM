@@ -7,10 +7,11 @@
         "dev": "dotenv -e .env.local -- nodemon src/index.ts",
         "migrate:dev": "dotenv -e .env.local -- prisma migrate dev",
         "migrate:test": "dotenv -e .env.test -- prisma migrate dev --name init_test",
-        "test": "DATABASE_URL=postgresql://postgres:mysecretpassword@postgres:5432/sbms_test?schema=public dotenv -e .env.test -- prisma generate && DATABASE_URL=postgresql://postgres:mysecretpassword@postgres:5432/sbms_test?schema=public dotenv -e .env.test -- prisma migrate reset --force && DATABASE_URL=postgresql://postgres:mysecretpassword@postgres:5432/sbms_test?schema=public dotenv -e .env.test -- jest"
+        "test": "DATABASE_URL=${DATABASE_URL:-postgresql://postgres:mysecretpassword@postgres:5432/sbms_test?schema=public} dotenv -e .env.test -- prisma generate && DATABASE_URL=${DATABASE_URL:-postgresql://postgres:mysecretpassword@postgres:5432/sbms_test?schema=public} dotenv -e .env.test -- prisma migrate reset --force && DATABASE_URL=${DATABASE_URL:-postgresql://postgres:mysecretpassword@postgres:5432/sbms_test?schema=public} dotenv -e .env.test -- jest"
     },
     "dependencies": {
         "@prisma/client": "^5.22.0",
+        "axios": "^1.13.6",
         "bullmq": "^5.71.1",
         "express": "^4.18.2",
         "ioredis": "^5.10.1",

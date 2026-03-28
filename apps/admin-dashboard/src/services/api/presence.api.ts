@@ -1,41 +1,64 @@
-import type { StudentPresence } from '../../types';
-import { apiClient } from './api-client';
+import { apiClient as api } from './api-client';
+
+export interface PresenceStats {
+    totalStudents: number;
+    boarded: number;
+    alighted: number;
+    unknown: number;
+    byRoute: {
+        routeId: string;
+        boarded: number;
+        alighted: number;
+        unknown: number;
+    }[];
+}
+
+export interface PresenceEvent {
+    id: string;
+    studentId: string;
+    firstName: string;
+    lastName: string;
+    grade: string;
+    vehicleId: string;
+    routeId: string;
+    eventType: 'BOARD' | 'ALIGHT';
+    timestamp: string;
+}
+
+export interface PresenceEventsResponse {
+    items: PresenceEvent[];
+    total: number;
+    page: number;
+    limit: number;
+}
 
 export const presenceApi = {
-    /**
-     * Get students by route
+    getStats: async (schoolId?: string): Promise<PresenceStats> =>
+        api.get<PresenceStats>(`/api/v1/presence/stats${schoolId ? `?schoolId=${schoolId}` : ''}`).then((res: any) => res.data),
+
+    getEvents: async (params: any): Promise<PresenceEventsResponse> =>
+        api.get<PresenceEventsResponse>('/api/v1/presence/events', { params }).then((res: any) => res.data),
+
+    /** 
+     * Legacy support for Dashboard.tsx 
+     * In the new system, this returns the current state of students by fetching stats/events 
      */
-    async getStudentsByRoute(routeId: string): Promise<StudentPresence[]> {
-        const response = await apiClient.get<{ students?: StudentPresence[] } | StudentPresence[]>(
-            `/api/v1/routes/${routeId}/students`
-        );
-        const data = Array.isArray(response.data)
-            ? response.data
-            : response.data.students || [];
-
-        return data.map((student) => ({
-            ...student,
-            routeId: student.routeId || routeId,
-        }));
+    getAllBoardedStudents: async (routeIds?: string[]): Promise<any[]> => {
+        const res = await api.get<PresenceEventsResponse>('/api/v1/presence/events', {
+            params: { limit: 100, eventType: 'BOARD' }
+        });
+        // Filter by routeIds if provided
+        let students = res.data.items;
+        if (routeIds && routeIds.length > 0) {
+            students = students.filter(s => routeIds.includes(s.routeId));
+        }
+        return students;
     },
 
-    async getPresenceForRoutes(routeIds: string[]): Promise<StudentPresence[]> {
-        const results = await Promise.all(routeIds.map((routeId) => this.getStudentsByRoute(routeId)));
-        return results.flat();
-    },
-
-    /**
-     * Get all students currently on buses
-     */
-    async getAllBoardedStudents(routeIds: string[]): Promise<StudentPresence[]> {
-        const students = await this.getPresenceForRoutes(routeIds);
-        return students.filter((student) => student.status === 'BOARDED');
-    },
-
-    /**
-     * Get all presence records
-     */
-    async getAllPresence(routeIds: string[]): Promise<StudentPresence[]> {
-        return this.getPresenceForRoutes(routeIds);
-    },
+    getStudentsByRoute: async (routeId: string): Promise<any[]> => {
+        const res = await api.get<PresenceEventsResponse>('/api/v1/presence/events', {
+            params: { limit: 100, routeId }
+        });
+        return res.data.items;
+    }
 };

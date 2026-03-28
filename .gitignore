@@ -5,3 +5,13 @@ dist
 coverage
 .turbo
 tmpclaude-*
+
+# Project Specific
+infra/osrm-data/
+*.log
+
+# Editor Specific
+.vscode/
+.idea/
+*.swp
+*.swo

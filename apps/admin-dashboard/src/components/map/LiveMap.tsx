@@ -1,5 +1,6 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
+import { Maximize2, Minimize2 } from 'lucide-react';
 import type { LiveLocation } from '../../types';
 import { getStatusColorClass } from '../../utils/formatters';
 
@@ -8,14 +9,26 @@ const LIVE_DRIVER_ROUTE_IDS = ['ROUTE-R01', 'ROUTE-R02', 'ROUTE-R11', 'ROUTE-R12
 
 interface LiveMapProps {
     locations: LiveLocation[];
+    plannedRoute?: [number, number][]; // Array of [lat, lng]
     onMarkerClick?: (location: LiveLocation) => void;
     className?: string;
 }
 
-const LiveMap: React.FC<LiveMapProps> = ({ locations, onMarkerClick, className = '' }) => {
+const LiveMap: React.FC<LiveMapProps> = ({ locations, plannedRoute, onMarkerClick, className = '' }) => {
     const mapRef = useRef<HTMLDivElement>(null);
     const mapInstanceRef = useRef<L.Map | null>(null);
     const markersRef = useRef<L.Marker[]>([]);
+    const routePolylineRef = useRef<L.Polyline | null>(null);
+    const [isFullscreen, setIsFullscreen] = useState(false);
+
+    useEffect(() => {
+        // Handle map resize when fullscreen or sidebar width changes
+        if (mapInstanceRef.current) {
+            setTimeout(() => {
+                mapInstanceRef.current?.invalidateSize();
+            }, 300);
+        }
+    }, [isFullscreen]);
 
     useEffect(() => {
         if (!mapRef.current || mapInstanceRef.current) return;
@@ -42,6 +55,21 @@ const LiveMap: React.FC<LiveMapProps> = ({ locations, onMarkerClick, className =
         // Clear existing markers
         markersRef.current.forEach(marker => marker.remove());
         markersRef.current = [];
+
+        // Update planned route polyline
+        if (routePolylineRef.current) {
+            routePolylineRef.current.remove();
+            routePolylineRef.current = null;
+        }
+
+        if (plannedRoute && plannedRoute.length > 0) {
+            routePolylineRef.current = L.polyline(plannedRoute as L.LatLngExpression[], {
+                color: '#3b82f6',
+                weight: 4,
+                opacity: 0.6,
+                dashArray: '10, 10',
+            }).addTo(mapInstanceRef.current);
+        }
 
         // Add new markers
         locations.forEach(location => {
@@ -112,27 +140,51 @@ const LiveMap: React.FC<LiveMapProps> = ({ locations, onMarkerClick, className =
         // Fit bounds if we have locations
         if (locations.length > 0) {
             const bounds = L.latLngBounds(locations.map(l => [l.position.lat, l.position.lng]));
+            if (plannedRoute && plannedRoute.length > 0) {
+                plannedRoute.forEach(p => bounds.extend(p as L.LatLngExpression));
+            }
+            mapInstanceRef.current.fitBounds(bounds, { padding: [50, 50] });
+        } else if (plannedRoute && plannedRoute.length > 0) {
+            const bounds = L.latLngBounds(plannedRoute as L.LatLngExpression[]);
             mapInstanceRef.current.fitBounds(bounds, { padding: [50, 50] });
         }
-    }, [locations, onMarkerClick]);
+    }, [locations, plannedRoute, onMarkerClick]);
 
     return (
-        <div className="relative">
+        <div className={`transition-all duration-300 ease-in-out ${isFullscreen
+                ? 'fixed inset-0 z-[9999] p-0 rounded-none'
+                : 'relative'
+            }`}>
             <div
                 ref={mapRef}
                 data-testid="live-map"
-                className={`w-full h-full min-h-[400px] rounded-xl overflow-hidden ${className}`}
+                className={`w-full h-full bg-slate-900 overflow-hidden ${isFullscreen ? 'rounded-none' : 'rounded-xl'
+                    } ${className}`}
+                style={{
+                    minHeight: isFullscreen ? '100vh' : '400px',
+                    height: isFullscreen ? '100vh' : '100%'
+                }}
             />
-            <div className="absolute bottom-4 left-4 z-[1000] bg-white/90 rounded-lg shadow-md px-3 py-2 text-xs">
+
+            {/* Fullscreen Toggle */}
+            <button
+                onClick={() => setIsFullscreen(!isFullscreen)}
+                className="absolute top-4 right-4 z-[1000] p-2 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 rounded-lg text-white shadow-lg transition-all"
+                title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+            >
+                {isFullscreen ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
+            </button>
+
+            <div className={`absolute bottom-4 left-4 z-[1000] bg-white/10 backdrop-blur-md border border-white/20 rounded-lg shadow-lg px-3 py-2 text-xs text-white transition-opacity ${isFullscreen ? 'opacity-50 hover:opacity-100' : ''}`}>
                 <div className="font-semibold mb-1">Legend</div>
                 <div className="flex items-center gap-1 mb-0.5">
-                    <span className="inline-block w-3 h-3 rounded-full bg-green-500 border-2 border-white" /> Normal
+                    <span className="inline-block w-3 h-3 rounded-full bg-green-500 border-2 border-white/50" /> Normal
                 </div>
                 <div className="flex items-center gap-1 mb-0.5">
-                    <span className="inline-block w-3 h-3 rounded-full bg-yellow-500 border-2 border-white" /> Delayed
+                    <span className="inline-block w-3 h-3 rounded-full bg-yellow-500 border-2 border-white/50" /> Delayed
                 </div>
                 <div className="flex items-center gap-1 mb-0.5">
-                    <span className="inline-block w-3 h-3 rounded-full bg-red-500 border-2 border-white" /> Emergency
+                    <span className="inline-block w-3 h-3 rounded-full bg-red-500 border-2 border-white/50" /> Emergency
                 </div>
                 <div className="flex items-center gap-1">
                     <span className="inline-block w-3 h-3 rounded-full bg-green-500 border-2 border-amber-500" /> Live Driver

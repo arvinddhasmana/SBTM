@@ -8,9 +8,12 @@ import Redis from 'ioredis';
 import { PresenceEvent, EventType, EventSource } from './entities/presence-event.entity';
 import { ProcessPresenceEventsDto } from './dto/process-presence-events.dto';
 import { ManualPresenceEventDto } from './dto/manual-presence-event.dto';
+import { PresenceStatsDto, RouteStatsDto } from './dto/presence-stats.dto';
+import { PresenceEventsQueryDto } from './dto/presence-events-query.dto';
 import { StudentPresenceState, StudentPresenceInfo } from './dto/presence-state.interface';
 import { TagsService } from '../tags/tags.service';
 import { WebsocketGateway } from '../realtime/websocket.gateway';
+import { DataSource } from 'typeorm';
 
 // Configuration constants
 const SIGNAL_STRENGTH_THRESHOLD = -80; // Minimum signal strength in dBm
@@ -27,6 +30,7 @@ export class PresenceService {
         @InjectQueue('presence') private presenceQueue: Queue,
         private tagsService: TagsService,
         private wsGateway: WebsocketGateway,
+        private dataSource: DataSource,
     ) {
         // Initialize Redis client for caching
         this.redis = new Redis({
@@ -291,5 +295,145 @@ export class PresenceService {
                 }
             }
         }
+    }
+
+    /**
+     * Get global presence stats for a school
+     */
+    async getStats(schoolId?: string): Promise<PresenceStatsDto> {
+        const schoolFilter = schoolId ? `WHERE schoolId = '${schoolId}'` : '';
+        const schoolFilterJoin = schoolId ? `AND s.school_id = '${schoolId}'` : '';
+
+        // 1. Total Enrolled Students
+        const totalStudentsResult = await this.dataSource.query(
+            `SELECT COUNT(*) as count FROM students s WHERE s.status = 'ENROLLED' ${schoolFilterJoin}`
+        );
+        const totalStudents = parseInt(totalStudentsResult[0]?.count || '0');
+
+        // 2. Latest status per student
+        const latestEvents = await this.dataSource.query(`
+            WITH LatestEvents AS (
+                SELECT DISTINCT ON ("studentId") *
+                FROM presence_event
+                ${schoolFilter}
+                ORDER BY "studentId", timestamp DESC
+            )
+            SELECT "eventType", COUNT(*) as count
+            FROM LatestEvents
+            GROUP BY "eventType"
+        `);
+
+        let boarded = 0;
+        let alighted = 0;
+
+        latestEvents.forEach((e: any) => {
+            if (e.eventType === 'BOARD') boarded = parseInt(e.count);
+            if (e.eventType === 'ALIGHT') alighted = parseInt(e.count);
+        });
+
+        const unknown = Math.max(0, totalStudents - boarded - alighted);
+
+        // 3. Stats by route
+        const routeStatsRaw = await this.dataSource.query(`
+            WITH LatestEvents AS (
+                SELECT DISTINCT ON ("studentId") *
+                FROM presence_event
+                ${schoolFilter}
+                ORDER BY "studentId", timestamp DESC
+            )
+            SELECT "routeId", "eventType", COUNT(*) as count
+            FROM LatestEvents
+            GROUP BY "routeId", "eventType"
+        `);
+
+        // We need route names, so let's fetch those if possible, but for now we'll just use IDs
+        // or join with routes table if it's in the same DB.
+        const byRoute: RouteStatsDto[] = [];
+        const routeMap = new Map<string, RouteStatsDto>();
+
+        routeStatsRaw.forEach((r: any) => {
+            if (!routeMap.has(r.routeId)) {
+                routeMap.set(r.routeId, {
+                    routeId: r.routeId,
+                    routeName: `Route ${r.routeId.substring(0, 4)}`, // Placeholder or join later
+                    boarded: 0,
+                    alighted: 0,
+                });
+            }
+            const stats = routeMap.get(r.routeId)!;
+            if (r.eventType === 'BOARD') stats.boarded = parseInt(r.count);
+            if (r.eventType === 'ALIGHT') stats.alighted = parseInt(r.count);
+        });
+
+        return {
+            totalStudents,
+            boarded,
+            alighted,
+            unknown,
+            byRoute: Array.from(routeMap.values()),
+        };
+    }
+
+    /**
+     * Get paginated presence events with student details
+     */
+    async getEvents(query: PresenceEventsQueryDto) {
+        const offset = (query.page - 1) * query.limit;
+        const schoolId = query.schoolId;
+
+        let whereClause = 'WHERE 1=1';
+        const params: any[] = [];
+
+        if (schoolId) {
+            whereClause += ` AND e."schoolId" = $${params.length + 1}`;
+            params.push(schoolId);
+        }
+
+        if (query.routeId) {
+            whereClause += ` AND e."routeId" = $${params.length + 1}`;
+            params.push(query.routeId);
+        }
+
+        if (query.vehicleId) {
+            whereClause += ` AND e."vehicleId" = $${params.length + 1}`;
+            params.push(query.vehicleId);
+        }
+
+        if (query.eventType) {
+            whereClause += ` AND e."eventType" = $${params.length + 1}`;
+            params.push(query.eventType);
+        }
+
+        if (query.studentName) {
+            whereClause += ` AND (s.first_name ILIKE $${params.length + 1} OR s.last_name ILIKE $${params.length + 1})`;
+            params.push(`%${query.studentName}%`);
+        }
+
+        const events = await this.dataSource.query(`
+            SELECT 
+                e.*,
+                s.first_name as "firstName",
+                s.last_name as "lastName",
+                s.grade
+            FROM presence_event e
+            LEFT JOIN students s ON (e."studentId" = s.id::text OR e."studentId" = s.id::varchar)
+            ${whereClause}
+            ORDER BY e.timestamp DESC
+            LIMIT $${params.length + 1} OFFSET $${params.length + 2}
+        `, [...params, query.limit, offset]);
+
+        const totalResult = await this.dataSource.query(`
+            SELECT COUNT(*) as count
+            FROM presence_event e
+            LEFT JOIN students s ON (e."studentId" = s.id::text OR e."studentId" = s.id::varchar)
+            ${whereClause}
+        `, params);
+
+        return {
+            items: events,
+            total: parseInt(totalResult[0].count),
+            page: query.page,
+            limit: query.limit,
+        };
     }
 }

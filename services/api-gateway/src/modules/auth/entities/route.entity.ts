@@ -43,6 +43,9 @@ export class Route {
     @Column({ type: 'int', default: 60 }) // Duration in minutes
     estimatedDuration: number;
 
+    @Column({ type: 'text', nullable: true })
+    polyline: string;
+
     @OneToMany(() => RouteStop, (stop) => stop.route, { cascade: true })
     stops: RouteStop[];
 }

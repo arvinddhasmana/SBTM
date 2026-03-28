@@ -9,10 +9,10 @@ interface CardProps {
 
 const Card: React.FC<CardProps> = ({ children, className = '', title, action }) => {
     return (
-        <div className={`glass-card p-6 ${className}`}>
+        <div className={`glass-card inner-glow p-6 transition-all duration-300 hover:shadow-blue-500/10 ${className}`}>
             {(title || action) && (
-                <div className="flex items-center justify-between mb-4">
-                    {title && <h3 className="text-lg font-semibold text-white">{title}</h3>}
+                <div className="flex items-center justify-between mb-6">
+                    {title && <h3 className="text-lg font-bold text-white tracking-tight">{title}</h3>}
                     {action}
                 </div>
             )}

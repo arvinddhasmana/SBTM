@@ -53,6 +53,7 @@ interface ReferenceRouteRow {
     vehicleId: string | null;
     driverId: string | null;
     schedule: any;
+    polyline: string | null;
 }
 
 interface ReferenceRouteStopRow {
@@ -78,7 +79,13 @@ export class GpsGatewayService {
             'GPS_SERVICE_URL',
             'http://localhost:3002',
         );
+        this.presenceServiceUrl = this.configService.get<string>(
+            'PRESENCE_SERVICE_URL',
+            'http://localhost:3004',
+        );
     }
+
+    private readonly presenceServiceUrl: string;
 
     async getLiveLocation(routeId: string, user: RequestUser): Promise<LiveLocationDto> {
         this.checkRouteAccess(routeId, user);
@@ -178,7 +185,7 @@ export class GpsGatewayService {
         const params: any[] = routeIds && routeIds.length ? [routeIds] : [];
 
         const routes = await this.dataSource.query(
-            `SELECT r.id, r.name, r."vehicleId" as "vehicleId", r.schedule
+            `SELECT r.id, r.name, r."vehicleId" as "vehicleId", r.schedule, r.polyline
              FROM routes_reference r
              ${whereClause}
              ORDER BY r.id ASC`,
@@ -223,6 +230,7 @@ export class GpsGatewayService {
                 estimatedDuration: 60,
                 stops: routeStops,
                 status: 'active',
+                polyline: r.polyline || undefined,
             };
         });
     }
@@ -250,6 +258,12 @@ export class GpsGatewayService {
             }
         }
         return results;
+    }
+
+    async getRouteStudents(routeId: string, user: RequestUser): Promise<unknown> {
+        this.checkRouteAccess(routeId, user);
+        const url = `${this.presenceServiceUrl}/api/v1/routes/${routeId}/students${user.schoolId ? `?schoolId=${user.schoolId}` : ''}`;
+        return this.httpClient.get(url);
     }
 
     private getAccessibleRouteIds(user: RequestUser): string[] | undefined {

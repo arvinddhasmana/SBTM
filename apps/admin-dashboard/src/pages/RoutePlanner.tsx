@@ -72,6 +72,7 @@ const RoutePlanner: React.FC = () => {
                 stops: buildStopsForApi(),
                 startTime: '07:00',
                 estimatedDuration: optimizationResult?.totalDuration ?? 60,
+                polyline: optimizationResult?.polyline,
             });
             alert('Route saved successfully!');
         } catch (error) {

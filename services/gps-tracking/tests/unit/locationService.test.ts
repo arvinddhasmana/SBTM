@@ -21,10 +21,17 @@ jest.mock('../../src/services/gpsEventPublisher', () => ({
     },
 }));
 
-// Mock geofence service — prevent PostGIS calls in unit tests
 jest.mock('../../src/services/geofenceService', () => ({
     GeofenceService: jest.fn().mockImplementation(() => ({
         checkDeviation: jest.fn().mockResolvedValue({ deviated: false, deviationMeters: null }),
+    })),
+}));
+
+// Mock OSRM service — prevent external network calls in unit tests
+jest.mock('../../src/services/osrmService', () => ({
+    OsrmService: jest.fn().mockImplementation(() => ({
+        snapToRoad: jest.fn().mockResolvedValue({ lat: 43.66, lng: -79.39, name: 'Snapped Road' }),
+        getSnappedRoute: jest.fn().mockResolvedValue([[43.66, -79.39]]),
     })),
 }));
 
@@ -58,6 +65,8 @@ describe('Location Service (Unit)', () => {
                 timestamp: expect.any(Date),
                 lat: data.lat,
                 lng: data.lng,
+                snappedLat: 43.66,
+                snappedLng: -79.39,
                 speedKph: undefined,
                 headingDeg: undefined,
                 accuracyMeters: undefined,
@@ -87,8 +96,8 @@ describe('Location Service (Unit)', () => {
                 vehicleId: data.vehicleId,
                 routeId: data.routeId,
                 schoolId: data.schoolId,
-                lat: data.lat,
-                lng: data.lng,
+                lat: 43.66, // Snapped lat from mock
+                lng: -79.39, // Snapped lng from mock
             }),
         );
     });

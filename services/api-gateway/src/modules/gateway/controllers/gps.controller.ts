@@ -61,4 +61,13 @@ export class GpsController {
     ) {
         return this.gpsGatewayService.recordRouteLifecycleEvent(dto, req.user);
     }
+
+    @Get(':routeId/students')
+    @Roles(Role.OSTA_ADMIN, Role.ADMIN, Role.SCHOOL_ADMIN)
+    async getRouteStudents(
+        @Param('routeId') routeId: string,
+        @Request() req: { user: any },
+    ) {
+        return this.gpsGatewayService.getRouteStudents(routeId, req.user);
+    }
 }

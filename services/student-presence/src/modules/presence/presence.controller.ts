@@ -3,6 +3,7 @@ import { Controller, Post, Get, Body, Param, Query, UseGuards } from '@nestjs/co
 import { PresenceService } from './presence.service';
 import { ProcessPresenceEventsDto } from './dto/process-presence-events.dto';
 import { ManualPresenceEventDto } from './dto/manual-presence-event.dto';
+import { PresenceEventsQueryDto } from './dto/presence-events-query.dto';
 import { InternalServiceAuthGuard } from '../../common/guards/internal-service-auth.guard';
 
 @Controller('api/v1')
@@ -22,6 +23,16 @@ export class PresenceController {
             status: 'recorded',
             presenceEventId: event.id,
         };
+    }
+
+    @Get('presence/stats')
+    async getStats(@Query('schoolId') schoolId?: string) {
+        return await this.presenceService.getStats(schoolId);
+    }
+
+    @Get('presence/events')
+    async getEvents(@Query() query: PresenceEventsQueryDto) {
+        return await this.presenceService.getEvents(query);
     }
 
     @Get('routes/:routeId/students')

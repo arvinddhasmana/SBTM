@@ -2,6 +2,7 @@ import {
   Controller,
   Post,
   Get,
+  Patch,
   Body,
   Param,
   Query,
@@ -14,7 +15,7 @@ import { InternalServiceAuthGuard } from '../../common/guards/internal-service-a
 @Controller('api/v1')
 @UseGuards(InternalServiceAuthGuard)
 export class AlertsController {
-  constructor(private readonly alertsService: AlertsService) {}
+  constructor(private readonly alertsService: AlertsService) { }
 
   @Post('emergency-events')
   async create(@Body() createDto: CreateEmergencyEventDto) {
@@ -22,9 +23,19 @@ export class AlertsController {
     return { status: 'received', alertId: alert.id };
   }
 
+  @Get('alerts')
+  async findAll(@Query('schoolId') schoolId?: string) {
+    return this.alertsService.findAll(schoolId);
+  }
+
   @Get('alerts/active')
   async findAllActive(@Query('schoolId') schoolId?: string) {
     return this.alertsService.findAllActive(schoolId);
+  }
+
+  @Patch('alerts/:alertId/resolve')
+  async resolve(@Param('alertId') alertId: string) {
+    return this.alertsService.resolve(alertId);
   }
 
   @Get('alerts/:alertId')

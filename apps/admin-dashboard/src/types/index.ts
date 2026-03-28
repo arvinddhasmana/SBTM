@@ -4,9 +4,13 @@ export type AlertStatus = 'ACTIVE' | 'RESOLVED';
 
 export interface Alert {
     id: string;
+    schoolId: string;
     routeId: string;
     vehicleId: string;
+    driverId: string;
     timestamp: string;
+    lat: number;
+    lng: number;
     eventType: AlertEventType;
     status: AlertStatus;
     description?: string;
@@ -81,6 +85,7 @@ export interface Route {
     estimatedDuration: number;
     stops: RouteStop[];
     status?: 'active' | 'completed' | 'scheduled';
+    polyline?: string;
 }
 
 // User and Auth Types

@@ -6,6 +6,7 @@ import { getQueueToken } from '@nestjs/bullmq';
 import { PresenceEvent, EventType, EventSource } from './entities/presence-event.entity';
 import { TagsService } from '../tags/tags.service';
 import { WebsocketGateway } from '../realtime/websocket.gateway';
+import { DataSource } from 'typeorm';
 
 describe('PresenceService', () => {
     let service: PresenceService;
@@ -21,6 +22,10 @@ describe('PresenceService', () => {
             orderBy: jest.fn().mockReturnThis(),
             getMany: jest.fn().mockResolvedValue([]),
         })),
+    };
+
+    const mockDataSource = {
+        query: jest.fn(),
     };
 
     const mockQueue = {
@@ -62,6 +67,10 @@ describe('PresenceService', () => {
                 {
                     provide: WebsocketGateway,
                     useValue: mockGateway,
+                },
+                {
+                    provide: DataSource,
+                    useValue: mockDataSource,
                 },
             ],
         }).compile();
@@ -164,5 +173,37 @@ describe('PresenceService', () => {
 
         expect(result).toEqual(cachedData);
         expect(mockRedis.get).toHaveBeenCalledWith('route:school-001:route-456:students');
+    });
+
+    it('should get global stats', async () => {
+        (service as any).dataSource = {
+            query: jest.fn()
+                .mockResolvedValueOnce([{ count: '10' }]) // totalStudents
+                .mockResolvedValueOnce([{ eventType: 'BOARD', count: '5' }, { eventType: 'ALIGHT', count: '3' }]) // latestEvents
+                .mockResolvedValueOnce([{ routeId: 'R1', eventType: 'BOARD', count: '2' }]), // routeStatsRaw
+        };
+
+        const result = await service.getStats('school-001');
+
+        expect(result.totalStudents).toBe(10);
+        expect(result.boarded).toBe(5);
+        expect(result.alighted).toBe(3);
+        expect(result.unknown).toBe(2);
+        expect(result.byRoute).toHaveLength(1);
+    });
+
+    it('should get paginated events', async () => {
+        (service as any).dataSource = {
+            query: jest.fn()
+                .mockResolvedValueOnce([{ id: 'ev1', firstName: 'John' }]) // events
+                .mockResolvedValueOnce([{ count: '1' }]), // totalResult
+        };
+
+        const query = { page: 1, limit: 10, schoolId: 'school-001' };
+        const result = await service.getEvents(query);
+
+        expect(result.items).toHaveLength(1);
+        expect(result.total).toBe(1);
+        expect(result.page).toBe(1);
     });
 });

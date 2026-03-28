@@ -13,8 +13,15 @@
 -- --------------------------------------------------------------------------
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS postgis;
 
--- Drop existing tables to ensure a clean slate (CASCADE to handle FKs)
+-- Drop existing tables and types to ensure a clean slate (CASCADE to handle FKs)
+DROP TABLE IF EXISTS emergency_alert CASCADE;
+DROP TABLE IF EXISTS alert_notification_log CASCADE;
+DROP TYPE IF EXISTS emergency_event_type_enum CASCADE;
+DROP TYPE IF EXISTS emergency_alert_status_enum CASCADE;
+DROP TYPE IF EXISTS notification_channel_enum CASCADE;
+DROP TYPE IF EXISTS notification_status_enum CASCADE;
 DROP TABLE IF EXISTS route_deviation_events CASCADE;
 DROP TABLE IF EXISTS route_geofences CASCADE;
 DROP TABLE IF EXISTS route_lifecycle_events CASCADE;
@@ -33,7 +40,6 @@ DROP TABLE IF EXISTS users CASCADE;
 DROP TABLE IF EXISTS schools CASCADE;
 DROP TABLE IF EXISTS school_boards CASCADE;
 
--- Drop ENUM types used by presence_event
 DROP TYPE IF EXISTS presence_event_eventtype_enum CASCADE;
 DROP TYPE IF EXISTS presence_event_source_enum CASCADE;
 
@@ -94,6 +100,7 @@ CREATE TABLE routes (
   "vehicleId" UUID NULL,
   "startTime" TIME NOT NULL,
   "estimatedDuration" INT NOT NULL DEFAULT 60,
+  polyline TEXT NULL,
   CONSTRAINT "FK_routes_school" FOREIGN KEY ("schoolId") REFERENCES schools(id) ON DELETE CASCADE,
   CONSTRAINT "FK_routes_vehicle" FOREIGN KEY ("vehicleId") REFERENCES vehicles(id) ON DELETE SET NULL,
   CONSTRAINT "UQ_route_school_name" UNIQUE ("schoolId", name)
@@ -102,8 +109,9 @@ CREATE TABLE routes (
 CREATE TABLE route_stops (
   id UUID PRIMARY KEY,
   "routeId" UUID NOT NULL,
-  "sequenceOrder" INT NOT NULL,
-  "stopName" TEXT NOT NULL,
+  "sequence" INT NOT NULL,
+  "address" TEXT NOT NULL,
+  "location" GEOGRAPHY(POINT, 4326) NULL,
   lat DOUBLE PRECISION NULL,
   lng DOUBLE PRECISION NULL,
   "arrivalTime" TIME NULL,
@@ -169,6 +177,8 @@ CREATE TABLE location_points (
   timestamp TIMESTAMP(3) NOT NULL,
   lat DOUBLE PRECISION NOT NULL,
   lng DOUBLE PRECISION NOT NULL,
+  snapped_lat DOUBLE PRECISION NULL,
+  snapped_lng DOUBLE PRECISION NULL,
   speed_kph DOUBLE PRECISION,
   heading_deg DOUBLE PRECISION,
   accuracy_meters DOUBLE PRECISION
@@ -201,19 +211,36 @@ CREATE TABLE route_geofences (
 );
 CREATE INDEX "IDX_route_geofences_school" ON route_geofences(school_id);
 
-CREATE TABLE route_deviation_events (
-  id TEXT PRIMARY KEY,
-  school_id TEXT NOT NULL,
-  route_id TEXT NOT NULL,
-  vehicle_id TEXT NOT NULL,
-  lat DOUBLE PRECISION NOT NULL,
-  lng DOUBLE PRECISION NOT NULL,
-  deviation_meters DOUBLE PRECISION NOT NULL,
-  threshold DOUBLE PRECISION NOT NULL,
-  detected_at TIMESTAMP NOT NULL DEFAULT NOW()
+-- Emergency Alerts (Matching emergency-alerts entity)
+CREATE TYPE emergency_event_type_enum AS ENUM ('PANIC_BUTTON', 'INCIDENT', 'OTHER');
+CREATE TYPE emergency_alert_status_enum AS ENUM ('ACTIVE', 'RESOLVED');
+
+CREATE TABLE emergency_alert (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    "schoolId" VARCHAR NOT NULL,
+    "vehicleId" VARCHAR NOT NULL,
+    "routeId" VARCHAR NOT NULL,
+    "driverId" VARCHAR NOT NULL,
+    "timestamp" TIMESTAMP NOT NULL,
+    "lat" FLOAT NOT NULL,
+    "lng" FLOAT NOT NULL,
+    "eventType" emergency_event_type_enum DEFAULT 'PANIC_BUTTON',
+    "status" emergency_alert_status_enum DEFAULT 'ACTIVE',
+    "createdAt" TIMESTAMP DEFAULT NOW(),
+    "updatedAt" TIMESTAMP DEFAULT NOW()
 );
-CREATE INDEX "IDX_route_deviation_school_route" ON route_deviation_events(school_id, route_id);
-CREATE INDEX "IDX_route_deviation_detected_at" ON route_deviation_events(detected_at);
+
+CREATE TYPE notification_channel_enum AS ENUM ('PUSH', 'EMAIL', 'SMS');
+CREATE TYPE notification_status_enum AS ENUM ('SENT', 'FAILED');
+
+CREATE TABLE alert_notification_log (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    "alertId" VARCHAR NOT NULL,
+    "recipientUserId" VARCHAR NOT NULL,
+    "channel" notification_channel_enum NOT NULL,
+    "status" notification_status_enum NOT NULL,
+    "timestamp" TIMESTAMP DEFAULT NOW()
+);
 
 
 
@@ -233,9 +260,10 @@ CREATE TABLE vehicles_reference (
 CREATE TABLE routes_reference (
     id VARCHAR(255) PRIMARY KEY,
     name VARCHAR(255),
-    "vehicleId" VARCHAR(255),
-    "driverId" VARCHAR(255),
-    schedule JSONB,
+    "vehicleId" TEXT,
+    "driverId" TEXT,
+    "schedule" JSONB,
+    "polyline" TEXT,
     "createdAt" TIMESTAMP DEFAULT NOW()
 );
 
@@ -397,128 +425,128 @@ INSERT INTO routes (id, "schoolId", name, direction, "vehicleId", "startTime", "
 -- ===================== Route Stops (100 — 5 per route) =====================
 -- GPS coordinates follow actual Ottawa road corridors within 5 km of each school.
 
-INSERT INTO route_stops (id, "routeId", "sequenceOrder", "stopName", lat, lng, "arrivalTime") VALUES
+INSERT INTO route_stops (id, "routeId", "sequence", "address", lat, lng, "location", "arrivalTime") VALUES
     -- R01 Bank Street South (SE → school, along Bank St)
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000001', 1, 'Bank & Walkley',         45.3680, -75.6690, '07:15:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000001', 2, 'Billings Bridge Plaza',  45.3735, -75.6740, '07:22:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000001', 3, 'Bank & Heron',           45.3770, -75.6800, '07:28:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000001', 4, 'Bank & Alta Vista',      45.3810, -75.6850, '07:35:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000001', 5, 'Lansdowne & Bank',       45.3850, -75.6910, '07:42:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000001', 1, 'Bank & Walkley',         45.3680, -75.6690, ST_SetSRID(ST_MakePoint(-75.6690, 45.3680), 4326)::geography, '07:15:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000001', 2, 'Billings Bridge Plaza',  45.3735, -75.6740, ST_SetSRID(ST_MakePoint(-75.6740, 45.3735), 4326)::geography, '07:22:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000001', 3, 'Bank & Heron',           45.3770, -75.6800, ST_SetSRID(ST_MakePoint(-75.6800, 45.3770), 4326)::geography, '07:28:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000001', 4, 'Bank & Alta Vista',      45.3810, -75.6850, ST_SetSRID(ST_MakePoint(-75.6850, 45.3810), 4326)::geography, '07:35:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000001', 5, 'Lansdowne & Bank',       45.3850, -75.6910, ST_SetSRID(ST_MakePoint(-75.6910, 45.3850), 4326)::geography, '07:42:00'),
     -- R02 Bronson Avenue (SW → school, along Bronson Ave)
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000002', 1, 'Carleton University',    45.3820, -75.6980, '07:20:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000002', 2, 'Bronson & Sunnyside',    45.3835, -75.6975, '07:25:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000002', 3, 'Bronson & Holmwood',     45.3848, -75.6972, '07:30:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000002', 4, 'Bronson & Fifth Ave',    45.3860, -75.6968, '07:36:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000002', 5, 'Bronson & Glebe Ave',    45.3870, -75.6963, '07:42:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000002', 1, 'Carleton University', 45.3820, -75.6980, ST_SetSRID(ST_MakePoint(-75.6980, 45.3820), 4326)::geography, '07:20:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000002', 2, 'Bronson & Sunnyside', 45.3835, -75.6975, ST_SetSRID(ST_MakePoint(-75.6975, 45.3835), 4326)::geography, '07:25:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000002', 3, 'Bronson & Holmwood', 45.3848, -75.6972, ST_SetSRID(ST_MakePoint(-75.6972, 45.3848), 4326)::geography, '07:30:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000002', 4, 'Bronson & Fifth Ave', 45.3860, -75.6968, ST_SetSRID(ST_MakePoint(-75.6968, 45.3860), 4326)::geography, '07:36:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000002', 5, 'Bronson & Glebe Ave', 45.3870, -75.6963, ST_SetSRID(ST_MakePoint(-75.6963, 45.3870), 4326)::geography, '07:42:00'),
     -- R03 Rideau Canal East (E → school, along canal path)
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000003', 1, 'Echo & Colonel By Dr',   45.3890, -75.6720, '07:25:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000003', 2, 'Queen Elizabeth Dr',     45.3888, -75.6780, '07:30:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000003', 3, 'Canal & Pretoria',       45.3885, -75.6830, '07:36:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000003', 4, 'Fifth Ave & Canal',      45.3882, -75.6880, '07:42:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000003', 5, 'Patterson Creek',        45.3880, -75.6920, '07:48:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000003', 1, 'Echo & Colonel By Dr', 45.3890, -75.6720, ST_SetSRID(ST_MakePoint(-75.6720, 45.3890), 4326)::geography, '07:25:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000003', 2, 'Queen Elizabeth Dr', 45.3888, -75.6780, ST_SetSRID(ST_MakePoint(-75.6780, 45.3888), 4326)::geography, '07:30:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000003', 3, 'Canal & Pretoria', 45.3885, -75.6830, ST_SetSRID(ST_MakePoint(-75.6830, 45.3885), 4326)::geography, '07:36:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000003', 4, 'Fifth Ave & Canal', 45.3882, -75.6880, ST_SetSRID(ST_MakePoint(-75.6880, 45.3882), 4326)::geography, '07:42:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000003', 5, 'Patterson Creek', 45.3880, -75.6920, ST_SetSRID(ST_MakePoint(-75.6920, 45.3880), 4326)::geography, '07:48:00'),
     -- R04 Main Street (NE → school, along Main St)
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000004', 1, 'Main & Greenfield',      45.3950, -75.6720, '07:30:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000004', 2, 'Main & Concord',         45.3935, -75.6780, '07:35:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000004', 3, 'Main & Riverdale',       45.3920, -75.6830, '07:40:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000004', 4, 'Main & Clegg',           45.3900, -75.6880, '07:46:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000004', 5, 'Main & Pretoria',        45.3885, -75.6930, '07:52:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000004', 1, 'Main & Greenfield', 45.3950, -75.6720, ST_SetSRID(ST_MakePoint(-75.6720, 45.3950), 4326)::geography, '07:30:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000004', 2, 'Main & Concord', 45.3935, -75.6780, ST_SetSRID(ST_MakePoint(-75.6780, 45.3935), 4326)::geography, '07:35:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000004', 3, 'Main & Riverdale', 45.3920, -75.6830, ST_SetSRID(ST_MakePoint(-75.6830, 45.3920), 4326)::geography, '07:40:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000004', 4, 'Main & Clegg', 45.3900, -75.6880, ST_SetSRID(ST_MakePoint(-75.6880, 45.3900), 4326)::geography, '07:46:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000004', 5, 'Main & Pretoria', 45.3885, -75.6930, ST_SetSRID(ST_MakePoint(-75.6930, 45.3885), 4326)::geography, '07:52:00'),
     -- R05 Colonel By Drive (NE → school, along Colonel By)
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000005', 1, 'uOttawa Campus',         45.4050, -75.6800, '07:15:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000005', 2, 'Colonel By & Somerset',  45.4010, -75.6830, '07:22:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000005', 3, 'Lansdowne Stadium',      45.3970, -75.6870, '07:28:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000005', 4, 'Canal & Holmwood',       45.3935, -75.6910, '07:35:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000005', 5, 'Canal & Fifth Ave',      45.3900, -75.6940, '07:42:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000005', 1, 'uOttawa Campus', 45.4050, -75.6800, ST_SetSRID(ST_MakePoint(-75.6800, 45.4050), 4326)::geography, '07:15:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000005', 2, 'Colonel By & Somerset', 45.4010, -75.6830, ST_SetSRID(ST_MakePoint(-75.6830, 45.4010), 4326)::geography, '07:22:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000005', 3, 'Lansdowne Stadium', 45.3970, -75.6870, ST_SetSRID(ST_MakePoint(-75.6870, 45.3970), 4326)::geography, '07:28:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000005', 4, 'Canal & Holmwood', 45.3935, -75.6910, ST_SetSRID(ST_MakePoint(-75.6910, 45.3935), 4326)::geography, '07:35:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000005', 5, 'Canal & Fifth Ave', 45.3900, -75.6940, ST_SetSRID(ST_MakePoint(-75.6940, 45.3900), 4326)::geography, '07:42:00'),
     -- R06 Elgin Street (N → school, along Elgin St)
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000006', 1, 'Elgin & Lisgar',         45.4180, -75.6880, '07:20:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000006', 2, 'Elgin & Somerset',       45.4130, -75.6890, '07:26:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000006', 3, 'Elgin & MacLaren',       45.4070, -75.6900, '07:32:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000006', 4, 'Elgin & Argyle',         45.4010, -75.6920, '07:38:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000006', 5, 'Elgin & Isabella',       45.3940, -75.6945, '07:44:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000006', 1, 'Elgin & Lisgar', 45.4180, -75.6880, ST_SetSRID(ST_MakePoint(-75.6880, 45.4180), 4326)::geography, '07:20:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000006', 2, 'Elgin & Somerset', 45.4130, -75.6890, ST_SetSRID(ST_MakePoint(-75.6890, 45.4130), 4326)::geography, '07:26:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000006', 3, 'Elgin & MacLaren', 45.4070, -75.6900, ST_SetSRID(ST_MakePoint(-75.6900, 45.4070), 4326)::geography, '07:32:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000006', 4, 'Elgin & Argyle', 45.4010, -75.6920, ST_SetSRID(ST_MakePoint(-75.6920, 45.4010), 4326)::geography, '07:38:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000006', 5, 'Elgin & Isabella', 45.3940, -75.6945, ST_SetSRID(ST_MakePoint(-75.6945, 45.3940), 4326)::geography, '07:44:00'),
     -- R07 O'Connor Street (N → school, along O'Connor)
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000007', 1, 'O''Connor & Slater',     45.4150, -75.6920, '07:25:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000007', 2, 'O''Connor & Nepean',     45.4110, -75.6928, '07:30:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000007', 3, 'O''Connor & Gladstone',  45.4060, -75.6935, '07:36:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000007', 4, 'O''Connor & Clemow',     45.4000, -75.6945, '07:42:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000007', 5, 'O''Connor & Second Ave', 45.3930, -75.6952, '07:48:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000007', 1, 'O''Connor & Slater', 45.4150, -75.6920, ST_SetSRID(ST_MakePoint(-75.6920, 45.4150), 4326)::geography, '07:25:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000007', 2, 'O''Connor & Nepean', 45.4110, -75.6928, ST_SetSRID(ST_MakePoint(-75.6928, 45.4110), 4326)::geography, '07:30:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000007', 3, 'O''Connor & Gladstone', 45.4060, -75.6935, ST_SetSRID(ST_MakePoint(-75.6935, 45.4060), 4326)::geography, '07:36:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000007', 4, 'O''Connor & Clemow', 45.4000, -75.6945, ST_SetSRID(ST_MakePoint(-75.6945, 45.4000), 4326)::geography, '07:42:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000007', 5, 'O''Connor & Second Ave', 45.3930, -75.6952, ST_SetSRID(ST_MakePoint(-75.6952, 45.3930), 4326)::geography, '07:48:00'),
     -- R08 Lyon Street (NW → school, along Lyon)
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000008', 1, 'Lyon & Gloucester',      45.4130, -75.7020, '07:30:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000008', 2, 'Lyon & Somerset',        45.4090, -75.7005, '07:35:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000008', 3, 'Lyon & Gladstone',       45.4040, -75.6990, '07:41:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000008', 4, 'Lyon & Arlington',       45.3990, -75.6980, '07:47:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000008', 5, 'Lyon & Powell',          45.3930, -75.6968, '07:53:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000008', 1, 'Lyon & Gloucester', 45.4130, -75.7020, ST_SetSRID(ST_MakePoint(-75.7020, 45.4130), 4326)::geography, '07:30:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000008', 2, 'Lyon & Somerset', 45.4090, -75.7005, ST_SetSRID(ST_MakePoint(-75.7005, 45.4090), 4326)::geography, '07:35:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000008', 3, 'Lyon & Gladstone', 45.4040, -75.6990, ST_SetSRID(ST_MakePoint(-75.6990, 45.4040), 4326)::geography, '07:41:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000008', 4, 'Lyon & Arlington', 45.3990, -75.6980, ST_SetSRID(ST_MakePoint(-75.6980, 45.3990), 4326)::geography, '07:47:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000008', 5, 'Lyon & Powell', 45.3930, -75.6968, ST_SetSRID(ST_MakePoint(-75.6968, 45.3930), 4326)::geography, '07:53:00'),
     -- R09 Pretoria Bridge (NE → school via bridge)
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000009', 1, 'Main & Nicholas',        45.4000, -75.6730, '07:35:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000009', 2, 'Hawthorne & Colonel By', 45.3980, -75.6770, '07:39:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000009', 3, 'Pretoria Bridge North',  45.3960, -75.6810, '07:44:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000009', 4, 'Pretoria & Echo',        45.3935, -75.6860, '07:49:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000009', 5, 'Sunnyside & Seneca',     45.3900, -75.6920, '07:54:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000009', 1, 'Main & Nicholas', 45.4000, -75.6730, ST_SetSRID(ST_MakePoint(-75.6730, 45.4000), 4326)::geography, '07:35:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000009', 2, 'Hawthorne & Colonel By', 45.3980, -75.6770, ST_SetSRID(ST_MakePoint(-75.6770, 45.3980), 4326)::geography, '07:39:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000009', 3, 'Pretoria Bridge North', 45.3960, -75.6810, ST_SetSRID(ST_MakePoint(-75.6810, 45.3960), 4326)::geography, '07:44:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000009', 4, 'Pretoria & Echo', 45.3935, -75.6860, ST_SetSRID(ST_MakePoint(-75.6860, 45.3935), 4326)::geography, '07:49:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000009', 5, 'Sunnyside & Seneca', 45.3900, -75.6920, ST_SetSRID(ST_MakePoint(-75.6920, 45.3900), 4326)::geography, '07:54:00'),
     -- R10 Sunnyside Avenue (W → school, along Sunnyside)
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000010', 1, 'Sunnyside & Woodfield',  45.3890, -75.7180, '07:40:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000010', 2, 'Sunnyside & Aylmer',     45.3888, -75.7130, '07:44:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000010', 3, 'Sunnyside & Ralph',      45.3886, -75.7080, '07:48:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000010', 4, 'Sunnyside & Bellwood',   45.3883, -75.7030, '07:52:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000010', 5, 'Sunnyside & Bronson',    45.3880, -75.6985, '07:56:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000010', 1, 'Sunnyside & Woodfield', 45.3890, -75.7180, ST_SetSRID(ST_MakePoint(-75.7180, 45.3890), 4326)::geography, '07:40:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000010', 2, 'Sunnyside & Aylmer', 45.3888, -75.7130, ST_SetSRID(ST_MakePoint(-75.7130, 45.3888), 4326)::geography, '07:44:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000010', 3, 'Sunnyside & Ralph', 45.3886, -75.7080, ST_SetSRID(ST_MakePoint(-75.7080, 45.3886), 4326)::geography, '07:48:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000010', 4, 'Sunnyside & Bellwood', 45.3883, -75.7030, ST_SetSRID(ST_MakePoint(-75.7030, 45.3883), 4326)::geography, '07:52:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000010', 5, 'Sunnyside & Bronson', 45.3880, -75.6985, ST_SetSRID(ST_MakePoint(-75.6985, 45.3880), 4326)::geography, '07:56:00'),
 
     -- R11 Richmond Road (W → school, along Richmond Rd)
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000011', 1, 'Richmond & Woodroffe',   45.3900, -75.7600, '07:15:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000011', 2, 'Richmond & Cleary',      45.3912, -75.7520, '07:22:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000011', 3, 'Richmond & Golden',      45.3925, -75.7440, '07:28:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000011', 4, 'Richmond & Churchill',   45.3938, -75.7370, '07:35:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000011', 5, 'Richmond & Roosevelt',   45.3950, -75.7330, '07:42:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000011', 1, 'Richmond & Woodroffe', 45.3900, -75.7600, ST_SetSRID(ST_MakePoint(-75.7600, 45.3900), 4326)::geography, '07:15:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000011', 2, 'Richmond & Cleary', 45.3912, -75.7520, ST_SetSRID(ST_MakePoint(-75.7520, 45.3912), 4326)::geography, '07:22:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000011', 3, 'Richmond & Golden', 45.3925, -75.7440, ST_SetSRID(ST_MakePoint(-75.7440, 45.3925), 4326)::geography, '07:28:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000011', 4, 'Richmond & Churchill', 45.3938, -75.7370, ST_SetSRID(ST_MakePoint(-75.7370, 45.3938), 4326)::geography, '07:35:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000011', 5, 'Richmond & Roosevelt', 45.3950, -75.7330, ST_SetSRID(ST_MakePoint(-75.7330, 45.3950), 4326)::geography, '07:42:00'),
     -- R12 Scott Street (E → school, along Scott St)
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000012', 1, 'Scott & Bayview',        45.4000, -75.7050, '07:20:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000012', 2, 'Scott & Preston',        45.3992, -75.7110, '07:25:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000012', 3, 'Scott & Empress',        45.3985, -75.7170, '07:31:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000012', 4, 'Scott & Holland',        45.3978, -75.7220, '07:37:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000012', 5, 'Scott & Parkdale',       45.3970, -75.7265, '07:43:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000012', 1, 'Scott & Bayview', 45.4000, -75.7050, ST_SetSRID(ST_MakePoint(-75.7050, 45.4000), 4326)::geography, '07:20:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000012', 2, 'Scott & Preston', 45.3992, -75.7110, ST_SetSRID(ST_MakePoint(-75.7110, 45.3992), 4326)::geography, '07:25:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000012', 3, 'Scott & Empress', 45.3985, -75.7170, ST_SetSRID(ST_MakePoint(-75.7170, 45.3985), 4326)::geography, '07:31:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000012', 4, 'Scott & Holland', 45.3978, -75.7220, ST_SetSRID(ST_MakePoint(-75.7220, 45.3978), 4326)::geography, '07:37:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000012', 5, 'Scott & Parkdale', 45.3970, -75.7265, ST_SetSRID(ST_MakePoint(-75.7265, 45.3970), 4326)::geography, '07:43:00'),
     -- R13 Carling Avenue (SW → school, along Carling)
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000013', 1, 'Carling & Merivale',     45.3800, -75.7520, '07:25:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000013', 2, 'Carling & Fisher',       45.3830, -75.7460, '07:31:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000013', 3, 'Carling & Kirkwood',     45.3860, -75.7400, '07:37:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000013', 4, 'Carling & Broadview',    45.3895, -75.7355, '07:44:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000013', 5, 'Carling & Island Park',  45.3930, -75.7320, '07:50:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000013', 1, 'Carling & Merivale', 45.3800, -75.7520, ST_SetSRID(ST_MakePoint(-75.7520, 45.3800), 4326)::geography, '07:25:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000013', 2, 'Carling & Fisher', 45.3830, -75.7460, ST_SetSRID(ST_MakePoint(-75.7460, 45.3830), 4326)::geography, '07:31:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000013', 3, 'Carling & Kirkwood', 45.3860, -75.7400, ST_SetSRID(ST_MakePoint(-75.7400, 45.3860), 4326)::geography, '07:37:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000013', 4, 'Carling & Broadview', 45.3895, -75.7355, ST_SetSRID(ST_MakePoint(-75.7355, 45.3895), 4326)::geography, '07:44:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000013', 5, 'Carling & Island Park', 45.3930, -75.7320, ST_SetSRID(ST_MakePoint(-75.7320, 45.3930), 4326)::geography, '07:50:00'),
     -- R14 Churchill Avenue (N → school, along Churchill)
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000014', 1, 'Churchill & Byron',      45.4120, -75.7280, '07:30:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000014', 2, 'Churchill & Scott',      45.4085, -75.7285, '07:34:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000014', 3, 'Churchill & Wellington',  45.4050, -75.7290, '07:39:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000014', 4, 'Churchill & Somerset',   45.4010, -75.7294, '07:44:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000014', 5, 'Churchill & Carling',    45.3980, -75.7298, '07:49:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000014', 1, 'Churchill & Byron', 45.4120, -75.7280, ST_SetSRID(ST_MakePoint(-75.7280, 45.4120), 4326)::geography, '07:30:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000014', 2, 'Churchill & Scott', 45.4085, -75.7285, ST_SetSRID(ST_MakePoint(-75.7285, 45.4085), 4326)::geography, '07:34:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000014', 3, 'Churchill & Wellington', 45.4050, -75.7290, ST_SetSRID(ST_MakePoint(-75.7290, 45.4050), 4326)::geography, '07:39:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000014', 4, 'Churchill & Somerset', 45.4010, -75.7294, ST_SetSRID(ST_MakePoint(-75.7294, 45.4010), 4326)::geography, '07:44:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000014', 5, 'Churchill & Carling', 45.3980, -75.7298, ST_SetSRID(ST_MakePoint(-75.7298, 45.3980), 4326)::geography, '07:49:00'),
     -- R15 Island Park Drive (S → school, along Island Park Dr)
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000015', 1, 'Island Park & Carling',  45.3750, -75.7230, '07:20:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000015', 2, 'Island Park & Woodlawn', 45.3800, -75.7245, '07:26:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000015', 3, 'Island Park & Cowley',   45.3845, -75.7258, '07:32:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000015', 4, 'Island Park & Byron',    45.3890, -75.7272, '07:38:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000015', 5, 'Island Park & Scott',    45.3930, -75.7288, '07:44:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000015', 1, 'Island Park & Carling', 45.3750, -75.7230, ST_SetSRID(ST_MakePoint(-75.7230, 45.3750), 4326)::geography, '07:20:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000015', 2, 'Island Park & Woodlawn', 45.3800, -75.7245, ST_SetSRID(ST_MakePoint(-75.7245, 45.3800), 4326)::geography, '07:26:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000015', 3, 'Island Park & Cowley', 45.3845, -75.7258, ST_SetSRID(ST_MakePoint(-75.7258, 45.3845), 4326)::geography, '07:32:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000015', 4, 'Island Park & Byron', 45.3890, -75.7272, ST_SetSRID(ST_MakePoint(-75.7272, 45.3890), 4326)::geography, '07:38:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000015', 5, 'Island Park & Scott', 45.3930, -75.7288, ST_SetSRID(ST_MakePoint(-75.7288, 45.3930), 4326)::geography, '07:44:00'),
     -- R16 Kirkwood Avenue (NW → school, along Kirkwood)
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000016', 1, 'Kirkwood & Carling',     45.4080, -75.7420, '07:25:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000016', 2, 'Kirkwood & Byron',       45.4055, -75.7395, '07:30:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000016', 3, 'Kirkwood & Wellington',  45.4030, -75.7370, '07:35:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000016', 4, 'Kirkwood & Somerset',    45.4000, -75.7345, '07:40:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000016', 5, 'Kirkwood & Clare',       45.3975, -75.7318, '07:45:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000016', 1, 'Kirkwood & Carling', 45.4080, -75.7420, ST_SetSRID(ST_MakePoint(-75.7420, 45.4080), 4326)::geography, '07:25:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000016', 2, 'Kirkwood & Byron', 45.4055, -75.7395, ST_SetSRID(ST_MakePoint(-75.7395, 45.4055), 4326)::geography, '07:30:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000016', 3, 'Kirkwood & Wellington', 45.4030, -75.7370, ST_SetSRID(ST_MakePoint(-75.7370, 45.4030), 4326)::geography, '07:35:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000016', 4, 'Kirkwood & Somerset', 45.4000, -75.7345, ST_SetSRID(ST_MakePoint(-75.7345, 45.4000), 4326)::geography, '07:40:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000016', 5, 'Kirkwood & Clare', 45.3975, -75.7318, ST_SetSRID(ST_MakePoint(-75.7318, 45.3975), 4326)::geography, '07:45:00'),
     -- R17 Byron Avenue (W → school, along Byron Ave)
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000017', 1, 'Byron & Fisher',         45.3980, -75.7560, '07:30:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000017', 2, 'Byron & Woodroffe',      45.3978, -75.7490, '07:35:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000017', 3, 'Byron & Athlone',        45.3975, -75.7420, '07:41:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000017', 4, 'Byron & Island Park',    45.3970, -75.7365, '07:47:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000017', 5, 'Byron & Clarendon',      45.3965, -75.7330, '07:53:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000017', 1, 'Byron & Fisher', 45.3980, -75.7560, ST_SetSRID(ST_MakePoint(-75.7560, 45.3980), 4326)::geography, '07:30:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000017', 2, 'Byron & Woodroffe', 45.3978, -75.7490, ST_SetSRID(ST_MakePoint(-75.7490, 45.3978), 4326)::geography, '07:35:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000017', 3, 'Byron & Athlone', 45.3975, -75.7420, ST_SetSRID(ST_MakePoint(-75.7420, 45.3975), 4326)::geography, '07:41:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000017', 4, 'Byron & Island Park', 45.3970, -75.7365, ST_SetSRID(ST_MakePoint(-75.7365, 45.3970), 4326)::geography, '07:47:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000017', 5, 'Byron & Clarendon', 45.3965, -75.7330, ST_SetSRID(ST_MakePoint(-75.7330, 45.3965), 4326)::geography, '07:53:00'),
     -- R18 Wellington Street (E → school, along Wellington)
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000018', 1, 'Wellington & Bank',      45.4010, -75.7020, '07:15:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000018', 2, 'Wellington & Lyon',      45.4003, -75.7080, '07:21:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000018', 3, 'Wellington & Preston',   45.3995, -75.7140, '07:27:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000018', 4, 'Wellington & Empress',   45.3988, -75.7200, '07:34:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000018', 5, 'Wellington & Holland',   45.3978, -75.7255, '07:40:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000018', 1, 'Wellington & Bank', 45.4010, -75.7020, ST_SetSRID(ST_MakePoint(-75.7020, 45.4010), 4326)::geography, '07:15:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000018', 2, 'Wellington & Lyon', 45.4003, -75.7080, ST_SetSRID(ST_MakePoint(-75.7080, 45.4003), 4326)::geography, '07:21:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000018', 3, 'Wellington & Preston', 45.3995, -75.7140, ST_SetSRID(ST_MakePoint(-75.7140, 45.3995), 4326)::geography, '07:27:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000018', 4, 'Wellington & Empress', 45.3988, -75.7200, ST_SetSRID(ST_MakePoint(-75.7200, 45.3988), 4326)::geography, '07:34:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000018', 5, 'Wellington & Holland', 45.3978, -75.7255, ST_SetSRID(ST_MakePoint(-75.7255, 45.3978), 4326)::geography, '07:40:00'),
     -- R19 Parkdale Avenue (S → school, along Parkdale)
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000019', 1, 'Parkdale & Carling',     45.3770, -75.7310, '07:35:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000019', 2, 'Parkdale & Sherwood',    45.3810, -75.7308, '07:39:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000019', 3, 'Parkdale & Tyndall',     45.3850, -75.7305, '07:44:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000019', 4, 'Parkdale & Eccles',      45.3890, -75.7303, '07:49:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000019', 5, 'Parkdale & Scott',       45.3930, -75.7300, '07:53:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000019', 1, 'Parkdale & Carling', 45.3770, -75.7310, ST_SetSRID(ST_MakePoint(-75.7310, 45.3770), 4326)::geography, '07:35:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000019', 2, 'Parkdale & Sherwood', 45.3810, -75.7308, ST_SetSRID(ST_MakePoint(-75.7308, 45.3810), 4326)::geography, '07:39:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000019', 3, 'Parkdale & Tyndall', 45.3850, -75.7305, ST_SetSRID(ST_MakePoint(-75.7305, 45.3850), 4326)::geography, '07:44:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000019', 4, 'Parkdale & Eccles', 45.3890, -75.7303, ST_SetSRID(ST_MakePoint(-75.7303, 45.3890), 4326)::geography, '07:49:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000019', 5, 'Parkdale & Scott', 45.3930, -75.7300, ST_SetSRID(ST_MakePoint(-75.7300, 45.3930), 4326)::geography, '07:53:00'),
     -- R20 Holland Avenue (N → school, along Holland Ave)
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000020', 1, 'Holland & Gladstone',    45.4100, -75.7250, '07:40:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000020', 2, 'Holland & Wellington',   45.4070, -75.7260, '07:44:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000020', 3, 'Holland & Byron',        45.4040, -75.7270, '07:48:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000020', 4, 'Holland & Ruskin',       45.4010, -75.7280, '07:52:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000020', 5, 'Holland & Carling',      45.3980, -75.7292, '07:56:00');
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000020', 1, 'Holland & Gladstone', 45.4100, -75.7250, ST_SetSRID(ST_MakePoint(-75.7250, 45.4100), 4326)::geography, '07:40:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000020', 2, 'Holland & Wellington', 45.4070, -75.7260, ST_SetSRID(ST_MakePoint(-75.7260, 45.4070), 4326)::geography, '07:44:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000020', 3, 'Holland & Byron', 45.4040, -75.7270, ST_SetSRID(ST_MakePoint(-75.7270, 45.4040), 4326)::geography, '07:48:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000020', 4, 'Holland & Ruskin', 45.4010, -75.7280, ST_SetSRID(ST_MakePoint(-75.7280, 45.4010), 4326)::geography, '07:52:00'),
+    (gen_random_uuid(), '30000000-0000-0000-0000-000000000020', 5, 'Holland & Carling', 45.3980, -75.7292, ST_SetSRID(ST_MakePoint(-75.7292, 45.3980), 4326)::geography, '07:56:00');
 
 -- ===================== Reference Tables =====================
 
@@ -808,5 +836,10 @@ INSERT INTO location_points (id, school_id, vehicle_id, route_id, timestamp, lat
     (uuid_generate_v4()::text, 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'BUS-02', 'ROUTE-R02', NOW() - INTERVAL '1 minute', 45.3848, -75.6972, 28),
     (uuid_generate_v4()::text, 'c1a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'BUS-11', 'ROUTE-R11', NOW() - INTERVAL '1 minute', 45.3925, -75.7440, 30),
     (uuid_generate_v4()::text, 'c1a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'BUS-12', 'ROUTE-R12', NOW() - INTERVAL '1 minute', 45.3985, -75.7170, 25);
+
+-- Seed Emergency Alert
+INSERT INTO emergency_alert (id, "schoolId", "vehicleId", "routeId", "driverId", "timestamp", "lat", "lng", "eventType", "status") VALUES
+    (uuid_generate_v4(), 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'BUS-01', 'ROUTE-R01', '10000000-0000-0000-0000-000000000101', NOW() - INTERVAL '10 minutes', 45.3770, -75.6800, 'PANIC_BUTTON', 'ACTIVE'),
+    (uuid_generate_v4(), 'c1a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'BUS-11', 'ROUTE-R11', '10000000-0000-0000-0000-000000000111', NOW() - INTERVAL '5 minutes', 45.3925, -75.7440, 'INCIDENT', 'ACTIVE');
 
 COMMIT;

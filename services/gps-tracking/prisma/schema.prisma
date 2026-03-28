@@ -18,6 +18,8 @@ model LocationPoint {
   timestamp       DateTime
   lat             Float
   lng             Float
+  snappedLat      Float?   @map("snapped_lat")
+  snappedLng      Float?   @map("snapped_lng")
   speedKph        Float?   @map("speed_kph")
   headingDeg      Float?   @map("heading_deg")
   accuracyMeters  Float?   @map("accuracy_meters")

@@ -7,9 +7,13 @@ import type { Alert } from '../../types';
 describe('AlertCard', () => {
     const mockAlert: Alert = {
         id: 'alert-001',
+        schoolId: 'school-001',
         routeId: 'route-123',
         vehicleId: 'bus-45',
+        driverId: 'driver-001',
         timestamp: new Date().toISOString(),
+        lat: 45.3920,
+        lng: -75.7130,
         eventType: 'PANIC_BUTTON',
         status: 'ACTIVE',
         description: 'Test alert description',

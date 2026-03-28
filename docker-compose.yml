@@ -33,7 +33,7 @@ services:
     ports:
       - "3001:3001"
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=production
       - PORT=3001
       - DB_HOST=postgres
       - DB_PORT=5432
@@ -193,6 +193,16 @@ services:
       - "3000:80"
     depends_on:
       - api-gateway
+
+  osrm:
+    image: ghcr.io/project-osrm/osrm-backend:v5.27.1
+    container_name: sbtm-osrm
+    command: osrm-routed --algorithm mld /data/ottawa.osrm
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./infra/osrm-data:/data
+    restart: unless-stopped
 
 volumes:
   postgres_data:

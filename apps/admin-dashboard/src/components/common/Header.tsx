@@ -12,7 +12,7 @@ const Header: React.FC<HeaderProps> = ({ title, subtitle, action }) => {
     const { user } = useAuth();
 
     return (
-        <header className="h-16 bg-dashboard-card/50 backdrop-blur-xl border-b border-dashboard-border flex items-center justify-between px-6 sticky top-0 z-40">
+        <header className="h-16 glass-header flex items-center justify-between px-6 sticky top-0 z-40 transition-all duration-300">
             {/* Title */}
             <div className="flex items-center gap-6">
                 <div>
@@ -30,25 +30,25 @@ const Header: React.FC<HeaderProps> = ({ title, subtitle, action }) => {
                     <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input
                         type="text"
-                        placeholder="Search..."
-                        className="pl-10 pr-4 py-2 bg-dashboard-bg border border-dashboard-border rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50 w-64"
+                        placeholder="Search trackers, routes..."
+                        className="glass-input pl-10 w-64 text-sm"
                     />
                 </div>
 
                 {/* Notifications */}
-                <button className="relative p-2 rounded-xl hover:bg-slate-800 transition-colors">
-                    <Bell size={20} className="text-slate-400" />
-                    <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                <button className="relative p-2 rounded-xl hover:bg-white/5 transition-all group">
+                    <Bell size={20} className="text-slate-400 group-hover:text-white" />
+                    <span className="absolute top-1 right-1 w-2 h-2 bg-rose-500 rounded-full animate-pulse shadow-lg shadow-rose-500/50" />
                 </button>
 
                 {/* User */}
-                <div className="flex items-center gap-3 pl-4 border-l border-dashboard-border">
-                    <div className="w-9 h-9 bg-gradient-to-br from-primary-500 to-primary-700 rounded-full flex items-center justify-center">
+                <div className="flex items-center gap-3 pl-4 border-l border-white/10">
+                    <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
                         <User size={18} className="text-white" />
                     </div>
                     <div className="hidden sm:block">
-                        <p className="text-sm font-medium text-white">{user?.name || 'Admin'}</p>
-                        <p className="text-xs text-slate-400">{user?.role || 'Administrator'}</p>
+                        <p className="text-sm font-bold text-white leading-tight">{user?.name || 'Admin'}</p>
+                        <p className="text-xs text-slate-500 font-medium truncate max-w-[100px]">{user?.role || 'Administrator'}</p>
                     </div>
                 </div>
             </div>

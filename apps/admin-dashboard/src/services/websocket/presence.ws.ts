@@ -1,58 +1,38 @@
-import type { StudentPresence } from '../../types';
+import { io, Socket } from 'socket.io-client';
 
-type PresenceCallback = (presence: StudentPresence) => void;
+type PresenceCallback = (event: any) => void;
 
 class PresenceWebSocket {
-    private ws: WebSocket | null = null;
+    private socket: Socket | null = null;
     private callbacks: PresenceCallback[] = [];
-    private reconnectAttempts = 0;
-    private maxReconnectAttempts = 5;
-    private reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
 
     connect(url?: string): void {
-        const wsUrl = url || import.meta.env.VITE_WS_URL || 'ws://localhost:3000/ws/presence';
+        const wsUrl = url || import.meta.env.VITE_WS_URL || 'http://localhost:3004';
 
-        try {
-            this.ws = new WebSocket(wsUrl);
+        if (this.socket?.connected) return;
 
-            this.ws.onopen = () => {
-                console.log('Presence WebSocket connected');
-                this.reconnectAttempts = 0;
-            };
+        this.socket = io(`${wsUrl}/ws/presence`, {
+            transports: ['websocket'],
+            reconnection: true,
+            reconnectionAttempts: 5,
+        });
 
-            this.ws.onmessage = (event) => {
-                try {
-                    const presence: StudentPresence = JSON.parse(event.data);
-                    this.callbacks.forEach(cb => cb(presence));
-                } catch (error) {
-                    console.error('Error parsing presence message:', error);
-                }
-            };
+        this.socket.on('connect', () => {
+            console.log('Presence WebSocket connected');
+        });
 
-            this.ws.onclose = () => {
-                console.log('Presence WebSocket closed');
-                this.attemptReconnect();
-            };
+        this.socket.on('presence:updated', (event) => {
+            console.log('Presence update received:', event);
+            this.callbacks.forEach(cb => cb(event));
+        });
 
-            this.ws.onerror = (error) => {
-                console.error('Presence WebSocket error:', error);
-            };
-        } catch (error) {
-            console.error('Failed to connect to presence WebSocket:', error);
-            this.attemptReconnect();
-        }
-    }
+        this.socket.on('disconnect', () => {
+            console.log('Presence WebSocket disconnected');
+        });
 
-    private attemptReconnect(): void {
-        if (this.reconnectAttempts < this.maxReconnectAttempts) {
-            this.reconnectAttempts++;
-            const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000);
-
-            this.reconnectTimeout = setTimeout(() => {
-                console.log(`Attempting to reconnect presence WebSocket (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
-                this.connect();
-            }, delay);
-        }
+        this.socket.on('connect_error', (error) => {
+            console.error('Presence WebSocket connection error:', error);
+        });
     }
 
     subscribe(callback: PresenceCallback): () => void {
@@ -63,18 +43,15 @@ class PresenceWebSocket {
     }
 
     disconnect(): void {
-        if (this.reconnectTimeout) {
-            clearTimeout(this.reconnectTimeout);
-        }
-        if (this.ws) {
-            this.ws.close();
-            this.ws = null;
+        if (this.socket) {
+            this.socket.disconnect();
+            this.socket = null;
         }
         this.callbacks = [];
     }
 
     isConnected(): boolean {
-        return this.ws?.readyState === WebSocket.OPEN;
+        return this.socket?.connected || false;
     }
 }
 

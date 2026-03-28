@@ -1,7 +1,6 @@
 import React from 'react';
-import { AlertTriangle, AlertCircle, Info, CheckCircle } from 'lucide-react';
+import { AlertTriangle, Bus, Clock } from 'lucide-react';
 import type { Alert } from '../../types';
-import { formatRelativeTime, formatEventType } from '../../utils/formatters';
 
 interface AlertCardProps {
     alert: Alert;
@@ -9,64 +8,50 @@ interface AlertCardProps {
 }
 
 const AlertCard: React.FC<AlertCardProps> = ({ alert, onClick }) => {
-    const getAlertIcon = () => {
-        switch (alert.eventType) {
-            case 'PANIC_BUTTON':
-                return <AlertTriangle className="text-red-500" size={20} />;
-            case 'INCIDENT':
-                return <AlertCircle className="text-yellow-500" size={20} />;
-            default:
-                return <Info className="text-blue-500" size={20} />;
-        }
-    };
-
-    const getStatusBadge = () => {
-        if (alert.status === 'RESOLVED') {
-            return (
-                <span className="flex items-center gap-1 px-2 py-1 bg-green-500/20 text-green-400 rounded-full text-xs font-medium">
-                    <CheckCircle size={12} />
-                    Resolved
-                </span>
-            );
-        }
-        return (
-            <span className="px-2 py-1 bg-red-500/20 text-red-400 rounded-full text-xs font-medium animate-pulse-slow">
-                Active
-            </span>
-        );
-    };
+    const isPanic = alert.eventType === 'PANIC_BUTTON';
+    const isResolved = alert.status === 'RESOLVED';
 
     return (
-        <div
+        <button
             onClick={onClick}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => e.key === 'Enter' && onClick?.()}
-            className={`p-4 rounded-xl border transition-all duration-200 cursor-pointer ${alert.status === 'ACTIVE'
-                    ? 'bg-red-500/5 border-red-500/30 hover:bg-red-500/10'
-                    : 'bg-dashboard-card border-dashboard-border hover:bg-slate-800'
-                }`}
+            className={`w-full text-left glass-item p-4 rounded-xl group transition-all duration-300 ${isResolved ? 'opacity-60' : 'hover:scale-[1.01]'}`}
         >
-            <div className="flex items-start gap-3">
-                <div className="mt-0.5">{getAlertIcon()}</div>
+            <div className="flex items-start gap-4">
+                <div className={`p-3 rounded-xl shadow-lg ${isPanic
+                    ? 'bg-rose-500/20 text-rose-500 shadow-rose-500/10'
+                    : 'bg-amber-500/20 text-amber-500 shadow-amber-500/10'
+                    }`}>
+                    <AlertTriangle size={20} className={isPanic ? 'animate-pulse' : ''} />
+                </div>
+
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2 mb-1">
-                        <span className="font-medium text-white truncate">
-                            {formatEventType(alert.eventType)}
+                        <span className={`text-sm font-bold tracking-tight uppercase ${isPanic ? 'text-rose-400' : 'text-amber-400'}`}>
+                            {alert.eventType.replace('_', ' ')}
                         </span>
-                        {getStatusBadge()}
+                        <span className={`px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider border ${isResolved
+                            ? 'bg-slate-800 text-slate-500 border-white/5'
+                            : 'bg-rose-500/20 text-rose-400 border-rose-500/30'
+                            }`}>
+                            {alert.status}
+                        </span>
                     </div>
-                    <p className="text-sm text-slate-400 mb-2 line-clamp-2">
-                        {alert.description || `Alert on ${alert.routeId}`}
-                    </p>
-                    <div className="flex items-center gap-3 text-xs text-slate-500">
-                        <span>Vehicle: {alert.vehicleId}</span>
-                        <span>•</span>
-                        <span>{formatRelativeTime(alert.timestamp)}</span>
+
+                    <p className="text-sm text-white font-medium line-clamp-1">{alert.description || 'No description provided'}</p>
+
+                    <div className="flex items-center gap-3 mt-3 text-[11px] font-medium text-slate-500 uppercase tracking-widest">
+                        <div className="flex items-center gap-1">
+                            <Bus size={10} />
+                            <span>{alert.vehicleId}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <Clock size={10} />
+                            <span>{new Date(alert.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </button>
     );
 };
 

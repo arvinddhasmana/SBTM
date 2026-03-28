@@ -73,117 +73,143 @@ const Dashboard: React.FC = () => {
     }
 
     const statCards = [
-        { icon: <RouteIcon size={20} />, label: 'Active Routes', value: stats.activeRoutes, color: 'text-primary-500' },
-        { icon: <Bus size={20} />, label: 'Buses On Route', value: stats.busesOnRoute, color: 'text-green-500' },
-        { icon: <Users size={20} />, label: 'Students Onboard', value: stats.totalStudents, color: 'text-blue-500' },
-        { icon: <Bell size={20} />, label: 'Active Alerts', value: stats.activeAlerts, color: 'text-red-500' },
+        {
+            icon: <RouteIcon size={22} />,
+            label: 'Active Routes',
+            value: stats.activeRoutes,
+            gradient: 'from-blue-500 to-blue-700',
+            shadow: 'shadow-blue-500/20'
+        },
+        {
+            icon: <Bus size={22} />,
+            label: 'Buses On Route',
+            value: stats.busesOnRoute,
+            gradient: 'from-emerald-500 to-emerald-700',
+            shadow: 'shadow-emerald-500/20'
+        },
+        {
+            icon: <Users size={22} />,
+            label: 'Students Onboard',
+            value: stats.totalStudents,
+            gradient: 'from-indigo-500 to-indigo-700',
+            shadow: 'shadow-indigo-500/20'
+        },
+        {
+            icon: <Bell size={22} />,
+            label: 'Active Alerts',
+            value: stats.activeAlerts,
+            gradient: 'from-rose-500 to-rose-700',
+            shadow: 'shadow-rose-500/20'
+        },
     ];
 
     return (
-        <>
-            <Header title="Dashboard" subtitle="Real-time fleet overview" />
+        <div className="min-h-screen bg-slate-950">
+            <Header title="Tactical Overview" subtitle="Real-time fleet intelligence" />
 
-            <div className="p-6 space-y-6">
-                {/* Stats */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="p-8 space-y-8 max-w-[1600px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
+                {/* Stats Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     {statCards.map((stat, i) => (
-                        <Card key={i} className="flex items-center gap-4">
-                            <div className={`p-3 rounded-xl bg-dashboard-bg ${stat.color}`}>
-                                {stat.icon}
+                        <div key={i} className="glass-card inner-glow p-6 group cursor-pointer hover:border-white/20 transition-all duration-300">
+                            <div className="flex items-center gap-5">
+                                <div className={`p-4 rounded-2xl bg-gradient-to-br ${stat.gradient} text-white shadow-xl ${stat.shadow} group-hover:scale-110 transition-transform duration-300`}>
+                                    {stat.icon}
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-3xl font-black text-white tracking-tighter">{stat.value}</p>
+                                    <p className="text-[11px] font-bold text-slate-500 uppercase tracking-[0.2em]">{stat.label}</p>
+                                </div>
                             </div>
-                            <div>
-                                <p className="text-2xl font-bold text-white">{stat.value}</p>
-                                <p className="text-sm text-slate-400">{stat.label}</p>
-                            </div>
-                        </Card>
+                        </div>
                     ))}
                 </div>
 
-                {/* Main Content */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* Map */}
-                    <Card title="Live Fleet Map" className="lg:col-span-2">
-                        <div className="h-[400px]">
+                {/* Main Content Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* Live Map Section */}
+                    <Card title="Fleet Status Map" className="lg:col-span-2 overflow-hidden border-blue-500/10 hover:border-blue-500/20">
+                        <div className="h-[500px] -mx-6 -mb-6 mt-2">
                             <LiveMap locations={locations} />
                         </div>
                     </Card>
 
-                    {/* Alerts */}
+                    {/* Active Alerts Section */}
                     <Card
-                        title="Active Alerts"
+                        title="Tactical Alerts"
                         action={
                             <button
                                 onClick={() => navigate('/alerts')}
-                                className="text-sm text-primary-400 hover:text-primary-300"
+                                className="text-xs font-bold text-blue-400 hover:text-blue-300 uppercase tracking-widest transition-colors"
                             >
-                                View All
+                                All Alerts
                             </button>
                         }
+                        className="bg-rose-500/[0.02] border-rose-500/10"
                     >
-                        <AlertList
-                            alerts={alerts.slice(0, 5)}
-                            onAlertClick={(alert) => navigate(`/alerts?id=${alert.id}`)}
-                            emptyMessage="No active alerts"
-                        />
+                        <div className="custom-scrollbar overflow-y-auto max-h-[440px] pr-2">
+                            <AlertList
+                                alerts={alerts.slice(0, 8)}
+                                onAlertClick={(alert) => navigate(`/alerts?id=${alert.id}`)}
+                                emptyMessage="System Clear: No active alerts"
+                            />
+                        </div>
                         {alerts.length > 0 && (
-                            <div className="flex items-center gap-2 mt-4 pt-4 border-t border-dashboard-border text-sm text-yellow-400">
-                                <AlertTriangle size={16} />
-                                <span>{alerts.length} alert{alerts.length !== 1 ? 's' : ''} require attention</span>
+                            <div className="flex items-center gap-3 mt-6 pt-6 border-t border-white/5 text-[11px] font-bold text-rose-400 uppercase tracking-widest">
+                                <div className="w-2 h-2 bg-rose-500 rounded-full animate-ping" />
+                                <span>{alerts.length} Critical Intervention{alerts.length !== 1 ? 's' : ''} Required</span>
                             </div>
                         )}
                     </Card>
                 </div>
 
-                {/* Secondary Content */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {/* Students */}
+                {/* Secondary Content Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pb-8">
+                    {/* Students Presence Section */}
                     <Card
-                        title="Students Onboard"
+                        title="Live Passenger Feed"
                         action={
                             <button
                                 onClick={() => navigate('/students')}
-                                className="text-sm text-primary-400 hover:text-primary-300"
+                                className="text-xs font-bold text-blue-400 hover:text-blue-300 uppercase tracking-widest transition-colors"
                             >
-                                View All
+                                Full manifest
                             </button>
                         }
                     >
-                        <PresenceList students={students.slice(0, 5)} emptyMessage="No students currently onboard" />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <PresenceList students={students.slice(0, 6)} emptyMessage="Fleet Empty: No active passengers" />
+                        </div>
                     </Card>
 
-                    {/* Quick Stats */}
-                    <Card title="System Health">
-                        <div className="space-y-4">
-                            <div className="flex items-center justify-between p-3 bg-dashboard-bg rounded-xl">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
-                                    <span className="text-slate-300">GPS Tracking Service</span>
+                    {/* System Diagnostics Section */}
+                    <Card title="Mission Health">
+                        <div className="grid grid-cols-1 gap-4">
+                            {[
+                                { name: 'GPS Tracking Mesh', status: 'Optimal', delay: '12ms' },
+                                { name: 'Tactical Alert Hub', status: 'Live', delay: '8ms' },
+                                { name: 'Telemetry Streaming', status: 'Synced', delay: '45ms' }
+                            ].map((service, idx) => (
+                                <div key={idx} className="flex items-center justify-between p-4 glass-item rounded-xl group">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-2 h-2 bg-emerald-500 rounded-full shadow-lg shadow-emerald-500/50 group-hover:scale-150 transition-transform" />
+                                        <span className="text-sm font-bold text-slate-300 tracking-tight">{service.name}</span>
+                                    </div>
+                                    <div className="flex items-center gap-4">
+                                        <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">{service.delay}</span>
+                                        <span className="text-xs font-black text-emerald-400 uppercase tracking-widest">{service.status}</span>
+                                    </div>
                                 </div>
-                                <span className="text-sm text-green-400">Online</span>
-                            </div>
-                            <div className="flex items-center justify-between p-3 bg-dashboard-bg rounded-xl">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
-                                    <span className="text-slate-300">Alerts Service</span>
-                                </div>
-                                <span className="text-sm text-green-400">Online</span>
-                            </div>
-                            <div className="flex items-center justify-between p-3 bg-dashboard-bg rounded-xl">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
-                                    <span className="text-slate-300">Video Service</span>
-                                </div>
-                                <span className="text-sm text-green-400">Online</span>
-                            </div>
-                            <div className="mt-4 pt-4 border-t border-dashboard-border flex items-center gap-2 text-sm text-slate-400">
-                                <TrendingUp size={16} className="text-green-500" />
-                                <span>All systems operational</span>
+                            ))}
+                            <div className="mt-4 pt-6 border-t border-white/5 flex items-center gap-3 text-xs font-bold text-slate-500 uppercase tracking-[0.2em]">
+                                <TrendingUp size={16} className="text-emerald-500" />
+                                <span>All Strategic Systems Operational</span>
                             </div>
                         </div>
                     </Card>
                 </div>
             </div>
-        </>
+        </div>
     );
 };
 

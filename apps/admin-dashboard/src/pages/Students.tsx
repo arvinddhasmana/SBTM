@@ -1,20 +1,30 @@
-import React, { useState, useEffect } from 'react';
-import { Filter, Users as UsersIcon, Upload, Plus } from 'lucide-react';
-import { Header, Card, LoadingSpinner } from '../components/common';
-import { PresenceList } from '../components/presence';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Upload, Plus } from 'lucide-react';
+import { Header, LoadingSpinner } from '../components/common';
+import { PresenceStats } from '../components/presence/PresenceStats';
+import { PresenceFilters } from '../components/presence/PresenceFilters';
+import { PresenceTable } from '../components/presence/PresenceTable';
 import { StudentTable, BulkImportModal, RouteAssignmentModal } from '../components/students';
 import { presenceApi, routesApi, studentManagementApi } from '../services/api';
-import type { StudentPresence, Route } from '../types';
+import { presenceWs } from '../services/websocket/presence.ws';
+import type { Route } from '../types';
+import type { PresenceStats as StatsType, PresenceEvent } from '../services/api/presence.api';
 
 const Students: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'presence' | 'management'>('presence');
 
     // Presence State
-    const [presenceData, setPresenceData] = useState<StudentPresence[]>([]);
-    const [routes, setRoutes] = useState<Route[]>([]);
-    const [presenceFilter, setPresenceFilter] = useState<'all' | 'boarded' | 'alighted'>('all');
-    const [selectedRoute, setSelectedRoute] = useState<string>('all');
+    const [stats, setStats] = useState<StatsType>({ totalStudents: 0, boarded: 0, alighted: 0, unknown: 0, byRoute: [] });
+    const [events, setEvents] = useState<PresenceEvent[]>([]);
+    const [totalEvents, setTotalEvents] = useState(0);
+    const [page, setPage] = useState(1);
+    const [isRefreshing, setIsRefreshing] = useState(false);
+    const [filters, setFilters] = useState({
+        studentName: '',
+        routeId: '',
+        eventType: '',
+    });
 
     // Management State
     const [managedStudents, setManagedStudents] = useState<any[]>([]);
@@ -22,50 +32,67 @@ const Students: React.FC = () => {
     const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
     const [selectedStudent, setSelectedStudent] = useState<any>(null);
 
-    const fetchData = async () => {
-        setIsLoading(true);
+    const fetchPresenceData = useCallback(async (isAutoRefresh = false) => {
+        if (!isAutoRefresh) setIsRefreshing(true);
         try {
-            const [rData, mData] = await Promise.all([
-                routesApi.getActiveRoutes(),
-                studentManagementApi.getStudents()
+            const [statsData, eventsData] = await Promise.all([
+                presenceApi.getStats(),
+                presenceApi.getEvents({ ...filters, page, limit: 10 }),
             ]);
+            setStats(statsData);
+            setEvents(eventsData.items);
+            setTotalEvents(eventsData.total);
+        } catch (error) {
+            console.error('Error fetching presence data:', error);
+        } finally {
+            setIsRefreshing(false);
+            if (!isAutoRefresh) setIsLoading(false);
+        }
+    }, [filters, page]);
 
-            const pData = await presenceApi.getAllPresence(rData.map((route) => route.id));
-            setPresenceData(pData);
-            setRoutes(rData);
+    const fetchManagementData = useCallback(async () => {
+        try {
+            const mData = await studentManagementApi.getStudents();
             setManagedStudents(mData);
         } catch (error) {
-            console.error('Error fetching data:', error);
-        } finally {
-            setIsLoading(false);
+            console.error('Error fetching management data:', error);
         }
-    };
-
-    useEffect(() => {
-        fetchData();
     }, []);
 
-    const filteredPresence = presenceData.filter((student) => {
-        let matches = true;
-        if (presenceFilter === 'boarded') matches = student.status === 'BOARDED';
-        if (presenceFilter === 'alighted') matches = student.status === 'ALIGHTED';
-        if (selectedRoute !== 'all') matches = matches && student.routeId === selectedRoute;
-        return matches;
-    });
+    useEffect(() => {
+        if (activeTab === 'presence') {
+            fetchPresenceData();
 
-    const boardedCount = presenceData.filter((s) => s.status === 'BOARDED').length;
+            // Connect to WebSocket
+            presenceWs.connect();
+            const unsubscribe = presenceWs.subscribe(() => {
+                // Refresh data on real-time update
+                fetchPresenceData(true);
+            });
+
+            return () => {
+                unsubscribe();
+            };
+        } else {
+            fetchManagementData();
+        }
+    }, [activeTab, fetchPresenceData, fetchManagementData]);
+
+    const handleFilterChange = (name: string, value: string) => {
+        setFilters(prev => ({ ...prev, [name]: value }));
+        setPage(1);
+    };
 
     const handleImport = async (file: File) => {
-        // Assuming current schoolId for simplicity, real app would get from auth context
         const res: any = await studentManagementApi.bulkImport(file, 's0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c');
-        if (res.success > 0) fetchData();
+        if (res.success > 0) fetchManagementData();
         return res;
     };
 
     const handleAssignSave = async (assignment: any) => {
         if (!selectedStudent) return;
         await studentManagementApi.assignRoute(selectedStudent.id, assignment);
-        fetchData();
+        fetchManagementData();
     };
 
     if (isLoading) {
@@ -73,7 +100,7 @@ const Students: React.FC = () => {
             <>
                 <Header title="Students" />
                 <div className="flex items-center justify-center h-96">
-                    <LoadingSpinner size="lg" text="Loading students..." />
+                    <LoadingSpinner size="lg" text="Loading student data..." />
                 </div>
             </>
         );
@@ -82,131 +109,69 @@ const Students: React.FC = () => {
     return (
         <>
             <Header
-                title="Students"
-                subtitle={activeTab === 'presence' ? `${boardedCount} students currently onboard` : 'Manage student enrollments and assignments'}
+                title="Student Presence"
+                subtitle={activeTab === 'presence' ? `Live monitoring of student boardings and alightings` : 'Manage student enrollments and assignments'}
             />
 
             <div className="p-6 space-y-6">
                 {/* Tab Switcher */}
-                <div className="flex gap-4 p-1 bg-dashboard-card border border-dashboard-border rounded-xl w-fit">
+                <div className="flex gap-4 p-1 bg-white/5 border border-white/10 rounded-2xl w-fit">
                     <button
                         onClick={() => setActiveTab('presence')}
-                        className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'presence' ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/25' : 'text-slate-400 hover:text-white'
+                        className={`px-6 py-2 rounded-xl text-sm font-bold transition-all ${activeTab === 'presence' ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/25' : 'text-slate-400 hover:text-white'
                             }`}
                     >
-                        Presence
+                        Live Presence
                     </button>
                     <button
                         onClick={() => setActiveTab('management')}
-                        className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'management' ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/25' : 'text-slate-400 hover:text-white'
+                        className={`px-6 py-2 rounded-xl text-sm font-bold transition-all ${activeTab === 'management' ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/25' : 'text-slate-400 hover:text-white'
                             }`}
                     >
-                        Management
+                        Administration
                     </button>
                 </div>
 
                 {activeTab === 'presence' ? (
-                    <div className="space-y-6 animate-in fade-in duration-500">
-                        {/* Stats */}
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                            <Card className="flex items-center gap-4">
-                                <div className="p-3 rounded-xl bg-green-500/20 text-green-500">
-                                    <UsersIcon size={20} />
-                                </div>
-                                <div>
-                                    <p className="text-2xl font-bold text-white">{boardedCount}</p>
-                                    <p className="text-sm text-slate-400">Boarded</p>
-                                </div>
-                            </Card>
-                            <Card className="flex items-center gap-4">
-                                <div className="p-3 rounded-xl bg-slate-500/20 text-slate-400">
-                                    <UsersIcon size={20} />
-                                </div>
-                                <div>
-                                    <p className="text-2xl font-bold text-white">
-                                        {presenceData.filter((s) => s.status === 'ALIGHTED').length}
-                                    </p>
-                                    <p className="text-sm text-slate-400">Alighted</p>
-                                </div>
-                            </Card>
-                            <Card className="flex items-center gap-4">
-                                <div className="p-3 rounded-xl bg-primary-500/20 text-primary-500">
-                                    <UsersIcon size={20} />
-                                </div>
-                                <div>
-                                    <p className="text-2xl font-bold text-white">{presenceData.length}</p>
-                                    <p className="text-sm text-slate-400">Total Tracked</p>
-                                </div>
-                            </Card>
+                    <div className="animate-in fade-in duration-500">
+                        <PresenceStats stats={stats} loading={isRefreshing} />
+
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-xl font-bold text-white">Recent Events</h3>
+                            {isRefreshing && <div className="text-xs text-blue-400 animate-pulse">Refreshing...</div>}
                         </div>
 
-                        {/* Filters */}
-                        <Card>
-                            <div className="flex flex-wrap items-center gap-4">
-                                <div className="flex items-center gap-2 text-slate-400">
-                                    <Filter size={18} />
-                                    <span className="font-medium">Status:</span>
-                                </div>
-                                <div className="flex gap-2">
-                                    {(['all', 'boarded', 'alighted'] as const).map((f) => (
-                                        <button
-                                            key={f}
-                                            onClick={() => setPresenceFilter(f)}
-                                            className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors capitalize ${presenceFilter === f
-                                                ? 'bg-primary-500 text-white'
-                                                : 'bg-dashboard-bg text-slate-400 hover:text-white'
-                                                }`}
-                                        >
-                                            {f}
-                                        </button>
-                                    ))}
-                                </div>
+                        <PresenceFilters filters={filters} onFilterChange={handleFilterChange} />
 
-                                <div className="flex items-center gap-2 ml-4 text-slate-400">
-                                    <span className="font-medium">Route:</span>
-                                </div>
-                                <select
-                                    value={selectedRoute}
-                                    onChange={(e) => setSelectedRoute(e.target.value)}
-                                    className="px-4 py-2 rounded-xl bg-dashboard-bg border border-dashboard-border text-white text-sm"
-                                >
-                                    <option value="all">All Routes</option>
-                                    {routes.map((route) => (
-                                        <option key={route.id} value={route.id}>
-                                            {route.name}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                        </Card>
-
-                        {/* Students List */}
-                        <Card title={`Live Presence (${filteredPresence.length})`}>
-                            <PresenceList students={filteredPresence} emptyMessage="No students tracked" />
-                        </Card>
+                        <PresenceTable
+                            events={events}
+                            total={totalEvents}
+                            page={page}
+                            limit={10}
+                            onPageChange={setPage}
+                            loading={isRefreshing}
+                        />
                     </div>
                 ) : (
                     <div className="space-y-6 animate-in slide-in-from-bottom-2 duration-500">
-                        {/* Management Actions */}
                         <div className="flex justify-between items-center">
-                            <h3 className="text-lg font-bold text-white">Student Roster</h3>
+                            <h3 className="text-xl font-bold text-white">Student Roster</h3>
                             <div className="flex gap-3">
                                 <button
                                     onClick={() => setIsImportModalOpen(true)}
-                                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 text-white hover:bg-slate-700 transition-colors border border-dashboard-border"
+                                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 text-white hover:bg-slate-700 transition-colors border border-white/10"
                                 >
                                     <Upload size={18} />
                                     Bulk Import
                                 </button>
-                                <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary-500 text-white hover:bg-primary-600 transition-colors shadow-lg shadow-primary-500/25">
+                                <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-500 text-white hover:bg-blue-600 transition-colors shadow-lg shadow-blue-500/25">
                                     <Plus size={18} />
                                     Enroll Student
                                 </button>
                             </div>
                         </div>
 
-                        {/* Managed Students Table */}
-                        <Card>
+                        <div className="glass-card p-0 overflow-hidden">
                             <StudentTable
                                 students={managedStudents}
                                 onEdit={() => { }}
@@ -216,7 +181,7 @@ const Students: React.FC = () => {
                                     setIsAssignModalOpen(true);
                                 }}
                             />
-                        </Card>
+                        </div>
                     </div>
                 )}
             </div>

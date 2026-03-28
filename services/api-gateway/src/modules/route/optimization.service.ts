@@ -107,7 +107,7 @@ export class OptimizationService {
     constructor(private readonly configService: ConfigService) {
         this.osrmBaseUrl = this.configService.get<string>(
             'OSRM_BASE_URL',
-            'http://router.project-osrm.org',
+            'http://osrm:5000',
         );
     }
 

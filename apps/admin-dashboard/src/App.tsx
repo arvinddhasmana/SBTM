@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { Sidebar } from './components/common';
+import { DashboardLayout } from './components/common';
 import {
     Login,
     Dashboard,
@@ -37,14 +37,7 @@ const ProtectedRoute: React.FC = () => {
         return <Navigate to="/login" replace />;
     }
 
-    return (
-        <div className="min-h-screen bg-dashboard-bg flex">
-            <Sidebar />
-            <main className="flex-1 ml-64">
-                <Outlet />
-            </main>
-        </div>
-    );
+    return <DashboardLayout />;
 };
 
 // Public Route wrapper (redirects to dashboard if already logged in)

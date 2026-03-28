@@ -3,6 +3,7 @@ import { Header, Card, LoadingSpinner } from '../components/common';
 import { RouteList } from '../components/routes';
 import { LiveMap } from '../components/map';
 import { routesApi } from '../services/api';
+import { decodePolyline } from '../utils/polyline';
 import type { Route, LiveLocation } from '../types';
 
 const Routes: React.FC = () => {
@@ -70,6 +71,7 @@ const Routes: React.FC = () => {
                         <div className="h-[500px]">
                             <LiveMap
                                 locations={selectedLocation ? [selectedLocation] : locations}
+                                plannedRoute={selectedRoute?.polyline ? decodePolyline(selectedRoute.polyline) : undefined}
                                 onMarkerClick={(loc) => {
                                     const route = routes.find((r) => r.id === loc.routeId);
                                     if (route) setSelectedRoute(route);

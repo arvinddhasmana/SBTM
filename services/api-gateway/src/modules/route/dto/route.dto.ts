@@ -48,6 +48,10 @@ export class CreateRouteDto {
     @IsOptional()
     estimatedDuration?: number;
 
+    @IsString()
+    @IsOptional()
+    polyline?: string;
+
     @IsArray()
     @ValidateNested({ each: true })
     @Type(() => CreateRouteStopDto)
@@ -79,4 +83,8 @@ export class UpdateRouteDto {
     @Min(1)
     @IsOptional()
     estimatedDuration?: number;
+
+    @IsString()
+    @IsOptional()
+    polyline?: string;
 }

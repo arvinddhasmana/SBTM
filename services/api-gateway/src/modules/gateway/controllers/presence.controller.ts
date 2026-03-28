@@ -1,9 +1,5 @@
-import { Controller, Get, Post, Param, Body, UseGuards, Request } from '@nestjs/common';
-import {
-    PresenceGatewayService,
-    CreateStudentPresenceEventDto,
-    ProcessBleDetectionsDto,
-} from '../services/presence.gateway.service';
+import { Controller, Get, Post, Body, Query, UseGuards, Request } from '@nestjs/common';
+import { PresenceGatewayService } from '../services/presence.gateway.service';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../common/guards/roles.guard';
 import { Roles, Role } from '../../../common/decorators/roles.decorator';
@@ -13,32 +9,34 @@ import { Roles, Role } from '../../../common/decorators/roles.decorator';
 export class PresenceController {
     constructor(private readonly presenceGatewayService: PresenceGatewayService) { }
 
-    @Get('routes/:routeId/students')
-    async getStudentsForRoute(
-        @Param('routeId') routeId: string,
+    @Get('presence/stats')
+    async getStats(@Request() req: { user: any }) {
+        return this.presenceGatewayService.getStats(req.user);
+    }
+
+    @Get('presence/events')
+    async getEvents(
+        @Query() query: any,
         @Request() req: { user: any },
     ) {
-        return this.presenceGatewayService.getStudentsForRoute(routeId, req.user);
+        return this.presenceGatewayService.getEvents(query, req.user);
+    }
+
+    @Post('presence-events')
+    @Roles(Role.DRIVER, Role.ADMIN)
+    async processEvents(@Body() dto: any) {
+        return this.presenceGatewayService.processEvents(dto);
     }
 
     @Post('student-presence-events')
-    async createStudentPresenceEvent(
-        @Body() dto: CreateStudentPresenceEventDto,
-        @Request() req: { user: any },
-    ) {
-        return this.presenceGatewayService.createStudentPresenceEvent(dto, req.user);
+    @Roles(Role.DRIVER, Role.ADMIN)
+    async processEventsAlt(@Body() dto: any) {
+        return this.presenceGatewayService.processEvents(dto);
     }
 
-    /**
-     * Accepts batched BLE SmartTag detections from driver app.
-     * schoolId is derived from the authenticated user – never trusted from the request body.
-     */
-    @Post('presence-events')
+    @Post('student-presence-events/manual')
     @Roles(Role.DRIVER, Role.ADMIN)
-    async processBleDetections(
-        @Body() dto: ProcessBleDetectionsDto,
-        @Request() req: { user: any },
-    ) {
-        return this.presenceGatewayService.processBleDetections(dto, req.user);
+    async manualOverride(@Body() dto: any) {
+        return this.presenceGatewayService.manualOverride(dto);
     }
 }
