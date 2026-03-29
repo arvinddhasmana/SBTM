@@ -20,6 +20,11 @@ export const routesApi = {
         return response.data;
     },
 
+    async getRouteById(id: string): Promise<Route> {
+        const response = await apiClient.get<Route>(`/api/v1/routes/${id}`);
+        return response.data;
+    },
+
     async getAllRoutes(): Promise<Route[]> {
         // Demo stack uses reference-route IDs (ROUTE-A, ROUTE-B, ...) that also drive GPS/presence.
         // The gateway exposes these via /routes/active.

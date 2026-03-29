@@ -123,12 +123,49 @@ export const mockAlertsApi = {
 export const mockRoutesApi = {
     getAllLiveLocations: async () => MOCK_LOCATIONS,
     getActiveRoutes: async () => MOCK_ROUTES,
-    getRouteById: async (id: string) => MOCK_ROUTES.find(r => r.id === id) || MOCK_ROUTES[0],
+    getAllRoutes: async () => MOCK_ROUTES,
+    getRouteById: async (id: string) => MOCK_ROUTES.find((r) => r.id === id) || MOCK_ROUTES[0],
+    getLiveLocation: async (routeId: string) => MOCK_LOCATIONS.find((l) => l.routeId === routeId),
+    getRouteHistory: async (routeId: string) => MOCK_LOCATIONS.filter((l) => l.routeId === routeId),
+    createRoute: async (data: any) => ({ ...MOCK_ROUTES[0], ...data, id: `ROUTE-${Math.random().toString(36).substr(2, 9)}` }),
+    updateRoute: async (id: string, data: any) => ({ ...MOCK_ROUTES[0], ...data, id }),
+    deleteRoute: async (_id: string) => { },
+    optimizeRoute: async (stops: any[]) => ({
+        optimizedStops: stops,
+        polyline: '',
+        polylineGeoJson: null,
+        totalDistance: 1000,
+        totalDuration: 600,
+    }),
 };
 
 export const mockPresenceApi = {
-    getAllBoardedStudents: async () => MOCK_STUDENTS.filter(s => s.status === 'BOARDED'),
-    getStudentPresence: async (id: string) => MOCK_STUDENTS.find(s => s.studentId === id) || MOCK_STUDENTS[0],
+    getStats: async (_schoolId?: string) => ({
+        totalStudents: 150,
+        boarded: 42,
+        alighted: 12,
+        unknown: 96,
+        byRoute: MOCK_ROUTES.map(r => ({ routeId: r.id, boarded: 10, alighted: 5, unknown: 20 }))
+    }),
+    getEvents: async (_params: any) => ({
+        items: MOCK_STUDENTS.map(s => ({
+            id: `evt-${s.studentId}`,
+            studentId: s.studentId,
+            firstName: s.name.split(' ')[0],
+            lastName: s.name.split(' ')[1] || '',
+            grade: '1',
+            vehicleId: 'BUS-101',
+            routeId: s.routeId || 'ROUTE-R01',
+            eventType: s.status as 'BOARD' | 'ALIGHT',
+            timestamp: s.lastSeen
+        })),
+        total: MOCK_STUDENTS.length,
+        page: 1,
+        limit: 10
+    }),
+    getAllBoardedStudents: async () => MOCK_STUDENTS.filter((s) => s.status === 'BOARDED'),
+    getStudentPresence: async (id: string) => MOCK_STUDENTS.find((s) => s.studentId === id) || MOCK_STUDENTS[0],
+    getStudentsByRoute: async (routeId: string) => MOCK_STUDENTS.filter(s => s.routeId === routeId),
 };
 
 export const mockAuthApi = {
