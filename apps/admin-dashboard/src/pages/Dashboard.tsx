@@ -128,23 +128,23 @@ const Dashboard: React.FC = () => {
                     icon={<ShieldAlert size={12} />}
                     anchor="right"
                     defaultPosition={{ x: 30, y: 80 }}
-                    defaultSize={{ width: '280px', height: 'auto' }}
+                    defaultSize={{ width: '280px', height: '400px' }}
                     className="pointer-events-auto"
                 >
-                    <div className="space-y-2">
-                        <div className="max-h-[300px] overflow-y-auto custom-scrollbar pr-1">
+                    <div className="flex flex-col h-full gap-2 overflow-hidden">
+                        <button
+                            onClick={() => navigate('/alerts')}
+                            className="w-full py-1.5 glass-item rounded text-[9px] font-black text-blue-400 uppercase tracking-widest hover:bg-white/10 shrink-0 mb-1"
+                        >
+                            Review All
+                        </button>
+                        <div className="flex-1 overflow-y-auto custom-scrollbar pr-1">
                             <AlertList
-                                alerts={alerts.slice(0, 8)}
+                                alerts={alerts}
                                 onAlertClick={(alert) => handleSelection(alert.routeId)}
                                 emptyMessage="No active alerts"
                             />
                         </div>
-                        <button
-                            onClick={() => navigate('/alerts')}
-                            className="w-full py-1.5 glass-item rounded text-[9px] font-black text-blue-400 uppercase tracking-widest hover:bg-white/10"
-                        >
-                            Review All
-                        </button>
                     </div>
                 </FloatingPanel>
 
@@ -155,23 +155,23 @@ const Dashboard: React.FC = () => {
                     icon={<Users size={12} />}
                     anchor="left"
                     defaultPosition={{ x: 30, y: 80 }}
-                    defaultSize={{ width: '280px', height: 'auto' }}
+                    defaultSize={{ width: '280px', height: '400px' }}
                     className="pointer-events-auto"
                 >
-                    <div className="space-y-2">
-                        <div className="max-h-[350px] overflow-y-auto custom-scrollbar">
+                    <div className="flex flex-col h-full gap-2 overflow-hidden">
+                        <button
+                            onClick={() => navigate('/students')}
+                            className="w-full py-1.5 glass-item rounded text-[9px] font-black text-blue-400 uppercase tracking-widest hover:bg-white/10 shrink-0 mb-1"
+                        >
+                            Manifest
+                        </button>
+                        <div className="flex-1 overflow-y-auto custom-scrollbar">
                             <PresenceList
-                                students={students.slice(0, 5)}
+                                students={students}
                                 onStudentClick={(student) => handleSelection(student.routeId)}
                                 emptyMessage="No occupancy"
                             />
                         </div>
-                        <button
-                            onClick={() => navigate('/students')}
-                            className="w-full py-1.5 glass-item rounded text-[9px] font-black text-blue-400 uppercase tracking-widest hover:bg-white/10"
-                        >
-                            Manifest
-                        </button>
                     </div>
                 </FloatingPanel>
 

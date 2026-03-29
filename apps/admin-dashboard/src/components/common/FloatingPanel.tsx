@@ -137,8 +137,10 @@ const FloatingPanel: React.FC<FloatingPanelProps> = ({
 
             {/* Content 영역 */}
             {!isCollapsed && (
-                <div className="p-2 overflow-auto custom-scrollbar flex-1 pointer-events-auto">
-                    {children}
+                <div className="flex-1 pointer-events-auto overflow-hidden">
+                    <div className="h-full p-2">
+                        {children}
+                    </div>
                 </div>
             )}
         </div>
