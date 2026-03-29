@@ -86,6 +86,7 @@ export interface Route {
     stops: RouteStop[];
     status?: 'active' | 'completed' | 'scheduled';
     polyline?: string;
+    path?: [number, number][];
 }
 
 // User and Auth Types

@@ -15,13 +15,14 @@ import { LiveMap } from '../components/map';
 import { AlertList } from '../components/alerts';
 import { PresenceList } from '../components/presence';
 import { alertsApi, routesApi, presenceApi } from '../services/api';
-import type { Alert, LiveLocation, StudentPresence, DashboardStats } from '../types';
+import type { Alert, LiveLocation, StudentPresence, DashboardStats, Route } from '../types';
 
 const Dashboard: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [alerts, setAlerts] = useState<Alert[]>([]);
     const [locations, setLocations] = useState<LiveLocation[]>([]);
     const [students, setStudents] = useState<StudentPresence[]>([]);
+    const [selectedRoute, setSelectedRoute] = useState<Route | null>(null);
     const [stats, setStats] = useState<DashboardStats>({
         activeRoutes: 0,
         totalStudents: 0,
@@ -29,6 +30,21 @@ const Dashboard: React.FC = () => {
         busesOnRoute: 0,
     });
     const navigate = useNavigate();
+
+    const handleSelection = async (routeId?: string) => {
+        if (!routeId) {
+            setSelectedRoute(null);
+            return;
+        }
+
+        try {
+            const routeData = await routesApi.getRouteById(routeId);
+            setSelectedRoute(routeData);
+        } catch (error) {
+            console.error('Error selecting route:', error);
+            setSelectedRoute(null);
+        }
+    };
 
     useEffect(() => {
         const fetchData = async () => {
@@ -84,7 +100,11 @@ const Dashboard: React.FC = () => {
         <div className="relative h-full w-full overflow-hidden bg-slate-950">
             {/* Background Map Layer */}
             <div className="absolute inset-0 z-0">
-                <LiveMap locations={locations} className="w-full h-full" />
+                <LiveMap
+                    locations={locations}
+                    selectedRoute={selectedRoute}
+                    className="w-full h-full"
+                />
             </div>
 
             {/* Tactical Overlays */}
@@ -105,7 +125,7 @@ const Dashboard: React.FC = () => {
                         <div className="max-h-[300px] overflow-y-auto custom-scrollbar pr-1">
                             <AlertList
                                 alerts={alerts.slice(0, 8)}
-                                onAlertClick={(alert) => navigate(`/alerts?id=${alert.id}`)}
+                                onAlertClick={(alert) => handleSelection(alert.routeId)}
                                 emptyMessage="No active alerts"
                             />
                         </div>
@@ -130,7 +150,11 @@ const Dashboard: React.FC = () => {
                 >
                     <div className="space-y-2">
                         <div className="max-h-[350px] overflow-y-auto custom-scrollbar">
-                            <PresenceList students={students.slice(0, 5)} emptyMessage="No occupancy" />
+                            <PresenceList
+                                students={students.slice(0, 5)}
+                                onStudentClick={(student) => handleSelection(student.routeId)}
+                                emptyMessage="No occupancy"
+                            />
                         </div>
                         <button
                             onClick={() => navigate('/students')}

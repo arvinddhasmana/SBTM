@@ -4,10 +4,11 @@ import PresenceCard from './PresenceCard';
 
 interface PresenceListProps {
     students: StudentPresence[];
+    onStudentClick?: (student: StudentPresence) => void;
     emptyMessage?: string;
 }
 
-const PresenceList: React.FC<PresenceListProps> = ({ students, emptyMessage = 'No students' }) => {
+const PresenceList: React.FC<PresenceListProps> = ({ students, onStudentClick, emptyMessage = 'No students' }) => {
     if (students.length === 0) {
         return (
             <div className="text-center py-8 text-slate-500">
@@ -19,7 +20,7 @@ const PresenceList: React.FC<PresenceListProps> = ({ students, emptyMessage = 'N
     return (
         <div className="space-y-2">
             {students.map((student) => (
-                <PresenceCard key={student.studentId} student={student} />
+                <PresenceCard key={student.studentId} student={student} onClick={() => onStudentClick?.(student)} />
             ))}
         </div>
     );

@@ -6,13 +6,14 @@ interface HeaderProps {
     title: string;
     subtitle?: string;
     action?: React.ReactNode;
+    className?: string;
 }
 
-const Header: React.FC<HeaderProps> = ({ title, subtitle, action }) => {
+const Header: React.FC<HeaderProps> = ({ title, subtitle, action, className }) => {
     const { user } = useAuth();
 
     return (
-        <header className="h-16 glass-header flex items-center justify-between px-6 sticky top-0 z-40 transition-all duration-300">
+        <header className={`h-16 glass-header flex items-center justify-between px-6 sticky top-0 z-40 transition-all duration-300 ${className || ''}`}>
             {/* Title */}
             <div className="flex items-center gap-6">
                 <div>
