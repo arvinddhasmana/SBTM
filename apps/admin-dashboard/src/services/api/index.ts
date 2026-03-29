@@ -4,13 +4,16 @@ import { routesApi as realRoutesApi } from './routes.api';
 import { presenceApi as realPresenceApi } from './presence.api';
 import { mockAlertsApi, mockRoutesApi, mockPresenceApi, mockAuthApi } from './mockApi';
 
-const useMock =
+export const useMock =
     import.meta.env.VITE_USE_MOCK === 'true' ||
     localStorage.getItem('VITE_USE_MOCK') === 'true' ||
     window.location.search.includes('mock=true');
 
 if (useMock) {
-    console.log('--- ADMIN DASHBOARD: MOCK MODE ACTIVE ---');
+    if (typeof window !== 'undefined' && !window.hasOwnProperty('__MOCK_LOGGED__')) {
+        console.log('--- ADMIN DASHBOARD: MOCK MODE ACTIVE ---');
+        (window as any).__MOCK_LOGGED__ = true;
+    }
     if (window.location.search.includes('mock=true')) {
         localStorage.setItem('VITE_USE_MOCK', 'true');
     }

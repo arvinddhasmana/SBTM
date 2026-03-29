@@ -42,7 +42,7 @@ const PresenceCard: React.FC<PresenceCardProps> = ({ student, onClick }) => {
                                 : 'bg-slate-800 text-slate-500'
                                 }`}
                         >
-                            {student.status.charAt(0)}
+                            {student.status?.charAt(0) || (isBoarded ? 'B' : 'A')}
                         </span>
                         <span className="text-[7px] font-bold text-slate-500 uppercase tracking-tighter">
                             {formatRelativeTime(student.lastSeen)}

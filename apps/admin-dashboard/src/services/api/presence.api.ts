@@ -47,18 +47,35 @@ export const presenceApi = {
         const res = await api.get<PresenceEventsResponse>('/api/v1/presence/events', {
             params: { limit: 100, eventType: 'BOARD' }
         });
-        // Filter by routeIds if provided
-        let students = res.data.items;
+
+        // Map PresenceEvent to StudentPresence format
+        const items = res.data.items.map(item => ({
+            studentId: item.studentId,
+            name: `${item.firstName || 'Student'} ${item.lastName || ''}`.trim(),
+            status: item.eventType === 'BOARD' ? 'BOARDED' : 'ALIGHTED',
+            lastSeen: item.timestamp,
+            routeId: item.routeId,
+            vehicleId: item.vehicleId
+        }));
+
         if (routeIds && routeIds.length > 0) {
-            students = students.filter(s => routeIds.includes(s.routeId));
+            return items.filter(s => routeIds.includes(s.routeId));
         }
-        return students;
+        return items;
     },
 
     getStudentsByRoute: async (routeId: string): Promise<any[]> => {
         const res = await api.get<PresenceEventsResponse>('/api/v1/presence/events', {
             params: { limit: 100, routeId }
         });
-        return res.data.items;
+
+        return res.data.items.map(item => ({
+            studentId: item.studentId,
+            name: `${item.firstName || 'Student'} ${item.lastName || ''}`.trim(),
+            status: item.eventType === 'BOARD' ? 'BOARDED' : 'ALIGHTED',
+            lastSeen: item.timestamp,
+            routeId: item.routeId,
+            vehicleId: item.vehicleId
+        }));
     }
 };

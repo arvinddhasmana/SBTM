@@ -14,7 +14,7 @@ import { Header, LoadingSpinner, FloatingPanel } from '../components/common';
 import { LiveMap } from '../components/map';
 import { AlertList } from '../components/alerts';
 import { PresenceList } from '../components/presence';
-import { alertsApi, routesApi, presenceApi } from '../services/api';
+import { alertsApi, routesApi, presenceApi, useMock } from '../services/api';
 import type { Alert, LiveLocation, StudentPresence, DashboardStats, Route } from '../types';
 
 const Dashboard: React.FC = () => {
@@ -109,7 +109,17 @@ const Dashboard: React.FC = () => {
 
             {/* Tactical Overlays */}
             <div className="absolute inset-0 z-10 pointer-events-none">
-                <Header title="Tactical Overview" subtitle="Real-time fleet intelligence" className="pointer-events-auto" />
+                <Header
+                    title="Tactical Overview"
+                    subtitle="Real-time fleet intelligence"
+                    className="pointer-events-auto"
+                    action={useMock && (
+                        <div className="flex items-center gap-2 px-3 py-1 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+                            <div className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse" />
+                            <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest">Mock Data Active</span>
+                        </div>
+                    )}
+                />
 
                 {/* Panel #3: Tactical Alerts */}
                 <FloatingPanel

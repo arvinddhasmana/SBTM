@@ -301,12 +301,20 @@ export class PresenceService {
      * Get global presence stats for a school
      */
     async getStats(schoolId?: string): Promise<PresenceStatsDto> {
-        const schoolFilter = schoolId ? `WHERE schoolId = '${schoolId}'` : '';
-        const schoolFilterJoin = schoolId ? `AND s.school_id = '${schoolId}'` : '';
+        const params: any[] = [];
+        let schoolFilter = '';
+        let schoolFilterJoin = '';
+
+        if (schoolId) {
+            schoolFilter = `WHERE "schoolId" = $1`;
+            schoolFilterJoin = `AND s.school_id = $1::uuid`;
+            params.push(schoolId);
+        }
 
         // 1. Total Enrolled Students
         const totalStudentsResult = await this.dataSource.query(
-            `SELECT COUNT(*) as count FROM students s WHERE s.status = 'ENROLLED' ${schoolFilterJoin}`
+            `SELECT COUNT(*) as count FROM students s WHERE s.status = 'ENROLLED' ${schoolFilterJoin}`,
+            params
         );
         const totalStudents = parseInt(totalStudentsResult[0]?.count || '0');
 
@@ -321,7 +329,7 @@ export class PresenceService {
             SELECT "eventType", COUNT(*) as count
             FROM LatestEvents
             GROUP BY "eventType"
-        `);
+        `, params);
 
         let boarded = 0;
         let alighted = 0;
@@ -344,18 +352,16 @@ export class PresenceService {
             SELECT "routeId", "eventType", COUNT(*) as count
             FROM LatestEvents
             GROUP BY "routeId", "eventType"
-        `);
+        `, params);
 
         // We need route names, so let's fetch those if possible, but for now we'll just use IDs
-        // or join with routes table if it's in the same DB.
-        const byRoute: RouteStatsDto[] = [];
         const routeMap = new Map<string, RouteStatsDto>();
 
         routeStatsRaw.forEach((r: any) => {
             if (!routeMap.has(r.routeId)) {
                 routeMap.set(r.routeId, {
                     routeId: r.routeId,
-                    routeName: `Route ${r.routeId.substring(0, 4)}`, // Placeholder or join later
+                    routeName: `Route ${r.routeId.substring(0, 4)}`, // Placeholder
                     boarded: 0,
                     alighted: 0,
                 });
@@ -378,7 +384,9 @@ export class PresenceService {
      * Get paginated presence events with student details
      */
     async getEvents(query: PresenceEventsQueryDto) {
-        const offset = (query.page - 1) * query.limit;
+        const limit = Math.max(1, Number(query.limit) || 10);
+        const page = Math.max(1, Number(query.page) || 1);
+        const offset = (page - 1) * limit;
         const schoolId = query.schoolId;
 
         let whereClause = 'WHERE 1=1';
@@ -400,7 +408,7 @@ export class PresenceService {
         }
 
         if (query.eventType) {
-            whereClause += ` AND e."eventType" = $${params.length + 1}`;
+            whereClause += ` AND e."eventType" = $${params.length + 1}::presence_event_eventtype_enum`;
             params.push(query.eventType);
         }
 
@@ -416,24 +424,24 @@ export class PresenceService {
                 s.last_name as "lastName",
                 s.grade
             FROM presence_event e
-            LEFT JOIN students s ON (e."studentId" = s.id::text OR e."studentId" = s.id::varchar)
+            LEFT JOIN students s ON (e."studentId" = s.external_student_id)
             ${whereClause}
             ORDER BY e.timestamp DESC
             LIMIT $${params.length + 1} OFFSET $${params.length + 2}
-        `, [...params, query.limit, offset]);
+        `, [...params, limit, offset]);
 
         const totalResult = await this.dataSource.query(`
             SELECT COUNT(*) as count
             FROM presence_event e
-            LEFT JOIN students s ON (e."studentId" = s.id::text OR e."studentId" = s.id::varchar)
+            LEFT JOIN students s ON (e."studentId" = s.external_student_id)
             ${whereClause}
         `, params);
 
         return {
             items: events,
-            total: parseInt(totalResult[0].count),
-            page: query.page,
-            limit: query.limit,
+            total: parseInt(totalResult[0]?.count || '0'),
+            page,
+            limit,
         };
     }
 }

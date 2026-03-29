@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bus, Mail, Lock, AlertCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useMock } from '../services/api';
 
 const Login: React.FC = () => {
     const [email, setEmail] = useState('');
@@ -36,7 +37,24 @@ const Login: React.FC = () => {
                         <Bus size={32} className="text-white" />
                     </div>
                     <h1 className="text-2xl font-bold text-white">OSTA Admin Dashboard</h1>
-                    <p className="text-slate-400 mt-2">Sign in to your account</p>
+                    {useMock ? (
+                        <div className="mt-2 inline-flex items-center gap-2 px-3 py-1 bg-amber-500/20 border border-amber-500/30 rounded-full text-amber-500 text-xs font-bold uppercase tracking-widest">
+                            <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse" />
+                            Mock Mode Active
+                            <button
+                                onClick={() => {
+                                    localStorage.removeItem('VITE_USE_MOCK');
+                                    window.location.search = '';
+                                    window.location.reload();
+                                }}
+                                className="ml-2 hover:text-white transition-colors"
+                            >
+                                (Exit)
+                            </button>
+                        </div>
+                    ) : (
+                        <p className="text-slate-400 mt-2">Sign in to your account</p>
+                    )}
                 </div>
 
                 {/* Form */}
