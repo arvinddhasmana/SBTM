@@ -825,11 +825,7 @@ INSERT INTO student_tag ("schoolId", "studentId", "tagId", "tagType") VALUES
     ('c1a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'STUDENT-010', 'TAG-010', 'SMARTTAG'),
     ('c1a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'STUDENT-011', 'TAG-011', 'SMARTTAG');
 
--- ===================== Initial location + presence (so Dashboard isn't empty) =====================
-
-INSERT INTO presence_event ("schoolId", "studentId", "vehicleId", "routeId", "eventType", "timestamp", "signalStrength") VALUES
-    ('c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'STUDENT-001', 'BUS-01', 'ROUTE-R01', 'BOARD', NOW() - INTERVAL '15 minutes', -50.0),
-    ('c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'STUDENT-003', 'BUS-01', 'ROUTE-R01', 'BOARD', NOW() - INTERVAL '14 minutes', -52.0);
+-- ===================== Initial location (so Dashboard isn't empty) =====================
 
 INSERT INTO location_points (id, school_id, vehicle_id, route_id, timestamp, lat, lng, speed_kph) VALUES
     (uuid_generate_v4()::text, 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'BUS-01', 'ROUTE-R01', NOW() - INTERVAL '1 minute', 45.3770, -75.6800, 32),
@@ -837,9 +833,5 @@ INSERT INTO location_points (id, school_id, vehicle_id, route_id, timestamp, lat
     (uuid_generate_v4()::text, 'c1a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'BUS-11', 'ROUTE-R11', NOW() - INTERVAL '1 minute', 45.3925, -75.7440, 30),
     (uuid_generate_v4()::text, 'c1a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'BUS-12', 'ROUTE-R12', NOW() - INTERVAL '1 minute', 45.3985, -75.7170, 25);
 
--- Seed Emergency Alert
-INSERT INTO emergency_alert (id, "schoolId", "vehicleId", "routeId", "driverId", "timestamp", "lat", "lng", "eventType", "status") VALUES
-    (uuid_generate_v4(), 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'BUS-01', 'ROUTE-R01', '10000000-0000-0000-0000-000000000101', NOW() - INTERVAL '10 minutes', 45.3770, -75.6800, 'PANIC_BUTTON', 'ACTIVE'),
-    (uuid_generate_v4(), 'c1a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'BUS-11', 'ROUTE-R11', '10000000-0000-0000-0000-000000000111', NOW() - INTERVAL '5 minutes', 45.3925, -75.7440, 'INCIDENT', 'ACTIVE');
 
 COMMIT;
