@@ -5,4 +5,5 @@ export default () => ({
     alertsServiceUrl: process.env.ALERTS_SERVICE_URL || 'http://localhost:3003',
     presenceServiceUrl: process.env.PRESENCE_SERVICE_URL || 'http://localhost:3004',
     videoServiceUrl: process.env.VIDEO_SERVICE_URL || 'http://localhost:3005',
+    corsOrigins: process.env.CORS_ORIGINS?.split(',') || ['http://localhost:3000', 'http://localhost:5173'],
 });

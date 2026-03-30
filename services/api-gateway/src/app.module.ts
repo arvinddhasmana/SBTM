@@ -12,9 +12,12 @@ import { CorrelationIdMiddleware } from './common/middleware/correlation-id.midd
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
+import configuration from './config/env';
+
 @Module({
     imports: [
         ConfigModule.forRoot({
+            load: [configuration],
             isGlobal: true,
         }),
         TypeOrmModule.forRootAsync({

@@ -1,18 +1,23 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { TimeoutInterceptor } from './common/interceptors/timeout.interceptor';
 
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
+    const configService = app.get(ConfigService);
+    const corsOrigins = configService.get<string[]>('corsOrigins');
 
     // Enable CORS for allowed origins
-    app.enableCors({
-        origin: process.env.CORS_ORIGINS?.split(',') || ['http://localhost:3000', 'http://localhost:5173'],
-        credentials: true,
-    });
+    if (corsOrigins) {
+        app.enableCors({
+            origin: corsOrigins,
+            credentials: true,
+        });
+    }
 
     // Global validation pipe
     app.useGlobalPipes(
