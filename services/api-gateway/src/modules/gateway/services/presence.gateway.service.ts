@@ -28,7 +28,8 @@ export class PresenceGatewayService {
         const params = new URLSearchParams();
 
         Object.entries(query).forEach(([key, value]) => {
-            if (value !== undefined && value !== null) {
+            // Filter out null, undefined, AND empty strings to avoid 400 errors from backend enums
+            if (value !== undefined && value !== null && value !== '') {
                 params.append(key, String(value));
             }
         });
@@ -41,12 +42,18 @@ export class PresenceGatewayService {
         return this.httpClient.get(url);
     }
 
-    async processEvents(dto: any) {
+    async processEvents(dto: any, user?: any) {
+        if (user?.schoolId && !dto.schoolId) {
+            dto.schoolId = user.schoolId;
+        }
         const url = `${this.presenceServiceUrl}/api/v1/presence-events`;
         return this.httpClient.post(url, dto);
     }
 
-    async manualOverride(dto: any) {
+    async manualOverride(dto: any, user?: any) {
+        if (user?.schoolId && !dto.schoolId) {
+            dto.schoolId = user.schoolId;
+        }
         const url = `${this.presenceServiceUrl}/api/v1/student-presence-events/manual`;
         return this.httpClient.post(url, dto);
     }

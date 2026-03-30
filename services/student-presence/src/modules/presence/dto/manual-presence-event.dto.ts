@@ -1,6 +1,5 @@
-
-import { IsString, IsNotEmpty, IsDateString, IsEnum } from 'class-validator';
-import { EventType } from '../entities/presence-event.entity';
+import { IsString, IsNotEmpty, IsDateString, IsEnum, IsOptional, IsNumber } from 'class-validator';
+import { EventType, EventSource } from '../entities/presence-event.entity';
 
 export class ManualPresenceEventDto {
     @IsString()
@@ -24,4 +23,12 @@ export class ManualPresenceEventDto {
 
     @IsDateString()
     timestamp: string;
+
+    @IsOptional()
+    @IsEnum(EventSource)
+    source?: EventSource;
+
+    @IsOptional()
+    @IsNumber()
+    signalStrength?: number;
 }

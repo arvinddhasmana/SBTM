@@ -362,7 +362,7 @@ for ((lap = 1; lap <= LAPS; lap++)); do
 
       # Presence
       if [ "$NO_PRESENCE" = false ] && [ -n "$wp_student" ] && [ "$wp_student" != "null" ]; then
-        presence_payload="{\"studentId\":\"$wp_student\",\"vehicleId\":\"$vehicle_id\",\"routeId\":\"$route_id\",\"eventType\":\"BOARD\",\"timestamp\":\"$timestamp\",\"source\":\"MANUAL\"}"
+        presence_payload="{\"schoolId\":\"$ADMIN_SCHOOL_ID\",\"studentId\":\"$wp_student\",\"vehicleId\":\"$vehicle_id\",\"routeId\":\"$route_id\",\"eventType\":\"BOARD\",\"timestamp\":\"$timestamp\",\"source\":\"MANUAL\"}"
         api_post "$API_BASE/student-presence-events" "$presence_payload" "$token" > /dev/null
         echo -e "  \033[32mPresence BOARD: $wp_student\033[0m"
       fi

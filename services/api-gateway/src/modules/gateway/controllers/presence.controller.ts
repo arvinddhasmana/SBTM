@@ -23,20 +23,21 @@ export class PresenceController {
     }
 
     @Post('presence-events')
-    @Roles(Role.DRIVER, Role.ADMIN)
-    async processEvents(@Body() dto: any) {
-        return this.presenceGatewayService.processEvents(dto);
+    @Roles(Role.DRIVER, Role.ADMIN, Role.OSTA_ADMIN, Role.SCHOOL_ADMIN, Role.BOARD_ADMIN)
+    async processEvents(@Body() dto: any, @Request() req: { user: any }) {
+        return this.presenceGatewayService.processEvents(dto, req.user);
     }
 
     @Post('student-presence-events')
-    @Roles(Role.DRIVER, Role.ADMIN)
-    async processEventsAlt(@Body() dto: any) {
-        return this.presenceGatewayService.processEvents(dto);
+    @Roles(Role.DRIVER, Role.ADMIN, Role.OSTA_ADMIN, Role.SCHOOL_ADMIN, Role.BOARD_ADMIN)
+    async processEventsAlt(@Body() dto: any, @Request() req: { user: any }) {
+        // Route to manualOverride because the simulation script sends single manual events
+        return this.presenceGatewayService.manualOverride(dto, req.user);
     }
 
     @Post('student-presence-events/manual')
-    @Roles(Role.DRIVER, Role.ADMIN)
-    async manualOverride(@Body() dto: any) {
-        return this.presenceGatewayService.manualOverride(dto);
+    @Roles(Role.DRIVER, Role.ADMIN, Role.OSTA_ADMIN, Role.SCHOOL_ADMIN, Role.BOARD_ADMIN)
+    async manualOverride(@Body() dto: any, @Request() req: { user: any }) {
+        return this.presenceGatewayService.manualOverride(dto, req.user);
     }
 }
