@@ -44,7 +44,12 @@
             "STUDENT-021",
             "STUDENT-041",
             "STUDENT-061",
-            "STUDENT-081"
+            "STUDENT-081",
+            "STUDENT-101",
+            "STUDENT-121",
+            "STUDENT-141",
+            "STUDENT-161",
+            "STUDENT-181"
           ],
           "waypoints": [
             {
@@ -92,7 +97,12 @@
             {
               "lat": 45.370400000000004,
               "lng": -75.67072,
-              "speedKph": 20
+              "speedKph": 0,
+              "label": "Stop 1",
+              "pauseSeconds": 15,
+              "students": [
+                "STUDENT-001"
+              ]
             },
             {
               "lat": 45.3707,
@@ -132,7 +142,12 @@
             {
               "lat": 45.3727,
               "lng": -75.6728,
-              "speedKph": 35
+              "speedKph": 0,
+              "label": "Stop 2",
+              "pauseSeconds": 15,
+              "students": [
+                "STUDENT-021"
+              ]
             },
             {
               "lat": 45.3729,
@@ -152,10 +167,12 @@
             {
               "lat": 45.3735,
               "lng": -75.674,
-              "label": "Stop 1 - Billings Bridge Plaza",
-              "student": "STUDENT-001",
+              "label": "Stop 3",
               "speedKph": 0,
-              "pauseSeconds": 15
+              "pauseSeconds": 15,
+              "students": [
+                "STUDENT-041"
+              ]
             },
             {
               "lat": 45.3737,
@@ -175,7 +192,12 @@
             {
               "lat": 45.3743,
               "lng": -75.6752,
-              "speedKph": 30
+              "speedKph": 0,
+              "label": "Stop 4",
+              "pauseSeconds": 15,
+              "students": [
+                "STUDENT-061"
+              ]
             },
             {
               "lat": 45.3745,
@@ -215,7 +237,12 @@
             {
               "lat": 45.3761,
               "lng": -75.6785,
-              "speedKph": 32
+              "speedKph": 0,
+              "label": "Stop 5",
+              "pauseSeconds": 15,
+              "students": [
+                "STUDENT-081"
+              ]
             },
             {
               "lat": 45.376400000000004,
@@ -230,10 +257,12 @@
             {
               "lat": 45.377,
               "lng": -75.68,
-              "label": "Stop 2 - Bank & Heron",
-              "student": "STUDENT-021",
+              "label": "Stop 6",
               "speedKph": 0,
-              "pauseSeconds": 15
+              "pauseSeconds": 15,
+              "students": [
+                "STUDENT-101"
+              ]
             },
             {
               "lat": 45.3772,
@@ -258,7 +287,12 @@
             {
               "lat": 45.378,
               "lng": -75.6815,
-              "speedKph": 28
+              "speedKph": 0,
+              "label": "Stop 7",
+              "pauseSeconds": 15,
+              "students": [
+                "STUDENT-121"
+              ]
             },
             {
               "lat": 45.3783,
@@ -283,7 +317,12 @@
             {
               "lat": 45.3795,
               "lng": -75.6835,
-              "speedKph": 35
+              "speedKph": 0,
+              "label": "Stop 8",
+              "pauseSeconds": 15,
+              "students": [
+                "STUDENT-141"
+              ]
             },
             {
               "lat": 45.3798,
@@ -298,7 +337,12 @@
             {
               "lat": 45.3804,
               "lng": -75.6844,
-              "speedKph": 35
+              "speedKph": 0,
+              "label": "Stop 9",
+              "pauseSeconds": 15,
+              "students": [
+                "STUDENT-161"
+              ]
             },
             {
               "lat": 45.3807,
@@ -308,10 +352,12 @@
             {
               "lat": 45.381,
               "lng": -75.685,
-              "label": "Stop 3 - Bank & Alta Vista",
-              "student": "STUDENT-041",
+              "label": "Stop 10",
               "speedKph": 0,
-              "pauseSeconds": 15
+              "pauseSeconds": 15,
+              "students": [
+                "STUDENT-181"
+              ]
             },
             {
               "lat": 45.3812,
@@ -336,7 +382,9 @@
             {
               "lat": 45.382,
               "lng": -75.6865,
-              "speedKph": 25
+              "speedKph": 0,
+              "label": "Stop 11",
+              "pauseSeconds": 15
             },
             {
               "lat": 45.3823,
@@ -386,8 +434,7 @@
             {
               "lat": 45.385,
               "lng": -75.691,
-              "label": "Stop 4 - Lansdowne & Bank",
-              "student": "STUDENT-061",
+              "label": "Stop 12",
               "speedKph": 0,
               "pauseSeconds": 15
             },
@@ -590,7 +637,7 @@
             {
               "lat": 45.3835,
               "lng": -75.6975,
-              "label": "Stop 1 - Bronson & Sunnyside",
+              "label": "Stop 1",
               "student": "STUDENT-002",
               "speedKph": 0,
               "pauseSeconds": 15
@@ -668,7 +715,7 @@
             {
               "lat": 45.3848,
               "lng": -75.6972,
-              "label": "Stop 2 - Bronson & Holmwood",
+              "label": "Stop 2",
               "student": "STUDENT-022",
               "speedKph": 0,
               "pauseSeconds": 15
@@ -746,7 +793,7 @@
             {
               "lat": 45.386,
               "lng": -75.6968,
-              "label": "Stop 3 - Bronson & Fifth Ave",
+              "label": "Stop 3",
               "student": "STUDENT-042",
               "speedKph": 0,
               "pauseSeconds": 15
@@ -824,7 +871,7 @@
             {
               "lat": 45.387,
               "lng": -75.6963,
-              "label": "Stop 4 - Bronson & Glebe Ave",
+              "label": "Stop 4",
               "student": "STUDENT-062",
               "speedKph": 0,
               "pauseSeconds": 15
@@ -975,7 +1022,7 @@
             {
               "lat": 45.3888,
               "lng": -75.678,
-              "label": "Stop 1 - Queen Elizabeth Dr",
+              "label": "Stop 1",
               "student": "STUDENT-003",
               "speedKph": 0,
               "pauseSeconds": 15
@@ -1028,7 +1075,7 @@
             {
               "lat": 45.3885,
               "lng": -75.683,
-              "label": "Stop 2 - Canal & Pretoria",
+              "label": "Stop 2",
               "student": "STUDENT-023",
               "speedKph": 0,
               "pauseSeconds": 15
@@ -1081,7 +1128,7 @@
             {
               "lat": 45.3882,
               "lng": -75.688,
-              "label": "Stop 3 - Fifth Ave & Canal",
+              "label": "Stop 3",
               "student": "STUDENT-043",
               "speedKph": 0,
               "pauseSeconds": 15
@@ -1134,7 +1181,7 @@
             {
               "lat": 45.388,
               "lng": -75.692,
-              "label": "Stop 4 - Patterson Creek",
+              "label": "Stop 4",
               "speedKph": 0,
               "pauseSeconds": 10
             },
@@ -1284,7 +1331,7 @@
             {
               "lat": 45.3935,
               "lng": -75.678,
-              "label": "Stop 1 - Main & Concord",
+              "label": "Stop 1",
               "student": "STUDENT-004",
               "speedKph": 0,
               "pauseSeconds": 15
@@ -1337,7 +1384,7 @@
             {
               "lat": 45.392,
               "lng": -75.683,
-              "label": "Stop 2 - Main & Riverdale",
+              "label": "Stop 2",
               "student": "STUDENT-024",
               "speedKph": 0,
               "pauseSeconds": 15
@@ -1390,7 +1437,7 @@
             {
               "lat": 45.39,
               "lng": -75.688,
-              "label": "Stop 3 - Main & Clegg",
+              "label": "Stop 3",
               "student": "STUDENT-044",
               "speedKph": 0,
               "pauseSeconds": 15
@@ -1443,7 +1490,7 @@
             {
               "lat": 45.3885,
               "lng": -75.693,
-              "label": "Stop 4 - Main & Pretoria",
+              "label": "Stop 4",
               "speedKph": 0,
               "pauseSeconds": 10
             },
@@ -1567,7 +1614,7 @@
             {
               "lat": 45.401,
               "lng": -75.683,
-              "label": "Stop 1 - Colonel By & Somerset",
+              "label": "Stop 1",
               "student": "STUDENT-005",
               "speedKph": 0,
               "pauseSeconds": 15
@@ -1620,7 +1667,7 @@
             {
               "lat": 45.397,
               "lng": -75.687,
-              "label": "Stop 2 - Lansdowne Stadium",
+              "label": "Stop 2",
               "student": "STUDENT-025",
               "speedKph": 0,
               "pauseSeconds": 15
@@ -1673,7 +1720,7 @@
             {
               "lat": 45.3935,
               "lng": -75.691,
-              "label": "Stop 3 - Canal & Holmwood",
+              "label": "Stop 3",
               "speedKph": 0,
               "pauseSeconds": 10
             },
@@ -1725,7 +1772,7 @@
             {
               "lat": 45.39,
               "lng": -75.694,
-              "label": "Stop 4 - Canal & Fifth Ave",
+              "label": "Stop 4",
               "speedKph": 0,
               "pauseSeconds": 10
             },
@@ -1849,7 +1896,7 @@
             {
               "lat": 45.413,
               "lng": -75.689,
-              "label": "Stop 1 - Elgin & Somerset",
+              "label": "Stop 1",
               "student": "STUDENT-006",
               "speedKph": 0,
               "pauseSeconds": 15
@@ -1902,7 +1949,7 @@
             {
               "lat": 45.407,
               "lng": -75.69,
-              "label": "Stop 2 - Elgin & MacLaren",
+              "label": "Stop 2",
               "student": "STUDENT-026",
               "speedKph": 0,
               "pauseSeconds": 15
@@ -1955,7 +2002,7 @@
             {
               "lat": 45.401,
               "lng": -75.692,
-              "label": "Stop 3 - Elgin & Argyle",
+              "label": "Stop 3",
               "speedKph": 0,
               "pauseSeconds": 10
             },
@@ -2007,7 +2054,7 @@
             {
               "lat": 45.394,
               "lng": -75.6945,
-              "label": "Stop 4 - Elgin & Isabella",
+              "label": "Stop 4",
               "speedKph": 0,
               "pauseSeconds": 10
             },
@@ -2131,7 +2178,7 @@
             {
               "lat": 45.411,
               "lng": -75.6928,
-              "label": "Stop 1 - O'Connor & Nepean",
+              "label": "Stop 1",
               "student": "STUDENT-007",
               "speedKph": 0,
               "pauseSeconds": 15
@@ -2184,7 +2231,7 @@
             {
               "lat": 45.406,
               "lng": -75.6935,
-              "label": "Stop 2 - O'Connor & Gladstone",
+              "label": "Stop 2",
               "student": "STUDENT-027",
               "speedKph": 0,
               "pauseSeconds": 15
@@ -2237,7 +2284,7 @@
             {
               "lat": 45.4,
               "lng": -75.6945,
-              "label": "Stop 3 - O'Connor & Clemow",
+              "label": "Stop 3",
               "speedKph": 0,
               "pauseSeconds": 10
             },
@@ -2289,7 +2336,7 @@
             {
               "lat": 45.393,
               "lng": -75.6952,
-              "label": "Stop 4 - O'Connor & Second Ave",
+              "label": "Stop 4",
               "speedKph": 0,
               "pauseSeconds": 10
             },
@@ -2413,7 +2460,7 @@
             {
               "lat": 45.409,
               "lng": -75.7005,
-              "label": "Stop 1 - Lyon & Somerset",
+              "label": "Stop 1",
               "student": "STUDENT-008",
               "speedKph": 0,
               "pauseSeconds": 15
@@ -2466,7 +2513,7 @@
             {
               "lat": 45.404,
               "lng": -75.699,
-              "label": "Stop 2 - Lyon & Gladstone",
+              "label": "Stop 2",
               "student": "STUDENT-028",
               "speedKph": 0,
               "pauseSeconds": 15
@@ -2519,7 +2566,7 @@
             {
               "lat": 45.399,
               "lng": -75.698,
-              "label": "Stop 3 - Lyon & Arlington",
+              "label": "Stop 3",
               "speedKph": 0,
               "pauseSeconds": 10
             },
@@ -2571,7 +2618,7 @@
             {
               "lat": 45.393,
               "lng": -75.6968,
-              "label": "Stop 4 - Lyon & Powell",
+              "label": "Stop 4",
               "speedKph": 0,
               "pauseSeconds": 10
             },
@@ -2695,7 +2742,7 @@
             {
               "lat": 45.398,
               "lng": -75.677,
-              "label": "Stop 1 - Hawthorne & Colonel By",
+              "label": "Stop 1",
               "student": "STUDENT-009",
               "speedKph": 0,
               "pauseSeconds": 15
@@ -2748,7 +2795,7 @@
             {
               "lat": 45.396,
               "lng": -75.681,
-              "label": "Stop 2 - Pretoria Bridge North",
+              "label": "Stop 2",
               "student": "STUDENT-029",
               "speedKph": 0,
               "pauseSeconds": 15
@@ -2801,7 +2848,7 @@
             {
               "lat": 45.3935,
               "lng": -75.686,
-              "label": "Stop 3 - Pretoria & Echo",
+              "label": "Stop 3",
               "speedKph": 0,
               "pauseSeconds": 10
             },
@@ -2853,7 +2900,7 @@
             {
               "lat": 45.39,
               "lng": -75.692,
-              "label": "Stop 4 - Sunnyside & Seneca",
+              "label": "Stop 4",
               "speedKph": 0,
               "pauseSeconds": 10
             },
@@ -2977,7 +3024,7 @@
             {
               "lat": 45.3888,
               "lng": -75.713,
-              "label": "Stop 1 - Sunnyside & Aylmer",
+              "label": "Stop 1",
               "student": "STUDENT-010",
               "speedKph": 0,
               "pauseSeconds": 15
@@ -3030,7 +3077,7 @@
             {
               "lat": 45.3886,
               "lng": -75.708,
-              "label": "Stop 2 - Sunnyside & Ralph",
+              "label": "Stop 2",
               "student": "STUDENT-030",
               "speedKph": 0,
               "pauseSeconds": 15
@@ -3083,7 +3130,7 @@
             {
               "lat": 45.3883,
               "lng": -75.703,
-              "label": "Stop 3 - Sunnyside & Bellwood",
+              "label": "Stop 3",
               "speedKph": 0,
               "pauseSeconds": 10
             },
@@ -3135,7 +3182,7 @@
             {
               "lat": 45.388,
               "lng": -75.6985,
-              "label": "Stop 4 - Sunnyside & Bronson",
+              "label": "Stop 4",
               "speedKph": 0,
               "pauseSeconds": 10
             },
@@ -3288,7 +3335,7 @@
             {
               "lat": 45.3912,
               "lng": -75.752,
-              "label": "Stop 1 - Richmond & Cleary",
+              "label": "Stop 1",
               "student": "STUDENT-011",
               "speedKph": 0,
               "pauseSeconds": 15
@@ -3366,7 +3413,7 @@
             {
               "lat": 45.3925,
               "lng": -75.744,
-              "label": "Stop 2 - Richmond & Golden",
+              "label": "Stop 2",
               "student": "STUDENT-031",
               "speedKph": 0,
               "pauseSeconds": 15
@@ -3444,7 +3491,7 @@
             {
               "lat": 45.3938,
               "lng": -75.737,
-              "label": "Stop 3 - Richmond & Churchill",
+              "label": "Stop 3",
               "student": "STUDENT-051",
               "speedKph": 0,
               "pauseSeconds": 15
@@ -3522,7 +3569,7 @@
             {
               "lat": 45.395,
               "lng": -75.733,
-              "label": "Stop 4 - Richmond & Roosevelt",
+              "label": "Stop 4",
               "student": "STUDENT-071",
               "speedKph": 0,
               "pauseSeconds": 15
@@ -3701,7 +3748,7 @@
             {
               "lat": 45.3992,
               "lng": -75.711,
-              "label": "Stop 1 - Scott & Preston",
+              "label": "Stop 1",
               "student": "STUDENT-012",
               "speedKph": 0,
               "pauseSeconds": 15
@@ -3779,7 +3826,7 @@
             {
               "lat": 45.3985,
               "lng": -75.717,
-              "label": "Stop 2 - Scott & Empress",
+              "label": "Stop 2",
               "student": "STUDENT-032",
               "speedKph": 0,
               "pauseSeconds": 15
@@ -3857,7 +3904,7 @@
             {
               "lat": 45.3978,
               "lng": -75.722,
-              "label": "Stop 3 - Scott & Holland",
+              "label": "Stop 3",
               "student": "STUDENT-052",
               "speedKph": 0,
               "pauseSeconds": 15
@@ -3935,7 +3982,7 @@
             {
               "lat": 45.397,
               "lng": -75.7265,
-              "label": "Stop 4 - Scott & Parkdale",
+              "label": "Stop 4",
               "student": "STUDENT-072",
               "speedKph": 0,
               "pauseSeconds": 15
@@ -4085,7 +4132,7 @@
             {
               "lat": 45.383,
               "lng": -75.746,
-              "label": "Stop 1 - Carling & Fisher",
+              "label": "Stop 1",
               "student": "STUDENT-013",
               "speedKph": 0,
               "pauseSeconds": 15
@@ -4138,7 +4185,7 @@
             {
               "lat": 45.386,
               "lng": -75.74,
-              "label": "Stop 2 - Carling & Kirkwood",
+              "label": "Stop 2",
               "student": "STUDENT-033",
               "speedKph": 0,
               "pauseSeconds": 15
@@ -4191,7 +4238,7 @@
             {
               "lat": 45.3895,
               "lng": -75.7355,
-              "label": "Stop 3 - Carling & Broadview",
+              "label": "Stop 3",
               "speedKph": 0,
               "pauseSeconds": 10
             },
@@ -4243,7 +4290,7 @@
             {
               "lat": 45.393,
               "lng": -75.732,
-              "label": "Stop 4 - Carling & Island Park",
+              "label": "Stop 4",
               "speedKph": 0,
               "pauseSeconds": 10
             },
@@ -4367,7 +4414,7 @@
             {
               "lat": 45.4085,
               "lng": -75.7285,
-              "label": "Stop 1 - Churchill & Scott",
+              "label": "Stop 1",
               "student": "STUDENT-014",
               "speedKph": 0,
               "pauseSeconds": 15
@@ -4420,7 +4467,7 @@
             {
               "lat": 45.405,
               "lng": -75.729,
-              "label": "Stop 2 - Churchill & Wellington",
+              "label": "Stop 2",
               "student": "STUDENT-034",
               "speedKph": 0,
               "pauseSeconds": 15
@@ -4473,7 +4520,7 @@
             {
               "lat": 45.401,
               "lng": -75.7294,
-              "label": "Stop 3 - Churchill & Somerset",
+              "label": "Stop 3",
               "speedKph": 0,
               "pauseSeconds": 10
             },
@@ -4525,7 +4572,7 @@
             {
               "lat": 45.398,
               "lng": -75.7298,
-              "label": "Stop 4 - Churchill & Carling",
+              "label": "Stop 4",
               "speedKph": 0,
               "pauseSeconds": 10
             },
@@ -4649,7 +4696,7 @@
             {
               "lat": 45.38,
               "lng": -75.7245,
-              "label": "Stop 1 - Island Park & Woodlawn",
+              "label": "Stop 1",
               "student": "STUDENT-015",
               "speedKph": 0,
               "pauseSeconds": 15
@@ -4702,7 +4749,7 @@
             {
               "lat": 45.3845,
               "lng": -75.7258,
-              "label": "Stop 2 - Island Park & Cowley",
+              "label": "Stop 2",
               "student": "STUDENT-035",
               "speedKph": 0,
               "pauseSeconds": 15
@@ -4755,7 +4802,7 @@
             {
               "lat": 45.389,
               "lng": -75.7272,
-              "label": "Stop 3 - Island Park & Byron",
+              "label": "Stop 3",
               "speedKph": 0,
               "pauseSeconds": 10
             },
@@ -4807,7 +4854,7 @@
             {
               "lat": 45.393,
               "lng": -75.7288,
-              "label": "Stop 4 - Island Park & Scott",
+              "label": "Stop 4",
               "speedKph": 0,
               "pauseSeconds": 10
             },
@@ -4931,7 +4978,7 @@
             {
               "lat": 45.4055,
               "lng": -75.7395,
-              "label": "Stop 1 - Kirkwood & Byron",
+              "label": "Stop 1",
               "student": "STUDENT-016",
               "speedKph": 0,
               "pauseSeconds": 15
@@ -4984,7 +5031,7 @@
             {
               "lat": 45.403,
               "lng": -75.737,
-              "label": "Stop 2 - Kirkwood & Wellington",
+              "label": "Stop 2",
               "student": "STUDENT-036",
               "speedKph": 0,
               "pauseSeconds": 15
@@ -5037,7 +5084,7 @@
             {
               "lat": 45.4,
               "lng": -75.7345,
-              "label": "Stop 3 - Kirkwood & Somerset",
+              "label": "Stop 3",
               "speedKph": 0,
               "pauseSeconds": 10
             },
@@ -5089,7 +5136,7 @@
             {
               "lat": 45.3975,
               "lng": -75.7318,
-              "label": "Stop 4 - Kirkwood & Clare",
+              "label": "Stop 4",
               "speedKph": 0,
               "pauseSeconds": 10
             },
@@ -5213,7 +5260,7 @@
             {
               "lat": 45.3978,
               "lng": -75.749,
-              "label": "Stop 1 - Byron & Woodroffe",
+              "label": "Stop 1",
               "student": "STUDENT-017",
               "speedKph": 0,
               "pauseSeconds": 15
@@ -5266,7 +5313,7 @@
             {
               "lat": 45.3975,
               "lng": -75.742,
-              "label": "Stop 2 - Byron & Athlone",
+              "label": "Stop 2",
               "student": "STUDENT-037",
               "speedKph": 0,
               "pauseSeconds": 15
@@ -5319,7 +5366,7 @@
             {
               "lat": 45.397,
               "lng": -75.7365,
-              "label": "Stop 3 - Byron & Island Park",
+              "label": "Stop 3",
               "speedKph": 0,
               "pauseSeconds": 10
             },
@@ -5371,7 +5418,7 @@
             {
               "lat": 45.3965,
               "lng": -75.733,
-              "label": "Stop 4 - Byron & Clarendon",
+              "label": "Stop 4",
               "speedKph": 0,
               "pauseSeconds": 10
             },
@@ -5495,7 +5542,7 @@
             {
               "lat": 45.4003,
               "lng": -75.708,
-              "label": "Stop 1 - Wellington & Lyon",
+              "label": "Stop 1",
               "student": "STUDENT-018",
               "speedKph": 0,
               "pauseSeconds": 15
@@ -5548,7 +5595,7 @@
             {
               "lat": 45.3995,
               "lng": -75.714,
-              "label": "Stop 2 - Wellington & Preston",
+              "label": "Stop 2",
               "student": "STUDENT-038",
               "speedKph": 0,
               "pauseSeconds": 15
@@ -5601,7 +5648,7 @@
             {
               "lat": 45.3988,
               "lng": -75.72,
-              "label": "Stop 3 - Wellington & Empress",
+              "label": "Stop 3",
               "speedKph": 0,
               "pauseSeconds": 10
             },
@@ -5653,7 +5700,7 @@
             {
               "lat": 45.3978,
               "lng": -75.7255,
-              "label": "Stop 4 - Wellington & Holland",
+              "label": "Stop 4",
               "speedKph": 0,
               "pauseSeconds": 10
             },
@@ -5777,7 +5824,7 @@
             {
               "lat": 45.381,
               "lng": -75.7308,
-              "label": "Stop 1 - Parkdale & Sherwood",
+              "label": "Stop 1",
               "student": "STUDENT-019",
               "speedKph": 0,
               "pauseSeconds": 15
@@ -5830,7 +5877,7 @@
             {
               "lat": 45.385,
               "lng": -75.7305,
-              "label": "Stop 2 - Parkdale & Tyndall",
+              "label": "Stop 2",
               "student": "STUDENT-039",
               "speedKph": 0,
               "pauseSeconds": 15
@@ -5883,7 +5930,7 @@
             {
               "lat": 45.389,
               "lng": -75.7303,
-              "label": "Stop 3 - Parkdale & Eccles",
+              "label": "Stop 3",
               "speedKph": 0,
               "pauseSeconds": 10
             },
@@ -5935,7 +5982,7 @@
             {
               "lat": 45.393,
               "lng": -75.73,
-              "label": "Stop 4 - Parkdale & Scott",
+              "label": "Stop 4",
               "speedKph": 0,
               "pauseSeconds": 10
             },
@@ -6059,7 +6106,7 @@
             {
               "lat": 45.407,
               "lng": -75.726,
-              "label": "Stop 1 - Holland & Wellington",
+              "label": "Stop 1",
               "student": "STUDENT-020",
               "speedKph": 0,
               "pauseSeconds": 15
@@ -6112,7 +6159,7 @@
             {
               "lat": 45.404,
               "lng": -75.727,
-              "label": "Stop 2 - Holland & Byron",
+              "label": "Stop 2",
               "student": "STUDENT-040",
               "speedKph": 0,
               "pauseSeconds": 15
@@ -6165,7 +6212,7 @@
             {
               "lat": 45.401,
               "lng": -75.728,
-              "label": "Stop 3 - Holland & Ruskin",
+              "label": "Stop 3",
               "speedKph": 0,
               "pauseSeconds": 10
             },
@@ -6217,7 +6264,7 @@
             {
               "lat": 45.398,
               "lng": -75.7292,
-              "label": "Stop 4 - Holland & Carling",
+              "label": "Stop 4",
               "speedKph": 0,
               "pauseSeconds": 10
             },

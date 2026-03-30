@@ -45,14 +45,26 @@ export const presenceApi = {
      */
     getAllBoardedStudents: async (routeIds?: string[]): Promise<any[]> => {
         const res = await api.get<PresenceEventsResponse>('/api/v1/presence/events', {
-            params: { limit: 100, eventType: 'BOARD' }
+            params: { limit: 1000 }
         });
 
+        const latestEvents = new Map<string, any>();
+        for (const item of res.data.items) {
+            const existing = latestEvents.get(item.studentId);
+            if (!existing || new Date(item.timestamp) > new Date(existing.timestamp)) {
+                latestEvents.set(item.studentId, item);
+            }
+        }
+
+        const boardedItems = Array.from(latestEvents.values()).filter(
+            item => item.eventType === 'BOARD'
+        );
+
         // Map PresenceEvent to StudentPresence format
-        const items = res.data.items.map(item => ({
+        const items = boardedItems.map(item => ({
             studentId: item.studentId,
             name: `${item.firstName || 'Student'} ${item.lastName || ''}`.trim(),
-            status: item.eventType === 'BOARD' ? 'BOARDED' : 'ALIGHTED',
+            status: 'BOARDED',
             lastSeen: item.timestamp,
             routeId: item.routeId,
             vehicleId: item.vehicleId
@@ -66,10 +78,18 @@ export const presenceApi = {
 
     getStudentsByRoute: async (routeId: string): Promise<any[]> => {
         const res = await api.get<PresenceEventsResponse>('/api/v1/presence/events', {
-            params: { limit: 100, routeId }
+            params: { limit: 1000, routeId }
         });
 
-        return res.data.items.map(item => ({
+        const latestEvents = new Map<string, any>();
+        for (const item of res.data.items) {
+            const existing = latestEvents.get(item.studentId);
+            if (!existing || new Date(item.timestamp) > new Date(existing.timestamp)) {
+                latestEvents.set(item.studentId, item);
+            }
+        }
+
+        return Array.from(latestEvents.values()).map(item => ({
             studentId: item.studentId,
             name: `${item.firstName || 'Student'} ${item.lastName || ''}`.trim(),
             status: item.eventType === 'BOARD' ? 'BOARDED' : 'ALIGHTED',
