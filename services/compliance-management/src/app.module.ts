@@ -28,7 +28,7 @@ import { DsarModule } from './modules/dsar/dsar.module';
                 password: configService.get<string>('DB_PASSWORD', 'mysecretpassword'),
                 database: configService.get<string>('DB_DATABASE', 'sbms'),
                 entities: [__dirname + '/**/*.entity{.ts,.js}'],
-                synchronize: configService.get<string>('NODE_ENV', 'development') !== 'production',
+                synchronize: false,
             }),
             inject: [ConfigService],
         }),

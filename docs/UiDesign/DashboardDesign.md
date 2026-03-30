@@ -74,3 +74,33 @@ Always use the predefined utility classes in `index.css`:
 ### Positioning Logic
 - Use **`absolute`** positioning within the dashboard container. This ensures that panels move *with* the layout (e.g., when the Sidebar expands) but stay *on top* of the Map.
 - **NEVER** use `fixed` for panels inside the main content area, as they will ignore the sidebar expansion and cover navigation icons.
+
+---
+
+## Mock Mode Architecture
+
+The dashboard supports a **zero-backend** mock mode for rapid UI development. Mock data and logic are fully separated from production code.
+
+### Data Layer Separation
+
+```
+src/services/mock/
+├── data/       ← Pure data constants (no logic)
+└── handlers/   ← Mock API implementations (import from data/)
+```
+
+The API barrel (`src/services/api/index.ts`) conditionally exports either real or mock implementations based on `VITE_USE_MOCK`:
+
+```typescript
+export const alertsApi = useMock ? mockAlertsApi : realAlertsApi;
+```
+
+### Adding Mock Data for New Features
+1. Add data constants to `src/services/mock/data/<domain>.data.ts`
+2. Create handler in `src/services/mock/handlers/<domain>.mock.ts`
+3. Export from `src/services/mock/index.ts`
+4. Add conditional export in `src/services/api/index.ts`
+
+### Mock Mode Indicator
+When active, the dashboard header shows an amber "Mock Data Active" badge. The Login page shows a "Mock Mode Active" pill with an exit button.
+

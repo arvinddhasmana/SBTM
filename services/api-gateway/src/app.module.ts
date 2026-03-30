@@ -27,7 +27,7 @@ import { AppService } from './app.service';
                 password: configService.get<string>('DB_PASSWORD', 'mysecretpassword'),
                 database: configService.get<string>('DB_DATABASE', 'sbms'),
                 entities: [__dirname + '/**/*.entity{.ts,.js}'],
-                synchronize: configService.get<string>('NODE_ENV') !== 'production',
+                synchronize: false,
                 autoLoadEntities: true,
             }),
             inject: [ConfigService],

@@ -78,6 +78,17 @@ describe('AuthController (e2e)', () => {
                 });
         });
 
+        it('should normalize email (trim and lowercase) before authentication', () => {
+            return request(app.getHttpServer())
+                .post('/api/v1/auth/login')
+                .send({ email: '  TEST@Example.Com  ', password: 'password123' })
+                .expect(200)
+                .expect((res) => {
+                    expect(res.body.accessToken).toBeDefined();
+                    expect(res.body.user.email).toBe('test@example.com');
+                });
+        });
+
         it('should return 401 for invalid email', () => {
             return request(app.getHttpServer())
                 .post('/api/v1/auth/login')

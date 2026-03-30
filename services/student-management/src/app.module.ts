@@ -22,7 +22,7 @@ import { Student } from './modules/student/entities/student.entity';
                 password: configService.get<string>('DB_PASSWORD', 'mysecretpassword'),
                 database: configService.get<string>('DB_DATABASE', 'sbms'),
                 entities: [Student],
-                synchronize: configService.get<string>('NODE_ENV', 'development') !== 'production',
+                synchronize: false,
                 autoLoadEntities: true,
             }),
             inject: [ConfigService],

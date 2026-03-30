@@ -46,6 +46,7 @@ export class EmergencyAlert {
   @Column({
     type: 'enum',
     enum: EmergencyEventType,
+    enumName: 'emergency_alert_eventtype_enum',
     default: EmergencyEventType.PANIC_BUTTON,
   })
   eventType: EmergencyEventType;
@@ -53,6 +54,7 @@ export class EmergencyAlert {
   @Column({
     type: 'enum',
     enum: EmergencyAlertStatus,
+    enumName: 'emergency_alert_status_enum',
     default: EmergencyAlertStatus.ACTIVE,
   })
   status: EmergencyAlertStatus;

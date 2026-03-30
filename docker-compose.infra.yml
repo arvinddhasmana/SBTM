@@ -1,0 +1,53 @@
+# Docker Compose Override: Infrastructure Only
+# Usage: docker compose -f docker-compose.yml -f docker-compose.infra.yml up -d
+#
+# This starts ONLY the infrastructure containers (Postgres, Redis, OSRM)
+# for Hybrid Development mode where app services run on the host.
+
+services:
+  # Infrastructure services — these start normally
+  postgres:
+    # Inherits from docker-compose.yml
+
+  redis:
+    # Inherits from docker-compose.yml
+
+  osrm:
+    # Inherits from docker-compose.yml
+
+  # Application services — disabled via scale: 0
+  api-gateway:
+    deploy:
+      replicas: 0
+
+  gps-tracking:
+    deploy:
+      replicas: 0
+
+  emergency-alerts:
+    deploy:
+      replicas: 0
+
+  student-presence:
+    deploy:
+      replicas: 0
+
+  video-service:
+    deploy:
+      replicas: 0
+
+  student-management:
+    deploy:
+      replicas: 0
+
+  admin-dashboard:
+    deploy:
+      replicas: 0
+
+  compliance-management:
+    deploy:
+      replicas: 0
+
+  parent-app:
+    deploy:
+      replicas: 0
