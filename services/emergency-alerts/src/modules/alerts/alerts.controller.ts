@@ -10,12 +10,12 @@ import {
 } from '@nestjs/common';
 import { AlertsService } from './alerts.service';
 import { CreateEmergencyEventDto } from './dto/create-emergency-event.dto';
-import { InternalServiceAuthGuard } from '../../common/guards/internal-service-auth.guard';
+import { InternalServiceAuthGuard } from '@sbtm/common';
 
 @Controller('api/v1')
 @UseGuards(InternalServiceAuthGuard)
 export class AlertsController {
-  constructor(private readonly alertsService: AlertsService) { }
+  constructor(private readonly alertsService: AlertsService) {}
 
   @Post('emergency-events')
   async create(@Body() createDto: CreateEmergencyEventDto) {

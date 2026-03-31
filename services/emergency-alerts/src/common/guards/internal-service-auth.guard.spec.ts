@@ -1,7 +1,7 @@
 import { ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { InternalServiceAuthGuard } from './internal-service-auth.guard';
+import { InternalServiceAuthGuard } from '@sbtm/common';
 
 describe('InternalServiceAuthGuard', () => {
   let guard: InternalServiceAuthGuard;

@@ -1,333 +1,365 @@
 import { Injectable, ForbiddenException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpClientService } from '../../../common/utils/http-client.service';
-import { Role } from '../../../common/decorators/roles.decorator';
+import { Role } from '@sbtm/common';
 import { DataSource } from 'typeorm';
 
 export interface LiveLocationDto {
-    routeId: string;
-    vehicleId: string;
-    lastUpdate: string;
-    position: { lat: number; lng: number };
-    etaToNextStopMinutes: number;
-    deviationFlag?: boolean;
+  routeId: string;
+  vehicleId: string;
+  lastUpdate: string;
+  position: { lat: number; lng: number };
+  etaToNextStopMinutes: number;
+  deviationFlag?: boolean;
 }
 
 export interface CreateLocationDto {
-    vehicleId: string;
-    routeId: string;
-    timestamp: string;
-    lat: number;
-    lng: number;
-    speedKph?: number;
-    headingDeg?: number;
-    accuracyMeters?: number;
-    schoolId?: string;
+  vehicleId: string;
+  routeId: string;
+  timestamp: string;
+  lat: number;
+  lng: number;
+  speedKph?: number;
+  headingDeg?: number;
+  accuracyMeters?: number;
+  schoolId?: string;
 }
 
 export interface LocationHistoryQueryDto {
-    from?: string;
-    to?: string;
-    granularity?: 'raw' | '1min' | '5min';
+  from?: string;
+  to?: string;
+  granularity?: 'raw' | '1min' | '5min';
 }
 
 export interface RouteLifecycleEventDto {
-    routeId: string;
-    vehicleId: string;
-    eventType: 'ROUTE_STARTED' | 'STOP_REACHED' | 'ROUTE_COMPLETED';
-    timestamp: string;
-    stopId?: string;
+  routeId: string;
+  vehicleId: string;
+  eventType: 'ROUTE_STARTED' | 'STOP_REACHED' | 'ROUTE_COMPLETED';
+  timestamp: string;
+  stopId?: string;
 }
 
 interface RequestUser {
-    id: string;
-    role: Role;
-    childRouteIds?: string[];
-    assignedRouteIds?: string[];
-    schoolId?: string;
+  id: string;
+  role: Role;
+  childRouteIds?: string[];
+  assignedRouteIds?: string[];
+  schoolId?: string;
 }
 
 interface ReferenceRouteRow {
-    id: string;
-    name: string;
-    vehicleId: string | null;
-    driverId: string | null;
-    schedule: any;
-    polyline: string | null;
+  id: string;
+  name: string;
+  vehicleId: string | null;
+  driverId: string | null;
+  schedule: any;
+  polyline: string | null;
 }
 
 interface ReferenceRouteStopRow {
-    id: string;
-    routeId: string;
-    sequenceOrder: number;
-    stopName: string;
-    lat: number;
-    lng: number;
-    arrivalTime: string;
+  id: string;
+  routeId: string;
+  sequenceOrder: number;
+  stopName: string;
+  lat: number;
+  lng: number;
+  arrivalTime: string;
 }
 
 @Injectable()
 export class GpsGatewayService {
-    private readonly gpsServiceUrl: string;
+  private readonly gpsServiceUrl: string;
 
-    constructor(
-        private readonly httpClient: HttpClientService,
-        private readonly configService: ConfigService,
-        private readonly dataSource: DataSource,
+  constructor(
+    private readonly httpClient: HttpClientService,
+    private readonly configService: ConfigService,
+    private readonly dataSource: DataSource,
+  ) {
+    this.gpsServiceUrl = this.configService.get<string>(
+      'GPS_SERVICE_URL',
+      'http://localhost:3002',
+    );
+    this.presenceServiceUrl = this.configService.get<string>(
+      'PRESENCE_SERVICE_URL',
+      'http://localhost:3004',
+    );
+  }
+
+  private readonly presenceServiceUrl: string;
+
+  async getLiveLocation(
+    routeId: string,
+    user: RequestUser,
+  ): Promise<LiveLocationDto> {
+    this.checkRouteAccess(routeId, user);
+
+    const url = `${this.gpsServiceUrl}/api/v1/routes/${routeId}/live-location`;
+    return this.httpClient.get<LiveLocationDto>(url);
+  }
+
+  async getLocationHistory(
+    routeId: string,
+    query: LocationHistoryQueryDto,
+    user: RequestUser,
+  ): Promise<unknown> {
+    this.checkRouteAccess(routeId, user);
+
+    const params = new URLSearchParams();
+    if (query.from) params.append('from', query.from);
+    if (query.to) params.append('to', query.to);
+    if (query.granularity) params.append('granularity', query.granularity);
+
+    const url = `${this.gpsServiceUrl}/api/v1/routes/${routeId}/history?${params.toString()}`;
+    return this.httpClient.get(url);
+  }
+
+  async ingestLocation(
+    dto: CreateLocationDto,
+    user: RequestUser,
+  ): Promise<{ status: string }> {
+    if (
+      !user.schoolId &&
+      user.role !== Role.ADMIN &&
+      user.role !== Role.OSTA_ADMIN
     ) {
-        this.gpsServiceUrl = this.configService.get<string>(
-            'GPS_SERVICE_URL',
-            'http://localhost:3002',
-        );
-        this.presenceServiceUrl = this.configService.get<string>(
-            'PRESENCE_SERVICE_URL',
-            'http://localhost:3004',
-        );
+      throw new ForbiddenException('School ID is required to ingest locations');
     }
 
-    private readonly presenceServiceUrl: string;
+    const url = `${this.gpsServiceUrl}/api/v1/locations`;
+    return this.httpClient.post<{ status: string }>(url, {
+      ...dto,
+      schoolId: dto.schoolId || user.schoolId,
+    });
+  }
 
-    async getLiveLocation(routeId: string, user: RequestUser): Promise<LiveLocationDto> {
-        this.checkRouteAccess(routeId, user);
-
-        const url = `${this.gpsServiceUrl}/api/v1/routes/${routeId}/live-location`;
-        return this.httpClient.get<LiveLocationDto>(url);
+  async recordRouteLifecycleEvent(
+    dto: RouteLifecycleEventDto,
+    user: RequestUser,
+  ): Promise<{ status: string }> {
+    if (user.role !== Role.DRIVER && user.role !== Role.ADMIN) {
+      throw new ForbiddenException(
+        'Only drivers can record route lifecycle events',
+      );
     }
 
-    async getLocationHistory(
-        routeId: string,
-        query: LocationHistoryQueryDto,
-        user: RequestUser,
-    ): Promise<unknown> {
-        this.checkRouteAccess(routeId, user);
-
-        const params = new URLSearchParams();
-        if (query.from) params.append('from', query.from);
-        if (query.to) params.append('to', query.to);
-        if (query.granularity) params.append('granularity', query.granularity);
-
-        const url = `${this.gpsServiceUrl}/api/v1/routes/${routeId}/history?${params.toString()}`;
-        return this.httpClient.get(url);
+    if (
+      user.role === Role.DRIVER &&
+      !user.assignedRouteIds?.includes(dto.routeId)
+    ) {
+      throw new ForbiddenException(
+        'You can only record lifecycle events for your assigned routes',
+      );
     }
 
-    async ingestLocation(dto: CreateLocationDto, user: RequestUser): Promise<{ status: string }> {
-        if (!user.schoolId && user.role !== Role.ADMIN && user.role !== Role.OSTA_ADMIN) {
-            throw new ForbiddenException('School ID is required to ingest locations');
-        }
-
-        const url = `${this.gpsServiceUrl}/api/v1/locations`;
-        return this.httpClient.post<{ status: string }>(url, {
-            ...dto,
-            schoolId: dto.schoolId || user.schoolId,
-        });
+    if (!user.schoolId) {
+      throw new ForbiddenException('School context required');
     }
 
-    async recordRouteLifecycleEvent(
-        dto: RouteLifecycleEventDto,
-        user: RequestUser,
-    ): Promise<{ status: string }> {
-        if (user.role !== Role.DRIVER && user.role !== Role.ADMIN) {
-            throw new ForbiddenException('Only drivers can record route lifecycle events');
-        }
+    const url = `${this.gpsServiceUrl}/api/v1/routes/lifecycle`;
+    // schoolId always from authenticated user – never from client body
+    return this.httpClient.post<{ status: string }>(url, {
+      schoolId: user.schoolId,
+      routeId: dto.routeId,
+      vehicleId: dto.vehicleId,
+      driverId: user.id,
+      eventType: dto.eventType,
+      timestamp: dto.timestamp,
+      stopId: dto.stopId,
+    });
+  }
 
-        if (user.role === Role.DRIVER && !user.assignedRouteIds?.includes(dto.routeId)) {
-            throw new ForbiddenException('You can only record lifecycle events for your assigned routes');
-        }
-
-        if (!user.schoolId) {
-            throw new ForbiddenException('School context required');
-        }
-
-        const url = `${this.gpsServiceUrl}/api/v1/routes/lifecycle`;
-        // schoolId always from authenticated user – never from client body
-        return this.httpClient.post<{ status: string }>(url, {
-            schoolId: user.schoolId,
-            routeId: dto.routeId,
-            vehicleId: dto.vehicleId,
-            driverId: user.id,
-            eventType: dto.eventType,
-            timestamp: dto.timestamp,
-            stopId: dto.stopId,
-        });
+  private checkRouteAccess(routeId: string, user: RequestUser): void {
+    // System admins can access all routes
+    if (
+      user.role === Role.ADMIN ||
+      user.role === Role.OSTA_ADMIN ||
+      user.role === Role.BOARD_ADMIN ||
+      user.role === Role.SCHOOL_ADMIN
+    ) {
+      return;
     }
 
-    private checkRouteAccess(routeId: string, user: RequestUser): void {
-        // System admins can access all routes
-        if (user.role === Role.ADMIN || user.role === Role.OSTA_ADMIN || user.role === Role.BOARD_ADMIN || user.role === Role.SCHOOL_ADMIN) {
-            return;
-        }
-
-        // Parents can only access their children's routes
-        if (user.role === Role.PARENT) {
-            if (!user.childRouteIds?.includes(routeId)) {
-                throw new ForbiddenException('You do not have access to this route');
-            }
-            return;
-        }
-
-        // Drivers can only access their assigned routes
-        if (user.role === Role.DRIVER) {
-            if (!user.assignedRouteIds?.includes(routeId)) {
-                throw new ForbiddenException('You do not have access to this route');
-            }
-            return;
-        }
-
-        throw new ForbiddenException('Access denied');
+    // Parents can only access their children's routes
+    if (user.role === Role.PARENT) {
+      if (!user.childRouteIds?.includes(routeId)) {
+        throw new ForbiddenException('You do not have access to this route');
+      }
+      return;
     }
 
-    async getActiveRoutes(user: RequestUser): Promise<any[]> {
-        const routeIds = this.getAccessibleRouteIds(user);
+    // Drivers can only access their assigned routes
+    if (user.role === Role.DRIVER) {
+      if (!user.assignedRouteIds?.includes(routeId)) {
+        throw new ForbiddenException('You do not have access to this route');
+      }
+      return;
+    }
 
-        const whereClause = routeIds && routeIds.length
-            ? 'WHERE r.id = ANY($1)'
-            : '';
-        const params: any[] = routeIds && routeIds.length ? [routeIds] : [];
+    throw new ForbiddenException('Access denied');
+  }
 
-        const routes = await this.dataSource.query(
-            `SELECT r.id, r.name, r."vehicleId" as "vehicleId", r.schedule, r.polyline
+  async getActiveRoutes(user: RequestUser): Promise<any[]> {
+    const routeIds = this.getAccessibleRouteIds(user);
+
+    const whereClause =
+      routeIds && routeIds.length ? 'WHERE r.id = ANY($1)' : '';
+    const params: any[] = routeIds && routeIds.length ? [routeIds] : [];
+
+    const routes = (await this.dataSource.query(
+      `SELECT r.id, r.name, r."vehicleId" as "vehicleId", r.schedule, r.polyline
              FROM routes_reference r
              ${whereClause}
              ORDER BY r.id ASC`,
-            params,
-        ) as ReferenceRouteRow[];
+      params,
+    )) as ReferenceRouteRow[];
 
-        const stops = await this.dataSource.query(
-            `SELECT s.id, s."routeId" as "routeId", s."sequenceOrder" as "sequenceOrder", s."stopName" as "stopName", s.lat, s.lng, s."arrivalTime" as "arrivalTime"
+    const stops = (await this.dataSource.query(
+      `SELECT s.id, s."routeId" as "routeId", s."sequenceOrder" as "sequenceOrder", s."stopName" as "stopName", s.lat, s.lng, s."arrivalTime" as "arrivalTime"
              FROM route_stops_reference s`,
-        ) as ReferenceRouteStopRow[];
+    )) as ReferenceRouteStopRow[];
 
-        const stopsByRoute = new Map<string, ReferenceRouteStopRow[]>();
-        for (const stop of stops) {
-            const list = stopsByRoute.get(stop.routeId) ?? [];
-            list.push(stop);
-            stopsByRoute.set(stop.routeId, list);
-        }
-
-        const demoSchoolId = user.schoolId || 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c';
-
-        return routes.map((r) => {
-            const schedule = typeof r.schedule === 'string' ? JSON.parse(r.schedule) : r.schedule;
-            const startTime = schedule?.startTime || '07:30';
-            const routeStops = (stopsByRoute.get(r.id) ?? [])
-                .slice()
-                .sort((a, b) => a.sequenceOrder - b.sequenceOrder)
-                .map((s) => ({
-                    id: s.id,
-                    routeId: r.id,
-                    sequence: s.sequenceOrder,
-                    address: s.stopName,
-                    location: `POINT(${s.lng} ${s.lat})`,
-                }));
-
-            return {
-                id: r.id,
-                name: r.name,
-                schoolId: demoSchoolId,
-                direction: 'AM',
-                vehicleId: r.vehicleId || undefined,
-                startTime,
-                estimatedDuration: 60,
-                stops: routeStops,
-                status: 'active',
-                polyline: r.polyline || undefined,
-            };
-        });
+    const stopsByRoute = new Map<string, ReferenceRouteStopRow[]>();
+    for (const stop of stops) {
+      const list = stopsByRoute.get(stop.routeId) ?? [];
+      list.push(stop);
+      stopsByRoute.set(stop.routeId, list);
     }
 
-    async getReferenceRouteById(routeId: string, user: RequestUser): Promise<any> {
-        this.checkRouteAccess(routeId, user);
-        
-        const demoSchoolId = user.schoolId || 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c';
-        
-        const routes = await this.dataSource.query(
-            `SELECT r.id, r.name, r."vehicleId" as "vehicleId", r.schedule, r.polyline
+    const demoSchoolId =
+      user.schoolId || 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c';
+
+    return routes.map((r) => {
+      const schedule =
+        typeof r.schedule === 'string' ? JSON.parse(r.schedule) : r.schedule;
+      const startTime = schedule?.startTime || '07:30';
+      const routeStops = (stopsByRoute.get(r.id) ?? [])
+        .slice()
+        .sort((a, b) => a.sequenceOrder - b.sequenceOrder)
+        .map((s) => ({
+          id: s.id,
+          routeId: r.id,
+          sequence: s.sequenceOrder,
+          address: s.stopName,
+          location: `POINT(${s.lng} ${s.lat})`,
+        }));
+
+      return {
+        id: r.id,
+        name: r.name,
+        schoolId: demoSchoolId,
+        direction: 'AM',
+        vehicleId: r.vehicleId || undefined,
+        startTime,
+        estimatedDuration: 60,
+        stops: routeStops,
+        status: 'active',
+        polyline: r.polyline || undefined,
+      };
+    });
+  }
+
+  async getReferenceRouteById(
+    routeId: string,
+    user: RequestUser,
+  ): Promise<any> {
+    this.checkRouteAccess(routeId, user);
+
+    const demoSchoolId =
+      user.schoolId || 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c';
+
+    const routes = (await this.dataSource.query(
+      `SELECT r.id, r.name, r."vehicleId" as "vehicleId", r.schedule, r.polyline
              FROM routes_reference r
              WHERE r.id = $1`,
-            [routeId],
-        ) as ReferenceRouteRow[];
+      [routeId],
+    )) as ReferenceRouteRow[];
 
-        if (routes.length === 0) {
-            const { NotFoundException } = require('@nestjs/common');
-            throw new NotFoundException('Reference route not found');
-        }
+    if (routes.length === 0) {
+      const { NotFoundException } = require('@nestjs/common');
+      throw new NotFoundException('Reference route not found');
+    }
 
-        const r = routes[0];
+    const r = routes[0];
 
-        const stops = await this.dataSource.query(
-            `SELECT s.id, s."routeId" as "routeId", s."sequenceOrder" as "sequenceOrder", s."stopName" as "stopName", s.lat, s.lng, s."arrivalTime" as "arrivalTime"
+    const stops = (await this.dataSource.query(
+      `SELECT s.id, s."routeId" as "routeId", s."sequenceOrder" as "sequenceOrder", s."stopName" as "stopName", s.lat, s.lng, s."arrivalTime" as "arrivalTime"
              FROM route_stops_reference s
              WHERE s."routeId" = $1`,
-            [routeId]
-        ) as ReferenceRouteStopRow[];
+      [routeId],
+    )) as ReferenceRouteStopRow[];
 
-        const schedule = typeof r.schedule === 'string' ? JSON.parse(r.schedule) : r.schedule;
-        const startTime = schedule?.startTime || '07:30';
-        const routeStops = stops
-            .slice()
-            .sort((a, b) => a.sequenceOrder - b.sequenceOrder)
-            .map((s) => ({
-                id: s.id,
-                routeId: r.id,
-                sequence: s.sequenceOrder,
-                address: s.stopName,
-                location: `POINT(${s.lng} ${s.lat})`,
-            }));
+    const schedule =
+      typeof r.schedule === 'string' ? JSON.parse(r.schedule) : r.schedule;
+    const startTime = schedule?.startTime || '07:30';
+    const routeStops = stops
+      .slice()
+      .sort((a, b) => a.sequenceOrder - b.sequenceOrder)
+      .map((s) => ({
+        id: s.id,
+        routeId: r.id,
+        sequence: s.sequenceOrder,
+        address: s.stopName,
+        location: `POINT(${s.lng} ${s.lat})`,
+      }));
 
-        return {
-            id: r.id,
-            name: r.name,
-            schoolId: demoSchoolId,
-            direction: 'AM',
-            vehicleId: r.vehicleId || undefined,
-            startTime,
-            estimatedDuration: 60,
-            stops: routeStops,
-            status: 'active',
-            polyline: r.polyline || undefined,
-        };
+    return {
+      id: r.id,
+      name: r.name,
+      schoolId: demoSchoolId,
+      direction: 'AM',
+      vehicleId: r.vehicleId || undefined,
+      startTime,
+      estimatedDuration: 60,
+      stops: routeStops,
+      status: 'active',
+      polyline: r.polyline || undefined,
+    };
+  }
+
+  async getAllLiveLocations(user: RequestUser): Promise<LiveLocationDto[]> {
+    const routeIds = this.getAccessibleRouteIds(user);
+
+    const whereClause =
+      routeIds && routeIds.length ? 'WHERE r.id = ANY($1)' : '';
+    const params: any[] = routeIds && routeIds.length ? [routeIds] : [];
+
+    const routes = (await this.dataSource.query(
+      `SELECT r.id FROM routes_reference r ${whereClause} ORDER BY r.id ASC`,
+      params,
+    )) as Array<{ id: string }>;
+
+    const results: LiveLocationDto[] = [];
+    for (const r of routes) {
+      try {
+        const live = await this.getLiveLocation(r.id, user);
+        results.push(live);
+      } catch {
+        // Ignore per-route failures; demo UI will just omit that marker
+      }
+    }
+    return results;
+  }
+
+  async getRouteStudents(routeId: string, user: RequestUser): Promise<unknown> {
+    this.checkRouteAccess(routeId, user);
+    const url = `${this.presenceServiceUrl}/api/v1/routes/${routeId}/students${user.schoolId ? `?schoolId=${user.schoolId}` : ''}`;
+    return this.httpClient.get(url);
+  }
+
+  private getAccessibleRouteIds(user: RequestUser): string[] | undefined {
+    if (user.role === Role.PARENT) return user.childRouteIds || [];
+    if (user.role === Role.DRIVER) return user.assignedRouteIds || [];
+
+    // Admin roles: see all seeded reference routes
+    if (
+      user.role === Role.ADMIN ||
+      user.role === Role.OSTA_ADMIN ||
+      user.role === Role.BOARD_ADMIN ||
+      user.role === Role.SCHOOL_ADMIN
+    ) {
+      return undefined;
     }
 
-    async getAllLiveLocations(user: RequestUser): Promise<LiveLocationDto[]> {
-        const routeIds = this.getAccessibleRouteIds(user);
-
-        const whereClause = routeIds && routeIds.length
-            ? 'WHERE r.id = ANY($1)'
-            : '';
-        const params: any[] = routeIds && routeIds.length ? [routeIds] : [];
-
-        const routes = await this.dataSource.query(
-            `SELECT r.id FROM routes_reference r ${whereClause} ORDER BY r.id ASC`,
-            params,
-        ) as Array<{ id: string }>;
-
-        const results: LiveLocationDto[] = [];
-        for (const r of routes) {
-            try {
-                const live = await this.getLiveLocation(r.id, user);
-                results.push(live);
-            } catch {
-                // Ignore per-route failures; demo UI will just omit that marker
-            }
-        }
-        return results;
-    }
-
-    async getRouteStudents(routeId: string, user: RequestUser): Promise<unknown> {
-        this.checkRouteAccess(routeId, user);
-        const url = `${this.presenceServiceUrl}/api/v1/routes/${routeId}/students${user.schoolId ? `?schoolId=${user.schoolId}` : ''}`;
-        return this.httpClient.get(url);
-    }
-
-    private getAccessibleRouteIds(user: RequestUser): string[] | undefined {
-        if (user.role === Role.PARENT) return user.childRouteIds || [];
-        if (user.role === Role.DRIVER) return user.assignedRouteIds || [];
-
-        // Admin roles: see all seeded reference routes
-        if (user.role === Role.ADMIN || user.role === Role.OSTA_ADMIN || user.role === Role.BOARD_ADMIN || user.role === Role.SCHOOL_ADMIN) {
-            return undefined;
-        }
-
-        return undefined;
-    }
+    return undefined;
+  }
 }
