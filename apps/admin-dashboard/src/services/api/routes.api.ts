@@ -32,7 +32,9 @@ export const routesApi = {
     },
 
     async getRouteById(id: string): Promise<Route> {
-        const response = await apiClient.get<Route>(`/api/v1/routes/${id}`);
+        // Fallback for demo tracking script string-based IDs
+        const endpoint = id.startsWith('ROUTE-') ? `/api/v1/routes/reference/${id}` : `/api/v1/routes/${id}`;
+        const response = await apiClient.get<Route>(endpoint);
         return transformRoute(response.data);
     },
 

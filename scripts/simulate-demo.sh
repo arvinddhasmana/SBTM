@@ -233,19 +233,29 @@ for ((lap = 1; lap <= LAPS; lap++)); do
   
   for ROUTE_ID in $LAP_ROUTE_IDS; do
     (
-      # Get route metadata
-      ROUTE_METADATA=$(node -e "
+      # Get route metadata base64 encoded
+      ROUTE_METADATA_B64=$(node -e "
         const fs = require('fs');
         const data = JSON.parse(fs.readFileSync('$TRACK_CONFIG_PATH', 'utf8'));
         const r = data.tracks['$SELECTED_TRACK'].routes.find(rr => rr.routeId === '$ROUTE_ID');
-        console.log(JSON.stringify(r));
+        console.log(Buffer.from(JSON.stringify(r)).toString('base64'));
       ")
       
-      VEHICLE_ID=$(node -e "console.log(JSON.parse('$ROUTE_METADATA').vehicleId)")
-      DRIVER_EMAIL=$(node -e "console.log(JSON.parse('$ROUTE_METADATA').driverEmail)")
-      DRIVER_ID=$(node -e "console.log(JSON.parse('$ROUTE_METADATA').driverId)")
-      WP_COUNT=$(node -e "console.log(JSON.parse('$ROUTE_METADATA').waypoints.length)")
+      VEHICLE_ID=$(node -e "console.log(JSON.parse(Buffer.from('$ROUTE_METADATA_B64', 'base64').toString()).vehicleId)")
+      DRIVER_EMAIL=$(node -e "console.log(JSON.parse(Buffer.from('$ROUTE_METADATA_B64', 'base64').toString()).driverEmail)")
+      DRIVER_ID=$(node -e "console.log(JSON.parse(Buffer.from('$ROUTE_METADATA_B64', 'base64').toString()).driverId)")
+      WP_COUNT=$(node -e "console.log(JSON.parse(Buffer.from('$ROUTE_METADATA_B64', 'base64').toString()).waypoints.length)")
       token="${DRIVER_TOKENS[$DRIVER_EMAIL]:-$ADMIN_TOKEN}"
+
+      # Sync Route Polyline
+      POLYLINE=$(node -e "console.log(JSON.parse(Buffer.from('$ROUTE_METADATA_B64', 'base64').toString()).polyline || '')")
+      if [ -n "$POLYLINE" ]; then
+         docker exec "sbtm_antigravity-postgres-1" psql -U postgres -d sbms -c "
+            INSERT INTO routes_reference (id, name, \"vehicleId\", \"driverId\", schedule, polyline) 
+            VALUES ('$ROUTE_ID', '$ROUTE_ID', '$VEHICLE_ID', '$DRIVER_ID', '{}', '$POLYLINE')
+            ON CONFLICT (id) DO UPDATE SET polyline = EXCLUDED.polyline;
+         " > /dev/null 2>&1 || true
+      fi
 
       write_audit_log "ROUTE_STARTED" "route" "$ROUTE_ID" "{\"vehicleId\":\"$VEHICLE_ID\",\"driverId\":\"$DRIVER_ID\",\"simulated\":true,\"lap\":\"$LAP_TYPE\"}"
 
@@ -255,13 +265,13 @@ for ((lap = 1; lap <= LAPS; lap++)); do
           EFFECTIVE_STEP=$((WP_COUNT - 1 - step))
         fi
 
-        WP=$(node -e "console.log(JSON.stringify(JSON.parse('$ROUTE_METADATA').waypoints[$EFFECTIVE_STEP]))")
-        WP_LAT=$(node -e "console.log(JSON.parse('$WP').lat)")
-        WP_LNG=$(node -e "console.log(JSON.parse('$WP').lng)")
-        WP_LABEL=$(node -e "console.log(JSON.parse('$WP').label || '')")
+        WP_B64=$(node -e "console.log(Buffer.from(JSON.stringify(JSON.parse(Buffer.from('$ROUTE_METADATA_B64', 'base64').toString()).waypoints[$EFFECTIVE_STEP])).toString('base64'))")
+        WP_LAT=$(node -e "console.log(JSON.parse(Buffer.from('$WP_B64', 'base64').toString()).lat)")
+        WP_LNG=$(node -e "console.log(JSON.parse(Buffer.from('$WP_B64', 'base64').toString()).lng)")
+        WP_LABEL=$(node -e "console.log(JSON.parse(Buffer.from('$WP_B64', 'base64').toString()).label || '')")
         WP_STUDENTS_LIST=$(node -e "
-          const wp = JSON.parse('$WP');
-          const r = JSON.parse('$ROUTE_METADATA');
+          const wp = JSON.parse(Buffer.from('$WP_B64', 'base64').toString());
+          const r = JSON.parse(Buffer.from('$ROUTE_METADATA_B64', 'base64').toString());
           const isStop = wp.label && wp.label.includes('Stop');
           const isSchool = wp.label && wp.label.includes('School');
           let students = [];
@@ -272,8 +282,8 @@ for ((lap = 1; lap <= LAPS; lap++)); do
           }
           console.log(students.join(' '));
         " 2>/dev/null)
-        WP_SPEED=$(node -e "console.log(JSON.parse('$WP').speedKph || 30)")
-        WP_PAUSE=$(node -e "console.log(JSON.parse('$WP').pauseSeconds || 0)")
+        WP_SPEED=$(node -e "console.log(JSON.parse(Buffer.from('$WP_B64', 'base64').toString()).speedKph || 30)")
+        WP_PAUSE=$(node -e "console.log(JSON.parse(Buffer.from('$WP_B64', 'base64').toString()).pauseSeconds || 0)")
         timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
         # GPS update
@@ -282,6 +292,22 @@ for ((lap = 1; lap <= LAPS; lap++)); do
         # Only log stops/start/school to avoid flood
         if [ -n "$WP_LABEL" ]; then
            echo -e "\033[32m$VEHICLE_ID ($LAP_DIR): $WP_LABEL\033[0m"
+        fi
+
+        # Alerts Logic
+        HAS_DEVIATION=$(node -e "console.log(JSON.parse(Buffer.from('$ROUTE_METADATA_B64', 'base64').toString()).hasDeviationAlert || false)")
+        HAS_PANIC=$(node -e "console.log(JSON.parse(Buffer.from('$ROUTE_METADATA_B64', 'base64').toString()).hasPanicAlert || false)")
+
+        if [ "$HAS_DEVIATION" = "true" ] && [ "$step" -eq 3 ]; then
+           alert_payload="{\"vehicleId\":\"$VEHICLE_ID\",\"routeId\":\"$ROUTE_ID\",\"type\":\"ROUTE_DEVIATION\",\"severity\":\"WARNING\",\"description\":\"Bus off route near $WP_LABEL\",\"location\":{\"lat\":$WP_LAT,\"lng\":$WP_LNG},\"timestamp\":\"$timestamp\"}"
+           api_post "$API_BASE/alerts" "$alert_payload" "$token" > /dev/null
+           echo -e "  \033[31m[ALERT] Deviation: $VEHICLE_ID\033[0m"
+        fi
+
+        if [ "$HAS_PANIC" = "true" ] && [ "$step" -eq 6 ]; then
+           alert_payload="{\"vehicleId\":\"$VEHICLE_ID\",\"routeId\":\"$ROUTE_ID\",\"type\":\"PANIC\",\"severity\":\"CRITICAL\",\"description\":\"Driver triggered panic button\",\"location\":{\"lat\":$WP_LAT,\"lng\":$WP_LNG},\"timestamp\":\"$timestamp\"}"
+           api_post "$API_BASE/alerts" "$alert_payload" "$token" > /dev/null
+           echo -e "  \033[31m[ALERT] Panic: $VEHICLE_ID\033[0m"
         fi
 
         # Presence Logic

@@ -6321,8 +6321,976 @@
               "pauseSeconds": 5
             }
           ]
+        },
+        {
+          "routeId": "ROUTE-R81",
+          "vehicleId": "BUS-NEW-82",
+          "driverEmail": "driver82@sbtm.demo",
+          "driverId": "driver-new-82",
+          "schoolId": "c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c",
+          "isLiveDriver": true,
+          "students": [
+            "STUDENT-300",
+            "STUDENT-301",
+            "STUDENT-302",
+            "STUDENT-303",
+            "STUDENT-304",
+            "STUDENT-305",
+            "STUDENT-306",
+            "STUDENT-307",
+            "STUDENT-308",
+            "STUDENT-309",
+            "STUDENT-310",
+            "STUDENT-311",
+            "STUDENT-312",
+            "STUDENT-313",
+            "STUDENT-314",
+            "STUDENT-315",
+            "STUDENT-316",
+            "STUDENT-317",
+            "STUDENT-318",
+            "STUDENT-319",
+            "STUDENT-320",
+            "STUDENT-321",
+            "STUDENT-322",
+            "STUDENT-323"
+          ],
+          "polyline": "k~{sG`k|lMTBJN@dA@pA?D?NO?C?mED_BFoAHM@M@qBPMBwANcAXQHy@Xm@\\m@d@GFs@n@e@d@MTe@n@W`@MHY`@EDQNECGAEAC?Y[EECGIOOUo@u@QQIMKKGKISIOGUCQCOAS?S?Q@OBQBQBQFQHSHOJMHIJGLGLAJAJ@LBJFHFDHFJBNBRAPANEPGLGHQRONkAbA_@PWLWLSFu@Xq@V{Af@cGtBaBl@SHiBr@YLULWNWNWRURYTWXUTSVSXqAfBMTMNORUXSVUTONOLOJi@^a@Xq@`@A@y@h@e@TmLlH{BzAqA|@aAp@iBjAo@b@y@j@qA|@KFMJcAr@GDiBnAwB|Ao@d@q@f@WPu@j@m@b@]VGFKFMHMJGDg@^WPi@`@iBtAKF{@n@wB|AKFCBUNOHMFOHODSFUFWFUDKB_ADa@@Q@Q@a@B{AFgAH]H[JE@SHwAp@IBKFWNEBIFQFm@Ze@\\k@V[N[N[NWLk@XEBGBGBGDIBy@`@u@^s@\\k@Xg@VA@c@Ra@Re@TYLGDy@^eAf@OHSHe@Va@POHOFMFOHO?E@c@TSJEFEDIHUJg@V{At@KFKDqAn@g@TKFe@TQHQHUJ{@^_Ab@CBWBMDEBKD_@PkAl@m@\\DVDR@JDVHh@DVR`@HVj@hAZ`AT|@x@|Et@nDh@bDDTBXl@nFLlAlAxKJx@ZzCPnAp@rEb@fCt@|Dj@~Cl@zCn@rCNn@F\\`@|A^~AT|@~BtIPn@d@|A\\fA|ApE`@zBZxAPp@rFlQ@RVChB{@HGPIl@]^[rAs@@P?DVnAH`@F^H`@Jd@l@tCXzAJh@Jf@?DDREBcCpAWLBPH^?B",
+          "waypoints": [
+            {
+              "lat": 45.37293,
+              "lng": -75.68307,
+              "label": "Stop 1",
+              "speedKph": 20,
+              "pauseSeconds": 5,
+              "students": [
+                "STUDENT-300",
+                "STUDENT-301"
+              ]
+            },
+            {
+              "lat": 45.37388,
+              "lng": -75.68374,
+              "speedKph": 50
+            },
+            {
+              "lat": 45.37468,
+              "lng": -75.68264,
+              "label": "Stop 2",
+              "speedKph": 20,
+              "pauseSeconds": 5,
+              "students": [
+                "STUDENT-302"
+              ]
+            },
+            {
+              "lat": 45.37452,
+              "lng": -75.68156,
+              "speedKph": 50
+            },
+            {
+              "lat": 45.37384,
+              "lng": -75.68156,
+              "label": "Stop 3",
+              "speedKph": 20,
+              "pauseSeconds": 5,
+              "students": [
+                "STUDENT-303",
+                "STUDENT-304",
+                "STUDENT-305"
+              ]
+            },
+            {
+              "lat": 45.37476,
+              "lng": -75.6828,
+              "speedKph": 50
+            },
+            {
+              "lat": 45.37874,
+              "lng": -75.68471,
+              "label": "Stop 4",
+              "speedKph": 20,
+              "pauseSeconds": 5,
+              "students": [
+                "STUDENT-306",
+                "STUDENT-307"
+              ]
+            },
+            {
+              "lat": 45.38028,
+              "lng": -75.6864,
+              "speedKph": 50
+            },
+            {
+              "lat": 45.38196,
+              "lng": -75.68776,
+              "label": "Stop 5",
+              "speedKph": 20,
+              "pauseSeconds": 5,
+              "students": [
+                "STUDENT-308"
+              ]
+            },
+            {
+              "lat": 45.38745,
+              "lng": -75.69177,
+              "speedKph": 50
+            },
+            {
+              "lat": 45.39008,
+              "lng": -75.69383,
+              "label": "Stop 6",
+              "speedKph": 20,
+              "pauseSeconds": 5,
+              "students": [
+                "STUDENT-309",
+                "STUDENT-310",
+                "STUDENT-311"
+              ]
+            },
+            {
+              "lat": 45.39241,
+              "lng": -75.69565,
+              "speedKph": 50
+            },
+            {
+              "lat": 45.39381,
+              "lng": -75.696,
+              "label": "Stop 7",
+              "speedKph": 20,
+              "pauseSeconds": 5,
+              "students": [
+                "STUDENT-312",
+                "STUDENT-313"
+              ]
+            },
+            {
+              "lat": 45.39592,
+              "lng": -75.69669,
+              "speedKph": 50
+            },
+            {
+              "lat": 45.39753,
+              "lng": -75.69766,
+              "label": "Stop 8",
+              "speedKph": 20,
+              "pauseSeconds": 5,
+              "students": [
+                "STUDENT-314",
+                "STUDENT-315",
+                "STUDENT-316"
+              ]
+            },
+            {
+              "lat": 45.39945,
+              "lng": -75.69878,
+              "speedKph": 50
+            },
+            {
+              "lat": 45.40111,
+              "lng": -75.69973,
+              "label": "Stop 9",
+              "speedKph": 20,
+              "pauseSeconds": 5,
+              "students": [
+                "STUDENT-317",
+                "STUDENT-318",
+                "STUDENT-319"
+              ]
+            },
+            {
+              "lat": 45.4025,
+              "lng": -75.70055,
+              "speedKph": 50
+            },
+            {
+              "lat": 45.40448,
+              "lng": -75.70162,
+              "label": "Stop 10",
+              "speedKph": 20,
+              "pauseSeconds": 5,
+              "students": [
+                "STUDENT-320"
+              ]
+            },
+            {
+              "lat": 45.40506,
+              "lng": -75.70304,
+              "speedKph": 50
+            },
+            {
+              "lat": 45.40303,
+              "lng": -75.71086,
+              "label": "Stop 11",
+              "speedKph": 20,
+              "pauseSeconds": 5,
+              "students": [
+                "STUDENT-321"
+              ]
+            },
+            {
+              "lat": 45.40106,
+              "lng": -75.7182,
+              "speedKph": 50
+            },
+            {
+              "lat": 45.39762,
+              "lng": -75.72719,
+              "label": "Stop 12",
+              "speedKph": 20,
+              "pauseSeconds": 5,
+              "students": [
+                "STUDENT-322",
+                "STUDENT-323"
+              ]
+            },
+            {
+              "lat": 45.3958,
+              "lng": -75.72708,
+              "speedKph": 50
+            },
+            {
+              "lat": 45.396,
+              "lng": -75.73,
+              "label": "End - School",
+              "speedKph": 5,
+              "pauseSeconds": 15
+            }
+          ]
+        },
+        {
+          "routeId": "ROUTE-R82",
+          "vehicleId": "BUS-NEW-83",
+          "driverEmail": "driver83@sbtm.demo",
+          "driverId": "driver-new-83",
+          "schoolId": "c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c",
+          "isLiveDriver": true,
+          "students": [
+            "STUDENT-324",
+            "STUDENT-325",
+            "STUDENT-326",
+            "STUDENT-327",
+            "STUDENT-328",
+            "STUDENT-329",
+            "STUDENT-330",
+            "STUDENT-331",
+            "STUDENT-332",
+            "STUDENT-333",
+            "STUDENT-334",
+            "STUDENT-335",
+            "STUDENT-336",
+            "STUDENT-337",
+            "STUDENT-338",
+            "STUDENT-339",
+            "STUDENT-340",
+            "STUDENT-341",
+            "STUDENT-342",
+            "STUDENT-343",
+            "STUDENT-344",
+            "STUDENT-345",
+            "STUDENT-346"
+          ],
+          "polyline": "ks{sGrqgmM]f@QPSPWT}@r@IFsB~AuB`BGBmCtBMFMKO[w@kBuA_DSe@}@qCASBMDEbEsDJIdBsALIGQw@aCKYCIGIGO{@sBGOCEKWGSIOGQGSEQGUCMAGEUACCWCSCWAW?SAU?G?M?w@?OCs@A[I]SBqD\\oCXI@o@FqAH_@@iBRO@MBK@w@JyAP_ALc@F_@DUBOBo@HuAPs@F{@BuBLU@K@S@O@G?o@DUB]Di@JS?Y?O?g@?O?S?aA@c@?{@CQA[AUA[A]C[CUAiAGG?q@EG?o@Eg@Cc@CQAQCsDe@aBWaBUOCUEeBWo@IcAOIAg@Ig@Gy@M[K[M_@EAAc@EKCA?_AMKAOC]iA{AkEkAqDGOUq@m@iBM]a@kA]cAIYISGWIUGUQw@Me@G[EQCKQOMc@ISEIEKEEEGIIGGOFi@XGDuBfA}BjA}FxC_GvCIDKF{@`@A@oCtAw@`@EBcCpAWLBPH^?B",
+          "waypoints": [
+            {
+              "lat": 45.3697,
+              "lng": -75.73969,
+              "label": "Stop 1",
+              "speedKph": 20,
+              "pauseSeconds": 5,
+              "students": [
+                "STUDENT-324",
+                "STUDENT-325"
+              ]
+            },
+            {
+              "lat": 45.36952,
+              "lng": -75.73687,
+              "speedKph": 50
+            },
+            {
+              "lat": 45.36928,
+              "lng": -75.73543,
+              "label": "Stop 2",
+              "speedKph": 20,
+              "pauseSeconds": 5,
+              "students": [
+                "STUDENT-326",
+                "STUDENT-327"
+              ]
+            },
+            {
+              "lat": 45.36982,
+              "lng": -75.73439,
+              "speedKph": 50
+            },
+            {
+              "lat": 45.37005,
+              "lng": -75.73381,
+              "label": "Stop 3",
+              "speedKph": 20,
+              "pauseSeconds": 5,
+              "students": [
+                "STUDENT-328"
+              ]
+            },
+            {
+              "lat": 45.37016,
+              "lng": -75.73312,
+              "speedKph": 50
+            },
+            {
+              "lat": 45.3702,
+              "lng": -75.73214,
+              "label": "Stop 4",
+              "speedKph": 20,
+              "pauseSeconds": 5,
+              "students": [
+                "STUDENT-329"
+              ]
+            },
+            {
+              "lat": 45.37266,
+              "lng": -75.73239,
+              "speedKph": 50
+            },
+            {
+              "lat": 45.37429,
+              "lng": -75.73269,
+              "label": "Stop 5",
+              "speedKph": 20,
+              "pauseSeconds": 5,
+              "students": [
+                "STUDENT-330"
+              ]
+            },
+            {
+              "lat": 45.37581,
+              "lng": -75.73301,
+              "speedKph": 50
+            },
+            {
+              "lat": 45.37731,
+              "lng": -75.73318,
+              "label": "Stop 6",
+              "speedKph": 20,
+              "pauseSeconds": 5,
+              "students": [
+                "STUDENT-331",
+                "STUDENT-332",
+                "STUDENT-333",
+                "STUDENT-334"
+              ]
+            },
+            {
+              "lat": 45.37829,
+              "lng": -75.73332,
+              "speedKph": 50
+            },
+            {
+              "lat": 45.37956,
+              "lng": -75.73331,
+              "label": "Stop 7",
+              "speedKph": 20,
+              "pauseSeconds": 5,
+              "students": [
+                "STUDENT-335",
+                "STUDENT-336"
+              ]
+            },
+            {
+              "lat": 45.38044,
+              "lng": -75.73322,
+              "speedKph": 50
+            },
+            {
+              "lat": 45.38176,
+              "lng": -75.73308,
+              "label": "Stop 8",
+              "speedKph": 20,
+              "pauseSeconds": 5,
+              "students": [
+                "STUDENT-337",
+                "STUDENT-338",
+                "STUDENT-339"
+              ]
+            },
+            {
+              "lat": 45.38401,
+              "lng": -75.73258,
+              "speedKph": 50
+            },
+            {
+              "lat": 45.38584,
+              "lng": -75.73216,
+              "label": "Stop 9",
+              "speedKph": 20,
+              "pauseSeconds": 5,
+              "students": [
+                "STUDENT-340"
+              ]
+            },
+            {
+              "lat": 45.38654,
+              "lng": -75.73194,
+              "speedKph": 50
+            },
+            {
+              "lat": 45.38803,
+              "lng": -75.72948,
+              "label": "Stop 10",
+              "speedKph": 20,
+              "pauseSeconds": 5,
+              "students": [
+                "STUDENT-341",
+                "STUDENT-342"
+              ]
+            },
+            {
+              "lat": 45.38886,
+              "lng": -75.7276,
+              "speedKph": 50
+            },
+            {
+              "lat": 45.38922,
+              "lng": -75.72656,
+              "label": "Stop 11",
+              "speedKph": 20,
+              "pauseSeconds": 5,
+              "students": [
+                "STUDENT-343",
+                "STUDENT-344"
+              ]
+            },
+            {
+              "lat": 45.38954,
+              "lng": -75.726,
+              "speedKph": 50
+            },
+            {
+              "lat": 45.39058,
+              "lng": -75.72643,
+              "label": "Stop 12",
+              "speedKph": 20,
+              "pauseSeconds": 5,
+              "students": [
+                "STUDENT-345",
+                "STUDENT-346"
+              ]
+            },
+            {
+              "lat": 45.39418,
+              "lng": -75.72859,
+              "speedKph": 50
+            },
+            {
+              "lat": 45.396,
+              "lng": -75.73,
+              "label": "End - School",
+              "speedKph": 5,
+              "pauseSeconds": 15
+            }
+          ],
+          "hasPanicAlert": true
+        },
+        {
+          "routeId": "ROUTE-E83",
+          "vehicleId": "BUS-NEW-84",
+          "driverEmail": "driver84@sbtm.demo",
+          "driverId": "driver-new-84",
+          "schoolId": "s0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5a",
+          "isLiveDriver": true,
+          "students": [
+            "STUDENT-347",
+            "STUDENT-348",
+            "STUDENT-349",
+            "STUDENT-350",
+            "STUDENT-351",
+            "STUDENT-352",
+            "STUDENT-353",
+            "STUDENT-354",
+            "STUDENT-355",
+            "STUDENT-356",
+            "STUDENT-357",
+            "STUDENT-358",
+            "STUDENT-359",
+            "STUDENT-360",
+            "STUDENT-361",
+            "STUDENT-362",
+            "STUDENT-363",
+            "STUDENT-364",
+            "STUDENT-365",
+            "STUDENT-366",
+            "STUDENT-367",
+            "STUDENT-368",
+            "STUDENT-369",
+            "STUDENT-370",
+            "STUDENT-371"
+          ],
+          "polyline": "qzctGhx{lM??",
+          "waypoints": [
+            {
+              "lat": 45.40857,
+              "lng": -75.67765,
+              "label": "Stop 1",
+              "speedKph": 20,
+              "pauseSeconds": 5,
+              "students": [
+                "STUDENT-347",
+                "STUDENT-348",
+                "STUDENT-349",
+                "STUDENT-350"
+              ]
+            },
+            {
+              "lat": 45.40857,
+              "lng": -75.67765,
+              "speedKph": 50
+            },
+            {
+              "lat": 45.40857,
+              "lng": -75.67765,
+              "label": "Stop 2",
+              "speedKph": 20,
+              "pauseSeconds": 5,
+              "students": [
+                "STUDENT-351",
+                "STUDENT-352",
+                "STUDENT-353",
+                "STUDENT-354",
+                "STUDENT-355"
+              ]
+            },
+            {
+              "lat": 45.40857,
+              "lng": -75.67765,
+              "speedKph": 50
+            },
+            {
+              "lat": 45.40857,
+              "lng": -75.67765,
+              "label": "Stop 3",
+              "speedKph": 20,
+              "pauseSeconds": 5,
+              "students": [
+                "STUDENT-356",
+                "STUDENT-357"
+              ]
+            },
+            {
+              "lat": 45.40857,
+              "lng": -75.67765,
+              "speedKph": 50
+            },
+            {
+              "lat": 45.40857,
+              "lng": -75.67765,
+              "label": "Stop 4",
+              "speedKph": 20,
+              "pauseSeconds": 5,
+              "students": [
+                "STUDENT-358",
+                "STUDENT-359"
+              ]
+            },
+            {
+              "lat": 45.40857,
+              "lng": -75.67765,
+              "speedKph": 50
+            },
+            {
+              "lat": 45.40857,
+              "lng": -75.67765,
+              "label": "Stop 5",
+              "speedKph": 20,
+              "pauseSeconds": 5,
+              "students": [
+                "STUDENT-360",
+                "STUDENT-361"
+              ]
+            },
+            {
+              "lat": 45.40857,
+              "lng": -75.67765,
+              "speedKph": 50
+            },
+            {
+              "lat": 45.40857,
+              "lng": -75.67765,
+              "label": "Stop 6",
+              "speedKph": 20,
+              "pauseSeconds": 5,
+              "students": [
+                "STUDENT-362",
+                "STUDENT-363"
+              ]
+            },
+            {
+              "lat": 45.40857,
+              "lng": -75.67765,
+              "speedKph": 50
+            },
+            {
+              "lat": 45.40857,
+              "lng": -75.67765,
+              "label": "Stop 7",
+              "speedKph": 20,
+              "pauseSeconds": 5,
+              "students": [
+                "STUDENT-364",
+                "STUDENT-365",
+                "STUDENT-366"
+              ]
+            },
+            {
+              "lat": 45.40857,
+              "lng": -75.67765,
+              "speedKph": 50
+            },
+            {
+              "lat": 45.40857,
+              "lng": -75.67765,
+              "label": "Stop 8",
+              "speedKph": 20,
+              "pauseSeconds": 5,
+              "students": [
+                "STUDENT-367"
+              ]
+            },
+            {
+              "lat": 45.40857,
+              "lng": -75.67765,
+              "speedKph": 50
+            },
+            {
+              "lat": 45.40857,
+              "lng": -75.67765,
+              "label": "Stop 9",
+              "speedKph": 20,
+              "pauseSeconds": 5,
+              "students": [
+                "STUDENT-368"
+              ]
+            },
+            {
+              "lat": 45.40857,
+              "lng": -75.67765,
+              "speedKph": 50
+            },
+            {
+              "lat": 45.40857,
+              "lng": -75.67765,
+              "label": "Stop 10",
+              "speedKph": 20,
+              "pauseSeconds": 5,
+              "students": [
+                "STUDENT-369"
+              ]
+            },
+            {
+              "lat": 45.40857,
+              "lng": -75.67765,
+              "speedKph": 50
+            },
+            {
+              "lat": 45.40857,
+              "lng": -75.67765,
+              "label": "Stop 11",
+              "speedKph": 20,
+              "pauseSeconds": 5,
+              "students": [
+                "STUDENT-370"
+              ]
+            },
+            {
+              "lat": 45.40857,
+              "lng": -75.67765,
+              "speedKph": 50
+            },
+            {
+              "lat": 45.40857,
+              "lng": -75.67765,
+              "label": "Stop 12",
+              "speedKph": 20,
+              "pauseSeconds": 5,
+              "students": [
+                "STUDENT-371"
+              ]
+            },
+            {
+              "lat": 45.40857,
+              "lng": -75.67765,
+              "speedKph": 50
+            },
+            {
+              "lat": 45.421,
+              "lng": -75.6,
+              "label": "End - School",
+              "speedKph": 5,
+              "pauseSeconds": 15
+            }
+          ],
+          "hasDeviationAlert": true
+        },
+        {
+          "routeId": "ROUTE-E84",
+          "vehicleId": "BUS-NEW-85",
+          "driverEmail": "driver85@sbtm.demo",
+          "driverId": "driver-new-85",
+          "schoolId": "s0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5a",
+          "isLiveDriver": true,
+          "students": [
+            "STUDENT-372",
+            "STUDENT-373",
+            "STUDENT-374",
+            "STUDENT-375",
+            "STUDENT-376",
+            "STUDENT-377",
+            "STUDENT-378",
+            "STUDENT-379",
+            "STUDENT-380",
+            "STUDENT-381",
+            "STUDENT-382",
+            "STUDENT-383",
+            "STUDENT-384",
+            "STUDENT-385",
+            "STUDENT-386",
+            "STUDENT-387",
+            "STUDENT-388",
+            "STUDENT-389",
+            "STUDENT-390",
+            "STUDENT-391",
+            "STUDENT-392",
+            "STUDENT-393"
+          ],
+          "polyline": "qzctGhx{lM??",
+          "waypoints": [
+            {
+              "lat": 45.40857,
+              "lng": -75.67765,
+              "label": "Stop 1",
+              "speedKph": 20,
+              "pauseSeconds": 5,
+              "students": [
+                "STUDENT-372"
+              ]
+            },
+            {
+              "lat": 45.40857,
+              "lng": -75.67765,
+              "speedKph": 50
+            },
+            {
+              "lat": 45.40857,
+              "lng": -75.67765,
+              "label": "Stop 2",
+              "speedKph": 20,
+              "pauseSeconds": 5,
+              "students": [
+                "STUDENT-373",
+                "STUDENT-374",
+                "STUDENT-375",
+                "STUDENT-376"
+              ]
+            },
+            {
+              "lat": 45.40857,
+              "lng": -75.67765,
+              "speedKph": 50
+            },
+            {
+              "lat": 45.40857,
+              "lng": -75.67765,
+              "label": "Stop 3",
+              "speedKph": 20,
+              "pauseSeconds": 5,
+              "students": [
+                "STUDENT-377",
+                "STUDENT-378"
+              ]
+            },
+            {
+              "lat": 45.40857,
+              "lng": -75.67765,
+              "speedKph": 50
+            },
+            {
+              "lat": 45.40857,
+              "lng": -75.67765,
+              "label": "Stop 4",
+              "speedKph": 20,
+              "pauseSeconds": 5,
+              "students": [
+                "STUDENT-379"
+              ]
+            },
+            {
+              "lat": 45.40857,
+              "lng": -75.67765,
+              "speedKph": 50
+            },
+            {
+              "lat": 45.40857,
+              "lng": -75.67765,
+              "label": "Stop 5",
+              "speedKph": 20,
+              "pauseSeconds": 5,
+              "students": [
+                "STUDENT-380",
+                "STUDENT-381"
+              ]
+            },
+            {
+              "lat": 45.40857,
+              "lng": -75.67765,
+              "speedKph": 50
+            },
+            {
+              "lat": 45.40857,
+              "lng": -75.67765,
+              "label": "Stop 6",
+              "speedKph": 20,
+              "pauseSeconds": 5,
+              "students": [
+                "STUDENT-382"
+              ]
+            },
+            {
+              "lat": 45.40857,
+              "lng": -75.67765,
+              "speedKph": 50
+            },
+            {
+              "lat": 45.40857,
+              "lng": -75.67765,
+              "label": "Stop 7",
+              "speedKph": 20,
+              "pauseSeconds": 5,
+              "students": [
+                "STUDENT-383"
+              ]
+            },
+            {
+              "lat": 45.40857,
+              "lng": -75.67765,
+              "speedKph": 50
+            },
+            {
+              "lat": 45.40857,
+              "lng": -75.67765,
+              "label": "Stop 8",
+              "speedKph": 20,
+              "pauseSeconds": 5,
+              "students": [
+                "STUDENT-384",
+                "STUDENT-385",
+                "STUDENT-386"
+              ]
+            },
+            {
+              "lat": 45.40857,
+              "lng": -75.67765,
+              "speedKph": 50
+            },
+            {
+              "lat": 45.40857,
+              "lng": -75.67765,
+              "label": "Stop 9",
+              "speedKph": 20,
+              "pauseSeconds": 5,
+              "students": [
+                "STUDENT-387"
+              ]
+            },
+            {
+              "lat": 45.40857,
+              "lng": -75.67765,
+              "speedKph": 50
+            },
+            {
+              "lat": 45.40857,
+              "lng": -75.67765,
+              "label": "Stop 10",
+              "speedKph": 20,
+              "pauseSeconds": 5,
+              "students": [
+                "STUDENT-388"
+              ]
+            },
+            {
+              "lat": 45.40857,
+              "lng": -75.67765,
+              "speedKph": 50
+            },
+            {
+              "lat": 45.40857,
+              "lng": -75.67765,
+              "label": "Stop 11",
+              "speedKph": 20,
+              "pauseSeconds": 5,
+              "students": [
+                "STUDENT-389",
+                "STUDENT-390"
+              ]
+            },
+            {
+              "lat": 45.40857,
+              "lng": -75.67765,
+              "speedKph": 50
+            },
+            {
+              "lat": 45.40857,
+              "lng": -75.67765,
+              "label": "Stop 12",
+              "speedKph": 20,
+              "pauseSeconds": 5,
+              "students": [
+                "STUDENT-391",
+                "STUDENT-392",
+                "STUDENT-393"
+              ]
+            },
+            {
+              "lat": 45.40857,
+              "lng": -75.67765,
+              "speedKph": 50
+            },
+            {
+              "lat": 45.421,
+              "lng": -75.6,
+              "label": "End - School",
+              "speedKph": 5,
+              "pauseSeconds": 15
+            }
+          ]
         }
       ]
     }
-  }
+  },
+  "schools": {
+    "school1": {
+      "name": "Riverside Academy",
+      "lat": 45.396,
+      "lng": -75.73,
+      "radiusKm": 5
+    },
+    "school2": {
+      "name": "Eastern Secondary",
+      "lat": 45.421,
+      "lng": -75.6,
+      "radiusKm": 5
+    }
+  },
+  "liveDriverRoutes": [
+    "ROUTE-R81",
+    "ROUTE-R82",
+    "ROUTE-E83",
+    "ROUTE-E84"
+  ],
+  "liveDriverEmails": [
+    "driver82@sbtm.demo",
+    "driver83@sbtm.demo",
+    "driver84@sbtm.demo",
+    "driver85@sbtm.demo"
+  ]
 }

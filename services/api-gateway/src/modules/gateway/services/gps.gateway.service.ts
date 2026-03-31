@@ -235,6 +235,59 @@ export class GpsGatewayService {
         });
     }
 
+    async getReferenceRouteById(routeId: string, user: RequestUser): Promise<any> {
+        this.checkRouteAccess(routeId, user);
+        
+        const demoSchoolId = user.schoolId || 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c';
+        
+        const routes = await this.dataSource.query(
+            `SELECT r.id, r.name, r."vehicleId" as "vehicleId", r.schedule, r.polyline
+             FROM routes_reference r
+             WHERE r.id = $1`,
+            [routeId],
+        ) as ReferenceRouteRow[];
+
+        if (routes.length === 0) {
+            const { NotFoundException } = require('@nestjs/common');
+            throw new NotFoundException('Reference route not found');
+        }
+
+        const r = routes[0];
+
+        const stops = await this.dataSource.query(
+            `SELECT s.id, s."routeId" as "routeId", s."sequenceOrder" as "sequenceOrder", s."stopName" as "stopName", s.lat, s.lng, s."arrivalTime" as "arrivalTime"
+             FROM route_stops_reference s
+             WHERE s."routeId" = $1`,
+            [routeId]
+        ) as ReferenceRouteStopRow[];
+
+        const schedule = typeof r.schedule === 'string' ? JSON.parse(r.schedule) : r.schedule;
+        const startTime = schedule?.startTime || '07:30';
+        const routeStops = stops
+            .slice()
+            .sort((a, b) => a.sequenceOrder - b.sequenceOrder)
+            .map((s) => ({
+                id: s.id,
+                routeId: r.id,
+                sequence: s.sequenceOrder,
+                address: s.stopName,
+                location: `POINT(${s.lng} ${s.lat})`,
+            }));
+
+        return {
+            id: r.id,
+            name: r.name,
+            schoolId: demoSchoolId,
+            direction: 'AM',
+            vehicleId: r.vehicleId || undefined,
+            startTime,
+            estimatedDuration: 60,
+            stops: routeStops,
+            status: 'active',
+            polyline: r.polyline || undefined,
+        };
+    }
+
     async getAllLiveLocations(user: RequestUser): Promise<LiveLocationDto[]> {
         const routeIds = this.getAccessibleRouteIds(user);
 

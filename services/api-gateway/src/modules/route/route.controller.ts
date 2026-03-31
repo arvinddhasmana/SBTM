@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, Res } from '@nestjs/common';
 import { RouteService } from './route.service';
 import { OptimizationService } from './optimization.service';
 import { CreateRouteDto, UpdateRouteDto, CreateRouteStopDto } from './dto/route.dto';
@@ -28,9 +28,17 @@ export class RouteController {
     }
 
     @Get(':id')
-    findOne(@Param('id') id: string, @Req() req: any) {
+    findOne(@Param('id') id: string, @Req() req: any, @Res() res: any) {
+        if (id.startsWith('ROUTE-')) {
+            return res.redirect(`/api/v1/routes/reference/${id}`);
+        }
         const schoolId = req.user.schoolId;
-        return this.routeService.findOne(id, schoolId);
+        this.routeService.findOne(id, schoolId)
+            .then(data => res.json(data))
+            .catch(err => {
+                const status = err.getStatus ? err.getStatus() : 500;
+                res.status(status).json({ message: err.message, error: err.name });
+            });
     }
 
     @Patch(':id')
