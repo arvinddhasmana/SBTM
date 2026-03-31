@@ -1,5 +1,5 @@
 // Alert Types
-export type AlertEventType = 'PANIC_BUTTON' | 'INCIDENT' | 'OTHER';
+export type AlertEventType = 'PANIC_BUTTON' | 'ROUTE_DEVIATION' | 'INCIDENT' | 'OTHER';
 export type AlertStatus = 'ACTIVE' | 'RESOLVED';
 
 export interface Alert {
@@ -41,6 +41,7 @@ export interface StudentPresence {
     status: PresenceStatus;
     lastSeen: string;
     routeId?: string;
+    vehicleId?: string;
 }
 
 // Video Event Types

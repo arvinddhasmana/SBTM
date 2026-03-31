@@ -113,20 +113,32 @@ const LiveMap: React.FC<LiveMapProps> = ({ locations, selectedRoute, plannedRout
 
         // Render Stops for Selected Route
         if (selectedRoute?.stops) {
-            selectedRoute.stops.forEach(stop => {
+            selectedRoute.stops.forEach((stop, idx) => {
                 const pos = parseWktPoint(stop.location);
-                const stopMarker = L.circleMarker(pos, {
-                    radius: 5,
-                    fillColor: '#3b82f6',
-                    color: '#fff',
-                    weight: 2,
-                    opacity: 1,
-                    fillOpacity: 1,
-                })
-                    .addTo(mapInstanceRef.current!)
-                    .bindPopup(`<strong class="text-slate-900">${stop.address}</strong>`);
+                if (!pos[0] && !pos[1]) return;
 
-                stopMarkersRef.current.push(stopMarker);
+                const seq = stop.sequence ?? idx + 1;
+                const stopIcon = L.divIcon({
+                    className: '',
+                    html: `<div style="
+                        width:22px;height:22px;
+                        background:#3b82f6;
+                        border:2px solid #fff;
+                        border-radius:50%;
+                        display:flex;align-items:center;justify-content:center;
+                        font-size:9px;font-weight:900;color:#fff;
+                        box-shadow:0 2px 6px rgba(0,0,0,0.45);
+                        font-family:monospace;
+                    ">${seq}</div>`,
+                    iconSize: [22, 22],
+                    iconAnchor: [11, 11],
+                });
+
+                const stopMarker = L.marker(pos, { icon: stopIcon, zIndexOffset: 500 })
+                    .addTo(mapInstanceRef.current!)
+                    .bindPopup(`<strong style="color:#1e293b">Stop ${seq}</strong><br/><span style="color:#475569">${stop.address}</span>`);
+
+                stopMarkersRef.current.push(stopMarker as unknown as L.CircleMarker);
             });
         }
 

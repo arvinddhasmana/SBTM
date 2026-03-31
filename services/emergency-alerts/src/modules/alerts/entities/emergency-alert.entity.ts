@@ -8,6 +8,7 @@ import {
 
 export enum EmergencyEventType {
   PANIC_BUTTON = 'PANIC_BUTTON',
+  ROUTE_DEVIATION = 'ROUTE_DEVIATION',
   INCIDENT = 'INCIDENT',
   OTHER = 'OTHER',
 }

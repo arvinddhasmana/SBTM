@@ -212,7 +212,7 @@ CREATE TABLE route_geofences (
 CREATE INDEX "IDX_route_geofences_school" ON route_geofences(school_id);
 
 -- Emergency Alerts (Matching emergency-alerts entity)
-CREATE TYPE emergency_event_type_enum AS ENUM ('PANIC_BUTTON', 'INCIDENT', 'OTHER');
+CREATE TYPE emergency_event_type_enum AS ENUM ('PANIC_BUTTON', 'ROUTE_DEVIATION', 'INCIDENT', 'OTHER');
 CREATE TYPE emergency_alert_status_enum AS ENUM ('ACTIVE', 'RESOLVED');
 
 CREATE TABLE emergency_alert (
@@ -326,389 +326,184 @@ INSERT INTO users (id, email, "passwordHash", role, "firstName", "lastName", "dr
     ('10000000-0000-0000-0000-000000000002', 'school.admin@sbtm.demo',  crypt('Admin123!', gen_salt('bf')), 'SCHOOL_ADMIN', 'School', 'Admin',   NULL, NULL, NULL, 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
     ('10000000-0000-0000-0000-000000000003', 'school2.admin@sbtm.demo', crypt('Admin123!', gen_salt('bf')), 'SCHOOL_ADMIN', 'School2','Admin',   NULL, NULL, NULL, 'c1a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c');
 
--- ===================== Driver Users (20) =====================
--- Drivers 1-10 → School 1 ("Greenfield Elementary")
--- Drivers 11-20 → School 2 ("Riverside Academy")
--- ☆ LIVE: driver1, driver2, driver11, driver12
+-- ===================== Driver Users (4 — live drivers only) =====================
+-- driver1, driver2 → School 1 ("Greenfield Elementary")
+-- driver11, driver12 → School 2 ("Riverside Academy")
 
 INSERT INTO users (id, email, "passwordHash", role, "firstName", "lastName", "driverId", "childRouteIds", "assignedRouteIds", "schoolId", "boardId") VALUES
-    -- School 1 Drivers
     ('10000000-0000-0000-0000-000000000101', 'driver1@sbtm.demo',  crypt('Admin123!', gen_salt('bf')), 'DRIVER', 'James',    'Wilson',    'driver-001', NULL, 'ROUTE-R01', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
     ('10000000-0000-0000-0000-000000000102', 'driver2@sbtm.demo',  crypt('Admin123!', gen_salt('bf')), 'DRIVER', 'Robert',   'Taylor',    'driver-002', NULL, 'ROUTE-R02', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
-    ('10000000-0000-0000-0000-000000000103', 'driver3@sbtm.demo',  crypt('Admin123!', gen_salt('bf')), 'DRIVER', 'Michael',  'Anderson',  'driver-003', NULL, 'ROUTE-R03', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
-    ('10000000-0000-0000-0000-000000000104', 'driver4@sbtm.demo',  crypt('Admin123!', gen_salt('bf')), 'DRIVER', 'William',  'Thomas',    'driver-004', NULL, 'ROUTE-R04', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
-    ('10000000-0000-0000-0000-000000000105', 'driver5@sbtm.demo',  crypt('Admin123!', gen_salt('bf')), 'DRIVER', 'David',    'Martinez',  'driver-005', NULL, 'ROUTE-R05', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
-    ('10000000-0000-0000-0000-000000000106', 'driver6@sbtm.demo',  crypt('Admin123!', gen_salt('bf')), 'DRIVER', 'Richard',  'Garcia',    'driver-006', NULL, 'ROUTE-R06', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
-    ('10000000-0000-0000-0000-000000000107', 'driver7@sbtm.demo',  crypt('Admin123!', gen_salt('bf')), 'DRIVER', 'Joseph',   'Brown',     'driver-007', NULL, 'ROUTE-R07', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
-    ('10000000-0000-0000-0000-000000000108', 'driver8@sbtm.demo',  crypt('Admin123!', gen_salt('bf')), 'DRIVER', 'Charles',  'Davis',     'driver-008', NULL, 'ROUTE-R08', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
-    ('10000000-0000-0000-0000-000000000109', 'driver9@sbtm.demo',  crypt('Admin123!', gen_salt('bf')), 'DRIVER', 'Daniel',   'Miller',    'driver-009', NULL, 'ROUTE-R09', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
-    ('10000000-0000-0000-0000-000000000110', 'driver10@sbtm.demo', crypt('Admin123!', gen_salt('bf')), 'DRIVER', 'Matthew',  'Lopez',     'driver-010', NULL, 'ROUTE-R10', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
-    -- School 2 Drivers
     ('10000000-0000-0000-0000-000000000111', 'driver11@sbtm.demo', crypt('Admin123!', gen_salt('bf')), 'DRIVER', 'Andrew',   'Clark',     'driver-011', NULL, 'ROUTE-R11', 'c1a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
-    ('10000000-0000-0000-0000-000000000112', 'driver12@sbtm.demo', crypt('Admin123!', gen_salt('bf')), 'DRIVER', 'Kevin',    'Lewis',     'driver-012', NULL, 'ROUTE-R12', 'c1a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
-    ('10000000-0000-0000-0000-000000000113', 'driver13@sbtm.demo', crypt('Admin123!', gen_salt('bf')), 'DRIVER', 'Steven',   'Walker',    'driver-013', NULL, 'ROUTE-R13', 'c1a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
-    ('10000000-0000-0000-0000-000000000114', 'driver14@sbtm.demo', crypt('Admin123!', gen_salt('bf')), 'DRIVER', 'Timothy',  'Hall',      'driver-014', NULL, 'ROUTE-R14', 'c1a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
-    ('10000000-0000-0000-0000-000000000115', 'driver15@sbtm.demo', crypt('Admin123!', gen_salt('bf')), 'DRIVER', 'Jason',    'Allen',     'driver-015', NULL, 'ROUTE-R15', 'c1a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
-    ('10000000-0000-0000-0000-000000000116', 'driver16@sbtm.demo', crypt('Admin123!', gen_salt('bf')), 'DRIVER', 'Jeffrey',  'Young',     'driver-016', NULL, 'ROUTE-R16', 'c1a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
-    ('10000000-0000-0000-0000-000000000117', 'driver17@sbtm.demo', crypt('Admin123!', gen_salt('bf')), 'DRIVER', 'Ryan',     'King',      'driver-017', NULL, 'ROUTE-R17', 'c1a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
-    ('10000000-0000-0000-0000-000000000118', 'driver18@sbtm.demo', crypt('Admin123!', gen_salt('bf')), 'DRIVER', 'Jacob',    'Wright',    'driver-018', NULL, 'ROUTE-R18', 'c1a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
-    ('10000000-0000-0000-0000-000000000119', 'driver19@sbtm.demo', crypt('Admin123!', gen_salt('bf')), 'DRIVER', 'Gary',     'Scott',     'driver-019', NULL, 'ROUTE-R19', 'c1a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
-    ('10000000-0000-0000-0000-000000000120', 'driver20@sbtm.demo', crypt('Admin123!', gen_salt('bf')), 'DRIVER', 'Nicholas', 'Adams',     'driver-020', NULL, 'ROUTE-R20', 'c1a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c');
+    ('10000000-0000-0000-0000-000000000112', 'driver12@sbtm.demo', crypt('Admin123!', gen_salt('bf')), 'DRIVER', 'Kevin',    'Lewis',     'driver-012', NULL, 'ROUTE-R12', 'c1a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c');
 
--- ===================== Parent Users (10) tracking 15 kids =====================
+-- ===================== Parent Users (10) tracking students on 4 active routes =====================
+-- parent1/parent2 → School 1 (R01, R02); parent3+ → School 2 (R11, R12)
 
 INSERT INTO users (id, email, "passwordHash", role, "firstName", "lastName", "driverId", "childRouteIds", "assignedRouteIds", "schoolId", "boardId") VALUES
     ('10000000-0000-0000-0000-000000000201', 'parent1@sbtm.demo',  crypt('Admin123!', gen_salt('bf')), 'PARENT', 'Sarah',    'Smith',     NULL, 'ROUTE-R01,ROUTE-R02', NULL, 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
-    ('10000000-0000-0000-0000-000000000202', 'parent2@sbtm.demo',  crypt('Admin123!', gen_salt('bf')), 'PARENT', 'David',    'Johnson',   NULL, 'ROUTE-R01,ROUTE-R03', NULL, 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
+    ('10000000-0000-0000-0000-000000000202', 'parent2@sbtm.demo',  crypt('Admin123!', gen_salt('bf')), 'PARENT', 'David',    'Johnson',   NULL, 'ROUTE-R02',            NULL, 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
     ('10000000-0000-0000-0000-000000000203', 'parent3@sbtm.demo',  crypt('Admin123!', gen_salt('bf')), 'PARENT', 'Maria',    'Garcia',    NULL, 'ROUTE-R11,ROUTE-R12', NULL, 'c1a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
-    ('10000000-0000-0000-0000-000000000204', 'parent4@sbtm.demo',  crypt('Admin123!', gen_salt('bf')), 'PARENT', 'Linda',    'Brown',     NULL, 'ROUTE-R04',            NULL, 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
-    ('10000000-0000-0000-0000-000000000205', 'parent5@sbtm.demo',  crypt('Admin123!', gen_salt('bf')), 'PARENT', 'Jennifer', 'Martinez',  NULL, 'ROUTE-R05,ROUTE-R06', NULL, 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
+    ('10000000-0000-0000-0000-000000000204', 'parent4@sbtm.demo',  crypt('Admin123!', gen_salt('bf')), 'PARENT', 'Linda',    'Brown',     NULL, 'ROUTE-R01',            NULL, 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
+    ('10000000-0000-0000-0000-000000000205', 'parent5@sbtm.demo',  crypt('Admin123!', gen_salt('bf')), 'PARENT', 'Jennifer', 'Martinez',  NULL, 'ROUTE-R01,ROUTE-R02', NULL, 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
     ('10000000-0000-0000-0000-000000000206', 'parent6@sbtm.demo',  crypt('Admin123!', gen_salt('bf')), 'PARENT', 'Patricia', 'Robinson',  NULL, 'ROUTE-R11',            NULL, 'c1a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
-    ('10000000-0000-0000-0000-000000000207', 'parent7@sbtm.demo',  crypt('Admin123!', gen_salt('bf')), 'PARENT', 'Elizabeth','Clark',     NULL, 'ROUTE-R13',            NULL, 'c1a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
-    ('10000000-0000-0000-0000-000000000208', 'parent8@sbtm.demo',  crypt('Admin123!', gen_salt('bf')), 'PARENT', 'Barbara',  'Lewis',     NULL, 'ROUTE-R07',            NULL, 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
-    ('10000000-0000-0000-0000-000000000209', 'parent9@sbtm.demo',  crypt('Admin123!', gen_salt('bf')), 'PARENT', 'Susan',    'Lee',       NULL, 'ROUTE-R14,ROUTE-R15', NULL, 'c1a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
-    ('10000000-0000-0000-0000-000000000210', 'parent10@sbtm.demo', crypt('Admin123!', gen_salt('bf')), 'PARENT', 'Jessica',  'Walker',    NULL, 'ROUTE-R08',            NULL, 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c');
+    ('10000000-0000-0000-0000-000000000207', 'parent7@sbtm.demo',  crypt('Admin123!', gen_salt('bf')), 'PARENT', 'Elizabeth','Clark',     NULL, 'ROUTE-R12',            NULL, 'c1a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
+    ('10000000-0000-0000-0000-000000000208', 'parent8@sbtm.demo',  crypt('Admin123!', gen_salt('bf')), 'PARENT', 'Barbara',  'Lewis',     NULL, 'ROUTE-R02',            NULL, 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
+    ('10000000-0000-0000-0000-000000000209', 'parent9@sbtm.demo',  crypt('Admin123!', gen_salt('bf')), 'PARENT', 'Susan',    'Lee',       NULL, 'ROUTE-R11,ROUTE-R12', NULL, 'c1a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
+    ('10000000-0000-0000-0000-000000000210', 'parent10@sbtm.demo', crypt('Admin123!', gen_salt('bf')), 'PARENT', 'Jessica',  'Walker',    NULL, 'ROUTE-R02',            NULL, 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c');
 
--- ===================== Vehicles (20) =====================
--- BUS-01 to BUS-10 → School 1,  BUS-11 to BUS-20 → School 2
+-- ===================== Vehicles (4) =====================
+-- BUS-01/02 → School 1 (Greenfield Elementary), BUS-11/12 → School 2 (Riverside Academy)
 
 INSERT INTO vehicles (id, "schoolId", "licensePlate", status) VALUES
     ('20000000-0000-0000-0000-000000000001', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'ON-1001', 'ACTIVE'),
     ('20000000-0000-0000-0000-000000000002', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'ON-1002', 'ACTIVE'),
-    ('20000000-0000-0000-0000-000000000003', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'ON-1003', 'ACTIVE'),
-    ('20000000-0000-0000-0000-000000000004', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'ON-1004', 'ACTIVE'),
-    ('20000000-0000-0000-0000-000000000005', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'ON-1005', 'ACTIVE'),
-    ('20000000-0000-0000-0000-000000000006', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'ON-1006', 'ACTIVE'),
-    ('20000000-0000-0000-0000-000000000007', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'ON-1007', 'ACTIVE'),
-    ('20000000-0000-0000-0000-000000000008', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'ON-1008', 'ACTIVE'),
-    ('20000000-0000-0000-0000-000000000009', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'ON-1009', 'ACTIVE'),
-    ('20000000-0000-0000-0000-000000000010', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'ON-1010', 'ACTIVE'),
     ('20000000-0000-0000-0000-000000000011', 'c1a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'ON-2001', 'ACTIVE'),
-    ('20000000-0000-0000-0000-000000000012', 'c1a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'ON-2002', 'ACTIVE'),
-    ('20000000-0000-0000-0000-000000000013', 'c1a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'ON-2003', 'ACTIVE'),
-    ('20000000-0000-0000-0000-000000000014', 'c1a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'ON-2004', 'ACTIVE'),
-    ('20000000-0000-0000-0000-000000000015', 'c1a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'ON-2005', 'ACTIVE'),
-    ('20000000-0000-0000-0000-000000000016', 'c1a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'ON-2006', 'ACTIVE'),
-    ('20000000-0000-0000-0000-000000000017', 'c1a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'ON-2007', 'ACTIVE'),
-    ('20000000-0000-0000-0000-000000000018', 'c1a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'ON-2008', 'ACTIVE'),
-    ('20000000-0000-0000-0000-000000000019', 'c1a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'ON-2009', 'ACTIVE'),
-    ('20000000-0000-0000-0000-000000000020', 'c1a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'ON-2010', 'ACTIVE');
+    ('20000000-0000-0000-0000-000000000012', 'c1a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'ON-2002', 'ACTIVE');
 
--- ===================== Routes (20) =====================
--- School 1: Routes R01-R10 along Ottawa Glebe-area streets
--- School 2: Routes R11-R20 along Ottawa Westboro-area streets
+-- ===================== Routes (4) =====================
+-- School 1 ("Greenfield Elementary" at 45.3876, -75.6960): R01 Bank Street South, R02 Bronson Avenue
+-- School 2 ("Riverside Academy"   at 45.3960, -75.7300): R11 Richmond Road, R12 Scott Street
 
 INSERT INTO routes (id, "schoolId", name, direction, "vehicleId", "startTime", "estimatedDuration") VALUES
-    -- School 1 ("Greenfield Elementary" at 45.3876, -75.6960)
-    ('30000000-0000-0000-0000-000000000001', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'Bank Street South',   'AM', '20000000-0000-0000-0000-000000000001', '07:15:00', 35),
-    ('30000000-0000-0000-0000-000000000002', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'Bronson Avenue',      'AM', '20000000-0000-0000-0000-000000000002', '07:20:00', 30),
-    ('30000000-0000-0000-0000-000000000003', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'Rideau Canal East',   'AM', '20000000-0000-0000-0000-000000000003', '07:25:00', 30),
-    ('30000000-0000-0000-0000-000000000004', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'Main Street',         'AM', '20000000-0000-0000-0000-000000000004', '07:30:00', 28),
-    ('30000000-0000-0000-0000-000000000005', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'Colonel By Drive',    'AM', '20000000-0000-0000-0000-000000000005', '07:15:00', 32),
-    ('30000000-0000-0000-0000-000000000006', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'Elgin Street',        'AM', '20000000-0000-0000-0000-000000000006', '07:20:00', 30),
-    ('30000000-0000-0000-0000-000000000007', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'O''Connor Street',    'AM', '20000000-0000-0000-0000-000000000007', '07:25:00', 28),
-    ('30000000-0000-0000-0000-000000000008', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'Lyon Street',         'AM', '20000000-0000-0000-0000-000000000008', '07:30:00', 30),
-    ('30000000-0000-0000-0000-000000000009', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'Pretoria Bridge',     'AM', '20000000-0000-0000-0000-000000000009', '07:35:00', 25),
-    ('30000000-0000-0000-0000-000000000010', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'Sunnyside Avenue',    'AM', '20000000-0000-0000-0000-000000000010', '07:40:00', 22),
-    -- School 2 ("Riverside Academy" at 45.3960, -75.7300)
-    ('30000000-0000-0000-0000-000000000011', 'c1a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'Richmond Road',       'AM', '20000000-0000-0000-0000-000000000011', '07:15:00', 35),
-    ('30000000-0000-0000-0000-000000000012', 'c1a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'Scott Street',        'AM', '20000000-0000-0000-0000-000000000012', '07:20:00', 30),
-    ('30000000-0000-0000-0000-000000000013', 'c1a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'Carling Avenue',      'AM', '20000000-0000-0000-0000-000000000013', '07:25:00', 32),
-    ('30000000-0000-0000-0000-000000000014', 'c1a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'Churchill Avenue',    'AM', '20000000-0000-0000-0000-000000000014', '07:30:00', 25),
-    ('30000000-0000-0000-0000-000000000015', 'c1a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'Island Park Drive',   'AM', '20000000-0000-0000-0000-000000000015', '07:20:00', 28),
-    ('30000000-0000-0000-0000-000000000016', 'c1a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'Kirkwood Avenue',     'AM', '20000000-0000-0000-0000-000000000016', '07:25:00', 25),
-    ('30000000-0000-0000-0000-000000000017', 'c1a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'Byron Avenue',        'AM', '20000000-0000-0000-0000-000000000017', '07:30:00', 30),
-    ('30000000-0000-0000-0000-000000000018', 'c1a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'Wellington Street',   'AM', '20000000-0000-0000-0000-000000000018', '07:15:00', 32),
-    ('30000000-0000-0000-0000-000000000019', 'c1a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'Parkdale Avenue',     'AM', '20000000-0000-0000-0000-000000000019', '07:35:00', 22),
-    ('30000000-0000-0000-0000-000000000020', 'c1a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'Holland Avenue',      'AM', '20000000-0000-0000-0000-000000000020', '07:40:00', 20);
+    ('30000000-0000-0000-0000-000000000001', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'Bank Street South', 'AM', '20000000-0000-0000-0000-000000000001', '07:15:00', 35),
+    ('30000000-0000-0000-0000-000000000002', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'Bronson Avenue',    'AM', '20000000-0000-0000-0000-000000000002', '07:20:00', 30),
+    ('30000000-0000-0000-0000-000000000011', 'c1a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'Richmond Road',     'AM', '20000000-0000-0000-0000-000000000011', '07:15:00', 35),
+    ('30000000-0000-0000-0000-000000000012', 'c1a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'Scott Street',      'AM', '20000000-0000-0000-0000-000000000012', '07:20:00', 30);
 
--- ===================== Route Stops (100 — 5 per route) =====================
--- GPS coordinates follow actual Ottawa road corridors within 5 km of each school.
+-- ===================== Route Stops (48 — 12 per route) =====================
+-- Stop UUID pattern: '5{RR}{SS}00-0000-0000-0000-000000000001'
+-- RR = route code (01,02,11,12), SS = 2-digit stop sequence (01-12)
 
 INSERT INTO route_stops (id, "routeId", "sequence", "address", lat, lng, "location", "arrivalTime") VALUES
-    -- R01 Bank Street South (SE → school, along Bank St)
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000001', 1, 'Bank & Walkley',         45.3680, -75.6690, ST_SetSRID(ST_MakePoint(-75.6690, 45.3680), 4326)::geography, '07:15:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000001', 2, 'Billings Bridge Plaza',  45.3735, -75.6740, ST_SetSRID(ST_MakePoint(-75.6740, 45.3735), 4326)::geography, '07:22:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000001', 3, 'Bank & Heron',           45.3770, -75.6800, ST_SetSRID(ST_MakePoint(-75.6800, 45.3770), 4326)::geography, '07:28:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000001', 4, 'Bank & Alta Vista',      45.3810, -75.6850, ST_SetSRID(ST_MakePoint(-75.6850, 45.3810), 4326)::geography, '07:35:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000001', 5, 'Lansdowne & Bank',       45.3850, -75.6910, ST_SetSRID(ST_MakePoint(-75.6910, 45.3850), 4326)::geography, '07:42:00'),
-    -- R02 Bronson Avenue (SW → school, along Bronson Ave)
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000002', 1, 'Carleton University', 45.3820, -75.6980, ST_SetSRID(ST_MakePoint(-75.6980, 45.3820), 4326)::geography, '07:20:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000002', 2, 'Bronson & Sunnyside', 45.3835, -75.6975, ST_SetSRID(ST_MakePoint(-75.6975, 45.3835), 4326)::geography, '07:25:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000002', 3, 'Bronson & Holmwood', 45.3848, -75.6972, ST_SetSRID(ST_MakePoint(-75.6972, 45.3848), 4326)::geography, '07:30:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000002', 4, 'Bronson & Fifth Ave', 45.3860, -75.6968, ST_SetSRID(ST_MakePoint(-75.6968, 45.3860), 4326)::geography, '07:36:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000002', 5, 'Bronson & Glebe Ave', 45.3870, -75.6963, ST_SetSRID(ST_MakePoint(-75.6963, 45.3870), 4326)::geography, '07:42:00'),
-    -- R03 Rideau Canal East (E → school, along canal path)
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000003', 1, 'Echo & Colonel By Dr', 45.3890, -75.6720, ST_SetSRID(ST_MakePoint(-75.6720, 45.3890), 4326)::geography, '07:25:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000003', 2, 'Queen Elizabeth Dr', 45.3888, -75.6780, ST_SetSRID(ST_MakePoint(-75.6780, 45.3888), 4326)::geography, '07:30:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000003', 3, 'Canal & Pretoria', 45.3885, -75.6830, ST_SetSRID(ST_MakePoint(-75.6830, 45.3885), 4326)::geography, '07:36:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000003', 4, 'Fifth Ave & Canal', 45.3882, -75.6880, ST_SetSRID(ST_MakePoint(-75.6880, 45.3882), 4326)::geography, '07:42:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000003', 5, 'Patterson Creek', 45.3880, -75.6920, ST_SetSRID(ST_MakePoint(-75.6920, 45.3880), 4326)::geography, '07:48:00'),
-    -- R04 Main Street (NE → school, along Main St)
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000004', 1, 'Main & Greenfield', 45.3950, -75.6720, ST_SetSRID(ST_MakePoint(-75.6720, 45.3950), 4326)::geography, '07:30:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000004', 2, 'Main & Concord', 45.3935, -75.6780, ST_SetSRID(ST_MakePoint(-75.6780, 45.3935), 4326)::geography, '07:35:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000004', 3, 'Main & Riverdale', 45.3920, -75.6830, ST_SetSRID(ST_MakePoint(-75.6830, 45.3920), 4326)::geography, '07:40:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000004', 4, 'Main & Clegg', 45.3900, -75.6880, ST_SetSRID(ST_MakePoint(-75.6880, 45.3900), 4326)::geography, '07:46:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000004', 5, 'Main & Pretoria', 45.3885, -75.6930, ST_SetSRID(ST_MakePoint(-75.6930, 45.3885), 4326)::geography, '07:52:00'),
-    -- R05 Colonel By Drive (NE → school, along Colonel By)
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000005', 1, 'uOttawa Campus', 45.4050, -75.6800, ST_SetSRID(ST_MakePoint(-75.6800, 45.4050), 4326)::geography, '07:15:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000005', 2, 'Colonel By & Somerset', 45.4010, -75.6830, ST_SetSRID(ST_MakePoint(-75.6830, 45.4010), 4326)::geography, '07:22:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000005', 3, 'Lansdowne Stadium', 45.3970, -75.6870, ST_SetSRID(ST_MakePoint(-75.6870, 45.3970), 4326)::geography, '07:28:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000005', 4, 'Canal & Holmwood', 45.3935, -75.6910, ST_SetSRID(ST_MakePoint(-75.6910, 45.3935), 4326)::geography, '07:35:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000005', 5, 'Canal & Fifth Ave', 45.3900, -75.6940, ST_SetSRID(ST_MakePoint(-75.6940, 45.3900), 4326)::geography, '07:42:00'),
-    -- R06 Elgin Street (N → school, along Elgin St)
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000006', 1, 'Elgin & Lisgar', 45.4180, -75.6880, ST_SetSRID(ST_MakePoint(-75.6880, 45.4180), 4326)::geography, '07:20:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000006', 2, 'Elgin & Somerset', 45.4130, -75.6890, ST_SetSRID(ST_MakePoint(-75.6890, 45.4130), 4326)::geography, '07:26:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000006', 3, 'Elgin & MacLaren', 45.4070, -75.6900, ST_SetSRID(ST_MakePoint(-75.6900, 45.4070), 4326)::geography, '07:32:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000006', 4, 'Elgin & Argyle', 45.4010, -75.6920, ST_SetSRID(ST_MakePoint(-75.6920, 45.4010), 4326)::geography, '07:38:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000006', 5, 'Elgin & Isabella', 45.3940, -75.6945, ST_SetSRID(ST_MakePoint(-75.6945, 45.3940), 4326)::geography, '07:44:00'),
-    -- R07 O'Connor Street (N → school, along O'Connor)
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000007', 1, 'O''Connor & Slater', 45.4150, -75.6920, ST_SetSRID(ST_MakePoint(-75.6920, 45.4150), 4326)::geography, '07:25:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000007', 2, 'O''Connor & Nepean', 45.4110, -75.6928, ST_SetSRID(ST_MakePoint(-75.6928, 45.4110), 4326)::geography, '07:30:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000007', 3, 'O''Connor & Gladstone', 45.4060, -75.6935, ST_SetSRID(ST_MakePoint(-75.6935, 45.4060), 4326)::geography, '07:36:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000007', 4, 'O''Connor & Clemow', 45.4000, -75.6945, ST_SetSRID(ST_MakePoint(-75.6945, 45.4000), 4326)::geography, '07:42:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000007', 5, 'O''Connor & Second Ave', 45.3930, -75.6952, ST_SetSRID(ST_MakePoint(-75.6952, 45.3930), 4326)::geography, '07:48:00'),
-    -- R08 Lyon Street (NW → school, along Lyon)
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000008', 1, 'Lyon & Gloucester', 45.4130, -75.7020, ST_SetSRID(ST_MakePoint(-75.7020, 45.4130), 4326)::geography, '07:30:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000008', 2, 'Lyon & Somerset', 45.4090, -75.7005, ST_SetSRID(ST_MakePoint(-75.7005, 45.4090), 4326)::geography, '07:35:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000008', 3, 'Lyon & Gladstone', 45.4040, -75.6990, ST_SetSRID(ST_MakePoint(-75.6990, 45.4040), 4326)::geography, '07:41:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000008', 4, 'Lyon & Arlington', 45.3990, -75.6980, ST_SetSRID(ST_MakePoint(-75.6980, 45.3990), 4326)::geography, '07:47:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000008', 5, 'Lyon & Powell', 45.3930, -75.6968, ST_SetSRID(ST_MakePoint(-75.6968, 45.3930), 4326)::geography, '07:53:00'),
-    -- R09 Pretoria Bridge (NE → school via bridge)
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000009', 1, 'Main & Nicholas', 45.4000, -75.6730, ST_SetSRID(ST_MakePoint(-75.6730, 45.4000), 4326)::geography, '07:35:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000009', 2, 'Hawthorne & Colonel By', 45.3980, -75.6770, ST_SetSRID(ST_MakePoint(-75.6770, 45.3980), 4326)::geography, '07:39:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000009', 3, 'Pretoria Bridge North', 45.3960, -75.6810, ST_SetSRID(ST_MakePoint(-75.6810, 45.3960), 4326)::geography, '07:44:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000009', 4, 'Pretoria & Echo', 45.3935, -75.6860, ST_SetSRID(ST_MakePoint(-75.6860, 45.3935), 4326)::geography, '07:49:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000009', 5, 'Sunnyside & Seneca', 45.3900, -75.6920, ST_SetSRID(ST_MakePoint(-75.6920, 45.3900), 4326)::geography, '07:54:00'),
-    -- R10 Sunnyside Avenue (W → school, along Sunnyside)
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000010', 1, 'Sunnyside & Woodfield', 45.3890, -75.7180, ST_SetSRID(ST_MakePoint(-75.7180, 45.3890), 4326)::geography, '07:40:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000010', 2, 'Sunnyside & Aylmer', 45.3888, -75.7130, ST_SetSRID(ST_MakePoint(-75.7130, 45.3888), 4326)::geography, '07:44:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000010', 3, 'Sunnyside & Ralph', 45.3886, -75.7080, ST_SetSRID(ST_MakePoint(-75.7080, 45.3886), 4326)::geography, '07:48:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000010', 4, 'Sunnyside & Bellwood', 45.3883, -75.7030, ST_SetSRID(ST_MakePoint(-75.7030, 45.3883), 4326)::geography, '07:52:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000010', 5, 'Sunnyside & Bronson', 45.3880, -75.6985, ST_SetSRID(ST_MakePoint(-75.6985, 45.3880), 4326)::geography, '07:56:00'),
+    -- R01 Bank Street South (SE→School, along Bank St, 12 stops)
+    ('50010100-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000001',  1, 'Bank & Walkley',      45.3680, -75.6693, ST_SetSRID(ST_MakePoint(-75.6693, 45.3680), 4326)::geography, '07:15:00'),
+    ('50010200-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000001',  2, 'Bank & Kilborn',      45.3699, -75.6700, ST_SetSRID(ST_MakePoint(-75.6700, 45.3699), 4326)::geography, '07:18:00'),
+    ('50010300-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000001',  3, 'Billings Bridge',     45.3733, -75.6718, ST_SetSRID(ST_MakePoint(-75.6718, 45.3733), 4326)::geography, '07:21:00'),
+    ('50010400-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000001',  4, 'Bank & Johnston Rd',  45.3755, -75.6749, ST_SetSRID(ST_MakePoint(-75.6749, 45.3755), 4326)::geography, '07:24:00'),
+    ('50010500-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000001',  5, 'Bank & Connell Ave',  45.3762, -75.6757, ST_SetSRID(ST_MakePoint(-75.6757, 45.3762), 4326)::geography, '07:26:00'),
+    ('50010600-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000001',  6, 'Bank & Heron Rd',     45.3780, -75.6790, ST_SetSRID(ST_MakePoint(-75.6790, 45.3780), 4326)::geography, '07:29:00'),
+    ('50010700-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000001',  7, 'Bank & Randall Ave',  45.3800, -75.6808, ST_SetSRID(ST_MakePoint(-75.6808, 45.3800), 4326)::geography, '07:31:00'),
+    ('50010800-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000001',  8, 'Bank & Seneca St',    45.3815, -75.6827, ST_SetSRID(ST_MakePoint(-75.6827, 45.3815), 4326)::geography, '07:33:00'),
+    ('50010900-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000001',  9, 'Bank & Belmont Ave',  45.3830, -75.6844, ST_SetSRID(ST_MakePoint(-75.6844, 45.3830), 4326)::geography, '07:35:00'),
+    ('50011000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000001', 10, 'Bank & Holmwood Ave', 45.3843, -75.6860, ST_SetSRID(ST_MakePoint(-75.6860, 45.3843), 4326)::geography, '07:37:00'),
+    ('50011100-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000001', 11, 'Bank & Fifth Ave',    45.3855, -75.6878, ST_SetSRID(ST_MakePoint(-75.6878, 45.3855), 4326)::geography, '07:39:00'),
+    ('50011200-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000001', 12, 'Bank & Sunnyside Ave',45.3867, -75.6902, ST_SetSRID(ST_MakePoint(-75.6902, 45.3867), 4326)::geography, '07:41:00'),
 
-    -- R11 Richmond Road (W → school, along Richmond Rd)
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000011', 1, 'Richmond & Woodroffe', 45.3900, -75.7600, ST_SetSRID(ST_MakePoint(-75.7600, 45.3900), 4326)::geography, '07:15:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000011', 2, 'Richmond & Cleary', 45.3912, -75.7520, ST_SetSRID(ST_MakePoint(-75.7520, 45.3912), 4326)::geography, '07:22:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000011', 3, 'Richmond & Golden', 45.3925, -75.7440, ST_SetSRID(ST_MakePoint(-75.7440, 45.3925), 4326)::geography, '07:28:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000011', 4, 'Richmond & Churchill', 45.3938, -75.7370, ST_SetSRID(ST_MakePoint(-75.7370, 45.3938), 4326)::geography, '07:35:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000011', 5, 'Richmond & Roosevelt', 45.3950, -75.7330, ST_SetSRID(ST_MakePoint(-75.7330, 45.3950), 4326)::geography, '07:42:00'),
-    -- R12 Scott Street (E → school, along Scott St)
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000012', 1, 'Scott & Bayview', 45.4000, -75.7050, ST_SetSRID(ST_MakePoint(-75.7050, 45.4000), 4326)::geography, '07:20:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000012', 2, 'Scott & Preston', 45.3992, -75.7110, ST_SetSRID(ST_MakePoint(-75.7110, 45.3992), 4326)::geography, '07:25:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000012', 3, 'Scott & Empress', 45.3985, -75.7170, ST_SetSRID(ST_MakePoint(-75.7170, 45.3985), 4326)::geography, '07:31:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000012', 4, 'Scott & Holland', 45.3978, -75.7220, ST_SetSRID(ST_MakePoint(-75.7220, 45.3978), 4326)::geography, '07:37:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000012', 5, 'Scott & Parkdale', 45.3970, -75.7265, ST_SetSRID(ST_MakePoint(-75.7265, 45.3970), 4326)::geography, '07:43:00'),
-    -- R13 Carling Avenue (SW → school, along Carling)
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000013', 1, 'Carling & Merivale', 45.3800, -75.7520, ST_SetSRID(ST_MakePoint(-75.7520, 45.3800), 4326)::geography, '07:25:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000013', 2, 'Carling & Fisher', 45.3830, -75.7460, ST_SetSRID(ST_MakePoint(-75.7460, 45.3830), 4326)::geography, '07:31:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000013', 3, 'Carling & Kirkwood', 45.3860, -75.7400, ST_SetSRID(ST_MakePoint(-75.7400, 45.3860), 4326)::geography, '07:37:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000013', 4, 'Carling & Broadview', 45.3895, -75.7355, ST_SetSRID(ST_MakePoint(-75.7355, 45.3895), 4326)::geography, '07:44:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000013', 5, 'Carling & Island Park', 45.3930, -75.7320, ST_SetSRID(ST_MakePoint(-75.7320, 45.3930), 4326)::geography, '07:50:00'),
-    -- R14 Churchill Avenue (N → school, along Churchill)
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000014', 1, 'Churchill & Byron', 45.4120, -75.7280, ST_SetSRID(ST_MakePoint(-75.7280, 45.4120), 4326)::geography, '07:30:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000014', 2, 'Churchill & Scott', 45.4085, -75.7285, ST_SetSRID(ST_MakePoint(-75.7285, 45.4085), 4326)::geography, '07:34:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000014', 3, 'Churchill & Wellington', 45.4050, -75.7290, ST_SetSRID(ST_MakePoint(-75.7290, 45.4050), 4326)::geography, '07:39:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000014', 4, 'Churchill & Somerset', 45.4010, -75.7294, ST_SetSRID(ST_MakePoint(-75.7294, 45.4010), 4326)::geography, '07:44:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000014', 5, 'Churchill & Carling', 45.3980, -75.7298, ST_SetSRID(ST_MakePoint(-75.7298, 45.3980), 4326)::geography, '07:49:00'),
-    -- R15 Island Park Drive (S → school, along Island Park Dr)
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000015', 1, 'Island Park & Carling', 45.3750, -75.7230, ST_SetSRID(ST_MakePoint(-75.7230, 45.3750), 4326)::geography, '07:20:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000015', 2, 'Island Park & Woodlawn', 45.3800, -75.7245, ST_SetSRID(ST_MakePoint(-75.7245, 45.3800), 4326)::geography, '07:26:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000015', 3, 'Island Park & Cowley', 45.3845, -75.7258, ST_SetSRID(ST_MakePoint(-75.7258, 45.3845), 4326)::geography, '07:32:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000015', 4, 'Island Park & Byron', 45.3890, -75.7272, ST_SetSRID(ST_MakePoint(-75.7272, 45.3890), 4326)::geography, '07:38:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000015', 5, 'Island Park & Scott', 45.3930, -75.7288, ST_SetSRID(ST_MakePoint(-75.7288, 45.3930), 4326)::geography, '07:44:00'),
-    -- R16 Kirkwood Avenue (NW → school, along Kirkwood)
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000016', 1, 'Kirkwood & Carling', 45.4080, -75.7420, ST_SetSRID(ST_MakePoint(-75.7420, 45.4080), 4326)::geography, '07:25:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000016', 2, 'Kirkwood & Byron', 45.4055, -75.7395, ST_SetSRID(ST_MakePoint(-75.7395, 45.4055), 4326)::geography, '07:30:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000016', 3, 'Kirkwood & Wellington', 45.4030, -75.7370, ST_SetSRID(ST_MakePoint(-75.7370, 45.4030), 4326)::geography, '07:35:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000016', 4, 'Kirkwood & Somerset', 45.4000, -75.7345, ST_SetSRID(ST_MakePoint(-75.7345, 45.4000), 4326)::geography, '07:40:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000016', 5, 'Kirkwood & Clare', 45.3975, -75.7318, ST_SetSRID(ST_MakePoint(-75.7318, 45.3975), 4326)::geography, '07:45:00'),
-    -- R17 Byron Avenue (W → school, along Byron Ave)
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000017', 1, 'Byron & Fisher', 45.3980, -75.7560, ST_SetSRID(ST_MakePoint(-75.7560, 45.3980), 4326)::geography, '07:30:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000017', 2, 'Byron & Woodroffe', 45.3978, -75.7490, ST_SetSRID(ST_MakePoint(-75.7490, 45.3978), 4326)::geography, '07:35:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000017', 3, 'Byron & Athlone', 45.3975, -75.7420, ST_SetSRID(ST_MakePoint(-75.7420, 45.3975), 4326)::geography, '07:41:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000017', 4, 'Byron & Island Park', 45.3970, -75.7365, ST_SetSRID(ST_MakePoint(-75.7365, 45.3970), 4326)::geography, '07:47:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000017', 5, 'Byron & Clarendon', 45.3965, -75.7330, ST_SetSRID(ST_MakePoint(-75.7330, 45.3965), 4326)::geography, '07:53:00'),
-    -- R18 Wellington Street (E → school, along Wellington)
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000018', 1, 'Wellington & Bank', 45.4010, -75.7020, ST_SetSRID(ST_MakePoint(-75.7020, 45.4010), 4326)::geography, '07:15:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000018', 2, 'Wellington & Lyon', 45.4003, -75.7080, ST_SetSRID(ST_MakePoint(-75.7080, 45.4003), 4326)::geography, '07:21:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000018', 3, 'Wellington & Preston', 45.3995, -75.7140, ST_SetSRID(ST_MakePoint(-75.7140, 45.3995), 4326)::geography, '07:27:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000018', 4, 'Wellington & Empress', 45.3988, -75.7200, ST_SetSRID(ST_MakePoint(-75.7200, 45.3988), 4326)::geography, '07:34:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000018', 5, 'Wellington & Holland', 45.3978, -75.7255, ST_SetSRID(ST_MakePoint(-75.7255, 45.3978), 4326)::geography, '07:40:00'),
-    -- R19 Parkdale Avenue (S → school, along Parkdale)
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000019', 1, 'Parkdale & Carling', 45.3770, -75.7310, ST_SetSRID(ST_MakePoint(-75.7310, 45.3770), 4326)::geography, '07:35:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000019', 2, 'Parkdale & Sherwood', 45.3810, -75.7308, ST_SetSRID(ST_MakePoint(-75.7308, 45.3810), 4326)::geography, '07:39:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000019', 3, 'Parkdale & Tyndall', 45.3850, -75.7305, ST_SetSRID(ST_MakePoint(-75.7305, 45.3850), 4326)::geography, '07:44:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000019', 4, 'Parkdale & Eccles', 45.3890, -75.7303, ST_SetSRID(ST_MakePoint(-75.7303, 45.3890), 4326)::geography, '07:49:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000019', 5, 'Parkdale & Scott', 45.3930, -75.7300, ST_SetSRID(ST_MakePoint(-75.7300, 45.3930), 4326)::geography, '07:53:00'),
-    -- R20 Holland Avenue (N → school, along Holland Ave)
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000020', 1, 'Holland & Gladstone', 45.4100, -75.7250, ST_SetSRID(ST_MakePoint(-75.7250, 45.4100), 4326)::geography, '07:40:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000020', 2, 'Holland & Wellington', 45.4070, -75.7260, ST_SetSRID(ST_MakePoint(-75.7260, 45.4070), 4326)::geography, '07:44:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000020', 3, 'Holland & Byron', 45.4040, -75.7270, ST_SetSRID(ST_MakePoint(-75.7270, 45.4040), 4326)::geography, '07:48:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000020', 4, 'Holland & Ruskin', 45.4010, -75.7280, ST_SetSRID(ST_MakePoint(-75.7280, 45.4010), 4326)::geography, '07:52:00'),
-    (gen_random_uuid(), '30000000-0000-0000-0000-000000000020', 5, 'Holland & Carling', 45.3980, -75.7292, ST_SetSRID(ST_MakePoint(-75.7292, 45.3980), 4326)::geography, '07:56:00');
+    -- R02 Bronson Avenue (SW→School: Merivale→Carling→Bronson N, 12 stops)
+    ('50020100-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000002',  1, 'Merivale & Carling',     45.3758, -75.7200, ST_SetSRID(ST_MakePoint(-75.7200, 45.3758), 4326)::geography, '07:20:00'),
+    ('50020200-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000002',  2, 'Carling & Clyde Ave',    45.3758, -75.7130, ST_SetSRID(ST_MakePoint(-75.7130, 45.3758), 4326)::geography, '07:22:00'),
+    ('50020300-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000002',  3, 'Fisher & Carling',       45.3760, -75.7002, ST_SetSRID(ST_MakePoint(-75.7002, 45.3760), 4326)::geography, '07:25:00'),
+    ('50020400-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000002',  4, 'Bronson & Carling',      45.3762, -75.6990, ST_SetSRID(ST_MakePoint(-75.6990, 45.3762), 4326)::geography, '07:27:00'),
+    ('50020500-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000002',  5, 'Bronson & Commissioner', 45.3790, -75.6985, ST_SetSRID(ST_MakePoint(-75.6985, 45.3790), 4326)::geography, '07:30:00'),
+    ('50020600-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000002',  6, 'Carleton Main Gate',     45.3817, -75.6982, ST_SetSRID(ST_MakePoint(-75.6982, 45.3817), 4326)::geography, '07:32:00'),
+    ('50020700-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000002',  7, 'Bronson & Aylmer Ave',   45.3828, -75.6976, ST_SetSRID(ST_MakePoint(-75.6976, 45.3828), 4326)::geography, '07:34:00'),
+    ('50020800-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000002',  8, 'Bronson & Sunnyside Ave',45.3840, -75.6972, ST_SetSRID(ST_MakePoint(-75.6972, 45.3840), 4326)::geography, '07:36:00'),
+    ('50020900-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000002',  9, 'Bronson & Holmwood Ave', 45.3851, -75.6968, ST_SetSRID(ST_MakePoint(-75.6968, 45.3851), 4326)::geography, '07:38:00'),
+    ('50021000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000002', 10, 'Bronson & Third Ave',    45.3861, -75.6964, ST_SetSRID(ST_MakePoint(-75.6964, 45.3861), 4326)::geography, '07:40:00'),
+    ('50021100-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000002', 11, 'Bronson & Glebe Ave',    45.3868, -75.6961, ST_SetSRID(ST_MakePoint(-75.6961, 45.3868), 4326)::geography, '07:42:00'),
+    ('50021200-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000002', 12, 'Chamberlain & Percy',    45.3873, -75.6958, ST_SetSRID(ST_MakePoint(-75.6958, 45.3873), 4326)::geography, '07:44:00'),
 
--- ===================== Reference Tables =====================
+    -- R11 Richmond Road (W→E toward Riverside Academy, 12 stops)
+    ('50110100-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000011',  1, 'Richmond & Woodroffe',   45.3900, -75.7600, ST_SetSRID(ST_MakePoint(-75.7600, 45.3900), 4326)::geography, '07:15:00'),
+    ('50110200-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000011',  2, 'Richmond & Currell Blvd',45.3905, -75.7545, ST_SetSRID(ST_MakePoint(-75.7545, 45.3905), 4326)::geography, '07:18:00'),
+    ('50110300-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000011',  3, 'Richmond & Roseberry',   45.3910, -75.7490, ST_SetSRID(ST_MakePoint(-75.7490, 45.3910), 4326)::geography, '07:21:00'),
+    ('50110400-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000011',  4, 'Richmond & Cleary Ave',  45.3913, -75.7435, ST_SetSRID(ST_MakePoint(-75.7435, 45.3913), 4326)::geography, '07:24:00'),
+    ('50110500-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000011',  5, 'Richmond & Churchill',   45.3916, -75.7388, ST_SetSRID(ST_MakePoint(-75.7388, 45.3916), 4326)::geography, '07:27:00'),
+    ('50110600-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000011',  6, 'Richmond & Golden Ave',  45.3920, -75.7345, ST_SetSRID(ST_MakePoint(-75.7345, 45.3920), 4326)::geography, '07:29:00'),
+    ('50110700-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000011',  7, 'Richmond & Athlone Ave', 45.3928, -75.7320, ST_SetSRID(ST_MakePoint(-75.7320, 45.3928), 4326)::geography, '07:31:00'),
+    ('50110800-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000011',  8, 'Richmond & Island Park', 45.3935, -75.7305, ST_SetSRID(ST_MakePoint(-75.7305, 45.3935), 4326)::geography, '07:33:00'),
+    ('50110900-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000011',  9, 'Richmond & Grosvenor',   45.3940, -75.7295, ST_SetSRID(ST_MakePoint(-75.7295, 45.3940), 4326)::geography, '07:35:00'),
+    ('50111000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000011', 10, 'Byron Ave & Island Park',45.3947, -75.7298, ST_SetSRID(ST_MakePoint(-75.7298, 45.3947), 4326)::geography, '07:37:00'),
+    ('50111100-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000011', 11, 'Byron Ave Mid',          45.3953, -75.7300, ST_SetSRID(ST_MakePoint(-75.7300, 45.3953), 4326)::geography, '07:39:00'),
+    ('50111200-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000011', 12, 'Byron at School Ave',    45.3957, -75.7300, ST_SetSRID(ST_MakePoint(-75.7300, 45.3957), 4326)::geography, '07:41:00'),
+
+    -- R12 Scott Street (E→W on Scott, then S on Island Park to school, 12 stops)
+    ('50120100-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000012',  1, 'Scott & Bayview',        45.4000, -75.7050, ST_SetSRID(ST_MakePoint(-75.7050, 45.4000), 4326)::geography, '07:20:00'),
+    ('50120200-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000012',  2, 'Scott & Preston',        45.3992, -75.7110, ST_SetSRID(ST_MakePoint(-75.7110, 45.3992), 4326)::geography, '07:22:00'),
+    ('50120300-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000012',  3, 'Scott & Booth St',       45.3988, -75.7155, ST_SetSRID(ST_MakePoint(-75.7155, 45.3988), 4326)::geography, '07:24:00'),
+    ('50120400-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000012',  4, 'Scott & Empress Ave',    45.3985, -75.7200, ST_SetSRID(ST_MakePoint(-75.7200, 45.3985), 4326)::geography, '07:26:00'),
+    ('50120500-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000012',  5, 'Scott & Breezehill',     45.3983, -75.7230, ST_SetSRID(ST_MakePoint(-75.7230, 45.3983), 4326)::geography, '07:28:00'),
+    ('50120600-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000012',  6, 'Scott & Holland Ave',    45.3980, -75.7255, ST_SetSRID(ST_MakePoint(-75.7255, 45.3980), 4326)::geography, '07:30:00'),
+    ('50120700-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000012',  7, 'Scott & Parkdale Ave',   45.3975, -75.7275, ST_SetSRID(ST_MakePoint(-75.7275, 45.3975), 4326)::geography, '07:32:00'),
+    ('50120800-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000012',  8, 'Scott & Winona Ave',     45.3970, -75.7295, ST_SetSRID(ST_MakePoint(-75.7295, 45.3970), 4326)::geography, '07:34:00'),
+    ('50120900-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000012',  9, 'Scott & Island Park',    45.3965, -75.7309, ST_SetSRID(ST_MakePoint(-75.7309, 45.3965), 4326)::geography, '07:36:00'),
+    ('50121000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000012', 10, 'Island Park & Byron',    45.3960, -75.7310, ST_SetSRID(ST_MakePoint(-75.7310, 45.3960), 4326)::geography, '07:38:00'),
+    ('50121100-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000012', 11, 'School Approach',        45.3959, -75.7306, ST_SetSRID(ST_MakePoint(-75.7306, 45.3959), 4326)::geography, '07:40:00'),
+    ('50121200-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000012', 12, 'Near Riverside Academy', 45.3958, -75.7302, ST_SetSRID(ST_MakePoint(-75.7302, 45.3958), 4326)::geography, '07:42:00');
+
+
+-- ===================== Reference Tables (4 routes) =====================
 
 INSERT INTO vehicles_reference (id, "plateNumber", capacity, status) VALUES
-    ('BUS-01', 'ON-1001', 40, 'ACTIVE'), ('BUS-02', 'ON-1002', 40, 'ACTIVE'),
-    ('BUS-03', 'ON-1003', 35, 'ACTIVE'), ('BUS-04', 'ON-1004', 40, 'ACTIVE'),
-    ('BUS-05', 'ON-1005', 35, 'ACTIVE'), ('BUS-06', 'ON-1006', 40, 'ACTIVE'),
-    ('BUS-07', 'ON-1007', 35, 'ACTIVE'), ('BUS-08', 'ON-1008', 40, 'ACTIVE'),
-    ('BUS-09', 'ON-1009', 35, 'ACTIVE'), ('BUS-10', 'ON-1010', 40, 'ACTIVE'),
-    ('BUS-11', 'ON-2001', 40, 'ACTIVE'), ('BUS-12', 'ON-2002', 40, 'ACTIVE'),
-    ('BUS-13', 'ON-2003', 35, 'ACTIVE'), ('BUS-14', 'ON-2004', 40, 'ACTIVE'),
-    ('BUS-15', 'ON-2005', 35, 'ACTIVE'), ('BUS-16', 'ON-2006', 40, 'ACTIVE'),
-    ('BUS-17', 'ON-2007', 35, 'ACTIVE'), ('BUS-18', 'ON-2008', 40, 'ACTIVE'),
-    ('BUS-19', 'ON-2009', 35, 'ACTIVE'), ('BUS-20', 'ON-2010', 40, 'ACTIVE');
+    ('BUS-01', 'ON-1001', 40, 'ACTIVE'),
+    ('BUS-02', 'ON-1002', 40, 'ACTIVE'),
+    ('BUS-11', 'ON-2001', 40, 'ACTIVE'),
+    ('BUS-12', 'ON-2002', 40, 'ACTIVE');
 
+-- polyline is initially NULL; sync-routes.js fills it via OSRM or fallback encoder
 INSERT INTO routes_reference (id, name, "vehicleId", "driverId", schedule) VALUES
-    ('ROUTE-R01', 'Bank Street South',   'BUS-01', 'driver-001', '{"startTime":"07:15","days":["Mon","Tue","Wed","Thu","Fri"]}'),
-    ('ROUTE-R02', 'Bronson Avenue',      'BUS-02', 'driver-002', '{"startTime":"07:20","days":["Mon","Tue","Wed","Thu","Fri"]}'),
-    ('ROUTE-R03', 'Rideau Canal East',   'BUS-03', 'driver-003', '{"startTime":"07:25","days":["Mon","Tue","Wed","Thu","Fri"]}'),
-    ('ROUTE-R04', 'Main Street',         'BUS-04', 'driver-004', '{"startTime":"07:30","days":["Mon","Tue","Wed","Thu","Fri"]}'),
-    ('ROUTE-R05', 'Colonel By Drive',    'BUS-05', 'driver-005', '{"startTime":"07:15","days":["Mon","Tue","Wed","Thu","Fri"]}'),
-    ('ROUTE-R06', 'Elgin Street',        'BUS-06', 'driver-006', '{"startTime":"07:20","days":["Mon","Tue","Wed","Thu","Fri"]}'),
-    ('ROUTE-R07', 'O''Connor Street',    'BUS-07', 'driver-007', '{"startTime":"07:25","days":["Mon","Tue","Wed","Thu","Fri"]}'),
-    ('ROUTE-R08', 'Lyon Street',         'BUS-08', 'driver-008', '{"startTime":"07:30","days":["Mon","Tue","Wed","Thu","Fri"]}'),
-    ('ROUTE-R09', 'Pretoria Bridge',     'BUS-09', 'driver-009', '{"startTime":"07:35","days":["Mon","Tue","Wed","Thu","Fri"]}'),
-    ('ROUTE-R10', 'Sunnyside Avenue',    'BUS-10', 'driver-010', '{"startTime":"07:40","days":["Mon","Tue","Wed","Thu","Fri"]}'),
-    ('ROUTE-R11', 'Richmond Road',       'BUS-11', 'driver-011', '{"startTime":"07:15","days":["Mon","Tue","Wed","Thu","Fri"]}'),
-    ('ROUTE-R12', 'Scott Street',        'BUS-12', 'driver-012', '{"startTime":"07:20","days":["Mon","Tue","Wed","Thu","Fri"]}'),
-    ('ROUTE-R13', 'Carling Avenue',      'BUS-13', 'driver-013', '{"startTime":"07:25","days":["Mon","Tue","Wed","Thu","Fri"]}'),
-    ('ROUTE-R14', 'Churchill Avenue',    'BUS-14', 'driver-014', '{"startTime":"07:30","days":["Mon","Tue","Wed","Thu","Fri"]}'),
-    ('ROUTE-R15', 'Island Park Drive',   'BUS-15', 'driver-015', '{"startTime":"07:20","days":["Mon","Tue","Wed","Thu","Fri"]}'),
-    ('ROUTE-R16', 'Kirkwood Avenue',     'BUS-16', 'driver-016', '{"startTime":"07:25","days":["Mon","Tue","Wed","Thu","Fri"]}'),
-    ('ROUTE-R17', 'Byron Avenue',        'BUS-17', 'driver-017', '{"startTime":"07:30","days":["Mon","Tue","Wed","Thu","Fri"]}'),
-    ('ROUTE-R18', 'Wellington Street',   'BUS-18', 'driver-018', '{"startTime":"07:15","days":["Mon","Tue","Wed","Thu","Fri"]}'),
-    ('ROUTE-R19', 'Parkdale Avenue',     'BUS-19', 'driver-019', '{"startTime":"07:35","days":["Mon","Tue","Wed","Thu","Fri"]}'),
-    ('ROUTE-R20', 'Holland Avenue',      'BUS-20', 'driver-020', '{"startTime":"07:40","days":["Mon","Tue","Wed","Thu","Fri"]}');
+    ('ROUTE-R01', 'Bank Street South', 'BUS-01', 'driver-001', '{"startTime":"07:15","days":["Mon","Tue","Wed","Thu","Fri"]}'),
+    ('ROUTE-R02', 'Bronson Avenue',    'BUS-02', 'driver-002', '{"startTime":"07:20","days":["Mon","Tue","Wed","Thu","Fri"]}'),
+    ('ROUTE-R11', 'Richmond Road',     'BUS-11', 'driver-011', '{"startTime":"07:15","days":["Mon","Tue","Wed","Thu","Fri"]}'),
+    ('ROUTE-R12', 'Scott Street',      'BUS-12', 'driver-012', '{"startTime":"07:20","days":["Mon","Tue","Wed","Thu","Fri"]}');
 
 INSERT INTO route_stops_reference (id, "routeId", "sequenceOrder", "stopName", lat, lng, "arrivalTime") VALUES
-    -- R01
-    ('STOP-R01-S1', 'ROUTE-R01', 1, 'Bank & Walkley',        45.3680, -75.6690, '07:15:00'),
-    ('STOP-R01-S2', 'ROUTE-R01', 2, 'Billings Bridge Plaza', 45.3735, -75.6740, '07:22:00'),
-    ('STOP-R01-S3', 'ROUTE-R01', 3, 'Bank & Heron',          45.3770, -75.6800, '07:28:00'),
-    ('STOP-R01-S4', 'ROUTE-R01', 4, 'Bank & Alta Vista',     45.3810, -75.6850, '07:35:00'),
-    ('STOP-R01-S5', 'ROUTE-R01', 5, 'Lansdowne & Bank',      45.3850, -75.6910, '07:42:00'),
-    -- R02
-    ('STOP-R02-S1', 'ROUTE-R02', 1, 'Carleton University',   45.3820, -75.6980, '07:20:00'),
-    ('STOP-R02-S2', 'ROUTE-R02', 2, 'Bronson & Sunnyside',   45.3835, -75.6975, '07:25:00'),
-    ('STOP-R02-S3', 'ROUTE-R02', 3, 'Bronson & Holmwood',    45.3848, -75.6972, '07:30:00'),
-    ('STOP-R02-S4', 'ROUTE-R02', 4, 'Bronson & Fifth Ave',   45.3860, -75.6968, '07:36:00'),
-    ('STOP-R02-S5', 'ROUTE-R02', 5, 'Bronson & Glebe Ave',   45.3870, -75.6963, '07:42:00'),
-    -- R03
-    ('STOP-R03-S1', 'ROUTE-R03', 1, 'Echo & Colonel By Dr',  45.3890, -75.6720, '07:25:00'),
-    ('STOP-R03-S2', 'ROUTE-R03', 2, 'Queen Elizabeth Dr',    45.3888, -75.6780, '07:30:00'),
-    ('STOP-R03-S3', 'ROUTE-R03', 3, 'Canal & Pretoria',      45.3885, -75.6830, '07:36:00'),
-    ('STOP-R03-S4', 'ROUTE-R03', 4, 'Fifth Ave & Canal',     45.3882, -75.6880, '07:42:00'),
-    ('STOP-R03-S5', 'ROUTE-R03', 5, 'Patterson Creek',       45.3880, -75.6920, '07:48:00'),
-    -- R04
-    ('STOP-R04-S1', 'ROUTE-R04', 1, 'Main & Greenfield',     45.3950, -75.6720, '07:30:00'),
-    ('STOP-R04-S2', 'ROUTE-R04', 2, 'Main & Concord',        45.3935, -75.6780, '07:35:00'),
-    ('STOP-R04-S3', 'ROUTE-R04', 3, 'Main & Riverdale',      45.3920, -75.6830, '07:40:00'),
-    ('STOP-R04-S4', 'ROUTE-R04', 4, 'Main & Clegg',          45.3900, -75.6880, '07:46:00'),
-    ('STOP-R04-S5', 'ROUTE-R04', 5, 'Main & Pretoria',       45.3885, -75.6930, '07:52:00'),
-    -- R05
-    ('STOP-R05-S1', 'ROUTE-R05', 1, 'uOttawa Campus',        45.4050, -75.6800, '07:15:00'),
-    ('STOP-R05-S2', 'ROUTE-R05', 2, 'Colonel By & Somerset', 45.4010, -75.6830, '07:22:00'),
-    ('STOP-R05-S3', 'ROUTE-R05', 3, 'Lansdowne Stadium',     45.3970, -75.6870, '07:28:00'),
-    ('STOP-R05-S4', 'ROUTE-R05', 4, 'Canal & Holmwood',      45.3935, -75.6910, '07:35:00'),
-    ('STOP-R05-S5', 'ROUTE-R05', 5, 'Canal & Fifth Ave',     45.3900, -75.6940, '07:42:00'),
-    -- R06
-    ('STOP-R06-S1', 'ROUTE-R06', 1, 'Elgin & Lisgar',        45.4180, -75.6880, '07:20:00'),
-    ('STOP-R06-S2', 'ROUTE-R06', 2, 'Elgin & Somerset',      45.4130, -75.6890, '07:26:00'),
-    ('STOP-R06-S3', 'ROUTE-R06', 3, 'Elgin & MacLaren',      45.4070, -75.6900, '07:32:00'),
-    ('STOP-R06-S4', 'ROUTE-R06', 4, 'Elgin & Argyle',        45.4010, -75.6920, '07:38:00'),
-    ('STOP-R06-S5', 'ROUTE-R06', 5, 'Elgin & Isabella',      45.3940, -75.6945, '07:44:00'),
-    -- R07
-    ('STOP-R07-S1', 'ROUTE-R07', 1, 'O''Connor & Slater',    45.4150, -75.6920, '07:25:00'),
-    ('STOP-R07-S2', 'ROUTE-R07', 2, 'O''Connor & Nepean',    45.4110, -75.6928, '07:30:00'),
-    ('STOP-R07-S3', 'ROUTE-R07', 3, 'O''Connor & Gladstone', 45.4060, -75.6935, '07:36:00'),
-    ('STOP-R07-S4', 'ROUTE-R07', 4, 'O''Connor & Clemow',    45.4000, -75.6945, '07:42:00'),
-    ('STOP-R07-S5', 'ROUTE-R07', 5, 'O''Connor & Second Ave',45.3930, -75.6952, '07:48:00'),
-    -- R08
-    ('STOP-R08-S1', 'ROUTE-R08', 1, 'Lyon & Gloucester',     45.4130, -75.7020, '07:30:00'),
-    ('STOP-R08-S2', 'ROUTE-R08', 2, 'Lyon & Somerset',       45.4090, -75.7005, '07:35:00'),
-    ('STOP-R08-S3', 'ROUTE-R08', 3, 'Lyon & Gladstone',      45.4040, -75.6990, '07:41:00'),
-    ('STOP-R08-S4', 'ROUTE-R08', 4, 'Lyon & Arlington',      45.3990, -75.6980, '07:47:00'),
-    ('STOP-R08-S5', 'ROUTE-R08', 5, 'Lyon & Powell',         45.3930, -75.6968, '07:53:00'),
-    -- R09
-    ('STOP-R09-S1', 'ROUTE-R09', 1, 'Main & Nicholas',       45.4000, -75.6730, '07:35:00'),
-    ('STOP-R09-S2', 'ROUTE-R09', 2, 'Hawthorne & Colonel By',45.3980, -75.6770, '07:39:00'),
-    ('STOP-R09-S3', 'ROUTE-R09', 3, 'Pretoria Bridge North', 45.3960, -75.6810, '07:44:00'),
-    ('STOP-R09-S4', 'ROUTE-R09', 4, 'Pretoria & Echo',       45.3935, -75.6860, '07:49:00'),
-    ('STOP-R09-S5', 'ROUTE-R09', 5, 'Sunnyside & Seneca',    45.3900, -75.6920, '07:54:00'),
-    -- R10
-    ('STOP-R10-S1', 'ROUTE-R10', 1, 'Sunnyside & Woodfield', 45.3890, -75.7180, '07:40:00'),
-    ('STOP-R10-S2', 'ROUTE-R10', 2, 'Sunnyside & Aylmer',    45.3888, -75.7130, '07:44:00'),
-    ('STOP-R10-S3', 'ROUTE-R10', 3, 'Sunnyside & Ralph',     45.3886, -75.7080, '07:48:00'),
-    ('STOP-R10-S4', 'ROUTE-R10', 4, 'Sunnyside & Bellwood',  45.3883, -75.7030, '07:52:00'),
-    ('STOP-R10-S5', 'ROUTE-R10', 5, 'Sunnyside & Bronson',   45.3880, -75.6985, '07:56:00'),
-    -- R11
-    ('STOP-R11-S1', 'ROUTE-R11', 1, 'Richmond & Woodroffe',  45.3900, -75.7600, '07:15:00'),
-    ('STOP-R11-S2', 'ROUTE-R11', 2, 'Richmond & Cleary',     45.3912, -75.7520, '07:22:00'),
-    ('STOP-R11-S3', 'ROUTE-R11', 3, 'Richmond & Golden',     45.3925, -75.7440, '07:28:00'),
-    ('STOP-R11-S4', 'ROUTE-R11', 4, 'Richmond & Churchill',  45.3938, -75.7370, '07:35:00'),
-    ('STOP-R11-S5', 'ROUTE-R11', 5, 'Richmond & Roosevelt',  45.3950, -75.7330, '07:42:00'),
-    -- R12
-    ('STOP-R12-S1', 'ROUTE-R12', 1, 'Scott & Bayview',       45.4000, -75.7050, '07:20:00'),
-    ('STOP-R12-S2', 'ROUTE-R12', 2, 'Scott & Preston',       45.3992, -75.7110, '07:25:00'),
-    ('STOP-R12-S3', 'ROUTE-R12', 3, 'Scott & Empress',       45.3985, -75.7170, '07:31:00'),
-    ('STOP-R12-S4', 'ROUTE-R12', 4, 'Scott & Holland',       45.3978, -75.7220, '07:37:00'),
-    ('STOP-R12-S5', 'ROUTE-R12', 5, 'Scott & Parkdale',      45.3970, -75.7265, '07:43:00'),
-    -- R13
-    ('STOP-R13-S1', 'ROUTE-R13', 1, 'Carling & Merivale',    45.3800, -75.7520, '07:25:00'),
-    ('STOP-R13-S2', 'ROUTE-R13', 2, 'Carling & Fisher',      45.3830, -75.7460, '07:31:00'),
-    ('STOP-R13-S3', 'ROUTE-R13', 3, 'Carling & Kirkwood',    45.3860, -75.7400, '07:37:00'),
-    ('STOP-R13-S4', 'ROUTE-R13', 4, 'Carling & Broadview',   45.3895, -75.7355, '07:44:00'),
-    ('STOP-R13-S5', 'ROUTE-R13', 5, 'Carling & Island Park', 45.3930, -75.7320, '07:50:00'),
-    -- R14
-    ('STOP-R14-S1', 'ROUTE-R14', 1, 'Churchill & Byron',     45.4120, -75.7280, '07:30:00'),
-    ('STOP-R14-S2', 'ROUTE-R14', 2, 'Churchill & Scott',     45.4085, -75.7285, '07:34:00'),
-    ('STOP-R14-S3', 'ROUTE-R14', 3, 'Churchill & Wellington', 45.4050, -75.7290, '07:39:00'),
-    ('STOP-R14-S4', 'ROUTE-R14', 4, 'Churchill & Somerset',  45.4010, -75.7294, '07:44:00'),
-    ('STOP-R14-S5', 'ROUTE-R14', 5, 'Churchill & Carling',   45.3980, -75.7298, '07:49:00'),
-    -- R15
-    ('STOP-R15-S1', 'ROUTE-R15', 1, 'Island Park & Carling', 45.3750, -75.7230, '07:20:00'),
-    ('STOP-R15-S2', 'ROUTE-R15', 2, 'Island Park & Woodlawn',45.3800, -75.7245, '07:26:00'),
-    ('STOP-R15-S3', 'ROUTE-R15', 3, 'Island Park & Cowley',  45.3845, -75.7258, '07:32:00'),
-    ('STOP-R15-S4', 'ROUTE-R15', 4, 'Island Park & Byron',   45.3890, -75.7272, '07:38:00'),
-    ('STOP-R15-S5', 'ROUTE-R15', 5, 'Island Park & Scott',   45.3930, -75.7288, '07:44:00'),
-    -- R16
-    ('STOP-R16-S1', 'ROUTE-R16', 1, 'Kirkwood & Carling',    45.4080, -75.7420, '07:25:00'),
-    ('STOP-R16-S2', 'ROUTE-R16', 2, 'Kirkwood & Byron',      45.4055, -75.7395, '07:30:00'),
-    ('STOP-R16-S3', 'ROUTE-R16', 3, 'Kirkwood & Wellington', 45.4030, -75.7370, '07:35:00'),
-    ('STOP-R16-S4', 'ROUTE-R16', 4, 'Kirkwood & Somerset',   45.4000, -75.7345, '07:40:00'),
-    ('STOP-R16-S5', 'ROUTE-R16', 5, 'Kirkwood & Clare',      45.3975, -75.7318, '07:45:00'),
-    -- R17
-    ('STOP-R17-S1', 'ROUTE-R17', 1, 'Byron & Fisher',        45.3980, -75.7560, '07:30:00'),
-    ('STOP-R17-S2', 'ROUTE-R17', 2, 'Byron & Woodroffe',     45.3978, -75.7490, '07:35:00'),
-    ('STOP-R17-S3', 'ROUTE-R17', 3, 'Byron & Athlone',       45.3975, -75.7420, '07:41:00'),
-    ('STOP-R17-S4', 'ROUTE-R17', 4, 'Byron & Island Park',   45.3970, -75.7365, '07:47:00'),
-    ('STOP-R17-S5', 'ROUTE-R17', 5, 'Byron & Clarendon',     45.3965, -75.7330, '07:53:00'),
-    -- R18
-    ('STOP-R18-S1', 'ROUTE-R18', 1, 'Wellington & Bank',     45.4010, -75.7020, '07:15:00'),
-    ('STOP-R18-S2', 'ROUTE-R18', 2, 'Wellington & Lyon',     45.4003, -75.7080, '07:21:00'),
-    ('STOP-R18-S3', 'ROUTE-R18', 3, 'Wellington & Preston',  45.3995, -75.7140, '07:27:00'),
-    ('STOP-R18-S4', 'ROUTE-R18', 4, 'Wellington & Empress',  45.3988, -75.7200, '07:34:00'),
-    ('STOP-R18-S5', 'ROUTE-R18', 5, 'Wellington & Holland',  45.3978, -75.7255, '07:40:00'),
-    -- R19
-    ('STOP-R19-S1', 'ROUTE-R19', 1, 'Parkdale & Carling',    45.3770, -75.7310, '07:35:00'),
-    ('STOP-R19-S2', 'ROUTE-R19', 2, 'Parkdale & Sherwood',   45.3810, -75.7308, '07:39:00'),
-    ('STOP-R19-S3', 'ROUTE-R19', 3, 'Parkdale & Tyndall',    45.3850, -75.7305, '07:44:00'),
-    ('STOP-R19-S4', 'ROUTE-R19', 4, 'Parkdale & Eccles',     45.3890, -75.7303, '07:49:00'),
-    ('STOP-R19-S5', 'ROUTE-R19', 5, 'Parkdale & Scott',      45.3930, -75.7300, '07:53:00'),
-    -- R20
-    ('STOP-R20-S1', 'ROUTE-R20', 1, 'Holland & Gladstone',   45.4100, -75.7250, '07:40:00'),
-    ('STOP-R20-S2', 'ROUTE-R20', 2, 'Holland & Wellington',  45.4070, -75.7260, '07:44:00'),
-    ('STOP-R20-S3', 'ROUTE-R20', 3, 'Holland & Byron',       45.4040, -75.7270, '07:48:00'),
-    ('STOP-R20-S4', 'ROUTE-R20', 4, 'Holland & Ruskin',      45.4010, -75.7280, '07:52:00'),
-    ('STOP-R20-S5', 'ROUTE-R20', 5, 'Holland & Carling',     45.3980, -75.7292, '07:56:00');
+    -- R01 Bank Street South (12 stops)
+    ('STOP-R01-S01',  'ROUTE-R01',  1, 'Bank & Walkley',       45.3680, -75.6693, '07:15:00'),
+    ('STOP-R01-S02',  'ROUTE-R01',  2, 'Bank & Kilborn',       45.3699, -75.6700, '07:18:00'),
+    ('STOP-R01-S03',  'ROUTE-R01',  3, 'Billings Bridge',      45.3733, -75.6718, '07:21:00'),
+    ('STOP-R01-S04',  'ROUTE-R01',  4, 'Bank & Johnston Rd',   45.3755, -75.6749, '07:24:00'),
+    ('STOP-R01-S05',  'ROUTE-R01',  5, 'Bank & Connell Ave',   45.3762, -75.6757, '07:26:00'),
+    ('STOP-R01-S06',  'ROUTE-R01',  6, 'Bank & Heron Rd',      45.3780, -75.6790, '07:29:00'),
+    ('STOP-R01-S07',  'ROUTE-R01',  7, 'Bank & Randall Ave',   45.3800, -75.6808, '07:31:00'),
+    ('STOP-R01-S08',  'ROUTE-R01',  8, 'Bank & Seneca St',     45.3815, -75.6827, '07:33:00'),
+    ('STOP-R01-S09',  'ROUTE-R01',  9, 'Bank & Belmont Ave',   45.3830, -75.6844, '07:35:00'),
+    ('STOP-R01-S10',  'ROUTE-R01', 10, 'Bank & Holmwood Ave',  45.3843, -75.6860, '07:37:00'),
+    ('STOP-R01-S11',  'ROUTE-R01', 11, 'Bank & Fifth Ave',     45.3855, -75.6878, '07:39:00'),
+    ('STOP-R01-S12',  'ROUTE-R01', 12, 'Bank & Sunnyside Ave', 45.3867, -75.6902, '07:41:00'),
+    -- R02 Bronson Avenue (12 stops)
+    ('STOP-R02-S01',  'ROUTE-R02',  1, 'Merivale & Carling',     45.3758, -75.7200, '07:20:00'),
+    ('STOP-R02-S02',  'ROUTE-R02',  2, 'Carling & Clyde Ave',    45.3758, -75.7130, '07:22:00'),
+    ('STOP-R02-S03',  'ROUTE-R02',  3, 'Fisher & Carling',       45.3760, -75.7002, '07:25:00'),
+    ('STOP-R02-S04',  'ROUTE-R02',  4, 'Bronson & Carling',      45.3762, -75.6990, '07:27:00'),
+    ('STOP-R02-S05',  'ROUTE-R02',  5, 'Bronson & Commissioner', 45.3790, -75.6985, '07:30:00'),
+    ('STOP-R02-S06',  'ROUTE-R02',  6, 'Carleton Main Gate',     45.3817, -75.6982, '07:32:00'),
+    ('STOP-R02-S07',  'ROUTE-R02',  7, 'Bronson & Aylmer Ave',   45.3828, -75.6976, '07:34:00'),
+    ('STOP-R02-S08',  'ROUTE-R02',  8, 'Bronson & Sunnyside Ave',45.3840, -75.6972, '07:36:00'),
+    ('STOP-R02-S09',  'ROUTE-R02',  9, 'Bronson & Holmwood Ave', 45.3851, -75.6968, '07:38:00'),
+    ('STOP-R02-S10',  'ROUTE-R02', 10, 'Bronson & Third Ave',    45.3861, -75.6964, '07:40:00'),
+    ('STOP-R02-S11',  'ROUTE-R02', 11, 'Bronson & Glebe Ave',    45.3868, -75.6961, '07:42:00'),
+    ('STOP-R02-S12',  'ROUTE-R02', 12, 'Chamberlain & Percy',    45.3873, -75.6958, '07:44:00'),
+    -- R11 Richmond Road (12 stops)
+    ('STOP-R11-S01',  'ROUTE-R11',  1, 'Richmond & Woodroffe',   45.3900, -75.7600, '07:15:00'),
+    ('STOP-R11-S02',  'ROUTE-R11',  2, 'Richmond & Currell Blvd',45.3905, -75.7545, '07:18:00'),
+    ('STOP-R11-S03',  'ROUTE-R11',  3, 'Richmond & Roseberry',   45.3910, -75.7490, '07:21:00'),
+    ('STOP-R11-S04',  'ROUTE-R11',  4, 'Richmond & Cleary Ave',  45.3913, -75.7435, '07:24:00'),
+    ('STOP-R11-S05',  'ROUTE-R11',  5, 'Richmond & Churchill',   45.3916, -75.7388, '07:27:00'),
+    ('STOP-R11-S06',  'ROUTE-R11',  6, 'Richmond & Golden Ave',  45.3920, -75.7345, '07:29:00'),
+    ('STOP-R11-S07',  'ROUTE-R11',  7, 'Richmond & Athlone Ave', 45.3928, -75.7320, '07:31:00'),
+    ('STOP-R11-S08',  'ROUTE-R11',  8, 'Richmond & Island Park', 45.3935, -75.7305, '07:33:00'),
+    ('STOP-R11-S09',  'ROUTE-R11',  9, 'Richmond & Grosvenor',   45.3940, -75.7295, '07:35:00'),
+    ('STOP-R11-S10',  'ROUTE-R11', 10, 'Byron Ave & Island Park',45.3947, -75.7298, '07:37:00'),
+    ('STOP-R11-S11',  'ROUTE-R11', 11, 'Byron Ave Mid',          45.3953, -75.7300, '07:39:00'),
+    ('STOP-R11-S12',  'ROUTE-R11', 12, 'Byron at School Ave',    45.3957, -75.7300, '07:41:00'),
+    -- R12 Scott Street (12 stops)
+    ('STOP-R12-S01',  'ROUTE-R12',  1, 'Scott & Bayview',        45.4000, -75.7050, '07:20:00'),
+    ('STOP-R12-S02',  'ROUTE-R12',  2, 'Scott & Preston',        45.3992, -75.7110, '07:22:00'),
+    ('STOP-R12-S03',  'ROUTE-R12',  3, 'Scott & Booth St',       45.3988, -75.7155, '07:24:00'),
+    ('STOP-R12-S04',  'ROUTE-R12',  4, 'Scott & Empress Ave',    45.3985, -75.7200, '07:26:00'),
+    ('STOP-R12-S05',  'ROUTE-R12',  5, 'Scott & Breezehill',     45.3983, -75.7230, '07:28:00'),
+    ('STOP-R12-S06',  'ROUTE-R12',  6, 'Scott & Holland Ave',    45.3980, -75.7255, '07:30:00'),
+    ('STOP-R12-S07',  'ROUTE-R12',  7, 'Scott & Parkdale Ave',   45.3975, -75.7275, '07:32:00'),
+    ('STOP-R12-S08',  'ROUTE-R12',  8, 'Scott & Winona Ave',     45.3970, -75.7295, '07:34:00'),
+    ('STOP-R12-S09',  'ROUTE-R12',  9, 'Scott & Island Park',    45.3965, -75.7309, '07:36:00'),
+    ('STOP-R12-S10',  'ROUTE-R12', 10, 'Island Park & Byron',    45.3960, -75.7310, '07:38:00'),
+    ('STOP-R12-S11',  'ROUTE-R12', 11, 'School Approach',        45.3959, -75.7306, '07:40:00'),
+    ('STOP-R12-S12',  'ROUTE-R12', 12, 'Near Riverside Academy', 45.3958, -75.7302, '07:42:00');
 
--- ===================== 500 Students + student_reference =====================
--- Generated: 25 students per route, distributed across grades K-8.
--- First 15 students (STUDENT-001 to STUDENT-015) are the tracked children assigned to parent logins.
+-- ===================== 88 Students (22 per route) + students_reference =====================
+-- Stop assignment: S01→idx1, S02→idx2, S03→idx3-4, S04→idx5-6, ..., S12→idx21-22
+-- Parent tracking: STUDENT-001/002→parent1(R01), STUDENT-023/024→parent2(R02), STUDENT-045/046/067/068→parent3(R11/R12)
 
 DO $$
 DECLARE
@@ -726,93 +521,94 @@ DECLARE
         'King','Wright','Hill','Scott','Adams','Green','Baker','Nelson','Carter','Mitchell',
         'Roberts','Turner','Phillips','Campbell','Parker','Evans','Edwards','Collins','Stewart','Morris'
     ];
-    -- Route UUIDs for school1 (R01-R10) and school2 (R11-R20)
-    route_uuids UUID[] := ARRAY[
-        '30000000-0000-0000-0000-000000000001'::uuid, '30000000-0000-0000-0000-000000000002'::uuid,
-        '30000000-0000-0000-0000-000000000003'::uuid, '30000000-0000-0000-0000-000000000004'::uuid,
-        '30000000-0000-0000-0000-000000000005'::uuid, '30000000-0000-0000-0000-000000000006'::uuid,
-        '30000000-0000-0000-0000-000000000007'::uuid, '30000000-0000-0000-0000-000000000008'::uuid,
-        '30000000-0000-0000-0000-000000000009'::uuid, '30000000-0000-0000-0000-000000000010'::uuid,
-        '30000000-0000-0000-0000-000000000011'::uuid, '30000000-0000-0000-0000-000000000012'::uuid,
-        '30000000-0000-0000-0000-000000000013'::uuid, '30000000-0000-0000-0000-000000000014'::uuid,
-        '30000000-0000-0000-0000-000000000015'::uuid, '30000000-0000-0000-0000-000000000016'::uuid,
-        '30000000-0000-0000-0000-000000000017'::uuid, '30000000-0000-0000-0000-000000000018'::uuid,
-        '30000000-0000-0000-0000-000000000019'::uuid, '30000000-0000-0000-0000-000000000020'::uuid
-    ];
-    route_refs TEXT[] := ARRAY[
-        'ROUTE-R01','ROUTE-R02','ROUTE-R03','ROUTE-R04','ROUTE-R05',
-        'ROUTE-R06','ROUTE-R07','ROUTE-R08','ROUTE-R09','ROUTE-R10',
-        'ROUTE-R11','ROUTE-R12','ROUTE-R13','ROUTE-R14','ROUTE-R15',
-        'ROUTE-R16','ROUTE-R17','ROUTE-R18','ROUTE-R19','ROUTE-R20'
-    ];
     school1_id UUID := 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c';
     school2_id UUID := 'c1a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c';
-    -- Parent UUIDs for tracked children (first 15 students)
-    tracked_parent_ids UUID[] := ARRAY[
-        '10000000-0000-0000-0000-000000000201'::uuid,  -- parent1: student 1 (R01)
-        '10000000-0000-0000-0000-000000000201'::uuid,  -- parent1: student 2 (R02)
-        '10000000-0000-0000-0000-000000000202'::uuid,  -- parent2: student 3 (R01)
-        '10000000-0000-0000-0000-000000000202'::uuid,  -- parent2: student 4 (R03)
-        '10000000-0000-0000-0000-000000000204'::uuid,  -- parent4: student 5 (R04)
-        '10000000-0000-0000-0000-000000000205'::uuid,  -- parent5: student 6 (R05)
-        '10000000-0000-0000-0000-000000000205'::uuid,  -- parent5: student 7 (R06)
-        '10000000-0000-0000-0000-000000000208'::uuid,  -- parent8: student 8 (R07)
-        '10000000-0000-0000-0000-000000000210'::uuid,  -- parent10: student 9 (R08)
-        '10000000-0000-0000-0000-000000000203'::uuid,  -- parent3: student 10 (R11)
-        '10000000-0000-0000-0000-000000000203'::uuid,  -- parent3: student 11 (R12)
-        '10000000-0000-0000-0000-000000000206'::uuid,  -- parent6: student 12 (R11)
-        '10000000-0000-0000-0000-000000000207'::uuid,  -- parent7: student 13 (R13)
-        '10000000-0000-0000-0000-000000000209'::uuid,  -- parent9: student 14 (R14)
-        '10000000-0000-0000-0000-000000000209'::uuid   -- parent9: student 15 (R15)
-    ];
-    tracked_route_idx INT[] := ARRAY[1,2,1,3,4,5,6,7,8,11,12,11,13,14,15];
-    i INT;
-    route_idx INT;
-    fname TEXT;
-    lname TEXT;
-    grade_val TEXT;
+    parent1_id UUID := '10000000-0000-0000-0000-000000000201';
+    parent2_id UUID := '10000000-0000-0000-0000-000000000202';
+    parent3_id UUID := '10000000-0000-0000-0000-000000000203';
+    i           INT;
+    idx_in_route INT;
+    block_start INT;
+    stop_num    INT;
+    stop_uuid   UUID;
+    route_uuid  UUID;
+    route_ref   TEXT;
+    route_code_str TEXT;
     school_uuid UUID;
-    route_uuid UUID;
-    route_ref TEXT;
     student_uuid UUID;
     student_ext TEXT;
     parent_uuid UUID;
     grades TEXT[] := ARRAY['K','1','2','3','4','5','6','7','8'];
+    grade_val   TEXT;
+    fname TEXT;
+    lname TEXT;
 BEGIN
-    FOR i IN 1..500 LOOP
-        -- Student external ID
-        student_ext := 'STUDENT-' || LPAD(i::TEXT, 3, '0');
-        -- Deterministic UUID
+    FOR i IN 1..88 LOOP
+        student_ext  := 'STUDENT-' || LPAD(i::TEXT, 3, '0');
         student_uuid := ('40000000-0000-0000-0000-' || LPAD(i::TEXT, 12, '0'))::uuid;
-        -- Route assignment: student i goes to route ((i-1) % 20) + 1 (1-indexed)
-        route_idx := ((i - 1) % 20) + 1;
-        route_uuid := route_uuids[route_idx];
-        route_ref := route_refs[route_idx];
-        -- School assignment
-        IF route_idx <= 10 THEN
-            school_uuid := school1_id;
+        fname        := first_names[((i - 1) % 50) + 1];
+        lname        := last_names[((i - 1) / 50 % 50) + 1];
+        grade_val    := grades[((i - 1) % 9) + 1];
+
+        -- Route block assignment
+        IF i <= 22 THEN
+            route_uuid     := '30000000-0000-0000-0000-000000000001';
+            route_ref      := 'ROUTE-R01';
+            route_code_str := '01';
+            school_uuid    := school1_id;
+            block_start    := 1;
+        ELSIF i <= 44 THEN
+            route_uuid     := '30000000-0000-0000-0000-000000000002';
+            route_ref      := 'ROUTE-R02';
+            route_code_str := '02';
+            school_uuid    := school1_id;
+            block_start    := 23;
+        ELSIF i <= 66 THEN
+            route_uuid     := '30000000-0000-0000-0000-000000000011';
+            route_ref      := 'ROUTE-R11';
+            route_code_str := '11';
+            school_uuid    := school2_id;
+            block_start    := 45;
         ELSE
-            school_uuid := school2_id;
+            route_uuid     := '30000000-0000-0000-0000-000000000012';
+            route_ref      := 'ROUTE-R12';
+            route_code_str := '12';
+            school_uuid    := school2_id;
+            block_start    := 67;
         END IF;
-        -- Name from arrays (cycle through)
-        fname := first_names[((i - 1) % 50) + 1];
-        lname := last_names[((i - 1) / 50 % 50) + 1];
-        -- Grade cycles K-8
-        grade_val := grades[((i - 1) % 9) + 1];
-        -- Parent for tracked children (first 15)
-        IF i <= 15 THEN
-            parent_uuid := tracked_parent_ids[i];
+
+        -- Index 1-22 within the route block
+        idx_in_route := i - block_start + 1;
+
+        -- Stop assignment: idx 1→S01, idx 2→S02, idx 3-4→S03, ..., idx 21-22→S12
+        IF idx_in_route <= 2 THEN
+            stop_num := idx_in_route;
+        ELSE
+            stop_num := (idx_in_route - 3) / 2 + 3;
+        END IF;
+
+        -- Stop UUID: '5{RR}{SS}00-0000-0000-0000-000000000001'
+        stop_uuid := ('5' || route_code_str || LPAD(stop_num::TEXT, 2, '0') || '00-0000-0000-0000-000000000001')::uuid;
+
+        -- Tracked students get parent assignments
+        IF i IN (1, 2) THEN
+            parent_uuid := parent1_id;
+        ELSIF i IN (23, 24) THEN
+            parent_uuid := parent2_id;
+        ELSIF i IN (45, 46, 67, 68) THEN
+            parent_uuid := parent3_id;
         ELSE
             parent_uuid := NULL;
         END IF;
 
-        -- Insert into NEW students table
-        INSERT INTO students (id, first_name, last_name, grade, school_id, parent_user_id, am_route_id, external_student_id)
-        VALUES (student_uuid, fname, lname, grade_val, school_uuid, parent_uuid, route_uuid, student_ext);
+        INSERT INTO students (id, first_name, last_name, grade, school_id, parent_user_id,
+                              am_route_id, am_stop_id, external_student_id)
+        VALUES (student_uuid, fname, lname, grade_val, school_uuid, parent_uuid,
+                route_uuid, stop_uuid, student_ext);
 
-        -- Insert into LEGACY reference table
         INSERT INTO students_reference (id, "firstName", "lastName", grade, "parentId", "schoolId", "assignedRouteId")
-        VALUES (student_ext, fname, lname, ((i - 1) % 9)::INT, COALESCE(parent_uuid::TEXT, ''), school_uuid::TEXT, route_ref);
+        VALUES (student_ext, fname, lname, ((i - 1) % 9)::INT,
+                COALESCE(parent_uuid::TEXT, ''), school_uuid::TEXT, route_ref);
     END LOOP;
 END $$;
 
@@ -821,9 +617,9 @@ END $$;
 INSERT INTO student_tag ("schoolId", "studentId", "tagId", "tagType") VALUES
     ('c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'STUDENT-001', 'TAG-001', 'SMARTTAG'),
     ('c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'STUDENT-002', 'TAG-002', 'SMARTTAG'),
-    ('c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'STUDENT-003', 'TAG-003', 'SMARTTAG'),
-    ('c1a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'STUDENT-010', 'TAG-010', 'SMARTTAG'),
-    ('c1a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'STUDENT-011', 'TAG-011', 'SMARTTAG');
+    ('c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'STUDENT-023', 'TAG-023', 'SMARTTAG'),
+    ('c1a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'STUDENT-045', 'TAG-045', 'SMARTTAG'),
+    ('c1a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'STUDENT-067', 'TAG-067', 'SMARTTAG');
 
 -- ===================== Initial location (so Dashboard isn't empty) =====================
 

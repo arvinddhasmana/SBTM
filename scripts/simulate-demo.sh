@@ -172,7 +172,7 @@ ADMIN_SCHOOL_ID=$(get_school_id_from_response "$ADMIN_AUTH")
 if [ -z "$ADMIN_SCHOOL_ID" ]; then ADMIN_SCHOOL_ID="$DEFAULT_SCHOOL_ID"; fi
 
 declare -A DRIVER_TOKENS
-for i in $(seq 1 20); do
+for i in 1 2 11 12; do
   email="driver${i}@sbtm.demo"
   auth_response=$(login_user "$email")
   DRIVER_TOKENS["$email"]=$(get_token_from_response "$auth_response")
@@ -299,14 +299,16 @@ for ((lap = 1; lap <= LAPS; lap++)); do
         HAS_PANIC=$(node -e "console.log(JSON.parse(Buffer.from('$ROUTE_METADATA_B64', 'base64').toString()).hasPanicAlert || false)")
 
         if [ "$HAS_DEVIATION" = "true" ] && [ "$step" -eq 3 ]; then
-           alert_payload="{\"vehicleId\":\"$VEHICLE_ID\",\"routeId\":\"$ROUTE_ID\",\"type\":\"ROUTE_DEVIATION\",\"severity\":\"WARNING\",\"description\":\"Bus off route near $WP_LABEL\",\"location\":{\"lat\":$WP_LAT,\"lng\":$WP_LNG},\"timestamp\":\"$timestamp\"}"
-           api_post "$API_BASE/alerts" "$alert_payload" "$token" > /dev/null
+           SCHOOL_ID=$(node -e "console.log(JSON.parse(Buffer.from('$ROUTE_METADATA_B64', 'base64').toString()).schoolId || '$DEFAULT_SCHOOL_ID')")
+           alert_payload="{\"schoolId\":\"$SCHOOL_ID\",\"vehicleId\":\"$VEHICLE_ID\",\"routeId\":\"$ROUTE_ID\",\"driverId\":\"$DRIVER_ID\",\"timestamp\":\"$timestamp\",\"lat\":$WP_LAT,\"lng\":$WP_LNG,\"eventType\":\"ROUTE_DEVIATION\"}"
+           api_post "$API_BASE/emergency-events" "$alert_payload" "$token" > /dev/null
            echo -e "  \033[31m[ALERT] Deviation: $VEHICLE_ID\033[0m"
         fi
 
         if [ "$HAS_PANIC" = "true" ] && [ "$step" -eq 6 ]; then
-           alert_payload="{\"vehicleId\":\"$VEHICLE_ID\",\"routeId\":\"$ROUTE_ID\",\"type\":\"PANIC\",\"severity\":\"CRITICAL\",\"description\":\"Driver triggered panic button\",\"location\":{\"lat\":$WP_LAT,\"lng\":$WP_LNG},\"timestamp\":\"$timestamp\"}"
-           api_post "$API_BASE/alerts" "$alert_payload" "$token" > /dev/null
+           SCHOOL_ID=$(node -e "console.log(JSON.parse(Buffer.from('$ROUTE_METADATA_B64', 'base64').toString()).schoolId || '$DEFAULT_SCHOOL_ID')")
+           alert_payload="{\"schoolId\":\"$SCHOOL_ID\",\"vehicleId\":\"$VEHICLE_ID\",\"routeId\":\"$ROUTE_ID\",\"driverId\":\"$DRIVER_ID\",\"timestamp\":\"$timestamp\",\"lat\":$WP_LAT,\"lng\":$WP_LNG,\"eventType\":\"PANIC_BUTTON\"}"
+           api_post "$API_BASE/emergency-events" "$alert_payload" "$token" > /dev/null
            echo -e "  \033[31m[ALERT] Panic: $VEHICLE_ID\033[0m"
         fi
 

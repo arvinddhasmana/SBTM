@@ -50,7 +50,7 @@ const PresenceCard: React.FC<PresenceCardProps> = ({ student, onClick }) => {
                     </div>
                     <div className="flex items-center gap-1 text-[7px] font-black text-slate-400 uppercase">
                         <Bus size={8} />
-                        <span>B-101</span>
+                        <span>{student.vehicleId || '—'}</span>
                     </div>
                 </div>
             </div>
