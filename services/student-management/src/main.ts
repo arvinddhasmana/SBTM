@@ -2,6 +2,9 @@ import { NestFactory } from '@nestjs/core';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { Logger as PinoLogger } from 'nestjs-pino';
+import { initTracing } from '@sbtm/common';
+
+initTracing('student-management');
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });

@@ -2,6 +2,9 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { Logger as PinoLogger } from 'nestjs-pino';
+import { initTracing } from '@sbtm/common';
+
+initTracing('video-service');
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });

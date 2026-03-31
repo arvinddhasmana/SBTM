@@ -7,8 +7,11 @@ import {
   HttpExceptionFilter,
   LoggingInterceptor,
   TimeoutInterceptor,
+  initTracing,
 } from '@sbtm/common';
 import { Logger as PinoLogger } from 'nestjs-pino';
+
+initTracing('api-gateway');
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });

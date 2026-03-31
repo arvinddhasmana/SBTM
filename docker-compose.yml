@@ -6,12 +6,12 @@ services:
       POSTGRES_PASSWORD: mysecretpassword
       POSTGRES_DB: sbms
     ports:
-      - "5433:5432"
+      - '5433:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./infra/local/init-test-db.sh:/docker-entrypoint-initdb.d/init-test-db.sh
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
       interval: 5s
       timeout: 5s
       retries: 5
@@ -19,9 +19,9 @@ services:
   redis:
     image: redis:7-alpine
     ports:
-      - "6379:6379"
+      - '6379:6379'
     healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
+      test: ['CMD', 'redis-cli', 'ping']
       interval: 5s
       timeout: 5s
       retries: 5
@@ -31,7 +31,7 @@ services:
       context: ./services/api-gateway
       dockerfile: Dockerfile
     ports:
-      - "3001:3001"
+      - '3001:3001'
     environment:
       - NODE_ENV=production
       - PORT=3001
@@ -53,6 +53,7 @@ services:
       - COMPLIANCE_SERVICE_URL=http://compliance-management:3007
       - CORS_ORIGINS=http://localhost:3000,http://localhost:5173,http://localhost:5174
       - OSRM_BASE_URL=http://router.project-osrm.org
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
     depends_on:
       postgres:
         condition: service_healthy
@@ -65,7 +66,7 @@ services:
       context: ./services/gps-tracking
       dockerfile: Dockerfile
     ports:
-      - "3002:3002"
+      - '3002:3002'
     environment:
       - DATABASE_URL=postgresql://postgres:mysecretpassword@postgres:5432/sbms
       - PORT=3002
@@ -82,7 +83,7 @@ services:
       context: ./services/emergency-alerts
       dockerfile: Dockerfile
     ports:
-      - "3003:3003"
+      - '3003:3003'
     environment:
       - DB_HOST=postgres
       - DB_PORT=5432
@@ -92,6 +93,7 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - PORT=3003
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
     depends_on:
       postgres:
         condition: service_healthy
@@ -103,7 +105,7 @@ services:
       context: ./services/student-presence
       dockerfile: Dockerfile
     ports:
-      - "3004:3004"
+      - '3004:3004'
     environment:
       - NODE_ENV=development
       - PORT=3004
@@ -114,6 +116,7 @@ services:
       - DB_DATABASE=sbms
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
     depends_on:
       postgres:
         condition: service_healthy
@@ -125,7 +128,7 @@ services:
       context: ./services/video-service
       dockerfile: Dockerfile
     ports:
-      - "3005:3005"
+      - '3005:3005'
     environment:
       - DB_HOST=postgres
       - DB_PORT=5432
@@ -134,6 +137,7 @@ services:
       - DB_DATABASE=sbms
       - STORAGE_TYPE=local
       - PORT=3005
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
     depends_on:
       postgres:
         condition: service_healthy
@@ -143,7 +147,7 @@ services:
       context: ./services/student-management
       dockerfile: Dockerfile
     ports:
-      - "3006:3006"
+      - '3006:3006'
     environment:
       - NODE_ENV=development
       - PORT=3006
@@ -152,6 +156,7 @@ services:
       - DB_USERNAME=postgres
       - DB_PASSWORD=mysecretpassword
       - DB_DATABASE=sbms
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
     depends_on:
       postgres:
         condition: service_healthy
@@ -161,7 +166,7 @@ services:
       context: ./apps/admin-dashboard
       dockerfile: Dockerfile
     ports:
-      - "5173:80"
+      - '5173:80'
     depends_on:
       - api-gateway
       - student-management
@@ -172,7 +177,7 @@ services:
       context: ./services/compliance-management
       dockerfile: Dockerfile
     ports:
-      - "3007:3007"
+      - '3007:3007'
     environment:
       - NODE_ENV=development
       - PORT=3007
@@ -181,6 +186,7 @@ services:
       - DB_USERNAME=postgres
       - DB_PASSWORD=mysecretpassword
       - DB_DATABASE=sbms
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
     depends_on:
       postgres:
         condition: service_healthy
@@ -190,7 +196,7 @@ services:
       context: ./apps/parent-app/web
       dockerfile: Dockerfile
     ports:
-      - "3000:80"
+      - '3000:80'
     depends_on:
       - api-gateway
 
@@ -199,9 +205,18 @@ services:
     container_name: sbtm-osrm
     command: osrm-routed --algorithm mld /data/ottawa.osrm
     ports:
-      - "5000:5000"
+      - '5000:5000'
     volumes:
       - ./infra/osrm-data:/data
+    restart: unless-stopped
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.58
+    ports:
+      - '16686:16686'
+      - '4318:4318'
+    environment:
+      COLLECTOR_OTLP_ENABLED: 'true'
     restart: unless-stopped
 
 volumes:

@@ -2,6 +2,7 @@ import { INestApplication, Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { HttpExceptionFilter } from '../filters/http-exception.filter';
 import { TimeoutInterceptor } from '../interceptors/timeout.interceptor';
+import { initTracing } from './tracing';
 
 export interface BootstrapOptions {
   module: new (...args: unknown[]) => unknown;
@@ -23,6 +24,8 @@ export async function bootstrapApp(options: BootstrapOptions): Promise<INestAppl
     cors = true,
     beforeListen,
   } = options;
+
+  initTracing(serviceName);
 
   const app = await NestFactory.create(module, { bufferLogs: true });
 

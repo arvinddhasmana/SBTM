@@ -15,6 +15,9 @@ services:
   osrm:
     # Inherits from docker-compose.yml
 
+  jaeger:
+    # Inherits from docker-compose.yml
+
   # Application services — disabled via scale: 0
   api-gateway:
     deploy:
