@@ -31,37 +31,31 @@ export class LoggingInterceptor implements NestInterceptor {
     return next.handle().pipe(
       tap({
         next: () => {
-          this.logger.log(
-            JSON.stringify({
-              level: 'info',
-              timestamp: new Date().toISOString(),
-              service: this.serviceName,
-              requestId,
-              tenantId,
-              userId,
-              method,
-              path: originalUrl,
-              statusCode: response.statusCode,
-              durationMs: Date.now() - startTime,
-            }),
-          );
+          const durationMs = Date.now() - startTime;
+          this.logger.log({
+            service: this.serviceName,
+            requestId,
+            tenantId,
+            userId,
+            method,
+            path: originalUrl,
+            statusCode: response.statusCode,
+            durationMs,
+          });
         },
         error: (error: { status?: number; message?: string }) => {
-          this.logger.error(
-            JSON.stringify({
-              level: 'error',
-              timestamp: new Date().toISOString(),
-              service: this.serviceName,
-              requestId,
-              tenantId,
-              userId,
-              method,
-              path: originalUrl,
-              statusCode: error?.status ?? 500,
-              durationMs: Date.now() - startTime,
-              error: error?.message ?? 'Unknown error',
-            }),
-          );
+          const durationMs = Date.now() - startTime;
+          this.logger.error({
+            service: this.serviceName,
+            requestId,
+            tenantId,
+            userId,
+            method,
+            path: originalUrl,
+            statusCode: error?.status ?? 500,
+            durationMs,
+            error: error?.message ?? 'Unknown error',
+          });
         },
       }),
     );

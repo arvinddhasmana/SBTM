@@ -24,5 +24,9 @@
     "express": "^4.21.0",
     "rxjs": "^7.8.0",
     "typescript": "^5.7.0"
+  },
+  "dependencies": {
+    "nestjs-pino": "^4.6.1",
+    "pino-http": "^11.0.0"
   }
 }

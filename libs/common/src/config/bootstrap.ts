@@ -1,4 +1,4 @@
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { INestApplication, Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { HttpExceptionFilter } from '../filters/http-exception.filter';
 import { TimeoutInterceptor } from '../interceptors/timeout.interceptor';
@@ -24,7 +24,17 @@ export async function bootstrapApp(options: BootstrapOptions): Promise<INestAppl
     beforeListen,
   } = options;
 
-  const app = await NestFactory.create(module);
+  const app = await NestFactory.create(module, { bufferLogs: true });
+
+  // Use pino logger if LoggerModule is registered in the AppModule
+  try {
+    const { Logger: PinoLogger } = await import('nestjs-pino');
+    app.useLogger(app.get(PinoLogger));
+  } catch {
+    // nestjs-pino not available, use default logger
+  }
+
+  const logger = new Logger(serviceName);
 
   if (globalPrefix) {
     app.setGlobalPrefix(globalPrefix);
@@ -51,7 +61,7 @@ export async function bootstrapApp(options: BootstrapOptions): Promise<INestAppl
 
   const port = process.env.PORT || defaultPort;
   await app.listen(port);
-  console.log(`${serviceName} is running on: http://localhost:${port}`);
+  logger.log(`${serviceName} is running on: http://localhost:${port}`);
 
   return app;
 }

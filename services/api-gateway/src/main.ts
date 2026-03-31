@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { ValidationPipe } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as cookieParser from 'cookie-parser';
 import {
@@ -8,9 +8,12 @@ import {
   LoggingInterceptor,
   TimeoutInterceptor,
 } from '@sbtm/common';
+import { Logger as PinoLogger } from 'nestjs-pino';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  app.useLogger(app.get(PinoLogger));
+  const logger = new Logger('Bootstrap');
   const configService = app.get(ConfigService);
   const corsOrigins = configService.get<string[]>('corsOrigins');
 
@@ -45,7 +48,7 @@ async function bootstrap() {
 
   const port = process.env.PORT || 3001;
   await app.listen(port);
-  console.log(`API Gateway is running on port ${port}`);
+  logger.log(`API Gateway is running on port ${port}`);
 }
 
 bootstrap();

@@ -21,7 +21,6 @@
     "test:integration": "jest --config ./test/jest-integration.json"
   },
   "dependencies": {
-    "@sbtm/common": "workspace:*",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.1",
@@ -30,11 +29,15 @@
     "@nestjs/platform-socket.io": "^11.1.9",
     "@nestjs/typeorm": "^11.0.0",
     "@nestjs/websockets": "^11.1.9",
+    "@sbtm/common": "workspace:*",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.3",
     "minio": "^8.0.2",
     "multer": "^1.4.5-lts.1",
+    "nestjs-pino": "^4.6.1",
     "pg": "^8.16.3",
+    "pino-http": "^11.0.0",
+    "pino-pretty": "^13.1.3",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "socket.io": "^4.8.1",
