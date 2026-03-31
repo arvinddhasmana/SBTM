@@ -1,7 +1,7 @@
 # SBTM Documentation Policy
 
 - Document owner: Product and Engineering
-- Last reviewed: 2026-03-24
+- Last reviewed: 2026-03-30
 - Primary use: Documentation governance, structure, traceability, and maintenance rules
 
 This policy defines how documentation is written and maintained in SBTM_AntiGravity. It takes inspiration from the RTSA documentation discipline, but adapts it for a school transportation platform focused on privacy, safety operations, and multi-tenant SaaS delivery.
@@ -17,13 +17,13 @@ This policy defines how documentation is written and maintained in SBTM_AntiGrav
 
 Use documentation domains rather than mixing all audiences into one file.
 
-| Audience | Primary entry point | Expected content |
-|----------|---------------------|------------------|
-| Product, delivery, stakeholders | `docs/Business` | Goals, requirements, feature scope, journeys, and use cases |
-| Architects and senior engineers | `docs/Design` | System context, service decomposition, event model, NFRs |
-| Developers | `docs/Implementation`, service `README.md` files | Code-aligned implementation details, module ownership, runtime expectations |
-| Operators, demo owners, QA | `docs/Demo`, `docs/Test` | Demo setup, verification steps, smoke tests, scenario validation |
-| Future compliance and support owners | `docs/Governance`, future operations/security docs | Policy, ownership, privacy controls, operational standards |
+| Audience                             | Primary entry point                                | Expected content                                                            |
+| ------------------------------------ | -------------------------------------------------- | --------------------------------------------------------------------------- |
+| Product, delivery, stakeholders      | `docs/Business`                                    | Goals, requirements, feature scope, journeys, and use cases                 |
+| Architects and senior engineers      | `docs/Design`                                      | System context, service decomposition, event model, NFRs                    |
+| Developers                           | `docs/Implementation`, service `README.md` files   | Code-aligned implementation details, module ownership, runtime expectations |
+| Operators, demo owners, QA           | `docs/Demo`, `docs/Test`                           | Demo setup, verification steps, smoke tests, scenario validation            |
+| Future compliance and support owners | `docs/Governance`, future operations/security docs | Policy, ownership, privacy controls, operational standards                  |
 
 ## Required Document Metadata
 

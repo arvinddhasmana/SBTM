@@ -1,7 +1,7 @@
 # Phase 5: Security, Compliance, and Production Hardening
 
 - Document owner: Product and Engineering
-- Last reviewed: 2026-03-24
+- Last reviewed: 2026-03-30
 - Phase status: Planned
 - Gap level: Medium
 
@@ -15,18 +15,18 @@ Hardening should be applied after core workflows are functionally complete. Phas
 
 ## Current State (from Gap Analysis)
 
-| Capability | Status |
-|---|---|
-| JWT-based auth at gateway | Implemented |
-| RBAC guards at gateway | Implemented |
-| Application-layer tenant isolation (school_id) | Implemented |
-| PostgreSQL RLS policies | Not implemented |
-| Service-to-service authentication | Not implemented |
-| Centralized audit pipeline | Not implemented (compliance service logs locally) |
-| Correlation IDs across services | Not implemented |
-| Data retention schedules | Not implemented |
-| Archival and purge workflows | Not implemented |
-| Production observability (centralized tracing, metrics) | Not implemented |
+| Capability                                              | Status                                            |
+| ------------------------------------------------------- | ------------------------------------------------- |
+| JWT-based auth at gateway                               | Implemented                                       |
+| RBAC guards at gateway                                  | Implemented                                       |
+| Application-layer tenant isolation (school_id)          | Implemented                                       |
+| PostgreSQL RLS policies                                 | Not implemented                                   |
+| Service-to-service authentication                       | Not implemented                                   |
+| Centralized audit pipeline                              | Not implemented (compliance service logs locally) |
+| Correlation IDs across services                         | Not implemented                                   |
+| Data retention schedules                                | Not implemented                                   |
+| Archival and purge workflows                            | Not implemented                                   |
+| Production observability (centralized tracing, metrics) | Not implemented                                   |
 
 ## Scope
 
@@ -38,10 +38,12 @@ Hardening should be applied after core workflows are functionally complete. Phas
 - Test that RLS prevents cross-tenant data access even with direct SQL access.
 
 **Implementation modules affected:**
+
 - All service modules (1–6, 8–10) — database-layer changes
 - [Module-8-ApiGateway.md](../../Implementation/Module-8-ApiGateway.md) — Tenant context propagation
 
 **Requirements traced:**
+
 - NFR-SEC-001: Tenant isolation enforceable at database layer
 - SR-TENANT-001: Cross-tenant data access prevented even with compromised application logic
 
@@ -53,10 +55,12 @@ Hardening should be applied after core workflows are functionally complete. Phas
 - Audit and log service-to-service calls with source attribution.
 
 **Implementation modules affected:**
+
 - All backend service modules — authentication middleware
 - [Module-8-ApiGateway.md](../../Implementation/Module-8-ApiGateway.md) — Token delegation
 
 **Requirements traced:**
+
 - SR-SVC-001: All internal service calls are authenticated and attributable
 - SR-SVC-002: Service credentials rotate on a defined schedule
 
@@ -69,10 +73,12 @@ Hardening should be applied after core workflows are functionally complete. Phas
 - Configure alerting for safety-critical metrics (see monitoring_observability.md).
 
 **Implementation modules affected:**
+
 - All service modules — audit event emission and structured logging
 - New: Observability infrastructure setup
 
 **Requirements traced:**
+
 - OPS-AUDIT-001: All critical data mutations are auditable
 - OPS-TRACE-001: Requests can be traced across service boundaries
 - OPS-MON-001: Safety-critical services are monitored with alerting
@@ -81,37 +87,39 @@ Hardening should be applied after core workflows are functionally complete. Phas
 
 - Define and implement retention schedules for each data category:
 
-| Data Category | Retention | Action After |
-|---|---|---|
-| GPS location records | 90 days | Archive to cold storage |
-| Emergency alert records | 1 year | Archive |
-| Presence events | 90 days | Archive |
-| Video metadata and files | 30 days | Purge |
-| Audit logs | 2 years | Archive |
-| Student records | Active enrollment + 1 year | Anonymize |
+| Data Category            | Retention                  | Action After            |
+| ------------------------ | -------------------------- | ----------------------- |
+| GPS location records     | 90 days                    | Archive to cold storage |
+| Emergency alert records  | 1 year                     | Archive                 |
+| Presence events          | 90 days                    | Archive                 |
+| Video metadata and files | 30 days                    | Purge                   |
+| Audit logs               | 2 years                    | Archive                 |
+| Student records          | Active enrollment + 1 year | Anonymize               |
 
 - Implement purge jobs as scheduled tasks.
 - Implement data subject access requests (DSAR) workflow for PIPEDA compliance.
 - Document data residency and encryption controls.
 
 **Implementation modules affected:**
+
 - All service modules — data lifecycle integration
 - [Module-10-ComplianceManagement.md](../../Implementation/Module-10-ComplianceManagement.md) — Compliance audit coordination
 
 **Requirements traced:**
+
 - PR-RET-001: Data retained only as long as necessary for stated purpose
 - PR-DEL-001: Personal data deleted upon request within 30 days
 - PR-ENC-001: PII encrypted at rest and in transit
 
 ## Dependencies
 
-| Dependency | Source | Status |
-|---|---|---|
-| Stable event and notification architecture | Phase 1 | Required |
-| Complete operational workflows | Phases 2–4 | Required |
-| Deployment topology decisions | DevOps | Needs decision |
-| Secret management infrastructure | DevOps | Needs setup |
-| Log aggregation service | DevOps | Needs provisioning |
+| Dependency                                 | Source     | Status             |
+| ------------------------------------------ | ---------- | ------------------ |
+| Stable event and notification architecture | Phase 1    | Required           |
+| Complete operational workflows             | Phases 2–4 | Required           |
+| Deployment topology decisions              | DevOps     | Needs decision     |
+| Secret management infrastructure           | DevOps     | Needs setup        |
+| Log aggregation service                    | DevOps     | Needs provisioning |
 
 ## Acceptance Criteria
 
@@ -124,14 +132,14 @@ Hardening should be applied after core workflows are functionally complete. Phas
 
 ## Verification
 
-| Test Type | Scope |
-|---|---|
-| Database security test | Direct SQL query bypasses application but RLS blocks cross-tenant access |
-| Service auth test | Internal call without valid service token is rejected |
-| Audit completeness test | Create/update/delete operations across services produce queryable audit trail |
-| Tracing test | E2E request produces correlated trace across gateway and 2+ downstream services |
-| Retention test | Data older than retention period is archived/purged on schedule |
-| PIPEDA test | DSAR workflow returns all personal data for a given subject within SLA |
+| Test Type               | Scope                                                                           |
+| ----------------------- | ------------------------------------------------------------------------------- |
+| Database security test  | Direct SQL query bypasses application but RLS blocks cross-tenant access        |
+| Service auth test       | Internal call without valid service token is rejected                           |
+| Audit completeness test | Create/update/delete operations across services produce queryable audit trail   |
+| Tracing test            | E2E request produces correlated trace across gateway and 2+ downstream services |
+| Retention test          | Data older than retention period is archived/purged on schedule                 |
+| PIPEDA test             | DSAR workflow returns all personal data for a given subject within SLA          |
 
 ## Demo Impact
 

@@ -1,7 +1,7 @@
 # SBTM v1 Deployment Architecture
 
 - Document owner: Engineering and Architecture
-- Last reviewed: 2026-03-24
+- Last reviewed: 2026-03-30
 - Primary use: Runtime topology for local development and target production deployment
 
 ## Purpose
@@ -10,14 +10,14 @@ This document describes how the platform is deployed today in local environments
 
 ## Environment Matrix
 
-| Property | Local Development | Demo and Staging Target | Production Target |
-| --- | --- | --- | --- |
-| Orchestration | Docker Compose | Docker Compose or container platform | Container platform with managed secrets and backups |
-| Gateway exposure | Local port mapping | Reverse-proxied HTTPS | Reverse-proxied HTTPS |
-| Database | Shared PostgreSQL container | Managed or dedicated PostgreSQL | Managed PostgreSQL with backup and recovery |
-| Queue and cache | Redis container | Managed or dedicated Redis | Managed Redis or resilient queue and cache tier |
-| Object storage | Local or MinIO | MinIO or managed S3-compatible storage | Managed object storage with encryption and lifecycle rules |
-| Client delivery | Local Vite or static container | Static hosting or containerized UI | Production web hosting and mobile release pipelines |
+| Property         | Local Development              | Demo and Staging Target                | Production Target                                          |
+| ---------------- | ------------------------------ | -------------------------------------- | ---------------------------------------------------------- |
+| Orchestration    | Docker Compose                 | Docker Compose or container platform   | Container platform with managed secrets and backups        |
+| Gateway exposure | Local port mapping             | Reverse-proxied HTTPS                  | Reverse-proxied HTTPS                                      |
+| Database         | Shared PostgreSQL container    | Managed or dedicated PostgreSQL        | Managed PostgreSQL with backup and recovery                |
+| Queue and cache  | Redis container                | Managed or dedicated Redis             | Managed Redis or resilient queue and cache tier            |
+| Object storage   | Local or MinIO                 | MinIO or managed S3-compatible storage | Managed object storage with encryption and lifecycle rules |
+| Client delivery  | Local Vite or static container | Static hosting or containerized UI     | Production web hosting and mobile release pipelines        |
 
 ## Current Local Topology
 
@@ -26,6 +26,7 @@ flowchart TB
     subgraph Docker Compose
         PG[PostgreSQL 15 and PostGIS]
         Redis[Redis 7]
+        OSRM[OSRM :5000]
         Gateway[API Gateway :3001]
         GPS[GPS Tracking :3002]
         Alerts[Emergency Alerts :3003]
@@ -48,6 +49,7 @@ flowchart TB
     Video --> PG
     Admin --> Gateway
     Parent --> Gateway
+    Gateway --> OSRM
 ```
 
 ## Production-Oriented Topology
@@ -69,9 +71,11 @@ flowchart TB
 ## Operational Dependencies
 
 - API Gateway depends on PostgreSQL and downstream service reachability.
+- API Gateway uses OSRM (port 5000) for route geometry and optimization.
 - Emergency Alerts and Student Presence depend on Redis in addition to PostgreSQL.
 - Video workflows depend on object storage configuration consistency.
 - Admin and Parent UIs depend on the gateway being reachable at the configured base URL.
+- OSRM requires pre-processed map data (Ottawa region) mounted at `/data/ottawa.osrm`.
 
 ## Traceability
 

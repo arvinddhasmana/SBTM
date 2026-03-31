@@ -1,7 +1,7 @@
 # SBTM Testing Guide
 
 - Document owner: QA and Engineering
-- Last reviewed: 2026-03-24
+- Last reviewed: 2026-03-30
 - Primary use: Test pyramid, operational verification, smoke checks, and test scenario index
 
 This guide is the testing reference for the SBTM platform. It covers test layers, coverage targets, scenario indices, and operational verification procedures.
@@ -17,13 +17,13 @@ This guide is the testing reference for the SBTM platform. It covers test layers
 
 ## 1. Test Pyramid
 
-| Layer | Location | Infrastructure | Coverage Target |
-|---|---|---|---|
-| **Unit Tests** | `services/*/src/**/*.spec.ts` | None (Jest mocks) | 80%+ (90%+ for guards/auth) |
-| **Integration Tests** | `services/*/test/*.e2e-spec.ts` | Docker Compose (Postgres + Redis) | Scenario-complete |
-| **API Smoke Tests** | `scripts/verify-demo.sh` | Full Docker stack | All critical paths |
-| **E2E Tests** | `apps/admin-dashboard/e2e/` (planned) | Playwright + full stack | Critical user flows |
-| **Frontend Unit Tests** | `apps/admin-dashboard/src/**/*.test.ts` | Vitest | 80%+ |
+| Layer                   | Location                                | Infrastructure                    | Coverage Target             |
+| ----------------------- | --------------------------------------- | --------------------------------- | --------------------------- |
+| **Unit Tests**          | `services/*/src/**/*.spec.ts`           | None (Jest mocks)                 | 80%+ (90%+ for guards/auth) |
+| **Integration Tests**   | `services/*/test/*.e2e-spec.ts`         | Docker Compose (Postgres + Redis) | Scenario-complete           |
+| **API Smoke Tests**     | `scripts/verify-demo.sh`                | Full Docker stack                 | All critical paths          |
+| **E2E Tests**           | `apps/admin-dashboard/e2e/` (planned)   | Playwright + full stack           | Critical user flows         |
+| **Frontend Unit Tests** | `apps/admin-dashboard/src/**/*.test.ts` | Vitest                            | 80%+                        |
 
 ---
 
@@ -59,23 +59,23 @@ SBTM_AntiGravity/
 ├── scripts/
 │   ├── verify-demo.sh                    # API smoke test suite
 │   └── simulate-demo.sh                  # GPS + events simulation
-└── docker-compose.ci.yml                 # CI test infrastructure
+└── docker-compose.ci.yml                 # CI build (admin-dashboard only; not full test infra)
 ```
 
 ---
 
 ## 3. Coverage Requirements
 
-| Component Type | Line Coverage | Notes |
-|---|---|---|
-| Auth guards and RBAC logic | 90%+ | Security-critical |
-| Tenant isolation (school_id filtering) | 90%+ | Privacy-critical |
-| Service controllers and handlers | 85%+ | Core business logic |
-| DTO validation and transforms | 80%+ | Input boundary |
-| Queue producers / consumers | 80%+ | Async pathways |
-| Frontend components | 80%+ | User-facing |
-| Configuration / startup | 75%+ | Bootstrap code |
-| **Global minimum** | **80%** | CI gate |
+| Component Type                         | Line Coverage | Notes               |
+| -------------------------------------- | ------------- | ------------------- |
+| Auth guards and RBAC logic             | 90%+          | Security-critical   |
+| Tenant isolation (school_id filtering) | 90%+          | Privacy-critical    |
+| Service controllers and handlers       | 85%+          | Core business logic |
+| DTO validation and transforms          | 80%+          | Input boundary      |
+| Queue producers / consumers            | 80%+          | Async pathways      |
+| Frontend components                    | 80%+          | User-facing         |
+| Configuration / startup                | 75%+          | Bootstrap code      |
+| **Global minimum**                     | **80%**       | CI gate             |
 
 ---
 
@@ -83,58 +83,58 @@ SBTM_AntiGravity/
 
 ### Unit Tests (UT01–UT12)
 
-| ID | Service | Validates |
-|---|---|---|
-| UT01 | api-gateway | JWT validation, token expiry, malformed tokens |
-| UT02 | api-gateway | RBAC role-based access (OSTA_ADMIN, BOARD_ADMIN, SCHOOL_ADMIN, DRIVER, PARENT) |
-| UT03 | api-gateway | Tenant guard: school_id isolation |
-| UT04 | gps-tracking | Location point creation and validation |
-| UT05 | gps-tracking | Route live-location query scoping |
-| UT06 | emergency-alerts | Alert creation, event type validation (PANIC_BUTTON, OTHER) |
-| UT07 | emergency-alerts | Queue producer enqueue behavior |
-| UT08 | student-presence | Presence event creation and deduplication |
-| UT09 | student-presence | Event type validation (BOARD, ALIGHT) |
-| UT10 | student-management | Student CRUD with school_id filtering |
-| UT11 | video-service | Video event creation and metadata validation |
-| UT12 | compliance-management | Audit log entry creation |
+| ID   | Service               | Validates                                                                      |
+| ---- | --------------------- | ------------------------------------------------------------------------------ |
+| UT01 | api-gateway           | JWT validation, token expiry, malformed tokens                                 |
+| UT02 | api-gateway           | RBAC role-based access (OSTA_ADMIN, BOARD_ADMIN, SCHOOL_ADMIN, DRIVER, PARENT) |
+| UT03 | api-gateway           | Tenant guard: school_id isolation                                              |
+| UT04 | gps-tracking          | Location point creation and validation                                         |
+| UT05 | gps-tracking          | Route live-location query scoping                                              |
+| UT06 | emergency-alerts      | Alert creation, event type validation (PANIC_BUTTON, OTHER)                    |
+| UT07 | emergency-alerts      | Queue producer enqueue behavior                                                |
+| UT08 | student-presence      | Presence event creation and deduplication                                      |
+| UT09 | student-presence      | Event type validation (BOARD, ALIGHT)                                          |
+| UT10 | student-management    | Student CRUD with school_id filtering                                          |
+| UT11 | video-service         | Video event creation and metadata validation                                   |
+| UT12 | compliance-management | Audit log entry creation                                                       |
 
 ### Integration Tests (IT01–IT08)
 
-| ID | Service(s) | Validates |
-|---|---|---|
-| IT01 | api-gateway → gps-tracking | GPS location POST through gateway with auth |
-| IT02 | api-gateway → emergency-alerts | Emergency event POST through gateway with auth |
-| IT03 | api-gateway → student-presence | Presence event POST through gateway with auth |
-| IT04 | api-gateway → student-management | Student CRUD through gateway with tenant scoping |
-| IT05 | api-gateway | Cross-tenant access rejection (school_id mismatch) |
-| IT06 | api-gateway | Role-based endpoint access matrix |
-| IT07 | gps-tracking → postgres | Location persistence and spatial queries |
-| IT08 | emergency-alerts → redis | Alert queue enqueue and process |
+| ID   | Service(s)                       | Validates                                          |
+| ---- | -------------------------------- | -------------------------------------------------- |
+| IT01 | api-gateway → gps-tracking       | GPS location POST through gateway with auth        |
+| IT02 | api-gateway → emergency-alerts   | Emergency event POST through gateway with auth     |
+| IT03 | api-gateway → student-presence   | Presence event POST through gateway with auth      |
+| IT04 | api-gateway → student-management | Student CRUD through gateway with tenant scoping   |
+| IT05 | api-gateway                      | Cross-tenant access rejection (school_id mismatch) |
+| IT06 | api-gateway                      | Role-based endpoint access matrix                  |
+| IT07 | gps-tracking → postgres          | Location persistence and spatial queries           |
+| IT08 | emergency-alerts → redis         | Alert queue enqueue and process                    |
 
 ### Smoke Tests (SM01–SM08)
 
 These are executed by `scripts/verify-demo.sh`:
 
-| ID | Validates |
-|---|---|
-| SM01 | Database tables exist and contain seeded data |
-| SM02 | User authentication for all demo roles |
-| SM03 | GPS location POST via gateway succeeds |
-| SM04 | Student presence event POST via gateway succeeds |
-| SM05 | Emergency alert POST via gateway succeeds |
-| SM06 | Admin can list students (scoped by school_id) |
-| SM07 | Parent can access child routes (authorization check) |
+| ID   | Validates                                             |
+| ---- | ----------------------------------------------------- |
+| SM01 | Database tables exist and contain seeded data         |
+| SM02 | User authentication for all demo roles                |
+| SM03 | GPS location POST via gateway succeeds                |
+| SM04 | Student presence event POST via gateway succeeds      |
+| SM05 | Emergency alert POST via gateway succeeds             |
+| SM06 | Admin can list students (scoped by school_id)         |
+| SM07 | Parent can access child routes (authorization check)  |
 | SM08 | Driver can post GPS but cannot access admin endpoints |
 
 ### Authorization Tests (AZ01–AZ05)
 
-| ID | Validates |
-|---|---|
+| ID   | Validates                                             |
+| ---- | ----------------------------------------------------- |
 | AZ01 | PARENT can read live-location for assigned route only |
 | AZ02 | PARENT cannot read live-location for unassigned route |
-| AZ03 | DRIVER can POST GPS but cannot GET student lists |
+| AZ03 | DRIVER can POST GPS but cannot GET student lists      |
 | AZ04 | SCHOOL_ADMIN can read students only for own school_id |
-| AZ05 | Unauthenticated requests return 401 |
+| AZ05 | Unauthenticated requests return 401                   |
 
 ---
 
@@ -161,30 +161,34 @@ These are executed by `scripts/verify-demo.sh`:
 
 ## 7. CI Pipeline Stages
 
+> **Current state (2026-03-30)**: No GitHub Actions workflow or other CI pipeline is implemented yet. The stages below define the **target CI pipeline design**. Root `package.json` scripts (`build`, `test`, `lint`) are currently placeholders. CI automation is a known gap.
+
 ```
 SG-1: Lint       →  SG-2: Build     →  SG-3: Unit Tests  →  SG-4: Integration  →  SG-5: Smoke
  (eslint,            (tsc, Vite        (jest + 80%          (docker-compose       (verify-demo.sh
   prettier)           build)            coverage)            + e2e-spec.ts)         POST checks)
 ```
 
-| Stage | Blocks PR | Time Budget |
-|---|---|---|
-| Lint & Format | Yes | < 2 min |
-| Build | Yes | < 5 min |
-| Unit Tests + Coverage | Yes | < 5 min |
-| Integration Tests | Yes | < 10 min |
-| Smoke Tests | Warn only | < 5 min |
+| Stage                 | Blocks PR | Time Budget |
+| --------------------- | --------- | ----------- |
+| Lint & Format         | Yes       | < 2 min     |
+| Build                 | Yes       | < 5 min     |
+| Unit Tests + Coverage | Yes       | < 5 min     |
+| Integration Tests     | Yes       | < 10 min    |
+| Smoke Tests           | Warn only | < 5 min     |
 
 ---
 
 ## 8. Current Smoke Tests
 
 ### API Gateway Health
+
 ```bash
 curl http://localhost:3001/api/v1/health
 ```
 
 ### Auth Login
+
 ```bash
 curl -X POST http://localhost:3001/api/v1/auth/login \
   -H "Content-Type: application/json" \
@@ -192,11 +196,13 @@ curl -X POST http://localhost:3001/api/v1/auth/login \
 ```
 
 Store the returned `accessToken` and use it for protected calls:
+
 ```bash
 export TOKEN=<access-token>
 ```
 
 ### GPS Tracking (via Gateway)
+
 ```bash
 curl -X POST http://localhost:3001/api/v1/routes/locations \
   -H "Authorization: Bearer $TOKEN" \
@@ -205,6 +211,7 @@ curl -X POST http://localhost:3001/api/v1/routes/locations \
 ```
 
 ### Presence (Manual via Gateway)
+
 ```bash
 curl -X POST http://localhost:3001/api/v1/student-presence-events \
   -H "Authorization: Bearer $TOKEN" \
@@ -213,6 +220,7 @@ curl -X POST http://localhost:3001/api/v1/student-presence-events \
 ```
 
 ### Emergency Alerts (via Gateway)
+
 ```bash
 curl -X POST http://localhost:3001/api/v1/emergency-events \
   -H "Authorization: Bearer $TOKEN" \
@@ -242,14 +250,16 @@ npm run test:cov
 
 ```bash
 # Start test infrastructure
-docker compose -f docker-compose.ci.yml up -d
+# Note: docker-compose.ci.yml currently only builds admin-dashboard.
+# For full integration testing, use docker-compose.yml with docker-compose.infra.yml override.
+docker compose -f docker-compose.yml -f docker-compose.infra.yml up -d
 
 # Run integration tests for a service
 cd services/api-gateway
 npm run test:e2e
 
 # Tear down
-docker compose -f docker-compose.ci.yml down -v
+docker compose -f docker-compose.yml -f docker-compose.infra.yml down -v
 ```
 
 ### Run all smoke tests
@@ -280,17 +290,21 @@ docker compose -f docker-compose.ci.yml down -v
 ## 11. Integration Focus By Upgrade Phase
 
 ### INC-1 (Rate Limiting & Service Auth Activation)
+
 - Verify rate limiting returns 429 for excessive requests
 - Verify service-to-service calls include valid auth headers
 
 ### INC-2 (Correlation IDs & Observability)
+
 - Verify correlation IDs propagate through multi-service calls
 - Verify structured log output includes correlation context
 
 ### INC-3 (Centralized Audit Pipeline)
+
 - Verify audit events are published and consumed end-to-end
 - Verify audit query returns entries scoped by school_id
 
 ### INC-4 (Data Retention & DSAR)
+
 - Verify data retention purge jobs remove expired records
 - Verify DSAR export produces correct per-student data extract

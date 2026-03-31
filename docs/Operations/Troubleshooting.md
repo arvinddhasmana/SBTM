@@ -1,7 +1,7 @@
 # SBTM Troubleshooting Guide
 
 - Document owner: Engineering and Operations
-- Last reviewed: 2026-03-24
+- Last reviewed: 2026-03-30
 - Primary use: Diagnose common platform failures and degraded workflow states
 
 ## Triage Order
@@ -17,11 +17,13 @@
 ### Parent app shows stale or missing live location
 
 Possible causes:
+
 - GPS service ingest or query failure
 - gateway proxy issue for route tracking endpoints
 - route assignment mismatch between student and route
 
 Checks:
+
 - verify GPS service is reachable
 - verify recent location points exist for the route
 - verify parent-child-route linkage is correct
@@ -29,12 +31,14 @@ Checks:
 ### Emergency alert created but not visible to admins or parents
 
 Possible causes:
+
 - alert persistence failure
 - gateway routing issue
 - Redis or queue processing issue
 - parent delivery pipeline incomplete or degraded
 
 Checks:
+
 - confirm alert record creation
 - confirm alert queue publish behavior
 - confirm admin real-time channel health
@@ -43,11 +47,13 @@ Checks:
 ### Driver presence actions do not persist
 
 Possible causes:
+
 - mobile app fell back to local-only behavior
 - student presence endpoint unavailable
 - offline queue not flushing after reconnect
 
 Checks:
+
 - inspect app connectivity state
 - confirm presence service health
 - inspect offline queue flush logs or metrics
@@ -55,23 +61,25 @@ Checks:
 ### Compliance records missing or inconsistent
 
 Possible causes:
+
 - incorrect tenant query scope
 - service-local audit behavior not reflected elsewhere
 - database write failure
 
 Checks:
+
 - verify `schoolId` filters and record ownership
 - confirm DB connectivity
 - review recent create or update requests
 
 ## Dependency Failures
 
-| Dependency | Expected Impact |
-| --- | --- |
-| PostgreSQL down | Most platform workflows fail or degrade severely |
-| Redis down | Alert and presence queue-backed behavior degrades; state caching affected |
-| Object storage down | Video upload and retrieval fail |
-| Gateway down | Apps lose primary backend access |
+| Dependency          | Expected Impact                                                           |
+| ------------------- | ------------------------------------------------------------------------- |
+| PostgreSQL down     | Most platform workflows fail or degrade severely                          |
+| Redis down          | Alert and presence queue-backed behavior degrades; state caching affected |
+| Object storage down | Video upload and retrieval fail                                           |
+| Gateway down        | Apps lose primary backend access                                          |
 
 ## Escalation Guidance
 

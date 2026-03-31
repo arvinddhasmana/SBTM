@@ -6,6 +6,9 @@ coverage
 .turbo
 tmpclaude-*
 
+# Package manager
+package-lock.json
+
 # Project Specific
 infra/osrm-data/
 *.log

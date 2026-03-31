@@ -3,15 +3,17 @@ import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-    const app = await NestFactory.create(AppModule);
-    app.useGlobalPipes(new ValidationPipe({
-        whitelist: true,
-        transform: true,
-        forbidNonWhitelisted: true,
-    }));
+  const app = await NestFactory.create(AppModule);
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      transform: true,
+      forbidNonWhitelisted: true,
+    }),
+  );
 
-    const port = process.env.PORT || 3006;
-    await app.listen(port);
-    console.log(`Student Management Service is running on: http://localhost:${port}`);
+  const port = process.env.PORT || 3007;
+  await app.listen(port);
+  console.log(`Compliance Management Service is running on: http://localhost:${port}`);
 }
 bootstrap();

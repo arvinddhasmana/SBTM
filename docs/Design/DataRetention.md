@@ -1,7 +1,7 @@
 # SBTM v1 Data Retention and Lifecycle
 
 - Document owner: Engineering and Product
-- Last reviewed: 2026-03-24
+- Last reviewed: 2026-03-30
 - Primary use: Retention, archival, deletion, and privacy-oriented lifecycle guidance for operational data
 
 ## Purpose
@@ -17,27 +17,27 @@ This document defines the target retention posture for major data classes in SBT
 
 ## Retention Matrix
 
-| Data Class | Examples | Operational Need | Target Retention | Intended Action After Retention |
-| --- | --- | --- | --- | --- |
-| User identity records | user accounts, role assignments, school or board links | Active platform access | Keep while account is active and for a bounded post-deactivation support window | Archive or purge after policy-defined offboarding period |
-| Route and fleet master data | routes, stops, vehicles | Operational baseline | Keep while active and for historical reporting window | Archive superseded records if needed |
-| Student roster records | student identity, route assignments, parent linkage | Daily operations and support | Keep while student is actively served and for a limited operational support window after departure | Archive or purge according to tenant policy |
-| GPS telemetry | live and historical location points | Live operations, incident review, limited analytics | Shorter retention than master data; avoid indefinite storage | Aggregate, archive, or purge |
-| Presence events | boarding and alighting records | Parent communication, operational traceability, incident review | Medium retention with explicit limit | Archive summary or purge detailed event history |
-| Emergency alerts | incident records and status | Safety follow-up and audit | Retain through investigation and reporting window | Archive and eventually purge under policy |
-| Compliance records | driver compliance, inspections | Safety and regulatory support | Retain according to school-board or regulatory obligations | Archive with controlled access |
-| Audit logs | critical mutations, access traces | Accountability and investigation | Retain longer than routine operational data | Archive with restricted access |
-| Video metadata and assets | video events, recordings, thumbnails | Incident handling and evidence review | Highly policy-sensitive and should be minimized | Secure deletion or archival under strict controls |
+| Data Class                  | Examples                                               | Operational Need                                                | Target Retention                                                                                   | Intended Action After Retention                          |
+| --------------------------- | ------------------------------------------------------ | --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| User identity records       | user accounts, role assignments, school or board links | Active platform access                                          | Keep while account is active and for a bounded post-deactivation support window                    | Archive or purge after policy-defined offboarding period |
+| Route and fleet master data | routes, stops, vehicles                                | Operational baseline                                            | Keep while active and for historical reporting window                                              | Archive superseded records if needed                     |
+| Student roster records      | student identity, route assignments, parent linkage    | Daily operations and support                                    | Keep while student is actively served and for a limited operational support window after departure | Archive or purge according to tenant policy              |
+| GPS telemetry               | live and historical location points                    | Live operations, incident review, limited analytics             | Shorter retention than master data; avoid indefinite storage                                       | Aggregate, archive, or purge                             |
+| Presence events             | boarding and alighting records                         | Parent communication, operational traceability, incident review | Medium retention with explicit limit                                                               | Archive summary or purge detailed event history          |
+| Emergency alerts            | incident records and status                            | Safety follow-up and audit                                      | Retain through investigation and reporting window                                                  | Archive and eventually purge under policy                |
+| Compliance records          | driver compliance, inspections                         | Safety and regulatory support                                   | Retain according to school-board or regulatory obligations                                         | Archive with controlled access                           |
+| Audit logs                  | critical mutations, access traces                      | Accountability and investigation                                | Retain longer than routine operational data                                                        | Archive with restricted access                           |
+| Video metadata and assets   | video events, recordings, thumbnails                   | Incident handling and evidence review                           | Highly policy-sensitive and should be minimized                                                    | Secure deletion or archival under strict controls        |
 
 ## Recommended Policy Direction
 
-| Data Class | Recommended Direction |
-| --- | --- |
-| GPS telemetry | Prefer short default retention with optional aggregation for reporting |
-| Presence events | Retain long enough for operational disputes and support, but not indefinitely |
-| Student roster data | Retain based on active service relationship and defined offboarding workflow |
-| Audit logs | Retain longer than operational telemetry because they support accountability |
-| Video | Require explicit retention rule tied to incident severity and privacy obligations |
+| Data Class          | Recommended Direction                                                             |
+| ------------------- | --------------------------------------------------------------------------------- |
+| GPS telemetry       | Prefer short default retention with optional aggregation for reporting            |
+| Presence events     | Retain long enough for operational disputes and support, but not indefinitely     |
+| Student roster data | Retain based on active service relationship and defined offboarding workflow      |
+| Audit logs          | Retain longer than operational telemetry because they support accountability      |
+| Video               | Require explicit retention rule tied to incident severity and privacy obligations |
 
 ## Deletion and Archival Events
 

@@ -1,7 +1,7 @@
 # Phase 4: Tenant Administration and User Provisioning
 
 - Document owner: Product and Engineering
-- Last reviewed: 2026-03-24
+- Last reviewed: 2026-03-30
 - Phase status: Planned
 - Gap level: Medium
 
@@ -15,16 +15,16 @@ Core safety workflows (Phases 1–3) must be stable before adding administrative
 
 ## Current State (from Gap Analysis)
 
-| Capability | Status |
-|---|---|
-| Board and school data model | Implemented |
-| Basic board/school listing pages in admin dashboard | Implemented |
-| Board/school CRUD operations | Partial (list/view only; create/edit not wired) |
-| User invitation flow | Not implemented |
-| Account lifecycle management | Not implemented (login only) |
-| Role provisioning beyond initial seed | Not implemented |
-| Cross-tenant operational dashboards | Partial (limited filtering) |
-| Parent absence reporting | Not implemented |
+| Capability                                          | Status                                          |
+| --------------------------------------------------- | ----------------------------------------------- |
+| Board and school data model                         | Implemented                                     |
+| Basic board/school listing pages in admin dashboard | Implemented                                     |
+| Board/school CRUD operations                        | Partial (list/view only; create/edit not wired) |
+| User invitation flow                                | Not implemented                                 |
+| Account lifecycle management                        | Not implemented (login only)                    |
+| Role provisioning beyond initial seed               | Not implemented                                 |
+| Cross-tenant operational dashboards                 | Partial (limited filtering)                     |
+| Parent absence reporting                            | Not implemented                                 |
 
 ## Scope
 
@@ -35,10 +35,12 @@ Core safety workflows (Phases 1–3) must be stable before adding administrative
 - Implement form validation and business rules for org creation.
 
 **Implementation modules affected:**
+
 - [Module-7-AdminDashboard.md](../../Implementation/Module-7-AdminDashboard.md)
 - [Module-8-ApiGateway.md](../../Implementation/Module-8-ApiGateway.md) — Org management API endpoints
 
 **Requirements traced:**
+
 - FR-ADMIN-001: Create and manage boards
 - FR-ADMIN-002: Create and manage schools within a board
 - FR-ADMIN-003: Role-based administration access
@@ -51,11 +53,13 @@ Core safety workflows (Phases 1–3) must be stable before adding administrative
 - Email-based invitation delivery (leverages Phase 1 notification infrastructure).
 
 **Implementation modules affected:**
+
 - [Module-8-ApiGateway.md](../../Implementation/Module-8-ApiGateway.md) — Auth and provisioning endpoints
 - [Module-9-StudentManagement.md](../../Implementation/Module-9-StudentManagement.md) — Parent-student linking
 - [Module-7-AdminDashboard.md](../../Implementation/Module-7-AdminDashboard.md) — Provisioning UI
 
 **Requirements traced:**
+
 - FR-PROV-001: Invite users by email with role assignment
 - FR-PROV-002: User activates account and sets credentials
 - FR-PROV-003: Admin can deactivate/reactivate user accounts
@@ -69,6 +73,7 @@ Core safety workflows (Phases 1–3) must be stable before adding administrative
 - Add reporting counts and filters aligned with tenant hierarchy.
 
 **Implementation modules affected:**
+
 - [Module-7-AdminDashboard.md](../../Implementation/Module-7-AdminDashboard.md)
 
 ### 4. Parent Absence Workflow
@@ -78,21 +83,23 @@ Core safety workflows (Phases 1–3) must be stable before adding administrative
 - Integrate absence data with presence tracking to avoid false alerts.
 
 **Implementation modules affected:**
+
 - [Module-2-ParentApp.md](../../Implementation/Module-2-ParentApp.md)
 - [Module-6-StudentPresence.md](../../Implementation/Module-6-StudentPresence.md) — Absence-aware processing
 - [Module-7-AdminDashboard.md](../../Implementation/Module-7-AdminDashboard.md) — Admin visibility
 
 **Requirements traced:**
+
 - FR-ABS-001: Guardian can report an absence for a scheduled trip
 - FR-ABS-002: Absence is visible to the driver and admin before route start
 
 ## Dependencies
 
-| Dependency | Source | Status |
-|---|---|---|
-| Stable auth and tenant data model | Module-8 | Implemented |
-| Notification infrastructure (Phase 1) | Phase 1 | Required (for invitation emails) |
-| Business rules for role ownership | Product | Needs clarification |
+| Dependency                            | Source   | Status                           |
+| ------------------------------------- | -------- | -------------------------------- |
+| Stable auth and tenant data model     | Module-8 | Implemented                      |
+| Notification infrastructure (Phase 1) | Phase 1  | Required (for invitation emails) |
+| Business rules for role ownership     | Product  | Needs clarification              |
 
 ## Acceptance Criteria
 
@@ -104,13 +111,13 @@ Core safety workflows (Phases 1–3) must be stable before adding administrative
 
 ## Verification
 
-| Test Type | Scope |
-|---|---|
-| E2E test | Create board → create school → invite admin → admin activates account |
-| RBAC test | Each role can only manage resources at or below its tenant level |
-| Authorization regression | Cross-tenant access attempts are denied |
-| Absence workflow test | Parent reports absence → driver sees updated roster → no false boarding alert |
-| Demo validation | Onboard a new tenant live during demo |
+| Test Type                | Scope                                                                         |
+| ------------------------ | ----------------------------------------------------------------------------- |
+| E2E test                 | Create board → create school → invite admin → admin activates account         |
+| RBAC test                | Each role can only manage resources at or below its tenant level              |
+| Authorization regression | Cross-tenant access attempts are denied                                       |
+| Absence workflow test    | Parent reports absence → driver sees updated roster → no false boarding alert |
+| Demo validation          | Onboard a new tenant live during demo                                         |
 
 ## Demo Impact
 

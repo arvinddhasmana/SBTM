@@ -1,7 +1,7 @@
 # SBTM Service Contracts
 
 - Document owner: Engineering
-- Last reviewed: 2026-03-24
+- Last reviewed: 2026-03-30
 - Primary use: Internal service boundary reference, payload shapes, and ownership expectations
 
 ## Purpose
@@ -10,24 +10,24 @@ This document describes how the API Gateway and downstream services interact tod
 
 ## Contract Model
 
-| Layer | Responsibility |
-| --- | --- |
-| API Gateway | Authenticates users, applies role checks, injects tenant context, proxies to domain services |
-| Domain service | Owns persistence and business logic for its domain |
-| Queue or real-time channel | Propagates selected operational state changes asynchronously |
+| Layer                      | Responsibility                                                                               |
+| -------------------------- | -------------------------------------------------------------------------------------------- |
+| API Gateway                | Authenticates users, applies role checks, injects tenant context, proxies to domain services |
+| Domain service             | Owns persistence and business logic for its domain                                           |
+| Queue or real-time channel | Propagates selected operational state changes asynchronously                                 |
 
 ## Gateway to Downstream Mapping
 
-| Gateway Surface | Downstream Service | Downstream Path | Contract Notes |
-| --- | --- | --- | --- |
-| `/api/v1/routes/*` telemetry endpoints | GPS Tracking | `/api/v1/locations`, `/api/v1/routes/:routeId/live-location`, `/api/v1/routes/:routeId/history` | Access control enforced at gateway using role, assigned routes, or child route lists |
-| `/api/v1/emergency-events`, `/api/v1/alerts/*` | Emergency Alerts | `/api/v1/emergency-events`, `/api/v1/alerts/active`, `/api/v1/alerts/:alertId` | Gateway injects tenant and driver context |
-| `/api/v1/routes/:routeId/students`, `/api/v1/student-presence-events` | Student Presence | `/api/v1/routes/:routeId/students`, `/api/v1/student-presence-events/manual`, `/api/v1/presence-events` | Gateway-facing presence event payload and downstream manual or BLE flows are not yet perfectly unified |
-| `/api/v1/students/*` | Student Management | `/students`, `/students/:id`, `/students/:id/assignment`, `/students/bulk-import` | Gateway forwards query or body payloads with tenant context expectations |
-| `/api/v1/inspections`, `/api/v1/compliance*`, `/api/v1/audit` | Compliance Management | `/inspections`, `/compliance`, `/compliance/driver/:driverId`, `/audit` | Gateway injects `schoolId` or `school_id` in several flows |
-| `/api/v1/video-events*` | Video Service | `/api/v1/video-events`, `/api/v1/video-events/:id` | Downstream video service also exposes completion, failure, access-log, and upload endpoints |
-| `/api/v1/parent/children` | Gateway-owned aggregation | Internal query logic plus downstream tracking | Parent experience is assembled at the gateway layer |
-| `/api/v1/driver/me/schedule` | Gateway-owned aggregation | Internal query logic plus route reference tables | Driver schedule is currently assembled within gateway-side logic |
+| Gateway Surface                                                       | Downstream Service        | Downstream Path                                                                                         | Contract Notes                                                                                         |
+| --------------------------------------------------------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `/api/v1/routes/*` telemetry endpoints                                | GPS Tracking              | `/api/v1/locations`, `/api/v1/routes/:routeId/live-location`, `/api/v1/routes/:routeId/history`         | Access control enforced at gateway using role, assigned routes, or child route lists                   |
+| `/api/v1/emergency-events`, `/api/v1/alerts/*`                        | Emergency Alerts          | `/api/v1/emergency-events`, `/api/v1/alerts/active`, `/api/v1/alerts/:alertId`                          | Gateway injects tenant and driver context                                                              |
+| `/api/v1/routes/:routeId/students`, `/api/v1/student-presence-events` | Student Presence          | `/api/v1/routes/:routeId/students`, `/api/v1/student-presence-events/manual`, `/api/v1/presence-events` | Gateway-facing presence event payload and downstream manual or BLE flows are not yet perfectly unified |
+| `/api/v1/students/*`                                                  | Student Management        | `/students`, `/students/:id`, `/students/:id/assignment`, `/students/bulk-import`                       | Gateway forwards query or body payloads with tenant context expectations                               |
+| `/api/v1/inspections`, `/api/v1/compliance*`, `/api/v1/audit`         | Compliance Management     | `/inspections`, `/compliance`, `/compliance/driver/:driverId`, `/audit`                                 | Gateway injects `schoolId` or `school_id` in several flows                                             |
+| `/api/v1/video-events*`                                               | Video Service             | `/api/v1/video-events`, `/api/v1/video-events/:id`                                                      | Downstream video service also exposes completion, failure, access-log, and upload endpoints            |
+| `/api/v1/parent/children`                                             | Gateway-owned aggregation | Internal query logic plus downstream tracking                                                           | Parent experience is assembled at the gateway layer                                                    |
+| `/api/v1/driver/me/schedule`                                          | Gateway-owned aggregation | Internal query logic plus route reference tables                                                        | Driver schedule is currently assembled within gateway-side logic                                       |
 
 ## Key Payload Contracts
 
@@ -145,12 +145,12 @@ BLE detection batch:
 
 ## Real-Time and Event Contracts
 
-| Producer | Contract | Channel | Current State |
-| --- | --- | --- | --- |
-| Emergency Alerts | `alert.created`-style alert payloads | BullMQ and SSE | Producer exists; parent delivery still incomplete |
-| Student Presence | `presence.boarded`, `presence.alighted`-style payloads | BullMQ | Producer exists; mobile UI integration partial |
-| Emergency Alerts | alert stream | SSE at `/api/v1/alerts/stream` in alerts service | Backend exists; parent client adoption incomplete |
-| Video Service | event status updates | internal and WebSocket-oriented patterns | Partial |
+| Producer         | Contract                                               | Channel                                          | Current State                                     |
+| ---------------- | ------------------------------------------------------ | ------------------------------------------------ | ------------------------------------------------- |
+| Emergency Alerts | `alert.created`-style alert payloads                   | BullMQ and SSE                                   | Producer exists; parent delivery still incomplete |
+| Student Presence | `presence.boarded`, `presence.alighted`-style payloads | BullMQ                                           | Producer exists; mobile UI integration partial    |
+| Emergency Alerts | alert stream                                           | SSE at `/api/v1/alerts/stream` in alerts service | Backend exists; parent client adoption incomplete |
+| Video Service    | event status updates                                   | internal and WebSocket-oriented patterns         | Partial                                           |
 
 ## Contract Caveats
 

@@ -1,7 +1,7 @@
 # Phase 1: Complete the Parent Safety Communication Loop
 
 - Document owner: Product and Engineering
-- Last reviewed: 2026-03-24
+- Last reviewed: 2026-03-30
 - Phase status: Planned
 - Gap level: Critical
 
@@ -15,16 +15,16 @@ The notification delivery gap is classified as **Critical** in the gap analysis.
 
 ## Current State (from Gap Analysis)
 
-| Capability | Status |
-|---|---|
-| Emergency alerts published to BullMQ | Implemented |
-| Presence events published to BullMQ | Implemented |
-| Alert SSE stream from emergency-alerts service | Implemented |
-| Parent app alert polling | Implemented |
-| BullMQ job consumers (notification fan-out) | Not implemented (placeholder) |
-| Push/SMS/email notification delivery | Not implemented |
-| Parent SSE/push subscription | Not implemented |
-| Notification audit trail | Not implemented |
+| Capability                                     | Status                        |
+| ---------------------------------------------- | ----------------------------- |
+| Emergency alerts published to BullMQ           | Implemented                   |
+| Presence events published to BullMQ            | Implemented                   |
+| Alert SSE stream from emergency-alerts service | Implemented                   |
+| Parent app alert polling                       | Implemented                   |
+| BullMQ job consumers (notification fan-out)    | Not implemented (placeholder) |
+| Push/SMS/email notification delivery           | Not implemented               |
+| Parent SSE/push subscription                   | Not implemented               |
+| Notification audit trail                       | Not implemented               |
 
 ## Scope
 
@@ -36,11 +36,13 @@ The notification delivery gap is classified as **Critical** in the gap analysis.
 - Persist notification attempts and delivery statuses for audit and support.
 
 **Implementation modules affected:**
+
 - [Module-4-EmergencyAlerts.md](../../Implementation/Module-4-EmergencyAlerts.md) — Producer side (already implemented)
 - [Module-6-StudentPresence.md](../../Implementation/Module-6-StudentPresence.md) — Producer side (already implemented)
 - New: Notification consumer (create or extend existing module)
 
 **Requirements traced:**
+
 - FR-NOTIFY-001: Deliver emergency alerts to parents on impacted route
 - FR-NOTIFY-002: Deliver boarding/alighting events as parent notifications
 - PR-CONSENT-001: Guardian consent required before notification delivery
@@ -53,6 +55,7 @@ The notification delivery gap is classified as **Critical** in the gap analysis.
 - Add a parent-facing notification list or recent activity feed.
 
 **Implementation modules affected:**
+
 - [Module-2-ParentApp.md](../../Implementation/Module-2-ParentApp.md)
 
 ### 3. Parent App Real-Time Integration
@@ -62,17 +65,18 @@ The notification delivery gap is classified as **Critical** in the gap analysis.
 - Add UI states for unread, failed, or delayed notifications.
 
 **Implementation modules affected:**
+
 - [Module-2-ParentApp.md](../../Implementation/Module-2-ParentApp.md)
 - [Module-8-ApiGateway.md](../../Implementation/Module-8-ApiGateway.md) — SSE proxy if needed
 
 ## Dependencies
 
-| Dependency | Source | Status |
-|---|---|---|
-| BullMQ producers in emergency-alerts | Module-4 | Implemented |
-| BullMQ producers in student-presence | Module-6 | Implemented |
+| Dependency                            | Source                        | Status               |
+| ------------------------------------- | ----------------------------- | -------------------- |
+| BullMQ producers in emergency-alerts  | Module-4                      | Implemented          |
+| BullMQ producers in student-presence  | Module-6                      | Implemented          |
 | Parent-to-route mapping in data model | Module-9 (Student Management) | Implemented (seeded) |
-| JWT auth and RBAC | Module-8 (API Gateway) | Implemented |
+| JWT auth and RBAC                     | Module-8 (API Gateway)        | Implemented          |
 
 ## Acceptance Criteria
 
@@ -84,13 +88,13 @@ The notification delivery gap is classified as **Critical** in the gap analysis.
 
 ## Verification
 
-| Test Type | Scope |
-|---|---|
+| Test Type        | Scope                                                                                             |
+| ---------------- | ------------------------------------------------------------------------------------------------- |
 | Integration test | Queue producer-to-consumer flow (enqueue alert job → consumer processes → notification persisted) |
-| Integration test | Presence event → notification delivery |
-| E2E test | Driver triggers alert → parent receives notification |
-| Security test | Notification only delivered to parents on the impacted route (tenant isolation) |
-| Demo validation | Seeded parent accounts receive notifications during live route demo |
+| Integration test | Presence event → notification delivery                                                            |
+| E2E test         | Driver triggers alert → parent receives notification                                              |
+| Security test    | Notification only delivered to parents on the impacted route (tenant isolation)                   |
+| Demo validation  | Seeded parent accounts receive notifications during live route demo                               |
 
 ## Demo Impact
 
@@ -100,5 +104,5 @@ After Phase 1 completion, the demo can show **real parent alerts** instead of na
 
 - [../GapAnalysis.md](../GapAnalysis.md) — Gap: "Notifications" (Critical), "Parent real-time delivery" (High)
 - [../../Design/EventCatalog.md](../../Design/EventCatalog.md) — Event definitions
-- [../../Business/Requirements.md](../../Business/Requirements.md) — FR-NOTIFY-*, PR-CONSENT-*
+- [../../Business/Requirements.md](../../Business/Requirements.md) — FR-NOTIFY-_, PR-CONSENT-_
 - [../../sdlc_guidelines/03_architecture_design/design_guidelines.md](../../sdlc_guidelines/03_architecture_design/design_guidelines.md) — Event-driven patterns

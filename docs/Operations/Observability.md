@@ -1,7 +1,7 @@
 # SBTM Observability Guide
 
 - Document owner: Engineering and Operations
-- Last reviewed: 2026-03-24
+- Last reviewed: 2026-03-30
 - Primary use: Operational monitoring expectations for health, metrics, logs, and traces
 
 ## Goals
@@ -12,28 +12,29 @@
 
 ## Health Signals
 
-| Signal | Why It Matters |
-| --- | --- |
-| API Gateway availability | Applications depend on it as the main backend surface |
-| PostgreSQL connectivity | All core transactional flows depend on it |
-| Redis health and queue depth | Alerts and presence event processing rely on it |
-| GPS ingest success rate | Route visibility and downstream intelligence depend on it |
-| Alert creation latency | Incidents are time-sensitive |
-| Presence event persistence latency | Boarding and alighting workflows need confidence |
-| Parent delivery pipeline status | A core safety communication expectation |
+| Signal                             | Why It Matters                                            |
+| ---------------------------------- | --------------------------------------------------------- |
+| API Gateway availability           | Applications depend on it as the main backend surface     |
+| PostgreSQL connectivity            | All core transactional flows depend on it                 |
+| Redis health and queue depth       | Alerts and presence event processing rely on it           |
+| GPS ingest success rate            | Route visibility and downstream intelligence depend on it |
+| Alert creation latency             | Incidents are time-sensitive                              |
+| Presence event persistence latency | Boarding and alighting workflows need confidence          |
+| Parent delivery pipeline status    | A core safety communication expectation                   |
+| OSRM routing availability          | Route optimization and geometry calculations depend on it |
 
 ## Recommended Metrics
 
-| Metric | Type | Scope |
-| --- | --- | --- |
-| request latency | histogram | gateway and all HTTP services |
-| error rate | counter | per service and per endpoint group |
-| queue depth | gauge | alerts and presence queues |
-| queue retry count | counter | event consumers |
-| location ingest rate | counter | GPS service |
-| active alerts | gauge | alerts service |
-| presence event throughput | counter | student presence service |
-| failed notification deliveries | counter | notification workflow when implemented |
+| Metric                         | Type      | Scope                                  |
+| ------------------------------ | --------- | -------------------------------------- |
+| request latency                | histogram | gateway and all HTTP services          |
+| error rate                     | counter   | per service and per endpoint group     |
+| queue depth                    | gauge     | alerts and presence queues             |
+| queue retry count              | counter   | event consumers                        |
+| location ingest rate           | counter   | GPS service                            |
+| active alerts                  | gauge     | alerts service                         |
+| presence event throughput      | counter   | student presence service               |
+| failed notification deliveries | counter   | notification workflow when implemented |
 
 ## Logging Guidance
 

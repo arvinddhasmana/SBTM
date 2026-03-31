@@ -2,18 +2,33 @@
   "name": "osta-sbms-monorepo",
   "version": "0.0.0",
   "private": true,
-  "workspaces": [
-    "apps/*",
-    "services/*",
-    "libs/*"
-  ],
+  "packageManager": "pnpm@9.15.9",
   "scripts": {
-    "build": "echo 'Build script placeholder'",
-    "test": "echo 'Test script placeholder'",
-    "lint": "echo 'Lint script placeholder'",
-    "db:init": "bash ./scripts/init-db.sh"
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "test:cov": "turbo run test:cov",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\"",
+    "db:init": "bash ./scripts/init-db.sh",
+    "prepare": "husky"
   },
   "devDependencies": {
-    "typescript": "^5.0.0"
+    "typescript": "^5.7.0",
+    "prettier": "^3.5.0",
+    "husky": "^9.1.0",
+    "lint-staged": "^15.4.0",
+    "@commitlint/cli": "^19.8.0",
+    "@commitlint/config-conventional": "^19.8.0",
+    "turbo": "^2.4.0"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml}": [
+      "prettier --write"
+    ]
   }
 }

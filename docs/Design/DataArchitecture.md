@@ -1,7 +1,7 @@
 # SBTM v1 Data Architecture
 
 - Document owner: Engineering and Architecture
-- Last reviewed: 2026-03-24
+- Last reviewed: 2026-03-30
 - Primary use: Data domain ownership, tenant boundaries, and persistence patterns
 
 ## Purpose
@@ -16,15 +16,15 @@ This document describes the major data domains in SBTM_AntiGravity, who owns the
 
 ## Data Domains
 
-| Domain | Primary Owner | Core Entities | Notes |
-| --- | --- | --- | --- |
-| Identity and tenancy | API Gateway | users, boards, schools, routes, vehicles | Gateway currently owns much of the tenancy and operational master data |
-| Tracking | GPS Tracking | location points, live route status | Time-series style writes and historical query patterns |
-| Presence | Student Presence | presence events, route occupancy state, SmartTag detections | Mix of durable records and cached current state |
-| Student records | Student Management | students, route assignments, parent linkage | Tenant-scoped roster and assignment data |
-| Alerts | Emergency Alerts | emergency alerts, delivery attempts or stubs | Real-time operational incident context |
-| Compliance | Compliance Management | driver compliance, vehicle inspections, audit logs | Operational readiness and accountability data |
-| Video | Video Service | video events, upload status, playback metadata | Metadata in DB, assets in object storage or local storage |
+| Domain               | Primary Owner         | Core Entities                                               | Notes                                                                  |
+| -------------------- | --------------------- | ----------------------------------------------------------- | ---------------------------------------------------------------------- |
+| Identity and tenancy | API Gateway           | users, boards, schools, routes, vehicles                    | Gateway currently owns much of the tenancy and operational master data |
+| Tracking             | GPS Tracking          | location points, live route status                          | Time-series style writes and historical query patterns                 |
+| Presence             | Student Presence      | presence events, route occupancy state, SmartTag detections | Mix of durable records and cached current state                        |
+| Student records      | Student Management    | students, route assignments, parent linkage                 | Tenant-scoped roster and assignment data                               |
+| Alerts               | Emergency Alerts      | emergency alerts, delivery attempts or stubs                | Real-time operational incident context                                 |
+| Compliance           | Compliance Management | driver compliance, vehicle inspections, audit logs          | Operational readiness and accountability data                          |
+| Video                | Video Service         | video events, upload status, playback metadata              | Metadata in DB, assets in object storage or local storage              |
 
 ## Logical Data Model
 
@@ -51,12 +51,12 @@ erDiagram
 
 ## Persistence Patterns
 
-| Pattern | Current Usage | Implication |
-| --- | --- | --- |
-| Shared PostgreSQL instance | Used across services in local delivery | Fast to operate, but demands stronger logical boundaries |
-| Per-service entities | Services own their own ORM entities | Good for modularity, but still depends on shared DB discipline |
-| Redis-backed transient state | Presence and alert flows | Supports low-latency state and job processing |
-| Object storage or local storage | Video assets | Allows metadata to stay in relational storage while assets remain external |
+| Pattern                         | Current Usage                          | Implication                                                                |
+| ------------------------------- | -------------------------------------- | -------------------------------------------------------------------------- |
+| Shared PostgreSQL instance      | Used across services in local delivery | Fast to operate, but demands stronger logical boundaries                   |
+| Per-service entities            | Services own their own ORM entities    | Good for modularity, but still depends on shared DB discipline             |
+| Redis-backed transient state    | Presence and alert flows               | Supports low-latency state and job processing                              |
+| Object storage or local storage | Video assets                           | Allows metadata to stay in relational storage while assets remain external |
 
 ## Sensitive Data Notes
 

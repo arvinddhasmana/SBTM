@@ -1,7 +1,7 @@
 # SBTM v1 Integration Architecture
 
 - Document owner: Engineering and Architecture
-- Last reviewed: 2026-03-24
+- Last reviewed: 2026-03-30
 - Primary use: Request flows, event flows, and external dependency interaction patterns
 
 ## Purpose
@@ -10,12 +10,12 @@ This document describes how SBTM_AntiGravity integrates across its internal serv
 
 ## Integration Modes
 
-| Mode | Current State | Target Direction |
-| --- | --- | --- |
-| Request-response via API Gateway | Primary integration mode | Remains the main application interaction pattern |
-| Domain events via BullMQ | Partial | Becomes the main decoupling mechanism for operational events |
-| Real-time updates | Mixed polling, SSE, and WebSocket support | Move toward event-driven delivery where practical |
-| External integrations | Limited today | Map provider and push provider integration later |
+| Mode                             | Current State                             | Target Direction                                             |
+| -------------------------------- | ----------------------------------------- | ------------------------------------------------------------ |
+| Request-response via API Gateway | Primary integration mode                  | Remains the main application interaction pattern             |
+| Domain events via BullMQ         | Partial                                   | Becomes the main decoupling mechanism for operational events |
+| Real-time updates                | Mixed polling, SSE, and WebSocket support | Move toward event-driven delivery where practical            |
+| External integrations            | Limited today                             | Map provider and push provider integration later             |
 
 ## Core Request Flow
 
@@ -51,23 +51,23 @@ sequenceDiagram
 
 ## Key Integration Paths
 
-| Path | Purpose | Current State |
-| --- | --- | --- |
-| Driver App -> API Gateway -> GPS Tracking | Live route telemetry | Implemented |
-| Driver App -> API Gateway -> Student Presence | Boarding and alighting events | Partial end to end |
-| Driver App -> API Gateway -> Emergency Alerts | Panic and incident workflows | Implemented |
-| Parent App -> API Gateway -> tracking and alert data | Child visibility | Partial, polling-heavy |
-| Admin Dashboard -> API Gateway -> domain services | Operations monitoring and administration | Implemented |
-| Alerts and Presence -> BullMQ | Event publication | Partial |
-| BullMQ -> Notification workflow | Parent-facing delivery | Planned |
+| Path                                                 | Purpose                                  | Current State          |
+| ---------------------------------------------------- | ---------------------------------------- | ---------------------- |
+| Driver App -> API Gateway -> GPS Tracking            | Live route telemetry                     | Implemented            |
+| Driver App -> API Gateway -> Student Presence        | Boarding and alighting events            | Partial end to end     |
+| Driver App -> API Gateway -> Emergency Alerts        | Panic and incident workflows             | Implemented            |
+| Parent App -> API Gateway -> tracking and alert data | Child visibility                         | Partial, polling-heavy |
+| Admin Dashboard -> API Gateway -> domain services    | Operations monitoring and administration | Implemented            |
+| Alerts and Presence -> BullMQ                        | Event publication                        | Partial                |
+| BullMQ -> Notification workflow                      | Parent-facing delivery                   | Planned                |
 
 ## External Dependencies
 
-| Dependency | Purpose | Status |
-| --- | --- | --- |
-| Push provider such as FCM or APNs | Parent alert and presence notifications | Planned |
-| Map provider | Route optimization, geometry, and ETA support | Planned |
-| Object storage | Video upload and playback | Implemented via MinIO or local storage |
+| Dependency                        | Purpose                                                 | Status                                          |
+| --------------------------------- | ------------------------------------------------------- | ----------------------------------------------- |
+| Push provider such as FCM or APNs | Parent alert and presence notifications                 | Planned                                         |
+| OSRM (self-hosted)                | Route geometry, optimization, and distance calculations | Implemented (v5.27.1, Ottawa region, port 5000) |
+| Object storage                    | Video upload and playback                               | Implemented via MinIO or local storage          |
 
 ## Integration Gaps
 

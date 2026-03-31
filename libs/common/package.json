@@ -1,0 +1,28 @@
+{
+  "name": "@sbtm/common",
+  "version": "0.0.1",
+  "private": true,
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "lint": "eslint 'src/**/*.ts'"
+  },
+  "peerDependencies": {
+    "@nestjs/common": ">=10.0.0",
+    "@nestjs/config": ">=3.0.0",
+    "@nestjs/core": ">=10.0.0",
+    "@nestjs/jwt": ">=10.0.0",
+    "express": ">=4.18.0",
+    "rxjs": ">=7.0.0"
+  },
+  "devDependencies": {
+    "@nestjs/common": "^11.0.0",
+    "@nestjs/config": "^4.0.0",
+    "@nestjs/core": "^11.0.0",
+    "@nestjs/jwt": "^11.0.0",
+    "express": "^4.21.0",
+    "rxjs": "^7.8.0",
+    "typescript": "^5.7.0"
+  }
+}

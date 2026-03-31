@@ -1,7 +1,7 @@
 # SBTM Documentation Map
 
 - Document owner: Product and Engineering
-- Last reviewed: 2026-03-24
+- Last reviewed: 2026-03-30
 - Primary use: Starting point for humans and AI agents to find the right source of truth
 
 Use this index to find the authoritative document for each kind of question.
@@ -9,39 +9,50 @@ Use this index to find the authoritative document for each kind of question.
 ## Folder Ownership
 
 ### Business
+
 - [Business](Business) defines product goals, requirements, use cases, and user journeys.
 
 ### Governance
+
 - [DocumentationPolicy.md](Governance/DocumentationPolicy.md) defines documentation structure, metadata, traceability, and maintenance rules.
 
 ### Design
+
 - [Design](Design) defines the target v1 architecture, event model, and technical baseline.
 
 ### Operations
+
 - [Operations](Operations) defines deployment, observability, troubleshooting, and runbook guidance.
 
 ### Reference
+
 - [Reference](Reference) defines formal API and service contract reference material.
 
 ### User Guide
+
 - [UserGuide](UserGuide) defines role-based usage guidance for Parent, Driver, Admin, School Operator, and Compliance or Support users.
 
 ### Implementation
+
 - [Implementation](Implementation) describes the current code-verified implementation state for each module.
 
 ### PRD
+
 - [GapAnalysis.md](prd/GapAnalysis.md) is the authoritative gap inventory.
 - [PhaseWiseImplementationPlan.md](prd/PhaseWiseImplementationPlan.md) is the authoritative delivery roadmap.
 - [UpgradePlan/](prd/UpgradePlan/) contains self-contained phase plans (Phase 1–5) with scope, acceptance criteria, and module cross-references.
 
 ### SDLC Guidelines
+
 - [sdlc_guidelines](sdlc_guidelines) defines development process standards: security compliance, requirements engineering, architecture, coding standards, testing, CI/CD, deployment, tech-specific conventions, and governance.
 - [00_master_policy.md](sdlc_guidelines/00_master_policy.md) is the universal policy loaded first by all agents and humans.
 
 ### Demo
+
 - [Demo](Demo) covers demo environment setup, simulator usage, and live demo flow.
 
 ### Test
+
 - [TestingGuide.md](Test/TestingGuide.md) covers operational verification and current smoke-test guidance.
 
 ## Audience-Based Entry Points

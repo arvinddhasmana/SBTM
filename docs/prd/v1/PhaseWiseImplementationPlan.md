@@ -1,7 +1,7 @@
 # Phase-Wise Implementation Plan (Revised v1)
 
 - Document owner: Product and Engineering
-- Last reviewed: 2026-03-24
+- Last reviewed: 2026-03-30
 - Primary use: Delivery sequencing summary and index for detailed phase plans
 
 This is the summary index for the SBTM v1 upgrade plan. Each phase has a self-contained implementation plan in the [UpgradePlan/](UpgradePlan/) directory with full scope, acceptance criteria, verification, dependencies, and module cross-references.
@@ -25,13 +25,13 @@ This is the summary index for the SBTM v1 upgrade plan. Each phase has a self-co
 
 ## Phase Summary
 
-| Phase | Goal | Gap Level | Detail |
-|---|---|---|---|
-| **[Phase 1: Parent Safety Communication](UpgradePlan/Phase-1-ParentSafetyCommunication.md)** | Deliver end-to-end parent notification — event occurs, parent receives message in near real time, delivery is recorded | Critical | Notification backbone, parent delivery workflows, SSE integration |
-| **[Phase 2: Driver Presence](UpgradePlan/Phase-2-DriverPresence.md)** | Make the driver app the authoritative presence-capture tool | High | Roster-to-API wiring, BLE/SmartTag capture, route lifecycle state |
-| **[Phase 3: GPS Intelligence](UpgradePlan/Phase-3-GpsEventingGeofencing.md)** | Turn GPS from passive tracking into an operational intelligence pipeline | High | Event publication, geofencing, deviation detection, real route optimization |
-| **[Phase 4: Tenant Administration](UpgradePlan/Phase-4-TenantAdminProvisioning.md)** | Operational multi-tenant onboarding without database seeding | Medium | Org management, user provisioning, absence reporting, tenant dashboards |
-| **[Phase 5: Production Hardening](UpgradePlan/Phase-5-SecurityProductionHardening.md)** | Enterprise security, audit, and compliance controls | Medium | RLS, service-to-service auth, centralized audit, data lifecycle |
+| Phase                                                                                        | Goal                                                                                                                   | Gap Level | Detail                                                                      |
+| -------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | --------- | --------------------------------------------------------------------------- |
+| **[Phase 1: Parent Safety Communication](UpgradePlan/Phase-1-ParentSafetyCommunication.md)** | Deliver end-to-end parent notification — event occurs, parent receives message in near real time, delivery is recorded | Critical  | Notification backbone, parent delivery workflows, SSE integration           |
+| **[Phase 2: Driver Presence](UpgradePlan/Phase-2-DriverPresence.md)**                        | Make the driver app the authoritative presence-capture tool                                                            | High      | Roster-to-API wiring, BLE/SmartTag capture, route lifecycle state           |
+| **[Phase 3: GPS Intelligence](UpgradePlan/Phase-3-GpsEventingGeofencing.md)**                | Turn GPS from passive tracking into an operational intelligence pipeline                                               | High      | Event publication, geofencing, deviation detection, real route optimization |
+| **[Phase 4: Tenant Administration](UpgradePlan/Phase-4-TenantAdminProvisioning.md)**         | Operational multi-tenant onboarding without database seeding                                                           | Medium    | Org management, user provisioning, absence reporting, tenant dashboards     |
+| **[Phase 5: Production Hardening](UpgradePlan/Phase-5-SecurityProductionHardening.md)**      | Enterprise security, audit, and compliance controls                                                                    | Medium    | RLS, service-to-service auth, centralized audit, data lifecycle             |
 
 ## Delivery Sequence
 
@@ -51,10 +51,10 @@ graph LR
 
 ## Demo Impact by Phase
 
-| After Phase | Demo Capability |
-|---|---|
-| 1 | Real parent alerts instead of narrated future-state behavior |
-| 2 | True boarding and alighting flows from the driver app |
-| 3 | Real route intelligence instead of placeholder optimization |
-| 4 | Live tenant and user onboarding |
-| 5 | Credible production-readiness demonstration |
+| After Phase | Demo Capability                                              |
+| ----------- | ------------------------------------------------------------ |
+| 1           | Real parent alerts instead of narrated future-state behavior |
+| 2           | True boarding and alighting flows from the driver app        |
+| 3           | Real route intelligence instead of placeholder optimization  |
+| 4           | Live tenant and user onboarding                              |
+| 5           | Credible production-readiness demonstration                  |

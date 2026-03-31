@@ -1,7 +1,7 @@
 # Phase 3: GPS Eventing, Geofencing, and Real Route Intelligence
 
 - Document owner: Product and Engineering
-- Last reviewed: 2026-03-24
+- Last reviewed: 2026-03-30
 - Phase status: Planned
 - Gap level: High
 
@@ -15,17 +15,17 @@ GPS intelligence depends on the stable eventing foundation from Phase 1 and reli
 
 ## Current State (from Gap Analysis)
 
-| Capability | Status |
-|---|---|
-| GPS location ingest and persistence | Implemented |
-| GPS history retrieval with schoolId filtering | Implemented |
-| Live location polling/WebSocket broadcast | Implemented |
-| `location.updated` domain event publication | Not implemented |
-| Geofencing logic (route corridor, stop proximity) | Not implemented |
-| Route deviation detection | Not implemented |
-| ETA calculation | Not implemented |
-| Provider-backed route optimization | Not implemented (mocked) |
-| Real route polyline data | Not implemented (placeholder) |
+| Capability                                        | Status                        |
+| ------------------------------------------------- | ----------------------------- |
+| GPS location ingest and persistence               | Implemented                   |
+| GPS history retrieval with schoolId filtering     | Implemented                   |
+| Live location polling/WebSocket broadcast         | Implemented                   |
+| `location.updated` domain event publication       | Not implemented               |
+| Geofencing logic (route corridor, stop proximity) | Not implemented               |
+| Route deviation detection                         | Not implemented               |
+| ETA calculation                                   | Not implemented               |
+| Provider-backed route optimization                | Not implemented (mocked)      |
+| Real route polyline data                          | Not implemented (placeholder) |
 
 ## Scope
 
@@ -36,9 +36,11 @@ GPS intelligence depends on the stable eventing foundation from Phase 1 and reli
 - Enable downstream consumers (geofencing, notifications, analytics) to subscribe.
 
 **Implementation modules affected:**
+
 - [Module-1-GpsTracking.md](../../Implementation/Module-1-GpsTracking.md)
 
 **Requirements traced:**
+
 - FR-GPS-001: Record vehicle location at configurable intervals
 - FR-GPS-002: Publish location events for downstream consumption
 
@@ -50,10 +52,12 @@ GPS intelligence depends on the stable eventing foundation from Phase 1 and reli
 - Add ETA and route-progress calculations where feasible.
 
 **Implementation modules affected:**
+
 - [Module-1-GpsTracking.md](../../Implementation/Module-1-GpsTracking.md)
 - [Module-4-EmergencyAlerts.md](../../Implementation/Module-4-EmergencyAlerts.md) — Consume derived alert events
 
 **Requirements traced:**
+
 - FR-GEO-001: Detect when a vehicle deviates from its assigned route corridor
 - FR-GEO-002: Generate alert events for significant route deviations
 - FR-GEO-003: Calculate ETA based on current position and route progress
@@ -65,19 +69,20 @@ GPS intelligence depends on the stable eventing foundation from Phase 1 and reli
 - Surface route quality, duration, and distance metrics in admin route planner.
 
 **Implementation modules affected:**
+
 - [Module-7-AdminDashboard.md](../../Implementation/Module-7-AdminDashboard.md) — Route planner UI
 - [Module-8-ApiGateway.md](../../Implementation/Module-8-ApiGateway.md) — Route optimization proxy
 - [Module-1-GpsTracking.md](../../Implementation/Module-1-GpsTracking.md) — Route data model
 
 ## Dependencies
 
-| Dependency | Source | Status |
-|---|---|---|
-| Event pipeline (Phase 1) | Phase 1 | Required (for event consumption) |
-| Stable route and stop data | Module-8 (API Gateway) | Implemented |
-| Route lifecycle state (Phase 2) | Phase 2 | Required (for deviation context) |
-| Map provider credentials | External | Needs selection and provisioning |
-| PostGIS spatial functions | Module-1 | Available (PostgreSQL + PostGIS deployed) |
+| Dependency                      | Source                 | Status                                    |
+| ------------------------------- | ---------------------- | ----------------------------------------- |
+| Event pipeline (Phase 1)        | Phase 1                | Required (for event consumption)          |
+| Stable route and stop data      | Module-8 (API Gateway) | Implemented                               |
+| Route lifecycle state (Phase 2) | Phase 2                | Required (for deviation context)          |
+| Map provider credentials        | External               | Needs selection and provisioning          |
+| PostGIS spatial functions       | Module-1               | Available (PostgreSQL + PostGIS deployed) |
 
 ## Acceptance Criteria
 
@@ -89,13 +94,13 @@ GPS intelligence depends on the stable eventing foundation from Phase 1 and reli
 
 ## Verification
 
-| Test Type | Scope |
-|---|---|
-| Contract test | `location.updated` event envelope matches v1 event catalog |
-| Geofence scenario test | On-route, near-route, and off-route positions produce correct results |
-| Integration test | GPS event → geofence check → deviation alert published |
-| Visual verification | Admin dashboard map renders real route geometry and live bus positions |
-| Performance test | GPS ingest p95 < 200ms under 100 updates/sec per school |
+| Test Type              | Scope                                                                  |
+| ---------------------- | ---------------------------------------------------------------------- |
+| Contract test          | `location.updated` event envelope matches v1 event catalog             |
+| Geofence scenario test | On-route, near-route, and off-route positions produce correct results  |
+| Integration test       | GPS event → geofence check → deviation alert published                 |
+| Visual verification    | Admin dashboard map renders real route geometry and live bus positions |
+| Performance test       | GPS ingest p95 < 200ms under 100 updates/sec per school                |
 
 ## Demo Impact
 

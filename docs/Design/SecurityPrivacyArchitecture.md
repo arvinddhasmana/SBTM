@@ -1,7 +1,7 @@
 # SBTM v1 Security and Privacy Architecture
 
 - Document owner: Engineering and Architecture
-- Last reviewed: 2026-03-24
+- Last reviewed: 2026-03-30
 - Primary use: Identity, access, privacy, audit, and trust boundaries
 
 ## Purpose
@@ -25,12 +25,12 @@ This document captures the security and privacy architecture for SBTM_AntiGravit
 
 ## Identity and Access Model
 
-| Concern | Current State | Target Direction |
-| --- | --- | --- |
-| User authentication | JWT via API Gateway | Continue at gateway with stronger session hardening |
-| Role enforcement | Gateway RBAC | Expand consistent downstream authorization expectations |
-| Tenant enforcement | `school_id` filtering and scoped APIs | Add stronger DB and service-level guarantees |
-| Service-to-service trust | Limited or absent | Internal JWT or mTLS before production rollout |
+| Concern                  | Current State                         | Target Direction                                        |
+| ------------------------ | ------------------------------------- | ------------------------------------------------------- |
+| User authentication      | JWT via API Gateway                   | Continue at gateway with stronger session hardening     |
+| Role enforcement         | Gateway RBAC                          | Expand consistent downstream authorization expectations |
+| Tenant enforcement       | `school_id` filtering and scoped APIs | Add stronger DB and service-level guarantees            |
+| Service-to-service trust | Limited or absent                     | Internal JWT or mTLS before production rollout          |
 
 ## Trust Boundaries
 
@@ -52,12 +52,12 @@ flowchart LR
 
 ## Sensitive Data Categories
 
-| Category | Examples | Primary Controls Needed |
-| --- | --- | --- |
-| Student-linked identity data | student names, parent linkage, route assignment | Tenant scoping, access minimization, audit |
-| Live operational telemetry | GPS positions, boarding and alighting events | Access control, retention policy, observability safeguards |
-| Incident records | alerts, inspections, audit history, video metadata | Restricted access, integrity, traceability |
-| Credentials and secrets | JWT secrets, provider keys, storage credentials | Externalized secret management, rotation, least exposure |
+| Category                     | Examples                                           | Primary Controls Needed                                    |
+| ---------------------------- | -------------------------------------------------- | ---------------------------------------------------------- |
+| Student-linked identity data | student names, parent linkage, route assignment    | Tenant scoping, access minimization, audit                 |
+| Live operational telemetry   | GPS positions, boarding and alighting events       | Access control, retention policy, observability safeguards |
+| Incident records             | alerts, inspections, audit history, video metadata | Restricted access, integrity, traceability                 |
+| Credentials and secrets      | JWT secrets, provider keys, storage credentials    | Externalized secret management, rotation, least exposure   |
 
 ## Privacy Controls
 

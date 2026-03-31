@@ -1,7 +1,7 @@
 # SBTM v1 Architecture Overview
 
 - Document owner: Engineering and Architecture
-- Last reviewed: 2026-03-24
+- Last reviewed: 2026-03-30
 - Primary use: Entry point for the split v1 architecture document set
 
 This document is the architectural index for the SBTM v1 target state. It separates the design into focused concerns so business, data, integration, deployment, and privacy decisions can evolve without overloading a single file.
@@ -30,17 +30,17 @@ The v1 architecture evolves the current prototype into a more coherent event-awa
 
 ## Document Map
 
-| Document | Primary Question It Answers |
-| --- | --- |
-| [SystemArchitecture.md](SystemArchitecture.md) | How do users, applications, services, and core runtime boundaries fit together? |
-| [DataArchitecture.md](DataArchitecture.md) | What data domains exist, who owns them, and how are tenant boundaries expressed? |
-| [DatabaseSchema.md](DatabaseSchema.md) | What persisted tables and entities currently exist across services? |
-| [DataRetention.md](DataRetention.md) | How long should operational and privacy-sensitive data be retained? |
-| [IntegrationArchitecture.md](IntegrationArchitecture.md) | How do requests, events, queues, and external dependencies interact? |
-| [DeploymentArchitecture.md](DeploymentArchitecture.md) | How does the platform run locally today and what is the intended production topology? |
-| [SecurityPrivacyArchitecture.md](SecurityPrivacyArchitecture.md) | How are identity, access control, privacy, audit, and operational trust handled? |
-| [TechnicalSpecifications.md](TechnicalSpecifications.md) | What technologies, interfaces, and technical constraints define v1? |
-| [EventCatalog.md](EventCatalog.md) | What domain events are expected across the event-driven architecture? |
+| Document                                                         | Primary Question It Answers                                                           |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| [SystemArchitecture.md](SystemArchitecture.md)                   | How do users, applications, services, and core runtime boundaries fit together?       |
+| [DataArchitecture.md](DataArchitecture.md)                       | What data domains exist, who owns them, and how are tenant boundaries expressed?      |
+| [DatabaseSchema.md](DatabaseSchema.md)                           | What persisted tables and entities currently exist across services?                   |
+| [DataRetention.md](DataRetention.md)                             | How long should operational and privacy-sensitive data be retained?                   |
+| [IntegrationArchitecture.md](IntegrationArchitecture.md)         | How do requests, events, queues, and external dependencies interact?                  |
+| [DeploymentArchitecture.md](DeploymentArchitecture.md)           | How does the platform run locally today and what is the intended production topology? |
+| [SecurityPrivacyArchitecture.md](SecurityPrivacyArchitecture.md) | How are identity, access control, privacy, audit, and operational trust handled?      |
+| [TechnicalSpecifications.md](TechnicalSpecifications.md)         | What technologies, interfaces, and technical constraints define v1?                   |
+| [EventCatalog.md](EventCatalog.md)                               | What domain events are expected across the event-driven architecture?                 |
 
 ## Cross-Cutting Principles
 
@@ -69,6 +69,7 @@ flowchart LR
     Video[Video Service]
     Redis[Redis and BullMQ]
     Postgres[PostgreSQL]
+    OSRM[OSRM Router]
     Notify[Future Notification Service]
 
     Admin --> Gateway
@@ -80,6 +81,7 @@ flowchart LR
     Gateway --> Students
     Gateway --> Compliance
     Gateway --> Video
+    Gateway --> OSRM
     Alerts --> Redis
     Presence --> Redis
     GPS --> Postgres

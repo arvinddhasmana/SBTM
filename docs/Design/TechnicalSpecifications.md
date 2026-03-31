@@ -1,7 +1,7 @@
 # SBTM v1 – Technical Specifications
 
 - Document owner: Engineering
-- Last reviewed: 2026-03-24
+- Last reviewed: 2026-03-30
 - Primary use: Target-state technical baseline, interfaces, and non-functional design
 
 This document describes the target v1 technical baseline. It should be read with the current-state implementation notes in `docs/Implementation` and the verified upgrade gaps in `docs/prd/GapAnalysis.md`.
@@ -21,23 +21,24 @@ This document describes the target v1 technical baseline. It should be read with
 
 ## 1. Technology Stack
 
-| Layer | Technology | Notes |
-|---|---|---|
-| Mobile App (Driver) | React Native (Expo ~54) | GPS, BLE scanning, offline queue via AsyncStorage |
-| Web App (Parent) | Vite + React 19, TailwindCSS | SSE alert stream, Leaflet map |
-| Web App (Admin) | Vite + React 19, TailwindCSS, Leaflet | Live fleet map, route management |
-| API Gateway | NestJS + TypeORM + JWT | RBAC, multi-tenant guards, proxy routing |
-| GPS Tracking | Express + Prisma | Location ingest, live/history queries |
-| Emergency Alerts | NestJS + TypeORM + BullMQ | Alert creation, WebSocket broadcast, notification fan-out |
-| Student Presence | NestJS + TypeORM + BullMQ | BLE / manual presence, Redis presence cache |
-| Video Service | NestJS + TypeORM | Video event metadata, MinIO/local storage |
-| Student Management | NestJS + TypeORM | Student CRUD, tag assignment, bulk import |
-| Compliance | NestJS + TypeORM | Driver records, inspections, audit log |
-| Notification Service | NestJS + BullMQ | FCM/APNs fan-out, notification log |
-| Event Bus | BullMQ (Redis-backed) | Domain event queuing and consumer groups |
-| Relational DB | PostgreSQL (PostGIS enabled) | Per-service schemas, `school_id` tenant column |
-| Cache / Queue broker | Redis | BullMQ queues, presence state cache |
-| Object Storage | MinIO (S3-compatible) or local | Video file storage |
+| Layer                | Technology                                  | Notes                                                                                          |
+| -------------------- | ------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| Mobile App (Driver)  | React Native (Expo ~54)                     | GPS, BLE scanning, offline queue via AsyncStorage                                              |
+| Web App (Parent)     | Vite + React 19, TailwindCSS                | SSE alert stream, Leaflet map                                                                  |
+| Web App (Admin)      | Vite + React 19, TailwindCSS, Leaflet       | Live fleet map, route management                                                               |
+| API Gateway          | NestJS **v10.4.15** + TypeORM **v10** + JWT | RBAC, multi-tenant guards, proxy routing. **Note: v10 — other NestJS services are on v11.0.1** |
+| GPS Tracking         | Express + Prisma **v5.22.0**                | Location ingest, live/history queries                                                          |
+| Emergency Alerts     | NestJS + TypeORM + BullMQ                   | Alert creation, WebSocket broadcast, notification fan-out                                      |
+| Student Presence     | NestJS + TypeORM + BullMQ                   | BLE / manual presence, Redis presence cache                                                    |
+| Video Service        | NestJS + TypeORM                            | Video event metadata, MinIO/local storage                                                      |
+| Student Management   | NestJS + TypeORM                            | Student CRUD, tag assignment, bulk import                                                      |
+| Compliance           | NestJS + TypeORM                            | Driver records, inspections, audit log                                                         |
+| Notification Service | NestJS + BullMQ                             | FCM/APNs fan-out, notification log                                                             |
+| Event Bus            | BullMQ (Redis-backed)                       | Domain event queuing and consumer groups                                                       |
+| Relational DB        | PostgreSQL (PostGIS enabled)                | Per-service schemas, `school_id` tenant column                                                 |
+| Cache / Queue broker | Redis                                       | BullMQ queues, presence state cache                                                            |
+| Object Storage       | MinIO (S3-compatible) or local              | Video file storage                                                                             |
+| Route Engine         | OSRM v5.27.1 (self-hosted)                  | Route geometry, optimization, ETA calculations                                                 |
 
 ---
 
@@ -47,12 +48,12 @@ All events are serialised as JSON and published via BullMQ. Each event envelope 
 
 ```typescript
 interface DomainEvent<T = unknown> {
-    eventId: string;       // UUID v4
-    eventType: string;     // e.g. "location.updated"
-    version: number;       // schema version, starts at 1
-    schoolId: string;      // tenant identifier
-    occurredAt: string;    // ISO 8601
-    payload: T;
+  eventId: string; // UUID v4
+  eventType: string; // e.g. "location.updated"
+  version: number; // schema version, starts at 1
+  schoolId: string; // tenant identifier
+  occurredAt: string; // ISO 8601
+  payload: T;
 }
 ```
 
@@ -63,13 +64,13 @@ Consumed by: (reserved for geofencing/deviation alerts in Phase 3)
 
 ```typescript
 interface LocationUpdatedPayload {
-    vehicleId: string;
-    routeId: string;
-    lat: number;
-    lng: number;
-    speedKph: number;
-    headingDeg: number;
-    accuracyMeters: number;
+  vehicleId: string;
+  routeId: string;
+  lat: number;
+  lng: number;
+  speedKph: number;
+  headingDeg: number;
+  accuracyMeters: number;
 }
 ```
 
@@ -80,12 +81,12 @@ Consumed by: Notification Service
 
 ```typescript
 interface AlertCreatedPayload {
-    alertId: string;
-    vehicleId: string;
-    routeId: string;
-    eventType: 'PANIC_BUTTON' | 'ROUTE_DEVIATION' | 'MEDICAL' | 'OTHER';
-    location: { lat: number; lng: number };
-    driverId?: string;
+  alertId: string;
+  vehicleId: string;
+  routeId: string;
+  eventType: 'PANIC_BUTTON' | 'ROUTE_DEVIATION' | 'MEDICAL' | 'OTHER';
+  location: { lat: number; lng: number };
+  driverId?: string;
 }
 ```
 
@@ -96,11 +97,11 @@ Consumed by: Notification Service
 
 ```typescript
 interface PresenceBoardedPayload {
-    studentId: string;
-    vehicleId: string;
-    routeId: string;
-    source: 'SMARTTAG' | 'MANUAL' | 'RFID';
-    signalStrength?: number;
+  studentId: string;
+  vehicleId: string;
+  routeId: string;
+  source: 'SMARTTAG' | 'MANUAL' | 'RFID';
+  signalStrength?: number;
 }
 ```
 
@@ -111,10 +112,10 @@ Consumed by: Notification Service
 
 ```typescript
 interface PresenceAlightedPayload {
-    studentId: string;
-    vehicleId: string;
-    routeId: string;
-    source: 'SMARTTAG' | 'MANUAL' | 'RFID';
+  studentId: string;
+  vehicleId: string;
+  routeId: string;
+  source: 'SMARTTAG' | 'MANUAL' | 'RFID';
 }
 ```
 
@@ -141,6 +142,7 @@ data: {"studentId":"s1","routeId":"r1","message":"Your child has alighted the bu
 `POST /api/v1/student-presence-events`
 
 Request body:
+
 ```json
 {
     "studentId": "uuid",
@@ -162,20 +164,20 @@ The Driver App uses an AsyncStorage-backed queue to buffer events when offline.
 
 ### Queue Key Layout
 
-| Key | Value |
-|---|---|
+| Key                   | Value                            |
+| --------------------- | -------------------------------- |
 | `@sbtm/offline_queue` | `JSON.stringify(OfflineEvent[])` |
 
 ### OfflineEvent schema
 
 ```typescript
 interface OfflineEvent {
-    id: string;           // UUID v4
-    type: 'gps' | 'emergency' | 'presence';
-    endpoint: string;     // API path
-    payload: unknown;
-    retries: number;      // incremented on failure
-    createdAt: string;    // ISO 8601
+  id: string; // UUID v4
+  type: 'gps' | 'emergency' | 'presence';
+  endpoint: string; // API path
+  payload: unknown;
+  retries: number; // incremented on failure
+  createdAt: string; // ISO 8601
 }
 ```
 
@@ -191,13 +193,13 @@ interface OfflineEvent {
 
 ## 5. Non-Functional Requirements
 
-| Requirement | Target |
-|---|---|
-| GPS ingest latency | ≤ 3 s end-to-end (prototype) |
+| Requirement            | Target                                 |
+| ---------------------- | -------------------------------------- |
+| GPS ingest latency     | ≤ 3 s end-to-end (prototype)           |
 | Alert delivery latency | ≤ 10 s from event to push notification |
-| Presence cache TTL | 1 hour (state), 30 s (route summary) |
-| Offline queue max age | 24 hours |
-| API availability | ≥ 99.5% (prototype SLA) |
+| Presence cache TTL     | 1 hour (state), 30 s (route summary)   |
+| Offline queue max age  | 24 hours                               |
+| API availability       | ≥ 99.5% (prototype SLA)                |
 | Multi-tenant isolation | `school_id` enforced on every DB query |
 
 ---

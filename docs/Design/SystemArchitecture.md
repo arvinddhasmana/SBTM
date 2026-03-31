@@ -1,7 +1,7 @@
 # SBTM v1 System Architecture
 
 - Document owner: Engineering and Architecture
-- Last reviewed: 2026-03-24
+- Last reviewed: 2026-03-30
 - Primary use: System context, service boundaries, and core runtime interactions
 
 ## Purpose
@@ -31,20 +31,21 @@ flowchart LR
 
 ## Primary Runtime Components
 
-| Component | Type | Responsibility |
-| --- | --- | --- |
-| Driver App | Mobile application | Driver authentication, route execution, GPS updates, presence actions, emergency initiation |
-| Parent App | Web application | Child tracking, route awareness, safety communications |
-| Admin Dashboard | Web application | Operational oversight, route management, compliance views, incident awareness |
-| API Gateway | Edge backend | Identity, RBAC, tenant scoping, reverse proxying, API normalization |
-| GPS Tracking | Domain service | Live location ingestion and history queries |
-| Emergency Alerts | Domain service | Alert persistence and admin-facing real-time channels |
-| Student Presence | Domain service | Boarding and alighting state, presence event persistence, Redis-backed state |
-| Student Management | Domain service | Enrollment, parent linkage, route assignment, roster import |
-| Compliance Management | Domain service | Driver compliance, inspections, and audit records |
-| Video Service | Domain service | Video event metadata and secure asset workflow |
-| Redis and BullMQ | Shared infrastructure | Queueing and ephemeral presence or alert state |
-| PostgreSQL | Shared infrastructure | Relational persistence across domain services |
+| Component             | Type                  | Responsibility                                                                              |
+| --------------------- | --------------------- | ------------------------------------------------------------------------------------------- |
+| Driver App            | Mobile application    | Driver authentication, route execution, GPS updates, presence actions, emergency initiation |
+| Parent App            | Web application       | Child tracking, route awareness, safety communications                                      |
+| Admin Dashboard       | Web application       | Operational oversight, route management, compliance views, incident awareness               |
+| API Gateway           | Edge backend          | Identity, RBAC, tenant scoping, reverse proxying, API normalization                         |
+| GPS Tracking          | Domain service        | Live location ingestion and history queries                                                 |
+| Emergency Alerts      | Domain service        | Alert persistence and admin-facing real-time channels                                       |
+| Student Presence      | Domain service        | Boarding and alighting state, presence event persistence, Redis-backed state                |
+| Student Management    | Domain service        | Enrollment, parent linkage, route assignment, roster import                                 |
+| Compliance Management | Domain service        | Driver compliance, inspections, and audit records                                           |
+| Video Service         | Domain service        | Video event metadata and secure asset workflow                                              |
+| Redis and BullMQ      | Shared infrastructure | Queueing and ephemeral presence or alert state                                              |
+| PostgreSQL            | Shared infrastructure | Relational persistence across domain services                                               |
+| OSRM                  | Shared infrastructure | Route geometry, optimization, and distance calculations (v5.27.1, Ottawa region data)       |
 
 ## Container View
 

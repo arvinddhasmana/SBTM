@@ -1,0 +1,25 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**", ".next/**", "build/**"],
+      "cache": true
+    },
+    "lint": {
+      "cache": true
+    },
+    "test": {
+      "cache": true,
+      "env": ["DATABASE_URL", "NODE_ENV"]
+    },
+    "test:cov": {
+      "cache": false,
+      "env": ["DATABASE_URL", "NODE_ENV"]
+    },
+    "dev": {
+      "persistent": true,
+      "cache": false
+    }
+  }
+}

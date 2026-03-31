@@ -1,7 +1,7 @@
 # Phase 2: Finish the Driver Presence Workflow
 
 - Document owner: Product and Engineering
-- Last reviewed: 2026-03-24
+- Last reviewed: 2026-03-30
 - Phase status: Planned
 - Gap level: High
 
@@ -15,15 +15,15 @@ Driver presence is the source-of-truth for whether a student is on the bus. Phas
 
 ## Current State (from Gap Analysis)
 
-| Capability | Status |
-|---|---|
-| Presence API client in driver app | Implemented |
-| Offline buffering (AsyncStorage queue) | Implemented |
-| Roster screen (local state toggling) | Implemented (local only) |
-| Presence events submitted to backend | Partial (API client exists but roster UI not wired through it) |
-| BLE/SmartTag scanning in driver app | Not implemented |
-| Backend SmartTag detection processing | Implemented |
-| Route lifecycle state management | Partial (some hardcoded values) |
+| Capability                             | Status                                                         |
+| -------------------------------------- | -------------------------------------------------------------- |
+| Presence API client in driver app      | Implemented                                                    |
+| Offline buffering (AsyncStorage queue) | Implemented                                                    |
+| Roster screen (local state toggling)   | Implemented (local only)                                       |
+| Presence events submitted to backend   | Partial (API client exists but roster UI not wired through it) |
+| BLE/SmartTag scanning in driver app    | Not implemented                                                |
+| Backend SmartTag detection processing  | Implemented                                                    |
+| Route lifecycle state management       | Partial (some hardcoded values)                                |
 
 ## Scope
 
@@ -35,10 +35,12 @@ Driver presence is the source-of-truth for whether a student is on the bus. Phas
 - Handle conflict resolution when offline events sync after reconnection.
 
 **Implementation modules affected:**
+
 - [Module-3-DriverApp.md](../../Implementation/Module-3-DriverApp.md)
 - [Module-6-StudentPresence.md](../../Implementation/Module-6-StudentPresence.md)
 
 **Requirements traced:**
+
 - FR-PRES-001: Driver manually records student boarding/alighting
 - FR-PRES-002: Presence events persisted to backend
 - NFR-PERF-002: Presence events processed within 300ms p95
@@ -51,10 +53,12 @@ Driver presence is the source-of-truth for whether a student is on the bus. Phas
 - Handle scan permissions and explain purpose to the driver.
 
 **Implementation modules affected:**
+
 - [Module-3-DriverApp.md](../../Implementation/Module-3-DriverApp.md)
 - [Module-6-StudentPresence.md](../../Implementation/Module-6-StudentPresence.md)
 
 **Requirements traced:**
+
 - FR-PRES-003: Automated presence detection via BLE/SmartTag
 - NFR-BATT-001: BLE scanning must not excessively drain driver device battery
 
@@ -65,17 +69,18 @@ Driver presence is the source-of-truth for whether a student is on the bus. Phas
 - Surface route state for downstream notifications and operations visibility.
 
 **Implementation modules affected:**
+
 - [Module-3-DriverApp.md](../../Implementation/Module-3-DriverApp.md)
 - [Module-1-GpsTracking.md](../../Implementation/Module-1-GpsTracking.md)
 
 ## Dependencies
 
-| Dependency | Source | Status |
-|---|---|---|
-| Phase 1 notification pipeline | Phase 1 | Required (for downstream delivery) |
-| Student tag assignment data | Module-9 (Student Management) | Implemented |
-| Presence service SmartTag processing | Module-6 | Implemented |
-| Offline queue infrastructure | Module-3 (Driver App) | Implemented |
+| Dependency                           | Source                        | Status                             |
+| ------------------------------------ | ----------------------------- | ---------------------------------- |
+| Phase 1 notification pipeline        | Phase 1                       | Required (for downstream delivery) |
+| Student tag assignment data          | Module-9 (Student Management) | Implemented                        |
+| Presence service SmartTag processing | Module-6                      | Implemented                        |
+| Offline queue infrastructure         | Module-3 (Driver App)         | Implemented                        |
 
 ## Acceptance Criteria
 
@@ -87,13 +92,13 @@ Driver presence is the source-of-truth for whether a student is on the bus. Phas
 
 ## Verification
 
-| Test Type | Scope |
-|---|---|
-| Mobile integration test | Roster action → presence API call → backend persistence |
-| Device test | Simulated or physical BLE beacon → SmartTag detection → presence event |
-| Offline test | Queue presence events offline → reconnect → verify server state matches |
-| Consistency check | Redis presence state matches database records for a route |
-| Security test | Presence events scoped to driver's assigned route only |
+| Test Type               | Scope                                                                   |
+| ----------------------- | ----------------------------------------------------------------------- |
+| Mobile integration test | Roster action → presence API call → backend persistence                 |
+| Device test             | Simulated or physical BLE beacon → SmartTag detection → presence event  |
+| Offline test            | Queue presence events offline → reconnect → verify server state matches |
+| Consistency check       | Redis presence state matches database records for a route               |
+| Security test           | Presence events scoped to driver's assigned route only                  |
 
 ## Demo Impact
 
