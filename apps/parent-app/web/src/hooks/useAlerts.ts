@@ -1,63 +1,53 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { parentApi, type ActiveAlert } from '../services/api';
-
-const POLL_INTERVAL_MS = 30_000;
+import { queryKeys } from '../services/query-keys';
 
 /**
  * Monitors for active emergency alerts on the given route.
- * Uses SSE as the primary delivery mechanism and polling as a fallback.
+ * Uses SSE as the primary delivery mechanism and TanStack Query polling as a fallback.
  * Returns the current alert (or null) and a manual refresh function.
  */
 export function useAlerts(routeId: string | undefined) {
-  const [alert, setAlert] = useState<ActiveAlert | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const [sseConnected, setSseConnected] = useState(false);
   const esRef = useRef<EventSource | null>(null);
-  const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const fetchAlert = useCallback(async () => {
-    if (!routeId) {
-      setAlert(null);
-      return;
-    }
-    try {
-      const result = await parentApi.getActiveAlert(routeId);
-      setAlert(result);
-      setError(null);
-    } catch {
-      setError('Unable to fetch alert status.');
-    }
-  }, [routeId]);
+  const {
+    data: alert = null,
+    error: queryError,
+    refetch,
+  } = useQuery({
+    queryKey: queryKeys.alerts.active(routeId),
+    queryFn: async () => {
+      if (!routeId) return null;
+      return parentApi.getActiveAlert(routeId);
+    },
+    enabled: !!routeId,
+    refetchInterval: sseConnected ? false : 30_000,
+  });
+
+  const error = queryError ? 'Unable to fetch alert status.' : null;
 
   useEffect(() => {
-    if (!routeId) {
-      setAlert(null);
-      return;
-    }
+    if (!routeId) return;
 
     const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
-    let sseActive = false;
-
     if (typeof EventSource !== 'undefined') {
-      sseActive = true;
       const url = `${apiBase}/api/v1/parent/alerts/stream`;
       const es = new EventSource(url, { withCredentials: true });
       esRef.current = es;
 
       es.onopen = () => {
-        // Clear polling timer once SSE is active
-        if (pollTimerRef.current) {
-          clearInterval(pollTimerRef.current);
-          pollTimerRef.current = null;
-        }
+        setSseConnected(true);
       };
 
       es.onmessage = (event: MessageEvent<string>) => {
         try {
           const data = JSON.parse(event.data) as Partial<ActiveAlert>;
           if (data.routeId === routeId) {
-            setAlert(data as ActiveAlert);
-            setError(null);
+            queryClient.setQueryData(queryKeys.alerts.active(routeId), data as ActiveAlert);
           }
         } catch {
           // Ignore unparseable events
@@ -65,21 +55,10 @@ export function useAlerts(routeId: string | undefined) {
       };
 
       es.onerror = () => {
-        sseActive = false;
+        setSseConnected(false);
         es.close();
         esRef.current = null;
-        // Fall back to polling
-        if (!pollTimerRef.current) {
-          void fetchAlert();
-          pollTimerRef.current = setInterval(() => void fetchAlert(), POLL_INTERVAL_MS);
-        }
       };
-    }
-
-    // Always do an initial fetch; polling acts as fallback if SSE unavailable
-    void fetchAlert();
-    if (!sseActive) {
-      pollTimerRef.current = setInterval(() => void fetchAlert(), POLL_INTERVAL_MS);
     }
 
     return () => {
@@ -87,12 +66,9 @@ export function useAlerts(routeId: string | undefined) {
         esRef.current.close();
         esRef.current = null;
       }
-      if (pollTimerRef.current) {
-        clearInterval(pollTimerRef.current);
-        pollTimerRef.current = null;
-      }
+      setSseConnected(false);
     };
-  }, [routeId, fetchAlert]);
+  }, [routeId, queryClient]);
 
-  return { alert, error, refresh: fetchAlert };
+  return { alert, error, refresh: refetch };
 }

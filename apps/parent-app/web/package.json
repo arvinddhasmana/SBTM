@@ -11,6 +11,8 @@
     "test": "vitest"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.95.2",
+    "@tanstack/react-query-devtools": "^5.95.2",
     "autoprefixer": "^10.4.22",
     "axios": "^1.13.2",
     "leaflet": "^1.9.4",
