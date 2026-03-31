@@ -6,51 +6,60 @@ import { Request } from 'express';
 import { AuthService, JwtPayload } from '../auth.service';
 
 /**
- * Extracts the JWT from the Authorization header (Bearer) or from the
- * `token` query parameter. The query parameter path is used exclusively
- * by the SSE stream endpoint, because EventSource does not support
- * custom request headers.
+ * Extracts the JWT from (in order of priority):
+ *   1. The `access_token` httpOnly cookie (web clients)
+ *   2. The `Authorization: Bearer <token>` header (mobile / service clients)
+ *   3. The `token` query parameter (SSE stream endpoint)
  */
 function extractJwtFromRequestOrQuery(req: Request): string | null {
-    const authHeader = req.headers?.authorization;
-    if (authHeader?.startsWith('Bearer ')) {
-        return authHeader.slice(7);
-    }
-    const queryToken = req.query?.token;
-    if (typeof queryToken === 'string' && queryToken.length > 0) {
-        return queryToken;
-    }
-    return null;
+  // 1. Cookie (set by login endpoint for web clients)
+  const cookieToken = req.cookies?.access_token;
+  if (typeof cookieToken === 'string' && cookieToken.length > 0) {
+    return cookieToken;
+  }
+
+  // 2. Authorization header (mobile apps / inter-service calls)
+  const authHeader = req.headers?.authorization;
+  if (authHeader?.startsWith('Bearer ')) {
+    return authHeader.slice(7);
+  }
+
+  // 3. Query parameter (SSE – EventSource cannot send headers)
+  const queryToken = req.query?.token;
+  if (typeof queryToken === 'string' && queryToken.length > 0) {
+    return queryToken;
+  }
+  return null;
 }
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-    constructor(
-        private readonly authService: AuthService,
-        configService: ConfigService,
-    ) {
-        super({
-            jwtFromRequest: extractJwtFromRequestOrQuery,
-            ignoreExpiration: false,
-            secretOrKey: configService.get<string>('JWT_SECRET', 'your-secret-key'),
-            passReqToCallback: false,
-        });
-    }
+  constructor(
+    private readonly authService: AuthService,
+    configService: ConfigService,
+  ) {
+    super({
+      jwtFromRequest: extractJwtFromRequestOrQuery,
+      ignoreExpiration: false,
+      secretOrKey: configService.get<string>('JWT_SECRET', 'your-secret-key'),
+      passReqToCallback: false,
+    });
+  }
 
-    async validate(payload: JwtPayload) {
-        const user = await this.authService.validateUser(payload);
-        if (!user) {
-            throw new UnauthorizedException('User not found');
-        }
-        return {
-            id: user.id,
-            email: user.email,
-            role: user.role,
-            driverId: user.driverId,
-            childRouteIds: user.childRouteIds,
-            assignedRouteIds: user.assignedRouteIds,
-            schoolId: user.schoolId,
-            boardId: user.boardId,
-        };
+  async validate(payload: JwtPayload) {
+    const user = await this.authService.validateUser(payload);
+    if (!user) {
+      throw new UnauthorizedException('User not found');
     }
+    return {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      driverId: user.driverId,
+      childRouteIds: user.childRouteIds,
+      assignedRouteIds: user.assignedRouteIds,
+      schoolId: user.schoolId,
+      boardId: user.boardId,
+    };
+  }
 }

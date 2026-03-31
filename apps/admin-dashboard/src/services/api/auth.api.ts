@@ -2,65 +2,64 @@ import type { User } from '../../types';
 import { apiClient } from './api-client';
 
 interface LoginResponse {
-    user: User;
-    accessToken: string;
+  user: User;
 }
 
 interface MeResponse {
-    user: User;
+  user: User;
 }
 
 interface GatewayUser {
-    id: string;
-    email: string;
-    role: User['role'];
-    firstName?: string;
-    lastName?: string;
-    schoolId?: string;
-    boardId?: string;
+  id: string;
+  email: string;
+  role: User['role'];
+  firstName?: string;
+  lastName?: string;
+  schoolId?: string;
+  boardId?: string;
 }
 
 interface GatewayLoginResponse {
-    accessToken: string;
-    user: GatewayUser;
+  user: GatewayUser;
 }
 
 export const authApi = {
-    async login(email: string, password: string): Promise<LoginResponse> {
-        const response = await apiClient.post<GatewayLoginResponse>(
-            '/api/v1/auth/login',
-            { email, password }
-        );
-        const nameParts = [response.data.user.firstName, response.data.user.lastName].filter(Boolean);
+  async login(email: string, password: string): Promise<LoginResponse> {
+    const response = await apiClient.post<GatewayLoginResponse>('/api/v1/auth/login', {
+      email,
+      password,
+    });
+    const nameParts = [response.data.user.firstName, response.data.user.lastName].filter(Boolean);
 
-        return {
-            accessToken: response.data.accessToken,
-            user: {
-                id: response.data.user.id,
-                email: response.data.user.email,
-                role: response.data.user.role,
-                name: nameParts.length ? nameParts.join(' ') : response.data.user.email,
-                schoolId: response.data.user.schoolId,
-                boardId: response.data.user.boardId,
-            },
-        };
-    },
+    return {
+      user: {
+        id: response.data.user.id,
+        email: response.data.user.email,
+        role: response.data.user.role,
+        name: nameParts.length ? nameParts.join(' ') : response.data.user.email,
+        schoolId: response.data.user.schoolId,
+        boardId: response.data.user.boardId,
+      },
+    };
+  },
 
-    async me(token: string): Promise<MeResponse> {
-        const response = await apiClient.get<GatewayUser>('/api/v1/auth/me', {
-            headers: { Authorization: `Bearer ${token}` },
-        });
-        const nameParts = [response.data.firstName, response.data.lastName].filter(Boolean);
+  async logout(): Promise<void> {
+    await apiClient.post('/api/v1/auth/logout');
+  },
 
-        return {
-            user: {
-                id: response.data.id,
-                email: response.data.email,
-                role: response.data.role,
-                name: nameParts.length ? nameParts.join(' ') : response.data.email,
-                schoolId: response.data.schoolId,
-                boardId: response.data.boardId,
-            },
-        };
-    },
+  async me(): Promise<MeResponse> {
+    const response = await apiClient.get<GatewayUser>('/api/v1/auth/me');
+    const nameParts = [response.data.firstName, response.data.lastName].filter(Boolean);
+
+    return {
+      user: {
+        id: response.data.id,
+        email: response.data.email,
+        role: response.data.role,
+        name: nameParts.length ? nameParts.join(' ') : response.data.email,
+        schoolId: response.data.schoolId,
+        boardId: response.data.boardId,
+      },
+    };
+  },
 };

@@ -3,84 +3,89 @@ import { authApi } from './auth.api';
 import { apiClient } from './api-client';
 
 vi.mock('./api-client', () => ({
-    apiClient: {
-        post: vi.fn(),
-        get: vi.fn(),
-    },
+  apiClient: {
+    post: vi.fn(),
+    get: vi.fn(),
+  },
 }));
 
 describe('authApi', () => {
-    beforeEach(() => {
-        vi.clearAllMocks();
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  describe('login', () => {
+    it('should return user on successful login', async () => {
+      const mockResponse = {
+        data: {
+          user: {
+            id: 'admin-001',
+            email: 'admin@example.com',
+            role: 'ADMIN',
+            firstName: 'Admin',
+            lastName: 'User',
+          },
+        },
+      };
+
+      vi.mocked(apiClient.post).mockResolvedValueOnce(mockResponse);
+
+      const result = await authApi.login('admin@example.com', 'password');
+
+      expect(result).toEqual({
+        user: {
+          id: 'admin-001',
+          email: 'admin@example.com',
+          role: 'ADMIN',
+          name: 'Admin User',
+          schoolId: undefined,
+          boardId: undefined,
+        },
+      });
+      expect(apiClient.post).toHaveBeenCalledWith('/api/v1/auth/login', {
+        email: 'admin@example.com',
+        password: 'password',
+      });
     });
+  });
 
-    describe('login', () => {
-        it('should return user and token on successful login', async () => {
-            const mockResponse = {
-                data: {
-                    user: {
-                        id: 'admin-001',
-                        email: 'admin@example.com',
-                        role: 'ADMIN',
-                        firstName: 'Admin',
-                        lastName: 'User',
-                    },
-                    accessToken: 'test-jwt-token',
-                },
-            };
+  describe('logout', () => {
+    it('should call logout endpoint', async () => {
+      vi.mocked(apiClient.post).mockResolvedValueOnce({ data: {} });
 
-            vi.mocked(apiClient.post).mockResolvedValueOnce(mockResponse);
+      await authApi.logout();
 
-            const result = await authApi.login('admin@example.com', 'password');
-
-            expect(result).toEqual({
-                accessToken: 'test-jwt-token',
-                user: {
-                    id: 'admin-001',
-                    email: 'admin@example.com',
-                    role: 'ADMIN',
-                    name: 'Admin User',
-                    schoolId: undefined,
-                    boardId: undefined,
-                },
-            });
-            expect(apiClient.post).toHaveBeenCalledWith(
-                '/api/v1/auth/login',
-                { email: 'admin@example.com', password: 'password' }
-            );
-        });
+      expect(apiClient.post).toHaveBeenCalledWith('/api/v1/auth/logout');
     });
+  });
 
-    describe('me', () => {
-        it('should return current user info', async () => {
-            const mockResponse = {
-                data: {
-                    id: 'admin-001',
-                    email: 'admin@example.com',
-                    role: 'ADMIN',
-                    firstName: 'Admin',
-                    lastName: 'User',
-                },
-            };
+  describe('me', () => {
+    it('should return current user info', async () => {
+      const mockResponse = {
+        data: {
+          id: 'admin-001',
+          email: 'admin@example.com',
+          role: 'ADMIN',
+          firstName: 'Admin',
+          lastName: 'User',
+        },
+      };
 
-            vi.mocked(apiClient.get).mockResolvedValueOnce(mockResponse);
+      vi.mocked(apiClient.get).mockResolvedValueOnce(mockResponse);
 
-            const result = await authApi.me('test-token');
+      const result = await authApi.me();
 
-            expect(result).toEqual({
-                user: {
-                    id: 'admin-001',
-                    email: 'admin@example.com',
-                    role: 'ADMIN',
-                    name: 'Admin User',
-                    schoolId: undefined,
-                    boardId: undefined,
-                },
-            });
-            expect(apiClient.get).toHaveBeenCalledWith(
-                '/api/v1/auth/me',
-                { headers: { Authorization: 'Bearer test-token' } }
-            );
-        });
+      expect(result).toEqual({
+        user: {
+          id: 'admin-001',
+          email: 'admin@example.com',
+          role: 'ADMIN',
+          name: 'Admin User',
+          schoolId: undefined,
+          boardId: undefined,
+        },
+      });
+      expect(apiClient.get).toHaveBeenCalledWith('/api/v1/auth/me');
     });
+  });
 });

@@ -5,6 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
+import * as cookieParser from 'cookie-parser';
 import { AuthController } from '../src/modules/auth/auth.controller';
 import { AuthService } from '../src/modules/auth/auth.service';
 import { User } from '../src/modules/auth/entities/user.entity';
@@ -45,6 +46,7 @@ describe('AuthController (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    app.use(cookieParser());
     app.useGlobalPipes(
       new ValidationPipe({ whitelist: true, transform: true }),
     );
@@ -73,15 +75,21 @@ describe('AuthController (e2e)', () => {
   });
 
   describe('/api/v1/auth/login (POST)', () => {
-    it('should return access token for valid credentials', () => {
+    it('should set httpOnly cookie and return user for valid credentials', () => {
       return request(app.getHttpServer())
         .post('/api/v1/auth/login')
         .send({ email: 'test@example.com', password: 'password123' })
         .expect(200)
         .expect((res) => {
-          expect(res.body.accessToken).toBeDefined();
           expect(res.body.user).toBeDefined();
           expect(res.body.user.email).toBe('test@example.com');
+          const cookies = res.headers['set-cookie'];
+          expect(cookies).toBeDefined();
+          const accessTokenCookie = (
+            Array.isArray(cookies) ? cookies : [cookies]
+          ).find((c: string) => c.startsWith('access_token='));
+          expect(accessTokenCookie).toBeDefined();
+          expect(accessTokenCookie).toContain('HttpOnly');
         });
     });
 
@@ -91,7 +99,6 @@ describe('AuthController (e2e)', () => {
         .send({ email: '  TEST@Example.Com  ', password: 'password123' })
         .expect(200)
         .expect((res) => {
-          expect(res.body.accessToken).toBeDefined();
           expect(res.body.user.email).toBe('test@example.com');
         });
     });
@@ -119,19 +126,19 @@ describe('AuthController (e2e)', () => {
   });
 
   describe('/api/v1/auth/me (GET)', () => {
-    let accessToken: string;
+    let cookies: string[];
 
     beforeAll(async () => {
       const response = await request(app.getHttpServer())
         .post('/api/v1/auth/login')
         .send({ email: 'test@example.com', password: 'password123' });
-      accessToken = response.body.accessToken;
+      cookies = response.headers['set-cookie'];
     });
 
-    it('should return user profile with valid token', () => {
+    it('should return user profile with valid cookie', () => {
       return request(app.getHttpServer())
         .get('/api/v1/auth/me')
-        .set('Authorization', `Bearer ${accessToken}`)
+        .set('Cookie', cookies)
         .expect(200)
         .expect((res) => {
           expect(res.body.email).toBe('test@example.com');
