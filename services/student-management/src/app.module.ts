@@ -5,6 +5,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { LoggerModule } from 'nestjs-pino';
 import { StudentModule } from './modules/student/student.module';
 import { Student } from './modules/student/entities/student.entity';
+import { AppController } from './app.controller';
 
 @Module({
   imports: [
@@ -40,5 +41,6 @@ import { Student } from './modules/student/entities/student.entity';
     }),
     StudentModule,
   ],
+  controllers: [AppController],
 })
 export class AppModule {}

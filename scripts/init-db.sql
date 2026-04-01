@@ -554,25 +554,25 @@ BEGIN
         IF i <= 22 THEN
             route_uuid     := '30000000-0000-0000-0000-000000000001';
             route_ref      := 'ROUTE-R01';
-            route_code_str := '01';
+            route_code_str := '001';
             school_uuid    := school1_id;
             block_start    := 1;
         ELSIF i <= 44 THEN
             route_uuid     := '30000000-0000-0000-0000-000000000002';
             route_ref      := 'ROUTE-R02';
-            route_code_str := '02';
+            route_code_str := '002';
             school_uuid    := school1_id;
             block_start    := 23;
         ELSIF i <= 66 THEN
             route_uuid     := '30000000-0000-0000-0000-000000000011';
             route_ref      := 'ROUTE-R11';
-            route_code_str := '11';
+            route_code_str := '011';
             school_uuid    := school2_id;
             block_start    := 45;
         ELSE
             route_uuid     := '30000000-0000-0000-0000-000000000012';
             route_ref      := 'ROUTE-R12';
-            route_code_str := '12';
+            route_code_str := '012';
             school_uuid    := school2_id;
             block_start    := 67;
         END IF;

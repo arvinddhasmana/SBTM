@@ -1,0 +1,14 @@
+.git
+**/node_modules
+**/.turbo
+**/coverage
+**/dist
+**/*.log
+**/.env
+**/.env.*
+!**/.env.example
+*.md
+docs/
+infra/osrm-data/
+apps/driver-app/
+apps/parent-app/mobile/

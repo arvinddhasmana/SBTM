@@ -1,47 +1,47 @@
-# Stage 1: Build
-FROM node:20-alpine AS builder
+# ─── Stage 1: install workspace dependencies ───────────────────────────────
+FROM node:20-alpine AS deps
+RUN corepack enable && corepack prepare pnpm@9.15.9 --activate
+WORKDIR /workspace
 
-WORKDIR /app
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml tsconfig.base.json ./
 
-# Copy package files and config
-COPY package*.json ./
-COPY tsconfig.json ./
-COPY tsconfig.build.json ./
-COPY nest-cli.json ./
+COPY libs/common/package.json                    ./libs/common/
+COPY apps/admin-dashboard/package.json           ./apps/admin-dashboard/
+COPY apps/parent-app/web/package.json            ./apps/parent-app/web/
+COPY services/api-gateway/package.json           ./services/api-gateway/
+COPY services/compliance-management/package.json ./services/compliance-management/
+COPY services/emergency-alerts/package.json      ./services/emergency-alerts/
+COPY services/gps-tracking/package.json          ./services/gps-tracking/
+COPY services/student-management/package.json    ./services/student-management/
+COPY services/student-presence/package.json      ./services/student-presence/
+COPY services/video-service/package.json         ./services/video-service/
 
-# Install dependencies
-RUN npm install
+RUN pnpm install --frozen-lockfile
 
-# Copy source code
-COPY src ./src
+# ─── Stage 2: build ─────────────────────────────────────────────────────────
+FROM deps AS builder
 
-# Build application
-RUN npm run build
+COPY libs/common/ ./libs/common/
+RUN pnpm --filter @sbtm/common run build
 
-# Stage 2: Production
+COPY services/emergency-alerts/ ./services/emergency-alerts/
+
+RUN pnpm --filter emergency-alerts run build
+
+RUN pnpm deploy --filter emergency-alerts --prod /deploy
+RUN rm -rf /deploy/dist && cp -r /workspace/services/emergency-alerts/dist /deploy/dist
+
+# ─── Stage 3: production image ──────────────────────────────────────────────
 FROM node:20-alpine
-
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+COPY --from=builder /deploy ./
 
-# Install production dependencies only
-RUN npm install --only=production
-
-# Copy built application from builder
-COPY --from=builder /app/dist ./dist
-
-# Expose port
-EXPOSE 3003
-
-# Set environment
 ENV NODE_ENV=production
+EXPOSE 3003
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s \
   CMD node -e "require('http').get('http://localhost:3003/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
 USER node
-
-# Start application
-CMD ["node", "dist/main.js"]
+CMD ["node", "dist/main"]

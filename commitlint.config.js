@@ -22,5 +22,12 @@ module.exports = {
       ],
     ],
     'scope-empty': [1, 'never'],
+    'subject-full-stop': [0, 'never'],
+    'type-enum': [
+      2,
+      'always',
+      ['feat', 'fix', 'chore', 'docs', 'style', 'refactor', 'perf', 'test', 'build', 'ci', 'revert'],
+    ],
   },
 };
+

@@ -1,9 +1,9 @@
 import { CorrelationIdMiddleware, CORRELATION_ID_HEADER } from '@sbtm/common';
-import { Request, Response } from 'express';
+import { Request } from 'express';
 
 describe('CorrelationIdMiddleware', () => {
   let middleware: CorrelationIdMiddleware;
-  let mockRes: Partial<Response>;
+  let mockRes: { setHeader: jest.Mock };
   let mockNext: jest.Mock;
 
   beforeEach(() => {
@@ -22,7 +22,7 @@ describe('CorrelationIdMiddleware', () => {
       headers: { [CORRELATION_ID_HEADER]: incomingId },
     } as unknown as Request;
 
-    middleware.use(mockReq, mockRes as Response, mockNext);
+    middleware.use(mockReq as any, mockRes as any, mockNext);
 
     expect(mockReq.headers[CORRELATION_ID_HEADER]).toBe(incomingId);
     expect(mockRes.setHeader).toHaveBeenCalledWith(
@@ -35,7 +35,7 @@ describe('CorrelationIdMiddleware', () => {
   it('should generate a new UUID when x-request-id header is absent', () => {
     const mockReq = { headers: {} } as unknown as Request;
 
-    middleware.use(mockReq, mockRes as Response, mockNext);
+    middleware.use(mockReq as any, mockRes as any, mockNext);
 
     const assignedId = mockReq.headers[CORRELATION_ID_HEADER] as string;
     expect(assignedId).toBeDefined();
@@ -54,7 +54,7 @@ describe('CorrelationIdMiddleware', () => {
       headers: { [CORRELATION_ID_HEADER]: '' },
     } as unknown as Request;
 
-    middleware.use(mockReq, mockRes as Response, mockNext);
+    middleware.use(mockReq as any, mockRes as any, mockNext);
 
     const assignedId = mockReq.headers[CORRELATION_ID_HEADER] as string;
     expect(assignedId.length).toBeGreaterThan(0);
@@ -65,7 +65,7 @@ describe('CorrelationIdMiddleware', () => {
 
   it('should always call next()', () => {
     const mockReq = { headers: {} } as unknown as Request;
-    middleware.use(mockReq, mockRes as Response, mockNext);
+    middleware.use(mockReq as any, mockRes as any, mockNext);
     expect(mockNext).toHaveBeenCalledTimes(1);
   });
 });

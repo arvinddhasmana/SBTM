@@ -28,8 +28,8 @@ services:
 
   api-gateway:
     build:
-      context: ./services/api-gateway
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: services/api-gateway/Dockerfile
     ports:
       - '3001:3001'
     environment:
@@ -80,8 +80,8 @@ services:
 
   emergency-alerts:
     build:
-      context: ./services/emergency-alerts
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: services/emergency-alerts/Dockerfile
     ports:
       - '3003:3003'
     environment:
@@ -102,8 +102,8 @@ services:
 
   student-presence:
     build:
-      context: ./services/student-presence
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: services/student-presence/Dockerfile
     ports:
       - '3004:3004'
     environment:
@@ -125,8 +125,8 @@ services:
 
   video-service:
     build:
-      context: ./services/video-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: services/video-service/Dockerfile
     ports:
       - '3005:3005'
     environment:
@@ -144,8 +144,8 @@ services:
 
   student-management:
     build:
-      context: ./services/student-management
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: services/student-management/Dockerfile
     ports:
       - '3006:3006'
     environment:
@@ -174,8 +174,8 @@ services:
 
   compliance-management:
     build:
-      context: ./services/compliance-management
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: services/compliance-management/Dockerfile
     ports:
       - '3007:3007'
     environment:

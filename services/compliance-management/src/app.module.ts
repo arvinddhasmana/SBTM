@@ -9,6 +9,7 @@ import { ComplianceModule } from './modules/compliance/compliance.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { RetentionModule } from './modules/retention/data-retention.module';
 import { DsarModule } from './modules/dsar/dsar.module';
+import { AppController } from './app.controller';
 
 @Module({
   imports: [
@@ -49,5 +50,6 @@ import { DsarModule } from './modules/dsar/dsar.module';
     RetentionModule,
     DsarModule,
   ],
+  controllers: [AppController],
 })
 export class AppModule {}

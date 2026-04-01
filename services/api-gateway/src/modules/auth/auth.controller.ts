@@ -43,7 +43,7 @@ export class AuthController {
       path: '/',
     });
 
-    return { user: result.user };
+    return { accessToken: result.accessToken, user: result.user };
   }
 
   @Post('logout')

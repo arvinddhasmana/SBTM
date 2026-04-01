@@ -1,12 +1,15 @@
 import { Injectable, NestInterceptor, ExecutionContext, CallHandler, Logger } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { CORRELATION_ID_HEADER } from '../middleware/correlation-id.middleware';
 
-interface AuthenticatedRequest extends Request {
+type RequestWithUser = {
+  method: string;
+  originalUrl: string;
+  headers: Record<string, string | string[] | undefined>;
   user?: { id?: string; userId?: string; schoolId?: string; role?: string };
-}
+};
 
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {
@@ -19,7 +22,7 @@ export class LoggingInterceptor implements NestInterceptor {
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     const ctx = context.switchToHttp();
-    const request = ctx.getRequest<AuthenticatedRequest>();
+    const request = ctx.getRequest<RequestWithUser>();
     const response = ctx.getResponse<Response>();
     const startTime = Date.now();
 
