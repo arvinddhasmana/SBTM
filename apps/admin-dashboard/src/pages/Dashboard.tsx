@@ -115,7 +115,12 @@ const Dashboard: React.FC = () => {
     <div className="relative h-full w-full overflow-hidden bg-slate-950">
       {/* Background Map Layer */}
       <div className="absolute inset-0 z-0">
-        <LiveMap locations={locations} selectedRoute={selectedRoute} className="w-full h-full" />
+        <LiveMap
+          locations={locations}
+          selectedRoute={selectedRoute}
+          onReset={() => setSelectedRoute(null)}
+          className="w-full h-full"
+        />
       </div>
 
       {/* Tactical Overlays */}

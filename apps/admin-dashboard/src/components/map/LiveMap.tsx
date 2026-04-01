@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
-import { Maximize2, Minimize2 } from 'lucide-react';
+import { Maximize2, Minimize2, RotateCcw, Users } from 'lucide-react';
 import type { LiveLocation, Route } from '../../types';
 import { getStatusColorClass } from '../../utils/formatters';
 
@@ -20,6 +20,7 @@ interface LiveMapProps {
   selectedRoute?: Route | null;
   plannedRoute?: [number, number][]; // Array of [lat, lng]
   onMarkerClick?: (location: LiveLocation) => void;
+  onReset?: () => void;
   className?: string;
 }
 
@@ -28,16 +29,31 @@ const LiveMap: React.FC<LiveMapProps> = ({
   selectedRoute,
   plannedRoute,
   onMarkerClick,
+  onReset,
   className = '',
 }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.Marker[]>([]);
   const routePolylineRef = useRef<L.Polyline | null>(null);
-  const stopMarkersRef = useRef<L.CircleMarker[]>([]);
+  const stopMarkersRef = useRef<L.Marker[]>([]);
   const lastSelectedRouteIdRef = useRef<string | undefined>(selectedRoute?.id);
   const initialFitDoneRef = useRef(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Escape Key Listener
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && onReset) {
+        onReset();
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.setView([45.392, -75.713], 12);
+        }
+      }
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [onReset]);
 
   useEffect(() => {
     if (!mapRef.current) return;
@@ -111,9 +127,10 @@ const LiveMap: React.FC<LiveMapProps> = ({
     // Render Planned/Selected Route Path
     const pathData = selectedRoute?.path || plannedRoute;
     if (pathData && pathData.length > 0) {
+      const color = selectedRoute?.direction === 'AM' ? '#3b82f6' : '#f59e0b';
       routePolylineRef.current = L.polyline(pathData as L.LatLngExpression[], {
-        color: '#3b82f6',
-        weight: 4,
+        color: color,
+        weight: 6,
         opacity: 0.8,
         lineJoin: 'round',
       }).addTo(mapInstanceRef.current);
@@ -122,33 +139,60 @@ const LiveMap: React.FC<LiveMapProps> = ({
     // Render Stops for Selected Route
     if (selectedRoute?.stops) {
       selectedRoute.stops.forEach((stop, idx) => {
-        const pos = parseWktPoint(stop.location);
-        if (!pos[0] && !pos[1]) return;
+        let pos: [number, number] = [0, 0];
+
+        if (stop.location) {
+          pos = parseWktPoint(stop.location);
+        } else if ((stop as any).lat !== undefined && (stop as any).lng !== undefined) {
+          pos = [Number((stop as any).lat), Number((stop as any).lng)];
+        }
+
+        if (pos[0] === 0 && pos[1] === 0) return;
 
         const seq = stop.sequence ?? idx + 1;
+        const color = selectedRoute?.direction === 'AM' ? '#3b82f6' : '#f59e0b';
         const stopIcon = L.divIcon({
           className: '',
           html: `<div style="
-                        width:22px;height:22px;
-                        background:#3b82f6;
+                        width:28px;height:28px;
+                        background:${color};
                         border:2px solid #fff;
                         border-radius:50%;
                         display:flex;align-items:center;justify-content:center;
-                        font-size:9px;font-weight:900;color:#fff;
-                        box-shadow:0 2px 6px rgba(0,0,0,0.45);
-                        font-family:monospace;
-                    ">${seq}</div>`,
-          iconSize: [22, 22],
-          iconAnchor: [11, 11],
+                        box-shadow:0 0 15px ${color}44, 0 2px 8px rgba(0,0,0,0.4);
+                        position:relative;
+                    ">
+                        <!-- Children Stop Icon (Marked with more detail) -->
+                        <div style="display:flex; flex-direction:column; align-items:center; transform:translateY(-1px);">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="white">
+                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                          </svg>
+                        </div>
+                        <div style="
+                            position:absolute; bottom:-4px; right:-4px;
+                            width:16px;height:16px; background:#fff; border:2px solid ${color};
+                            border-radius:50%; display:flex; align-items:center; justify-content:center;
+                            font-size:8px; font-weight:900; color:${color};
+                            box-shadow:0 2px 4px rgba(0,0,0,0.2);
+                        ">${seq}</div>
+                    </div>`,
+          iconSize: [28, 28],
+          iconAnchor: [14, 14],
         });
 
-        const stopMarker = L.marker(pos, { icon: stopIcon, zIndexOffset: 500 })
-          .addTo(mapInstanceRef.current!)
-          .bindPopup(
-            `<strong style="color:#1e293b">Stop ${seq}</strong><br/><span style="color:#475569">${stop.address}</span>`,
-          );
+        const stopMarker = L.marker(pos, { icon: stopIcon, zIndexOffset: 500 }).addTo(
+          mapInstanceRef.current!,
+        ).bindPopup(`
+            <div style="min-width: 140px; font-family: sans-serif;">
+              <strong style="color:#1e293b; display:block; border-bottom:1px solid #e2e8f0; padding-bottom:4px; margin-bottom:4px;">Stop ${seq}: ${stop.address}</strong>
+              <div style="font-size:11px; display:flex; flex-direction:column; gap:2px;">
+                <span style="color:#64748b">Route ID: <span style="color:#1e293b; font-weight:600">${selectedRoute.id}</span></span>
+                <span style="color:#64748b">Vehicle ID: <span style="color:#1e293b; font-weight:600">${selectedRoute.vehicleId || 'N/A'}</span></span>
+              </div>
+            </div>
+          `);
 
-        stopMarkersRef.current.push(stopMarker as unknown as L.CircleMarker);
+        stopMarkersRef.current.push(stopMarker);
       });
     }
 
@@ -257,6 +301,23 @@ const LiveMap: React.FC<LiveMapProps> = ({
           height: isFullscreen ? '100vh' : '100%',
         }}
       />
+
+      {/* Map Reset Button - Aligned with Tactical Alert Y-Axis (80px) */}
+      {onReset && (
+        <button
+          onClick={() => {
+            onReset();
+            if (mapInstanceRef.current) {
+              mapInstanceRef.current.setView([45.392, -75.713], 12);
+            }
+          }}
+          className="absolute top-[80px] left-1/2 -translate-x-1/2 z-[5000] px-4 py-2 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 rounded-lg text-white shadow-lg transition-all flex items-center gap-2 group pointer-events-auto"
+          title="Reset Map (Esc)"
+        >
+          <RotateCcw size={16} className="group-hover:rotate-[-45deg] transition-transform" />
+          <span className="text-xs font-black uppercase tracking-widest pt-0.5">Map Reset</span>
+        </button>
+      )}
 
       {/* Fullscreen Toggle */}
       <button

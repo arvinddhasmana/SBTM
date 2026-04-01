@@ -74,6 +74,7 @@ const Routes: React.FC = () => {
                 plannedRoute={
                   selectedRoute?.polyline ? decodePolyline(selectedRoute.polyline) : undefined
                 }
+                onReset={() => setSelectedRoute(null)}
                 onMarkerClick={(loc) => {
                   const route = routes.find((r) => r.id === loc.routeId);
                   if (route) setSelectedRoute(route);
