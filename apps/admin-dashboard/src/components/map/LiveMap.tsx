@@ -8,119 +8,127 @@ import { getStatusColorClass } from '../../utils/formatters';
 const LIVE_DRIVER_ROUTE_IDS = ['ROUTE-R01', 'ROUTE-R02', 'ROUTE-R11', 'ROUTE-R12'];
 
 const parseWktPoint = (wkt: string): [number, number] => {
-    const coords = wkt.match(/POINT\(([-\d.]+) ([-\d.]+)\)/);
-    if (coords) {
-        return [parseFloat(coords[2]), parseFloat(coords[1])]; // [lat, lng]
-    }
-    return [0, 0];
+  const coords = wkt.match(/POINT\(([-\d.]+) ([-\d.]+)\)/);
+  if (coords) {
+    return [parseFloat(coords[2]), parseFloat(coords[1])]; // [lat, lng]
+  }
+  return [0, 0];
 };
 
 interface LiveMapProps {
-    locations: LiveLocation[];
-    selectedRoute?: Route | null;
-    plannedRoute?: [number, number][]; // Array of [lat, lng]
-    onMarkerClick?: (location: LiveLocation) => void;
-    className?: string;
+  locations: LiveLocation[];
+  selectedRoute?: Route | null;
+  plannedRoute?: [number, number][]; // Array of [lat, lng]
+  onMarkerClick?: (location: LiveLocation) => void;
+  className?: string;
 }
 
-const LiveMap: React.FC<LiveMapProps> = ({ locations, selectedRoute, plannedRoute, onMarkerClick, className = '' }) => {
-    const mapRef = useRef<HTMLDivElement>(null);
-    const mapInstanceRef = useRef<L.Map | null>(null);
-    const markersRef = useRef<L.Marker[]>([]);
-    const routePolylineRef = useRef<L.Polyline | null>(null);
-    const stopMarkersRef = useRef<L.CircleMarker[]>([]);
-    const [isFullscreen, setIsFullscreen] = useState(false);
+const LiveMap: React.FC<LiveMapProps> = ({
+  locations,
+  selectedRoute,
+  plannedRoute,
+  onMarkerClick,
+  className = '',
+}) => {
+  const mapRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<L.Map | null>(null);
+  const markersRef = useRef<L.Marker[]>([]);
+  const routePolylineRef = useRef<L.Polyline | null>(null);
+  const stopMarkersRef = useRef<L.CircleMarker[]>([]);
+  const lastSelectedRouteIdRef = useRef<string | undefined>(selectedRoute?.id);
+  const initialFitDoneRef = useRef(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
-    useEffect(() => {
-        if (!mapRef.current) return;
+  useEffect(() => {
+    if (!mapRef.current) return;
 
-        const observer = new ResizeObserver(() => {
-            if (mapInstanceRef.current) {
-                mapInstanceRef.current.invalidateSize();
-            }
-        });
+    const observer = new ResizeObserver(() => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.invalidateSize();
+      }
+    });
 
-        observer.observe(mapRef.current);
+    observer.observe(mapRef.current);
 
-        // Periodically check for the first 5 seconds to handle any late layout shifts
-        const interval = setInterval(() => {
-            if (mapInstanceRef.current) {
-                mapInstanceRef.current.invalidateSize();
-            }
-        }, 1000);
+    // Periodically check for the first 5 seconds to handle any late layout shifts
+    const interval = setInterval(() => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.invalidateSize();
+      }
+    }, 1000);
 
-        const timeout = setTimeout(() => clearInterval(interval), 5000);
+    const timeout = setTimeout(() => clearInterval(interval), 5000);
 
-        return () => {
-            observer.disconnect();
-            clearInterval(interval);
-            clearTimeout(timeout);
-        };
-    }, []);
+    return () => {
+      observer.disconnect();
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
+  }, []);
 
-    useEffect(() => {
-        if (mapInstanceRef.current) {
-            setTimeout(() => {
-                mapInstanceRef.current?.invalidateSize();
-            }, 300);
-        }
-    }, [isFullscreen]);
+  useEffect(() => {
+    if (mapInstanceRef.current) {
+      setTimeout(() => {
+        mapInstanceRef.current?.invalidateSize();
+      }, 300);
+    }
+  }, [isFullscreen]);
 
-    useEffect(() => {
-        if (!mapRef.current || mapInstanceRef.current) return;
+  useEffect(() => {
+    if (!mapRef.current || mapInstanceRef.current) return;
 
-        // Initialize map
-        mapInstanceRef.current = L.map(mapRef.current).setView([45.3920, -75.7130], 12);
+    // Initialize map
+    mapInstanceRef.current = L.map(mapRef.current).setView([45.392, -75.713], 12);
 
-        // Add tile layer
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors',
-        }).addTo(mapInstanceRef.current);
+    // Add tile layer
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors',
+    }).addTo(mapInstanceRef.current);
 
-        return () => {
-            if (mapInstanceRef.current) {
-                mapInstanceRef.current.remove();
-                mapInstanceRef.current = null;
-            }
-        };
-    }, []);
+    return () => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
+    };
+  }, []);
 
-    useEffect(() => {
-        if (!mapInstanceRef.current) return;
+  useEffect(() => {
+    if (!mapInstanceRef.current) return;
 
-        // Clear existing markers and route data
-        markersRef.current.forEach(marker => marker.remove());
-        markersRef.current = [];
+    // Clear existing markers and route data
+    markersRef.current.forEach((marker) => marker.remove());
+    markersRef.current = [];
 
-        stopMarkersRef.current.forEach(marker => marker.remove());
-        stopMarkersRef.current = [];
+    stopMarkersRef.current.forEach((marker) => marker.remove());
+    stopMarkersRef.current = [];
 
-        if (routePolylineRef.current) {
-            routePolylineRef.current.remove();
-            routePolylineRef.current = null;
-        }
+    if (routePolylineRef.current) {
+      routePolylineRef.current.remove();
+      routePolylineRef.current = null;
+    }
 
-        // Render Planned/Selected Route Path
-        const pathData = selectedRoute?.path || plannedRoute;
-        if (pathData && pathData.length > 0) {
-            routePolylineRef.current = L.polyline(pathData as L.LatLngExpression[], {
-                color: '#3b82f6',
-                weight: 4,
-                opacity: 0.8,
-                lineJoin: 'round',
-            }).addTo(mapInstanceRef.current);
-        }
+    // Render Planned/Selected Route Path
+    const pathData = selectedRoute?.path || plannedRoute;
+    if (pathData && pathData.length > 0) {
+      routePolylineRef.current = L.polyline(pathData as L.LatLngExpression[], {
+        color: '#3b82f6',
+        weight: 4,
+        opacity: 0.8,
+        lineJoin: 'round',
+      }).addTo(mapInstanceRef.current);
+    }
 
-        // Render Stops for Selected Route
-        if (selectedRoute?.stops) {
-            selectedRoute.stops.forEach((stop, idx) => {
-                const pos = parseWktPoint(stop.location);
-                if (!pos[0] && !pos[1]) return;
+    // Render Stops for Selected Route
+    if (selectedRoute?.stops) {
+      selectedRoute.stops.forEach((stop, idx) => {
+        const pos = parseWktPoint(stop.location);
+        if (!pos[0] && !pos[1]) return;
 
-                const seq = stop.sequence ?? idx + 1;
-                const stopIcon = L.divIcon({
-                    className: '',
-                    html: `<div style="
+        const seq = stop.sequence ?? idx + 1;
+        const stopIcon = L.divIcon({
+          className: '',
+          html: `<div style="
                         width:22px;height:22px;
                         background:#3b82f6;
                         border:2px solid #fff;
@@ -130,37 +138,39 @@ const LiveMap: React.FC<LiveMapProps> = ({ locations, selectedRoute, plannedRout
                         box-shadow:0 2px 6px rgba(0,0,0,0.45);
                         font-family:monospace;
                     ">${seq}</div>`,
-                    iconSize: [22, 22],
-                    iconAnchor: [11, 11],
-                });
+          iconSize: [22, 22],
+          iconAnchor: [11, 11],
+        });
 
-                const stopMarker = L.marker(pos, { icon: stopIcon, zIndexOffset: 500 })
-                    .addTo(mapInstanceRef.current!)
-                    .bindPopup(`<strong style="color:#1e293b">Stop ${seq}</strong><br/><span style="color:#475569">${stop.address}</span>`);
+        const stopMarker = L.marker(pos, { icon: stopIcon, zIndexOffset: 500 })
+          .addTo(mapInstanceRef.current!)
+          .bindPopup(
+            `<strong style="color:#1e293b">Stop ${seq}</strong><br/><span style="color:#475569">${stop.address}</span>`,
+          );
 
-                stopMarkersRef.current.push(stopMarker as unknown as L.CircleMarker);
-            });
-        }
+        stopMarkersRef.current.push(stopMarker as unknown as L.CircleMarker);
+      });
+    }
 
-        // Add new markers
-        locations.forEach(location => {
-            const statusClass = getStatusColorClass(location.status);
-            const colorMap: Record<string, string> = {
-                'bg-green-500': '#22c55e',
-                'bg-yellow-500': '#eab308',
-                'bg-red-500': '#ef4444',
-                'bg-gray-500': '#6b7280',
-            };
-            const color = colorMap[statusClass] || '#6b7280';
-            const isLive = LIVE_DRIVER_ROUTE_IDS.includes(location.routeId);
-            const isSelected = selectedRoute?.id === location.routeId;
-            const borderColor = isSelected ? '#3b82f6' : (isLive ? '#f59e0b' : 'white');
-            const borderWidth = isSelected ? '4px' : (isLive ? '3px' : '2px');
-            const scale = isSelected ? 1.2 : 1.0;
+    // Add new markers
+    locations.forEach((location) => {
+      const statusClass = getStatusColorClass(location.status);
+      const colorMap: Record<string, string> = {
+        'bg-green-500': '#22c55e',
+        'bg-yellow-500': '#eab308',
+        'bg-red-500': '#ef4444',
+        'bg-gray-500': '#6b7280',
+      };
+      const color = colorMap[statusClass] || '#6b7280';
+      const isLive = LIVE_DRIVER_ROUTE_IDS.includes(location.routeId);
+      const isSelected = selectedRoute?.id === location.routeId;
+      const borderColor = isSelected ? '#3b82f6' : isLive ? '#f59e0b' : 'white';
+      const borderWidth = isSelected ? '4px' : isLive ? '3px' : '2px';
+      const scale = isSelected ? 1.2 : 1.0;
 
-            const icon = L.divIcon({
-                className: 'custom-bus-marker',
-                html: `
+      const icon = L.divIcon({
+        className: 'custom-bus-marker',
+        html: `
           <div style="
             width: ${32 * scale}px;
             height: ${32 * scale}px;
@@ -179,18 +189,20 @@ const LiveMap: React.FC<LiveMapProps> = ({ locations, selectedRoute, plannedRout
             </svg>
           </div>
         `,
-                iconSize: [32 * scale, 32 * scale],
-                iconAnchor: [16 * scale, 16 * scale],
-            });
+        iconSize: [32 * scale, 32 * scale],
+        iconAnchor: [16 * scale, 16 * scale],
+      });
 
-            const marker = L.marker([location.position.lat, location.position.lng], { icon, zIndexOffset: isSelected ? 1000 : 0 })
-                .addTo(mapInstanceRef.current!);
+      const marker = L.marker([location.position.lat, location.position.lng], {
+        icon,
+        zIndexOffset: isSelected ? 1000 : 0,
+      }).addTo(mapInstanceRef.current!);
 
-            if (onMarkerClick) {
-                marker.on('click', () => onMarkerClick(location));
-            }
+      if (onMarkerClick) {
+        marker.on('click', () => onMarkerClick(location));
+      }
 
-            marker.bindPopup(`
+      marker.bindPopup(`
         <div style="min-width: 150px;">
           <strong>Vehicle: ${location.vehicleId}</strong>${isLive ? ' <span style="background:#f59e0b;color:white;padding:1px 6px;border-radius:4px;font-size:11px;">LIVE</span>' : ''}<br/>
           <span>Route: ${location.routeId}</span><br/>
@@ -198,57 +210,66 @@ const LiveMap: React.FC<LiveMapProps> = ({ locations, selectedRoute, plannedRout
         </div>
       `);
 
-            markersRef.current.push(marker);
-        });
+      markersRef.current.push(marker);
+    });
 
-        // Fit bounds
-        const bounds = L.latLngBounds([]);
-        let hasPoints = false;
+    // Calculate bounds for potential fitting
+    const bounds = L.latLngBounds([]);
+    let hasPoints = false;
 
-        const allPoints = selectedRoute?.path || plannedRoute || [];
-        allPoints.forEach(p => {
-            bounds.extend(p as L.LatLngExpression);
-            hasPoints = true;
-        });
+    const allPoints = selectedRoute?.path || plannedRoute || [];
+    allPoints.forEach((p) => {
+      bounds.extend(p as L.LatLngExpression);
+      hasPoints = true;
+    });
 
-        locations.forEach(l => {
-            bounds.extend([l.position.lat, l.position.lng] as L.LatLngExpression);
-            hasPoints = true;
-        });
+    locations.forEach((l) => {
+      bounds.extend([l.position.lat, l.position.lng] as L.LatLngExpression);
+      hasPoints = true;
+    });
 
-        if (hasPoints && mapInstanceRef.current) {
-            mapInstanceRef.current.fitBounds(bounds, { padding: [100, 100], maxZoom: 15 });
-        }
-    }, [locations, selectedRoute, plannedRoute, onMarkerClick]);
+    // Fit bounds only on initial load or when the selected route changes
+    const routeChanged = lastSelectedRouteIdRef.current !== selectedRoute?.id;
+    const initialDataLoaded = !initialFitDoneRef.current && locations.length > 0;
 
-    return (
-        <div className={`w-full h-full transition-all duration-300 ease-in-out ${isFullscreen
-            ? 'fixed inset-0 z-[9999] p-0 rounded-none'
-            : 'relative'
-            }`}>
-            <div
-                ref={mapRef}
-                data-testid="live-map"
-                className={`w-full h-full bg-slate-900 overflow-hidden ${isFullscreen ? 'rounded-none' : 'rounded-xl'
-                    } ${className}`}
-                style={{
-                    minHeight: isFullscreen ? '100vh' : '100%',
-                    height: isFullscreen ? '100vh' : '100%'
-                }}
-            />
+    if (hasPoints && mapInstanceRef.current && (routeChanged || initialDataLoaded)) {
+      mapInstanceRef.current.fitBounds(bounds, { padding: [100, 100], maxZoom: 15 });
+      initialFitDoneRef.current = true;
+    }
 
-            {/* Fullscreen Toggle */}
-            <button
-                onClick={() => setIsFullscreen(!isFullscreen)}
-                className="absolute top-4 right-4 z-[1000] p-2 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 rounded-lg text-white shadow-lg transition-all"
-                title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
-            >
-                {isFullscreen ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
-            </button>
+    lastSelectedRouteIdRef.current = selectedRoute?.id;
+  }, [locations, selectedRoute, plannedRoute, onMarkerClick]);
 
-            {/* Legend is now managed by the Dashboard layout for better alignment */}
-        </div>
-    );
+  return (
+    <div
+      className={`w-full h-full transition-all duration-300 ease-in-out ${
+        isFullscreen ? 'fixed inset-0 z-[9999] p-0 rounded-none' : 'relative'
+      }`}
+    >
+      <div
+        ref={mapRef}
+        data-testid="live-map"
+        className={`w-full h-full bg-slate-900 overflow-hidden ${
+          isFullscreen ? 'rounded-none' : 'rounded-xl'
+        } ${className}`}
+        style={{
+          minHeight: isFullscreen ? '100vh' : '100%',
+          height: isFullscreen ? '100vh' : '100%',
+        }}
+      />
+
+      {/* Fullscreen Toggle */}
+      <button
+        onClick={() => setIsFullscreen(!isFullscreen)}
+        className="absolute top-4 right-4 z-[1000] p-2 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 rounded-lg text-white shadow-lg transition-all"
+        title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+      >
+        {isFullscreen ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
+      </button>
+
+      {/* Legend is now managed by the Dashboard layout for better alignment */}
+    </div>
+  );
 };
 
 export default LiveMap;
