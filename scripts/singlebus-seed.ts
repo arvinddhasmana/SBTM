@@ -102,14 +102,9 @@ async function main() {
     amStops[i % NUM_STOPS].students.push(studentIds[i]);
   }
 
-  console.log('Generating PM Route...');
-  const pmWaypoints = [
-    schoolPos,
-    ...amStops.map((s) => [s.lat, s.lng] as [number, number]).reverse(),
-    depotPos,
-  ];
-  const pmBase = await getOsrmRoute(pmWaypoints);
-  if (!pmBase) return;
+  console.log('Generating PM Route (Literal Reversal)...');
+  // PM path is a literal reverse of the AM path to ensure "exactly same" alignment
+  const pmDecoded = amDecoded.slice().reverse();
 
   const config = {
     school: {
@@ -134,12 +129,20 @@ async function main() {
     },
     pm: {
       routeId: 'ROUTE-CUSTOM-PM',
-      polyline: pmBase.polyline,
-      decoded: pmBase.decoded,
+      // We use the same polyline as AM because it represents the same road segments
+      polyline: amBase.polyline,
+      decoded: pmDecoded,
       stops: amStops
         .slice()
         .reverse()
-        .map((s, i) => ({ ...s, label: `PM Stop ${i + 1}` })),
+        .map((s, i) => ({
+          lat: s.lat,
+          lng: s.lng,
+          label: `PM Stop ${i + 1}`,
+          students: s.students,
+          pauseSeconds: 5,
+          speedKph: 0,
+        })),
       start: schoolPos,
       end: depotPos,
     },

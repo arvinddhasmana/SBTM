@@ -34,7 +34,7 @@ const LiveMap: React.FC<LiveMapProps> = ({
 }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
-  const markersRef = useRef<L.Marker[]>([]);
+  const markersRef = useRef<Map<string, L.Marker>>(new Map());
   const routePolylineRef = useRef<L.Polyline | null>(null);
   const stopMarkersRef = useRef<L.Marker[]>([]);
   const lastSelectedRouteIdRef = useRef<string | undefined>(selectedRoute?.id);
@@ -103,6 +103,8 @@ const LiveMap: React.FC<LiveMapProps> = ({
 
     return () => {
       if (mapInstanceRef.current) {
+        markersRef.current.forEach((m) => m.remove());
+        markersRef.current.clear();
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
       }
@@ -112,10 +114,7 @@ const LiveMap: React.FC<LiveMapProps> = ({
   useEffect(() => {
     if (!mapInstanceRef.current) return;
 
-    // Clear existing markers and route data
-    markersRef.current.forEach((marker) => marker.remove());
-    markersRef.current = [];
-
+    // 1. Clear existing stop markers and route data
     stopMarkersRef.current.forEach((marker) => marker.remove());
     stopMarkersRef.current = [];
 
@@ -124,7 +123,7 @@ const LiveMap: React.FC<LiveMapProps> = ({
       routePolylineRef.current = null;
     }
 
-    // Render Planned/Selected Route Path
+    // 2. Render Planned/Selected Route Path
     const pathData = selectedRoute?.path || plannedRoute;
     if (pathData && pathData.length > 0) {
       const color = selectedRoute?.direction === 'AM' ? '#3b82f6' : '#f59e0b';
@@ -136,7 +135,7 @@ const LiveMap: React.FC<LiveMapProps> = ({
       }).addTo(mapInstanceRef.current);
     }
 
-    // Render Stops for Selected Route
+    // 2b. Render Stops for Selected Route
     if (selectedRoute?.stops) {
       selectedRoute.stops.forEach((stop, idx) => {
         let pos: [number, number] = [0, 0];
@@ -196,19 +195,29 @@ const LiveMap: React.FC<LiveMapProps> = ({
       });
     }
 
-    // Deduplicate locations by vehicleId to prevent duplicate markers
+    // 3. Render Vehicle Markers (with synchronization to prevent "jumping")
     const deduplicatedLocations = new Map<string, LiveLocation>();
     locations.forEach((l) => {
       const existing = deduplicatedLocations.get(l.vehicleId);
-      // Prioritize the location belonging to the selected route if there's any conflict,
-      // otherwise keep the most recent one (assuming order in array is chronological/relevant)
       if (!existing || selectedRoute?.id === l.routeId) {
         deduplicatedLocations.set(l.vehicleId, l);
       }
     });
 
-    // Add new markers
-    Array.from(deduplicatedLocations.values()).forEach((location) => {
+    const activeVehicleIds = new Set(deduplicatedLocations.keys());
+
+    // Remove markers for vehicles no longer present
+    const markersMap = markersRef.current;
+
+    markersMap.forEach((marker: L.Marker, vId: string) => {
+      if (!activeVehicleIds.has(vId)) {
+        marker.remove();
+        markersMap.delete(vId);
+      }
+    });
+
+    // Add or Update markers
+    deduplicatedLocations.forEach((location) => {
       const statusClass = getStatusColorClass(location.status);
       const colorMap: Record<string, string> = {
         'bg-green-500': '#22c55e',
@@ -223,38 +232,50 @@ const LiveMap: React.FC<LiveMapProps> = ({
       const borderWidth = isSelected ? '4px' : isLive ? '3px' : '2px';
       const scale = isSelected ? 1.2 : 1.0;
 
+      const iconHtml = `
+        <div style="
+          width: ${32 * scale}px;
+          height: ${32 * scale}px;
+          background: ${color};
+          border-radius: 50%;
+          border: ${borderWidth} solid ${borderColor};
+          box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          ${isSelected ? 'transform: scale(1.1);' : ''}
+        ">
+          <svg width="${16 * scale}" height="${16 * scale}" viewBox="0 0 24 24" fill="white">
+            <path d="M4 16c0 .88.39 1.67 1 2.22V20c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h8v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1.78c.61-.55 1-1.34 1-2.22V6c0-3.5-3.58-4-8-4s-8 .5-8 4v10zm3.5 1c-.83 0-1.5-.67-1.5-1.5S6.67 14 7.5 14s1.5.67 1.5 1.5S8.33 17 7.5 17zm9 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm1.5-6H6V6h12v5z"/>
+          </svg>
+        </div>
+      `;
+
       const icon = L.divIcon({
         className: 'custom-bus-marker',
-        html: `
-          <div style="
-            width: ${32 * scale}px;
-            height: ${32 * scale}px;
-            background: ${color};
-            border-radius: 50%;
-            border: ${borderWidth} solid ${borderColor};
-            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            ${isSelected ? 'transform: scale(1.1);' : ''}
-          ">
-            <svg width="${16 * scale}" height="${16 * scale}" viewBox="0 0 24 24" fill="white">
-              <path d="M4 16c0 .88.39 1.67 1 2.22V20c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h8v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1.78c.61-.55 1-1.34 1-2.22V6c0-3.5-3.58-4-8-4s-8 .5-8 4v10zm3.5 1c-.83 0-1.5-.67-1.5-1.5S6.67 14 7.5 14s1.5.67 1.5 1.5S8.33 17 7.5 17zm9 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm1.5-6H6V6h12v5z"/>
-            </svg>
-          </div>
-        `,
+        html: iconHtml,
         iconSize: [32 * scale, 32 * scale],
         iconAnchor: [16 * scale, 16 * scale],
       });
 
-      const marker = L.marker([location.position.lat, location.position.lng], {
-        icon,
-        zIndexOffset: isSelected ? 1000 : 0,
-      }).addTo(mapInstanceRef.current!);
+      let marker = markersMap.get(location.vehicleId);
+      const pos: [number, number] = [location.position.lat, location.position.lng];
 
-      if (onMarkerClick) {
-        marker.on('click', () => onMarkerClick(location));
+      if (marker) {
+        marker.setLatLng(pos);
+        marker.setIcon(icon);
+        marker.setZIndexOffset(isSelected ? 1000 : 0);
+      } else {
+        marker = L.marker(pos, {
+          icon,
+          zIndexOffset: isSelected ? 1000 : 0,
+        }).addTo(mapInstanceRef.current!);
+
+        if (onMarkerClick) {
+          marker.on('click', () => onMarkerClick(location));
+        }
+        markersMap.set(location.vehicleId, marker);
       }
 
       marker.bindPopup(`
@@ -264,8 +285,6 @@ const LiveMap: React.FC<LiveMapProps> = ({
           <span>ETA: ${location.etaToNextStopMinutes} min</span>
         </div>
       `);
-
-      markersRef.current.push(marker);
     });
 
     // Calculate bounds for potential fitting

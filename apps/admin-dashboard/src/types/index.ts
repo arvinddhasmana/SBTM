@@ -1,5 +1,12 @@
 // Alert Types
-export type AlertEventType = 'PANIC_BUTTON' | 'ROUTE_DEVIATION' | 'INCIDENT' | 'OTHER';
+export type AlertEventType =
+  | 'PANIC_BUTTON'
+  | 'ROUTE_DEVIATION'
+  | 'INCIDENT'
+  | 'LATE_ARRIVAL'
+  | 'ROUTE_DIVERSION'
+  | 'PANIC_ALERT'
+  | 'OTHER';
 export type AlertStatus = 'ACTIVE' | 'RESOLVED';
 
 export interface Alert {

@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-const API_BASE = 'http://localhost:3001/api/v1';
+const API_BASE = 'http://127.0.0.1:3001/api/v1';
 
 // Global state for independent GPS broadcasting
 let currentPosition: [number, number] | null = null;
@@ -19,11 +19,13 @@ async function apiPost(url: string, body: any, token?: string) {
       body: JSON.stringify(body),
     });
     if (!response.ok) {
-      // Silence noisy errors during stop/pause for a cleaner console
+      console.error(`[API ERROR] ${url} - Status: ${response.status} ${response.statusText}`);
+      console.error(`  > Body: ${JSON.stringify(body)}`);
       return false;
     }
     return true;
-  } catch (e) {
+  } catch (e: any) {
+    console.error(`[API FETCH ERROR] ${url} - Error: ${e.message}`);
     return false;
   }
 }
@@ -66,6 +68,7 @@ async function runLap(
   const { id: schoolId, name: schoolName } = config.school;
   const allStudents = config.students;
   const visitedStops = new Set<string>();
+  const sentAlerts = new Set<string>();
 
   currentRouteId = routeId;
   currentVehicleId = vehicleId;
@@ -161,23 +164,67 @@ async function runLap(
       }
     }
 
-    // Trigger Late Arrival alert periodically for PM
-    if (routeKey === 'pm' && i === Math.floor((decoded.length * 2) / 3)) {
-      console.log('[ALERT] Dispatching LATE_ARRIVAL notification');
-      await apiPost(
-        `${API_BASE}/emergency-events`,
-        {
-          schoolId,
-          vehicleId,
-          routeId,
-          driverId,
-          timestamp,
-          lat,
-          lng,
-          eventType: 'LATE_ARRIVAL',
-        },
-        driverToken,
-      );
+    // Trigger Tactical Alerts throughout the journey for demonstration
+    if (routeKey === 'pm') {
+      // 1. Late Arrival Alert early in the route (20%)
+      if (i === Math.floor(decoded.length * 0.2) && !sentAlerts.has('LATE_ARRIVAL')) {
+        sentAlerts.add('LATE_ARRIVAL');
+        console.log('[ALERT] Dispatching LATE_ARRIVAL notification');
+        await apiPost(
+          `${API_BASE}/emergency-events`,
+          {
+            schoolId,
+            vehicleId,
+            routeId,
+            driverId,
+            timestamp,
+            lat,
+            lng,
+            eventType: 'LATE_ARRIVAL',
+          },
+          driverToken,
+        );
+      }
+
+      // 2. Route Diversion Alert in the middle (40%)
+      if (i === Math.floor(decoded.length * 0.4) && !sentAlerts.has('ROUTE_DEVIATION')) {
+        sentAlerts.add('ROUTE_DEVIATION');
+        console.log('[ALERT] Dispatching ROUTE_DEVIATION notification');
+        await apiPost(
+          `${API_BASE}/emergency-events`,
+          {
+            schoolId,
+            vehicleId,
+            routeId,
+            driverId,
+            timestamp,
+            lat,
+            lng,
+            eventType: 'ROUTE_DEVIATION',
+          },
+          driverToken,
+        );
+      }
+
+      // 3. Panic Alert late in the route (60%)
+      if (i === Math.floor(decoded.length * 0.6) && !sentAlerts.has('PANIC_BUTTON')) {
+        sentAlerts.add('PANIC_BUTTON');
+        console.log('[ALERT] Dispatching PANIC_BUTTON notification');
+        await apiPost(
+          `${API_BASE}/emergency-events`,
+          {
+            schoolId,
+            vehicleId,
+            routeId,
+            driverId,
+            timestamp,
+            lat,
+            lng,
+            eventType: 'PANIC_BUTTON',
+          },
+          driverToken,
+        );
+      }
     }
 
     // Control movement speed between polyline points
@@ -198,7 +245,15 @@ async function main() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email: config.bus.driverEmail, password: 'Admin123!' }),
   });
+  if (!loginRes.ok) {
+    console.error(`[AUTH ERROR] Failed to login driver: ${config.bus.driverEmail}`);
+    process.exit(1);
+  }
   const { accessToken: driverToken } = (await loginRes.json()) as any;
+  if (!driverToken) {
+    console.error(`[AUTH ERROR] No access token returned for driver.`);
+    process.exit(1);
+  }
 
   // Start the background GPS broadcaster
   startGpsLoop(driverToken, interval);
