@@ -212,7 +212,7 @@ CREATE TABLE route_geofences (
 CREATE INDEX "IDX_route_geofences_school" ON route_geofences(school_id);
 
 -- Emergency Alerts (Matching emergency-alerts entity)
-CREATE TYPE emergency_event_type_enum AS ENUM ('PANIC_BUTTON', 'ROUTE_DEVIATION', 'INCIDENT', 'OTHER');
+CREATE TYPE emergency_event_type_enum AS ENUM ('PANIC_BUTTON', 'ROUTE_DEVIATION', 'INCIDENT', 'LATE_ARRIVAL', 'ROUTE_DIVERSION', 'PANIC_ALERT', 'OTHER');
 CREATE TYPE emergency_alert_status_enum AS ENUM ('ACTIVE', 'RESOLVED');
 
 CREATE TABLE emergency_alert (
