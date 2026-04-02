@@ -48,7 +48,7 @@ const Dashboard: React.FC = () => {
         } as DashboardStats,
       };
     },
-    refetchInterval: 10_000,
+    refetchInterval: 2_000,
   });
 
   const alerts = dashboardData?.alerts ?? [];

@@ -196,8 +196,19 @@ const LiveMap: React.FC<LiveMapProps> = ({
       });
     }
 
+    // Deduplicate locations by vehicleId to prevent duplicate markers
+    const deduplicatedLocations = new Map<string, LiveLocation>();
+    locations.forEach((l) => {
+      const existing = deduplicatedLocations.get(l.vehicleId);
+      // Prioritize the location belonging to the selected route if there's any conflict,
+      // otherwise keep the most recent one (assuming order in array is chronological/relevant)
+      if (!existing || selectedRoute?.id === l.routeId) {
+        deduplicatedLocations.set(l.vehicleId, l);
+      }
+    });
+
     // Add new markers
-    locations.forEach((location) => {
+    Array.from(deduplicatedLocations.values()).forEach((location) => {
       const statusClass = getStatusColorClass(location.status);
       const colorMap: Record<string, string> = {
         'bg-green-500': '#22c55e',

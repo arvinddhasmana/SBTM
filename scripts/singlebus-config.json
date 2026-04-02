@@ -11,13 +11,41 @@
     "driverEmail": "driver1@sbtm.demo"
   },
   "students": [
-    "STUDENT-C01",
-    "STUDENT-C02",
-    "STUDENT-C03",
-    "STUDENT-C04",
-    "STUDENT-C05",
-    "STUDENT-C06",
-    "STUDENT-C07"
+    {
+      "id": "10000000-0000-0000-0000-000000000001",
+      "firstName": "Alice",
+      "lastName": "Smith"
+    },
+    {
+      "id": "10000000-0000-0000-0000-000000000002",
+      "firstName": "Bob",
+      "lastName": "Johnson"
+    },
+    {
+      "id": "10000000-0000-0000-0000-000000000003",
+      "firstName": "Charlie",
+      "lastName": "Brown"
+    },
+    {
+      "id": "10000000-0000-0000-0000-000000000004",
+      "firstName": "Diana",
+      "lastName": "Garcia"
+    },
+    {
+      "id": "10000000-0000-0000-0000-000000000005",
+      "firstName": "Ethan",
+      "lastName": "Wilson"
+    },
+    {
+      "id": "10000000-0000-0000-0000-000000000006",
+      "firstName": "Fiona",
+      "lastName": "Miller"
+    },
+    {
+      "id": "10000000-0000-0000-0000-000000000007",
+      "firstName": "George",
+      "lastName": "Davis"
+    }
   ],
   "am": {
     "routeId": "ROUTE-CUSTOM-AM",
@@ -206,7 +234,10 @@
         "lat": 45.373,
         "lng": -75.68318,
         "label": "AM Stop 1",
-        "students": ["STUDENT-C01", "STUDENT-C06"],
+        "students": [
+          "10000000-0000-0000-0000-000000000001",
+          "10000000-0000-0000-0000-000000000006"
+        ],
         "pauseSeconds": 5,
         "speedKph": 0
       },
@@ -214,7 +245,10 @@
         "lat": 45.37472,
         "lng": -75.68247,
         "label": "AM Stop 2",
-        "students": ["STUDENT-C02", "STUDENT-C07"],
+        "students": [
+          "10000000-0000-0000-0000-000000000002",
+          "10000000-0000-0000-0000-000000000007"
+        ],
         "pauseSeconds": 5,
         "speedKph": 0
       },
@@ -222,7 +256,7 @@
         "lat": 45.37381,
         "lng": -75.68183,
         "label": "AM Stop 3",
-        "students": ["STUDENT-C03"],
+        "students": ["10000000-0000-0000-0000-000000000003"],
         "pauseSeconds": 5,
         "speedKph": 0
       },
@@ -230,7 +264,7 @@
         "lat": 45.37922,
         "lng": -75.6851,
         "label": "AM Stop 4",
-        "students": ["STUDENT-C04"],
+        "students": ["10000000-0000-0000-0000-000000000004"],
         "pauseSeconds": 5,
         "speedKph": 0
       },
@@ -238,7 +272,7 @@
         "lat": 45.386,
         "lng": -75.69067,
         "label": "AM Stop 5",
-        "students": ["STUDENT-C05"],
+        "students": ["10000000-0000-0000-0000-000000000005"],
         "pauseSeconds": 5,
         "speedKph": 0
       }
@@ -1127,7 +1161,7 @@
         "lat": 45.386,
         "lng": -75.69067,
         "label": "PM Stop 1",
-        "students": ["STUDENT-C05"],
+        "students": ["10000000-0000-0000-0000-000000000005"],
         "pauseSeconds": 5,
         "speedKph": 0
       },
@@ -1135,7 +1169,7 @@
         "lat": 45.37922,
         "lng": -75.6851,
         "label": "PM Stop 2",
-        "students": ["STUDENT-C04"],
+        "students": ["10000000-0000-0000-0000-000000000004"],
         "pauseSeconds": 5,
         "speedKph": 0
       },
@@ -1143,7 +1177,7 @@
         "lat": 45.37381,
         "lng": -75.68183,
         "label": "PM Stop 3",
-        "students": ["STUDENT-C03"],
+        "students": ["10000000-0000-0000-0000-000000000003"],
         "pauseSeconds": 5,
         "speedKph": 0
       },
@@ -1151,7 +1185,10 @@
         "lat": 45.37472,
         "lng": -75.68247,
         "label": "PM Stop 4",
-        "students": ["STUDENT-C02", "STUDENT-C07"],
+        "students": [
+          "10000000-0000-0000-0000-000000000002",
+          "10000000-0000-0000-0000-000000000007"
+        ],
         "pauseSeconds": 5,
         "speedKph": 0
       },
@@ -1159,7 +1196,10 @@
         "lat": 45.373,
         "lng": -75.68318,
         "label": "PM Stop 5",
-        "students": ["STUDENT-C01", "STUDENT-C06"],
+        "students": [
+          "10000000-0000-0000-0000-000000000001",
+          "10000000-0000-0000-0000-000000000006"
+        ],
         "pauseSeconds": 5,
         "speedKph": 0
       }

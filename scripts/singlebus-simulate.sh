@@ -123,6 +123,33 @@ sync_route "$PM_ROUTE_ID" "Single Bus PM" "PM" "$PM_POLYLINE"
 sync_stops "$AM_ROUTE_ID" ".am"
 sync_stops "$PM_ROUTE_ID" ".pm"
 
+# Sync student names to database
+echo "Syncing students to database..."
+node -e "
+  const fs = require('fs');
+  const config = JSON.parse(fs.readFileSync('$CONFIG_PATH', 'utf8'));
+  const students = config.students;
+  const schoolId = config.school.id;
+  const inserts = students.map(s => {
+    return \"INSERT INTO students (id, first_name, last_name, external_student_id, school_id) VALUES ('\" + s.id + \"', '\" + s.firstName + \"', '\" + s.lastName + \"', '\" + s.id + \"', '\" + schoolId + \"') ON CONFLICT (id) DO UPDATE SET first_name = EXCLUDED.first_name, last_name = EXCLUDED.last_name;\";
+  }).join('\n');
+  console.log(inserts);
+" | xargs -0 -I {} docker exec -i "sbtm_antigravity-postgres-1" psql -U postgres -d sbms -c "{}" > /dev/null 2>&1 || true
+# Wait, xargs -0 might be overkill, I'll just use a simple loop or one psql call.
+# Actually, I'll just pipe the output of node directly to psql.
+node -e "
+  const fs = require('fs');
+  const config = JSON.parse(fs.readFileSync('$CONFIG_PATH', 'utf8'));
+  const schoolId = config.school.id;
+  config.students.forEach(s => {
+    process.stdout.write(\"INSERT INTO students (id, first_name, last_name, external_student_id, school_id, grade) VALUES ('\" + s.id + \"', '\" + s.firstName + \"', '\" + s.lastName + \"', '\" + s.id + \"', '\" + schoolId + \"', '1') ON CONFLICT (id) DO UPDATE SET first_name = EXCLUDED.first_name, last_name = EXCLUDED.last_name, grade = EXCLUDED.grade;\n\");
+  });
+" | docker exec -i "sbtm_antigravity-postgres-1" psql -U postgres -d sbms > /dev/null
+
+# Clear old location points to prevent duplicate bus on map
+echo "Cleaning up old location data for $VEHICLE_ID..."
+docker exec "sbtm_antigravity-postgres-1" psql -U postgres -d sbms -c "DELETE FROM location_points WHERE \"vehicle_id\" = '$VEHICLE_ID';" > /dev/null
+
 # --- Run ---
 
 echo -e "\033[36mStarting Single-Bus Simulation (Interval: ${INTERVAL_SECONDS}s)...\033[0m"
