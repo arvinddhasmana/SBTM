@@ -1,4 +1,5 @@
 <!-- CLASSIFICATION: INTERNAL -->
+
 # UC003 — Plan and Manage Routes, Stops, and Vehicles
 
 > **Use Case ID**: UC-ROUTE-001
@@ -36,10 +37,12 @@ An operator or school administrator defines a route, associates stops and a vehi
 ## 5. Alternative Flows
 
 ### 5a. Provider-Backed Optimization Not Available
+
 - The operator uses current route structure without relying on provider-grade optimization.
 - The system may return placeholder or mocked route geometry.
 
 ### 5b. Invalid Vehicle or Stop Configuration
+
 - The platform rejects the requested change.
 - The operator corrects the route or vehicle assignment and resubmits.
 
@@ -61,9 +64,19 @@ An operator or school administrator defines a route, associates stops and a vehi
 - Vehicle CRUD exists.
 - Optimization remains partial and should be treated as prototype-grade.
 
-## 9. Requirements Traced
+## 9. v4 Enhancements (Planned)
 
-| Requirement | Description |
-| --- | --- |
-| FR-ROUTE-001 | Route, stop, and vehicle management |
+- **Bulk route import** from Excel/CSV with geocoding and OSRM polyline generation. Admin uploads file -> system validates, geocodes, and previews on map -> admin confirms (see [UC-DATAMIG-001](UC012_data_migration_and_integration.md), [v4 Gap Analysis](../../prd/v4/GapAnalysis.md) GAP-INT-003).
+- **Address geocoding** for stop creation — admin types address, system geocodes via Nominatim or Google, admin confirms pin on map (GAP-INT-006).
+- **Fleet assignment workflow** — OSTA proposes vehicle-to-route assignment, School Admin reviews and confirms (see [UC-FLEET-ASSIGN-001](UC010_fleet_assignment_workflow.md), GAP-WF-001).
+- **Route change notification** — When a route is modified, parents of affected students are notified before the change takes effect (GAP-WF-002, FR-WORKFLOW-002).
+- **Seasonal route planning** — Clone previous year routes and adjust for new school year (GAP-WF-004).
+- **Academic calendar awareness** — Routes marked inactive on holidays and non-operational days (GAP-OPS-003).
+- See [v4 Integration and Migration](../../prd/v4/IntegrationAndMigration.md) for complete route import wizard design.
+
+## 10. Requirements Traced
+
+| Requirement  | Description                             |
+| ------------ | --------------------------------------- |
+| FR-ROUTE-001 | Route, stop, and vehicle management     |
 | FR-ROUTE-002 | Route planning and optimization support |

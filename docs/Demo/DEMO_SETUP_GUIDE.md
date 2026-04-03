@@ -1,12 +1,12 @@
 # SBTM Demo Setup Guide (All Features)
 
 - Document owner: QA and Engineering
-- Last reviewed: 2026-03-24
+- Last reviewed: 2026-04-02
 - Primary use: Demo environment setup, seeded data, and operator runbook
 
 This guide is for new developers and QA team members. It walks you through a full, end-to-end demo story that covers Board Admin, School Admin, Driver, and Parent roles. It includes one-command setup, seeded data, and workarounds for features that are not implemented yet.
 
-This document is the operational setup guide for demos. For current capability gaps, limitations, and phase sequencing, use `docs/prd/GapAnalysis.md` and `docs/prd/PhaseWiseImplementationPlan.md`.
+This document is the operational setup guide for demos. For current capability gaps, limitations, and phase sequencing, use `docs/prd/GapAnalysis.md` and `docs/prd/PhaseWiseImplementationPlan.md`. For v4 business gap analysis and upgrade plan, see `docs/prd/v4/GapAnalysis.md`.
 
 ## Related Documents
 
@@ -15,6 +15,9 @@ This document is the operational setup guide for demos. For current capability g
 - [GapAnalysis.md](../prd/GapAnalysis.md)
 - [PhaseWiseImplementationPlan.md](../prd/PhaseWiseImplementationPlan.md)
 - [TestingGuide.md](../Test/TestingGuide.md)
+- [v4 Gap Analysis](../prd/v4/GapAnalysis.md)
+- [v4 Roles and Workflows](../prd/v4/RolesAndWorkflows.md)
+- [v4 Alert Strategy](../prd/v4/AlertStrategy.md)
 
 If you need a shorter walkthrough, use [LiveDemoScript.md](LiveDemoScript.md).
 
@@ -30,7 +33,7 @@ graph LR
         RESET[Reset & Seed<br/>reset-demo-db.sh] --> VERIFY[Verify Services<br/>Health Checks]
     end
     subgraph "2. Demo Roles"
-        ADMIN[Board/School Admin<br/>Admin Dashboard] 
+        ADMIN[Board/School Admin<br/>Admin Dashboard]
         DRIVER[Driver<br/>Driver App]
         PARENT[Parent<br/>Parent Portal]
     end
@@ -106,23 +109,27 @@ This is the **primary recommended approach** for setting up the demo environment
 ```
 
 This command will:
+
 1. Stop all containers and delete volumes (`docker compose down -v`)
 2. Rebuild and start all services (`docker compose up -d --build`)
 3. Seed demo data (users, routes, vehicles, students, GPS history)
 4. Run verification checks to ensure everything works
 
 **Optional flags:**
+
 - `--no-build` - Skip Docker rebuild (faster if images are up to date)
 - `--skip-verify` - Skip verification step (not recommended)
 
 ### Verification After Setup
 
 Check that everything is working:
+
 ```bash
 ./scripts/verify-demo.sh
 ```
 
 This will verify:
+
 - Database tables and seeded data
 - User login credentials
 - API endpoint authorization (including live location and student presence)
@@ -132,11 +139,13 @@ This will verify:
 All demo users use password **Admin123!**
 
 **Admin users:**
+
 - OSTA Admin: `osta.admin@sbtm.demo`
 - School Admin (Greenfield Elementary): `school.admin@sbtm.demo`
 - School Admin (Riverside Academy): `school2.admin@sbtm.demo`
 
 **Live drivers (4 — install Driver app on phone for real GPS):**
+
 - `driver1@sbtm.demo` → ROUTE-R01, BUS-01 (Greenfield Elementary)
 - `driver2@sbtm.demo` → ROUTE-R02, BUS-02 (Greenfield Elementary)
 - `driver11@sbtm.demo` → ROUTE-R11, BUS-11 (Riverside Academy)
@@ -147,6 +156,7 @@ These 4 routes are highlighted on the admin dashboard with a **gold pulsing bord
 **All drivers:** driver1–driver20@sbtm.demo (all 20 exist in DB)
 
 **Parents (10 logins, tracking 15 kids):**
+
 - `parent1@sbtm.demo` → kids on ROUTE-R01, ROUTE-R02
 - `parent2@sbtm.demo` → kids on ROUTE-R01, ROUTE-R03
 - `parent3@sbtm.demo` → kids on ROUTE-R11, ROUTE-R12
@@ -159,9 +169,11 @@ If login fails, run the seeding script again and use the password printed by the
 `docker compose up -d --build` already starts these web apps and backend services in containers.
 
 ### Admin Dashboard
+
 - URL: http://localhost:5173
 
 ### Parent Portal
+
 - URL: http://localhost:5174
 
 ### Optional Local Frontend Development (instead of Docker app containers)
@@ -213,17 +225,20 @@ To use a different file, pass `--track-config <path>`.
 The simulator validates route, vehicle, driver, and student IDs against seeded demo data. Use `--strict-seed-validation` to fail fast if any IDs are out of sync.
 
 What this does:
+
 - Emits GPS updates for all 20 routes (BUS-01 through BUS-20) along Ottawa streets.
 - Sends a PANIC alert periodically.
 - Sends a late notice as an "OTHER" alert (workaround for missing delay endpoint).
 - Logs ROUTE_STARTED and ROUTE_COMPLETED entries to Compliance Audit (Admin Dashboard > Compliance > Audit).
 
 You can tune the pacing:
+
 - Increase `--interval` for slower movement.
 - Increase `--laps` for longer demos.
 - Use `--no-emergency` or `--no-late` to mute those events.
 
 **Troubleshooting:**
+
 - If you see "GPS failed" errors: Check that API Gateway is running (`docker ps`)
 - If maps don't update: Check browser console for 403 errors (authentication issue)
 - If GPS posts succeed but maps are empty: Run `./scripts/verify-demo.sh` to check authorization
@@ -234,11 +249,12 @@ This story demonstrates the main use cases for Board Admin, School Admin, Driver
 
 ### Step A: Board Admin View (Monitoring)
 
-1) Log in to the Admin Dashboard as osta.admin@sbtm.demo.
-2) Open the Dashboard page to view live alerts and fleet status.
-3) Open Students and Compliance pages to show tenant-scoped lists.
+1. Log in to the Admin Dashboard as osta.admin@sbtm.demo.
+2. Open the Dashboard page to view live alerts and fleet status.
+3. Open Students and Compliance pages to show tenant-scoped lists.
 
 Workaround (Board/School management UI is not implemented):
+
 - Use API calls to create a board and school to narrate the flow.
 
 ```bash
@@ -263,19 +279,20 @@ Narration tip: Explain that Board Admin would see system-wide metrics, while Sch
 
 ### Step B: School Admin Actions (Operations)
 
-1) In the Admin Dashboard, open Routes and Vehicles.
-2) Show a seeded route (ROUTE-R01 — Bank Street South) and associated bus (BUS-01).
-3) Show Students list for the school (500 students across 20 routes).
+1. In the Admin Dashboard, open Routes and Vehicles.
+2. Show a seeded route (ROUTE-R01 — Bank Street South) and associated bus (BUS-01).
+3. Show Students list for the school (500 students across 20 routes).
 
 Role switch for demo:
+
 - Use `osta.admin@sbtm.demo` for OSTA view.
 - Use `school.admin@sbtm.demo` for School view.
 
 ### Step C: Driver Operations (Route + GPS + Emergency)
 
-1) Open Driver App and log in as driver1@sbtm.demo.
-2) Select the schedule and start tracking.
-3) Trigger the panic button to create an emergency event.
+1. Open Driver App and log in as driver1@sbtm.demo.
+2. Select the schedule and start tracking.
+3. Trigger the panic button to create an emergency event.
 
 If no device GPS is available, simulate GPS from your terminal:
 
@@ -288,9 +305,9 @@ curl -X POST http://localhost:3001/api/v1/routes/locations \
 
 ### Step D: Parent Tracking (Live Location)
 
-1) Open the Parent Portal and log in as parent1@sbtm.demo.
-2) Select a child and open the live map view.
-3) The map polls the gateway for /routes/:routeId/live-location.
+1. Open the Parent Portal and log in as parent1@sbtm.demo.
+2. Select a child and open the live map view.
+3. The map polls the gateway for /routes/:routeId/live-location.
 
 If the bus location does not move, repeat the GPS curl above with updated coordinates.
 
@@ -320,8 +337,49 @@ Then open the Videos page in the Admin Dashboard.
 
 - Board/School management UI: use the API calls above and narrate the UI that will consume them.
 - Route optimization: explain that the API returns a placeholder polyline and will be wired to map providers later.
-- Parent notifications: the simulator uses an alert event type of OTHER to represent a delay.
+- Parent notifications: the simulator uses an alert event type of OTHER to represent a delay. v4 will add push/SMS/email notification delivery to parents (see [v4 Alert Strategy](../prd/v4/AlertStrategy.md)).
 - Video playback: show the event list and narrate how playback will be streamed from the Video Service.
+- Alert confirmation: currently alerts broadcast immediately without admin confirmation. v4 will add School Admin confirmation workflow with 2-minute timeout before parent delivery (see [v4 Alert Strategy](../prd/v4/AlertStrategy.md)).
+- Fleet assignment: currently vehicles are assigned directly. v4 will add OSTA proposal -> School Admin confirmation workflow (see [v4 Roles and Workflows](../prd/v4/RolesAndWorkflows.md)).
+- Pre-trip inspection: inspections exist as records but do not block route start. v4 will enforce pre-trip inspection completion before route start.
+- Absence reporting: parent can report absence in the portal but driver's roster does not reflect it yet. v4 will integrate absence into the driver roster.
+- Student boarding notifications: presence events are captured but no push notification is sent to parents yet. v4 will add the presence-to-notification pipeline.
+
+## 7. v4 Demo Additions (When Available)
+
+When v4 features are implemented, the demo can be extended with these additional scenes:
+
+### Scene G: Alert Confirmation Workflow
+
+1. Driver triggers panic button (Step C).
+2. Show School Admin receiving confirmation modal in the admin dashboard.
+3. School Admin confirms alert -> parents receive push + SMS.
+4. Show parent receiving the emergency notification.
+5. School Admin resolves alert -> parents receive resolution notification.
+
+### Scene H: Fleet Assignment Coordination
+
+1. Login as OSTA Admin.
+2. Show fleet pool with unassigned vehicles (imported from OSTA fleet DB).
+3. OSTA proposes vehicle assignment to school and route.
+4. Login as School Admin shows pending assignment for review.
+5. School Admin accepts -> vehicle assigned, driver notified.
+
+### Scene I: Bulk Route Import
+
+1. Login as School Admin.
+2. Upload Excel with route data.
+3. Show validation report with geocoded addresses.
+4. Preview routes on map with OSRM polylines.
+5. Confirm import.
+
+### Scene J: Student SIS Import
+
+1. Login as School Admin.
+2. Upload SIS export CSV.
+3. Show preview: new, updated, and flagged students.
+4. Confirm import -> students created with route assignments.
+5. Show parent invitation emails generated.
 
 ## 7. Scope Boundaries
 
@@ -349,3 +407,7 @@ Use these checks to confirm everything is working with real data:
 - [docs/Implementation/Module-2-ParentApp.md](../Implementation/Module-2-ParentApp.md)
 - [docs/Implementation/Module-6-StudentPresence.md](../Implementation/Module-6-StudentPresence.md)
 - [docs/Demo/LiveDemoScript.md](LiveDemoScript.md)
+- [docs/prd/v4/GapAnalysis.md](../prd/v4/GapAnalysis.md)
+- [docs/prd/v4/RolesAndWorkflows.md](../prd/v4/RolesAndWorkflows.md)
+- [docs/prd/v4/AlertStrategy.md](../prd/v4/AlertStrategy.md)
+- [docs/prd/v4/ProductionRolloutGuide.md](../prd/v4/ProductionRolloutGuide.md)

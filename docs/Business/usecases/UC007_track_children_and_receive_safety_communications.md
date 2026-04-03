@@ -1,4 +1,5 @@
 <!-- CLASSIFICATION: INTERNAL -->
+
 # UC007 — Track Children and Receive Safety Communications
 
 > **Use Case ID**: UC-PARENT-001
@@ -36,13 +37,16 @@ A parent uses the web portal to view linked children, inspect the current route 
 ## 5. Alternative Flows
 
 ### 5a. Polling-Based Visibility
+
 - The portal refreshes route and alert data through polling rather than push-style updates.
 - Information remains available, but not as proactively as the target design intends.
 
 ### 5b. No Current Route or Linked Child Context
+
 - The portal shows a limited state because there is no active route assignment or no linked roster match.
 
 ### 5c. Planned Parent Exception Workflow Not Yet Available
+
 - The parent cannot yet report an absence or review a notification history in a complete product flow.
 
 ## 6. Postconditions
@@ -62,11 +66,23 @@ A parent uses the web portal to view linked children, inspect the current route 
 - Real proactive notification delivery is still incomplete.
 - Absence reporting and notification history remain planned rather than delivered.
 
-## 9. Requirements Traced
+## 9. v4 Enhancements (Planned)
 
-| Requirement | Description |
-| --- | --- |
-| FR-PARENT-001 | Parent visibility into linked children and routes |
-| FR-PARENT-002 | Parent-facing safety communications |
-| FR-PARENT-003 | Absence reporting and history support |
-| PR-CONSENT-001 | Parent communication and consent expectations |
+- **Push notifications for boarding/alighting** — Parent receives push notification when their child boards or alights the bus: "[Child name] boarded bus at [Stop] at [Time]" (see [v4 Alert Strategy](../../prd/v4/AlertStrategy.md), Tier 3 Informational Notifications).
+- **Multi-channel notification delivery** — Push (primary), SMS (emergency escalation), Email (daily summary, route changes). See GAP-ALERT-004.
+- **Emergency notification with admin confirmation** — Safety alerts go through School Admin confirmation before parent delivery. Auto-escalate after 2-minute timeout (see [UC-ALERT-CONFIRM-001](UC011_alert_confirmation_and_governance.md)).
+- **Notification preference management** — Parents can configure which events to receive, on which channels, with quiet hours and emergency override (GAP-ALERT-005).
+- **Absence reporting with confirmation** — Parent reports absence, receives confirmation, driver roster updated automatically (see [UC-ABSENCE-001](UC014_absence_reporting_workflow.md)).
+- **Bus approaching notification** — Push notification when bus is within X minutes of child's stop.
+- **Route change notification** — Push + email notification before route changes affecting child take effect.
+- **Privacy consent management** — During onboarding, parent accepts privacy notice and consent form (GAP-GOV-005).
+- See [v4 Roles and Workflows](../../prd/v4/RolesAndWorkflows.md) for parent role responsibilities and the [v4 User Guide](../../UserGuide/parent/README.md) for the target parent experience.
+
+## 10. Requirements Traced
+
+| Requirement    | Description                                       |
+| -------------- | ------------------------------------------------- |
+| FR-PARENT-001  | Parent visibility into linked children and routes |
+| FR-PARENT-002  | Parent-facing safety communications               |
+| FR-PARENT-003  | Absence reporting and history support             |
+| PR-CONSENT-001 | Parent communication and consent expectations     |

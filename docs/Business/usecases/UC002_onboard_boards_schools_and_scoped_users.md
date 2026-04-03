@@ -1,4 +1,5 @@
 <!-- CLASSIFICATION: INTERNAL -->
+
 # UC002 — Onboard Boards, Schools, and Scoped Users
 
 > **Use Case ID**: UC-ONBOARD-001
@@ -36,10 +37,12 @@ An authorized tenant administrator prepares the organizational structure needed 
 ## 5. Alternative Flows
 
 ### 5a. Invitation and Provisioning Workflow Not Available
+
 - The organization structure is created, but account lifecycle steps are handled manually or through seeded data.
 - User provisioning remains an operational workaround rather than a full product flow.
 
 ### 5b. Incomplete Tenant Setup
+
 - The board or school record exists, but supporting route, roster, or user data is missing.
 - Daily operations remain blocked or only partially demonstrable.
 
@@ -60,11 +63,20 @@ An authorized tenant administrator prepares the organizational structure needed 
 - Full invitation-based provisioning is not yet delivered.
 - Tenant setup still depends on partial or manual workflows in practice.
 
-## 9. Requirements Traced
+## 9. v4 Enhancements (Planned)
 
-| Requirement | Description |
-| --- | --- |
-| FR-TENANT-001 | Tenant-scoped operational data |
-| FR-ONBOARD-001 | Tenant onboarding workflows |
-| PR-TENANT-001 | Tenant boundaries preserved in operations |
-| OPS-DEPLOY-001 | Documented, runnable platform baseline |
+- **Super Admin role** for initial system bootstrap — creates OSTA Admin, configures system settings (see [v4 Gap Analysis](../../prd/v4/GapAnalysis.md), GAP-ROLE-001).
+- **Board Admin school management** — Board Admin can create, modify, and deactivate schools within their board scope (GAP-ROLE-003).
+- **Guided tenant provisioning wizard** — Step-by-step workflow for adding new boards and schools post-initial-setup (GAP-OPS-002).
+- **Parent auto-provisioning from SIS** — When students are imported from SIS, parent accounts are auto-generated with invitation emails (GAP-INT-005).
+- **SIS integration** — Batch or API sync of student data from school board SIS, reducing manual data entry (see [UC-DATAMIG-001](UC012_data_migration_and_integration.md)).
+- See [v4 Roles and Workflows](../../prd/v4/RolesAndWorkflows.md) for the complete RACI matrix across all admin roles.
+
+## 10. Requirements Traced
+
+| Requirement    | Description                               |
+| -------------- | ----------------------------------------- |
+| FR-TENANT-001  | Tenant-scoped operational data            |
+| FR-ONBOARD-001 | Tenant onboarding workflows               |
+| PR-TENANT-001  | Tenant boundaries preserved in operations |
+| OPS-DEPLOY-001 | Documented, runnable platform baseline    |

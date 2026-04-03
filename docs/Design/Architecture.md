@@ -17,6 +17,11 @@ This document is the architectural index for the SBTM v1 target state. It separa
 - [EventCatalog.md](EventCatalog.md)
 - [../../Business/Requirements.md](../../Business/Requirements.md)
 - [../../prd/GapAnalysis.md](../../prd/GapAnalysis.md)
+- [../../prd/v4/GapAnalysis.md](../../prd/v4/GapAnalysis.md) (v4 Business Gap Analysis)
+- [../../prd/v4/RolesAndWorkflows.md](../../prd/v4/RolesAndWorkflows.md) (v4 Roles and Workflows)
+- [../../prd/v4/AlertStrategy.md](../../prd/v4/AlertStrategy.md) (v4 Alert Strategy)
+- [../../prd/v4/IntegrationAndMigration.md](../../prd/v4/IntegrationAndMigration.md) (v4 Integration)
+- [../../prd/v4/UpgradePlan.md](../../prd/v4/UpgradePlan.md) (v4 Upgrade Plan)
 
 ## Architecture Intent
 
@@ -98,3 +103,4 @@ flowchart LR
 - Use `docs/Design` for target-state design and architectural direction.
 - Use `docs/Implementation` for code-verified current state.
 - Use `docs/prd` for the difference between current delivery and the v1 target.
+- Use `docs/prd/v4` for v4 business gap analysis, role/workflow definitions, alert strategy, integration and migration design, upgrade plan, and production rollout guide.
