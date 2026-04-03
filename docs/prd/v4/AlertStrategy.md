@@ -103,7 +103,7 @@ notification_router --> sms_gateway : "SMS escalation"
 ### Confirmation Workflow for Tier 1 (Safety) Alerts
 
 ```mermaid
-statechart
+stateDiagram-v2
     [*] --> TRIGGERED : Driver/system creates alert
     TRIGGERED --> PENDING_CONFIRMATION : School Admin notified
     PENDING_CONFIRMATION --> CONFIRMED : School Admin confirms (within 2 min)

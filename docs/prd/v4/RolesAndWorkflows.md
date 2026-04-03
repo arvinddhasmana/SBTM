@@ -95,16 +95,39 @@ After initial setup, the Super Admin role is used only for platform maintenance 
 
 Fleet Assignment Workflow (OSTA assigns to school and route in consultation with School Admin):
 
-```
-Sequence: Fleet Assignment
-1. OSTA Admin selects vehicle from fleet pool
-2. OSTA Admin proposes assignment to school and route
-3. System notifies School Admin of proposed assignment
-4. School Admin reviews proposal with route details
-5a. School Admin accepts -> Assignment becomes effective, Driver is notified
-5b. School Admin rejects with comments -> OSTA Admin revises proposal
-6. System records decision in audit trail (who, when, decision, comments)
-7. Option: Generate printable assignment agreement for physical signature
+```mermaid
+sequenceDiagram
+    autonumber
+    participant OA as OSTA Admin
+    participant SYS as Fleet Management System
+    participant SA as School Admin
+    participant D as Driver
+
+    Note over OA, SYS: Phase 1: Proposal
+    OA->>SYS: Select vehicle from fleet pool
+    OA->>SYS: Propose assignment (School + Route)
+    SYS->>SA: Notify of proposed assignment
+
+    Note over SA, SYS: Phase 2: Review & Decision
+    SA->>SYS: Review proposal & route details
+
+    alt 5a. School Admin Accepts
+        SA->>SYS: Accept Proposal
+        SYS->>SYS: Set status to Effective
+        SYS->>D: Notify Driver of assignment
+    else 5b. School Admin Rejects
+        SA->>SYS: Reject with comments
+        SYS->>OA: Notify for revision
+        OA->>SYS: Revise proposal (Return to step 2)
+    end
+
+    Note over SYS: Phase 3: Finalization
+    SYS->>SYS: Log audit trail (User, Timestamp, Decision, Comments)
+
+    opt 7. Documentation
+        OA->>SYS: Request printable agreement
+        SYS-->>OA: Generate PDF for physical signature
+    end
 ```
 
 ### Route and Stop Management
