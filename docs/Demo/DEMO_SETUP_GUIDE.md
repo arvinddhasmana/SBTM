@@ -64,37 +64,38 @@ graph TD
 ### C4 Diagram (Demo Context)
 
 ```mermaid
-C4Context
-  title SBTM Demo Context
-  Person(admin, "Board/School Admin", "Monitors fleet and manages data")
-  Person(driver, "Driver", "Runs the route and triggers emergency events")
-  Person(parent, "Parent", "Tracks the bus and students")
-  System(sbms, "SBTM Platform", "Gateway, services, and web/mobile apps")
-  Rel(admin, sbms, "Uses Admin Dashboard")
-  Rel(driver, sbms, "Uses Driver App")
-  Rel(parent, sbms, "Uses Parent Portal")
+graph TB
+    Admin["Board/School Admin<br/>(Monitors fleet and manages data)"]
+    Driver["Driver<br/>(Runs the route and triggers emergency events)"]
+    Parent["Parent<br/>(Tracks the bus and students)"]
+    SBTM["SBTM Platform<br/>(Gateway, services, and web/mobile apps)"]
+
+    Admin -- "Uses Admin Dashboard" --> SBTM
+    Driver -- "Uses Driver App" --> SBTM
+    Parent -- "Uses Parent Portal" --> SBTM
 ```
 
 ```mermaid
-C4Container
-  title SBTM Demo Containers
-  Person(admin, "Board/School Admin")
-  Person(driver, "Driver")
-  Person(parent, "Parent")
-  System_Boundary(sbtm, "SBTM") {
-    Container(gateway, "API Gateway", "NestJS", "Auth, RBAC, tenant guards, proxies")
-    Container(adminUi, "Admin Dashboard", "React (Vite)", "Monitoring and management")
-    Container(parentUi, "Parent Portal", "React (Vite)", "Child tracking")
-    Container(driverApp, "Driver App", "Expo", "GPS, emergency events")
-    ContainerDb(db, "PostgreSQL", "Postgres", "Tenant data")
-  }
-  Rel(admin, adminUi, "Login and monitor")
-  Rel(driver, driverApp, "Run route")
-  Rel(parent, parentUi, "Track child")
-  Rel(adminUi, gateway, "REST")
-  Rel(parentUi, gateway, "REST")
-  Rel(driverApp, gateway, "REST")
-  Rel(gateway, db, "Read/Write")
+graph TB
+    Admin["Board/School Admin"]
+    Driver["Driver"]
+    Parent["Parent"]
+
+    subgraph SBTM_Boundary ["SBTM"]
+        Gateway["API Gateway<br/>[NestJS]<br/>Auth, RBAC, tenant guards, proxies"]
+        AdminUI["Admin Dashboard<br/>[React/Vite]<br/>Monitoring and management"]
+        ParentUI["Parent Portal<br/>[React/Vite]<br/>Child tracking"]
+        DriverApp["Driver App<br/>[Expo]<br/>GPS, emergency events"]
+        DB[("PostgreSQL<br/>[Postgres]<br/>Tenant data")]
+    end
+
+    Admin -- "Login and monitor" --> AdminUI
+    Driver -- "Run route" --> DriverApp
+    Parent -- "Track child" --> ParentUI
+    AdminUI -- "REST" --> Gateway
+    ParentUI -- "REST" --> Gateway
+    DriverApp -- "REST" --> Gateway
+    Gateway -- "Read/Write" --> DB
 ```
 
 ## 1. Demo Setup - Complete Reset (Recommended)

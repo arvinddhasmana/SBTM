@@ -21,38 +21,6 @@
 ### C4 Context Diagram: Target Integration Architecture
 
 ```mermaid
-C4Context
-    title SBTM Integration Architecture - Target State
-
-    System(sbtm, "SBTM Platform", "School Bus Transport Management")
-
-    System_Ext(ocsb_sis, "OCSB SIS", "Student enrollment & parent contacts")
-    System_Ext(ocdsb_sis, "OCDSB SIS", "Student enrollment & parent contacts")
-    System_Ext(osta_fleet, "OSTA Fleet DB", "Vehicle inventory & maintenance")
-    System_Ext(legacy_routes, "Legacy Data", "Excel/CSV route definitions")
-
-    System_Ext(osrm, "OSRM Engine", "Route optimization")
-    System_Ext(geocoder, "Geocoding", "Nominatim / Google Maps")
-
-    System_Ext(fcm, "Firebase", "Push notifications")
-    System_Ext(email_svc, "Email Svc", "AWS SES / SMTP")
-    System_Ext(sms_gw, "SMS Gateway", "Twilio / AWS SNS")
-
-    Rel(ocsb_sis, sbtm, "Syncs students", "Batch/API")
-    Rel(ocdsb_sis, sbtm, "Syncs students", "Batch/API")
-    Rel(osta_fleet, sbtm, "Syncs fleet", "API")
-    Rel(legacy_routes, sbtm, "Migrates data", "CSV")
-
-    Rel(sbtm, osrm, "Optimizes", "HTTPS")
-    Rel(sbtm, geocoder, "Resolves", "HTTPS")
-    Rel(sbtm, fcm, "Push alerts", "HTTPS")
-    Rel(sbtm, email_svc, "Sends email", "SMTP")
-    Rel(sbtm, sms_gw, "Sends SMS", "HTTPS")
-```
-
-Mermaid version of diagram
-
-```mermaid
 graph TD
     %% Define Groups
     subgraph SIS ["School Information Systems"]
