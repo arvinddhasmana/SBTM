@@ -43,6 +43,7 @@ flowchart LR
 | Student Management    | Domain service        | Enrollment, parent linkage, route assignment, roster import                                 |
 | Compliance Management | Domain service        | Driver compliance, inspections, and audit records                                           |
 | Video Service         | Domain service        | Video event metadata and secure asset workflow                                              |
+| Notification Service  | Domain service        | Multi-channel parent notification delivery (push, email, SMS) with preference management    |
 | Redis and BullMQ      | Shared infrastructure | Queueing and ephemeral presence or alert state                                              |
 | PostgreSQL            | Shared infrastructure | Relational persistence across domain services                                               |
 | OSRM                  | Shared infrastructure | Route geometry, optimization, and distance calculations (v5.27.1, Ottawa region data)       |
@@ -65,6 +66,7 @@ flowchart TB
         Students[Student Management\nNestJS]
         Compliance[Compliance Management\nNestJS]
         Video[Video Service\nNestJS]
+        Notify[Notification Service\nNestJS]
     end
 
     subgraph Data and Messaging
@@ -82,6 +84,7 @@ flowchart TB
     Gateway --> Students
     Gateway --> Compliance
     Gateway --> Video
+    Gateway --> Notify
     GPS --> PG
     Alerts --> PG
     Alerts --> MQ
@@ -92,6 +95,8 @@ flowchart TB
     Compliance --> PG
     Video --> PG
     Video --> Storage
+    Notify --> PG
+    Notify --> MQ
 ```
 
 ## Responsibility Boundaries
@@ -106,7 +111,7 @@ flowchart TB
 
 - The current platform already runs the gateway, core services, and web clients in Docker Compose.
 - The target architecture expects more complete event consumption and parent delivery than currently exists.
-- The intended notification boundary is explicit in architecture even if it is not yet implemented as a standalone service.
+- The notification boundary is now implemented as a standalone Notification Service (port 3008) consuming from BullMQ `notifications` queue.
 
 ## Traceability
 

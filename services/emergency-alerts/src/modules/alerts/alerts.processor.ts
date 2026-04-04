@@ -1,8 +1,8 @@
-import { Processor, WorkerHost } from '@nestjs/bullmq';
+import { Processor, WorkerHost, InjectQueue } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
-import { Job } from 'bullmq';
+import { Job, Queue } from 'bullmq';
 import {
   AlertNotificationLog,
   NotificationChannel,
@@ -22,6 +22,8 @@ export class AlertsProcessor extends WorkerHost {
     @InjectRepository(AlertNotificationLog)
     private readonly notificationLogRepo: Repository<AlertNotificationLog>,
     private readonly dataSource: DataSource,
+    @InjectQueue('notifications')
+    private readonly notificationsQueue: Queue,
   ) {
     super();
   }
@@ -40,6 +42,7 @@ export class AlertsProcessor extends WorkerHost {
       alertId?: string;
       routeId?: string;
       schoolId?: string;
+      eventType?: string;
     };
 
     const alertId = alert.id ?? alert.alertId;
@@ -65,13 +68,22 @@ export class AlertsProcessor extends WorkerHost {
       await this.logNotification(
         alertId,
         parent.parentId,
-        NotificationStatus.SENT,
+        NotificationStatus.PENDING,
       );
+
+      await this.notificationsQueue.add('notification-request', {
+        eventType: 'EMERGENCY',
+        eventSourceId: alertId,
+        recipientUserId: parent.parentId,
+        routeId,
+        schoolId: parent.schoolId ?? schoolId,
+        emergencyType: alert.eventType,
+      });
       sent++;
     }
 
     this.logger.log(
-      `Alert job ${job.id}: delivered to ${sent} recipients for routeId=${routeId}`,
+      `Alert job ${job.id}: queued notifications for ${sent} recipients on routeId=${routeId}`,
     );
     return { processed: true, recipientCount: sent };
   }

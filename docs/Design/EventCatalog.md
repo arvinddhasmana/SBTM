@@ -178,6 +178,7 @@ Producer            Queue Name      Consumer
 GPS Tracking        gps             (Phase 3: Geofencing)
 Emergency Alerts    alerts          Notification Service
 Student Presence    presence        Notification Service
+Presence/Alerts     notifications   Notification Service
 ```
 
 All queues use:
@@ -186,3 +187,35 @@ All queues use:
 - **Backoff**: exponential, starting at 1 s, max 30 s
 - **Max retries**: 5
 - **Job retention**: completed jobs kept for 1 h, failed jobs kept for 24 h
+
+---
+
+### `notification.requested`
+
+| Field         | Value                                              |
+| ------------- | -------------------------------------------------- |
+| **Producer**  | Student Presence Service, Emergency Alerts Service |
+| **Consumers** | Notification Service                               |
+| **Trigger**   | A presence or alert event requires parent delivery |
+| **Queue**     | `notifications` (BullMQ)                           |
+| **Status**    | **Implemented — Phase A**                          |
+
+**Payload**:
+
+```json
+{
+  "eventType": "BOARD | ALIGHT | EMERGENCY",
+  "eventSourceId": "uuid",
+  "recipientUserId": "uuid",
+  "schoolId": "uuid",
+  "routeId": "uuid",
+  "studentId": "uuid",
+  "emergencyType": "PANIC_BUTTON (optional, EMERGENCY only)"
+}
+```
+
+**Downstream actions**:
+
+- Notification Service checks parent preferences and delivers via enabled channels (push, email, SMS).
+- EMERGENCY events bypass preferences and deliver on all channels with SMS escalation on push failure.
+- Delivery status logged in `notification_delivery_log`.

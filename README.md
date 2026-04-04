@@ -19,23 +19,24 @@ The project is built as a monorepo containing multiple microservices and fronten
 
 ### 📱 Frontend Applications
 
-| Application | Path | Description | Tech Stack |
-|-------------|------|-------------|------------|
-| **[Admin Dashboard](./apps/admin-dashboard)** | `/apps/admin-dashboard` | Command center for fleet & route management | React, Vite, Tailwind |
-| **[Driver App](./apps/driver-app)** | `/apps/driver-app` | Mobile app for navigation & presence logging | React Native, Expo |
-| **[Parent App](./apps/parent-app)** | `/apps/parent-app` | Web portal for tracking children | React, Vite |
+| Application                                   | Path                    | Description                                  | Tech Stack            |
+| --------------------------------------------- | ----------------------- | -------------------------------------------- | --------------------- |
+| **[Admin Dashboard](./apps/admin-dashboard)** | `/apps/admin-dashboard` | Command center for fleet & route management  | React, Vite, Tailwind |
+| **[Driver App](./apps/driver-app)**           | `/apps/driver-app`      | Mobile app for navigation & presence logging | React Native, Expo    |
+| **[Parent App](./apps/parent-app)**           | `/apps/parent-app`      | Web portal for tracking children             | React, Vite           |
 
 ### ☁️ Cloud Backend & Microservices
 
-| Service | Path | Description | Tech Stack |
-|---------|------|-------------|------------|
-| **[API Gateway](./services/api-gateway)** | `/services/api-gateway` | Unified entry point, Auth, Data Aggregation | NestJS, JWT |
-| **[GPS Tracking](./services/gps-tracking)** | `/services/gps-tracking` | High-frequency location ingestion & query | Express, Prisma |
-| **[Emergency Alerts](./services/emergency-alerts)** | `/services/emergency-alerts` | Real-time critical event handling | NestJS, BullMQ, Redis |
-| **[Student Presence](./services/student-presence)** | `/services/student-presence` | BLE SmartTag processing & attendance | NestJS, Socket.IO |
-| **[Video Service](./services/video-service)** | `/services/video-service` | Secure video upload & metadata management | NestJS, MinIO |
-| **[Student Management](./services/student-management)** | `/services/student-management` | Enrollment and roster management | NestJS, TypeORM |
-| **[Compliance Management](./services/compliance-management)** | `/services/compliance-management` | Inspections and audit logs | NestJS, TypeORM |
+| Service                                                       | Path                              | Description                                 | Tech Stack                  |
+| ------------------------------------------------------------- | --------------------------------- | ------------------------------------------- | --------------------------- |
+| **[API Gateway](./services/api-gateway)**                     | `/services/api-gateway`           | Unified entry point, Auth, Data Aggregation | NestJS, JWT                 |
+| **[GPS Tracking](./services/gps-tracking)**                   | `/services/gps-tracking`          | High-frequency location ingestion & query   | Express, Prisma             |
+| **[Emergency Alerts](./services/emergency-alerts)**           | `/services/emergency-alerts`      | Real-time critical event handling           | NestJS, BullMQ, Redis       |
+| **[Student Presence](./services/student-presence)**           | `/services/student-presence`      | BLE SmartTag processing & attendance        | NestJS, Socket.IO           |
+| **[Video Service](./services/video-service)**                 | `/services/video-service`         | Secure video upload & metadata management   | NestJS, MinIO               |
+| **[Student Management](./services/student-management)**       | `/services/student-management`    | Enrollment and roster management            | NestJS, TypeORM             |
+| **[Compliance Management](./services/compliance-management)** | `/services/compliance-management` | Inspections and audit logs                  | NestJS, TypeORM             |
+| **[Notification Service](./services/notification-service)**   | `/services/notification-service`  | Multi-channel parent notification delivery  | NestJS, BullMQ, FCM, Twilio |
 
 ## 🚀 Getting Started
 
@@ -51,6 +52,7 @@ The project is built as a monorepo containing multiple microservices and fronten
 To start the entire backend infrastructure:
 
 1. **Clone the repository**:
+
    ```bash
    git clone https://github.com/arvinddhasmana/SBTM_AntiGravity.git
    cd SBTM_AntiGravity
@@ -104,7 +106,6 @@ Detailed documentation is available in the `docs/` folder. Start with the docume
 - **[Demo Setup Guide](./docs/Demo/DEMO_SETUP_GUIDE.md)**: Complete guide for setting up the demo environment.
 - **[Live Demo Script](./docs/Demo/LiveDemoScript.md)**: Step-by-step script for conducting live demos.
 - **[Testing Guide](./docs/Test/TestingGuide.md)**: Operational verification guidance and current smoke-test coverage.
-
 
 ## 🧪 Testing
 

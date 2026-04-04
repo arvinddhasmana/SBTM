@@ -51,6 +51,7 @@ services:
       - VIDEO_SERVICE_URL=http://video-service:3005
       - STUDENT_SERVICE_URL=http://student-management:3006
       - COMPLIANCE_SERVICE_URL=http://compliance-management:3007
+      - NOTIFICATION_SERVICE_URL=http://notification-service:3008
       - CORS_ORIGINS=http://localhost:3000,http://localhost:5173,http://localhost:5174
       - OSRM_BASE_URL=http://router.project-osrm.org
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
@@ -189,6 +190,31 @@ services:
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
     depends_on:
       postgres:
+        condition: service_healthy
+
+  notification-service:
+    build:
+      context: .
+      dockerfile: services/notification-service/Dockerfile
+    ports:
+      - '3008:3008'
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=mysecretpassword
+      - DB_DATABASE=sbms
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - PORT=3008
+      - FCM_DRY_RUN=true
+      - EMAIL_DRY_RUN=true
+      - SMS_DRY_RUN=true
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
 
   parent-app:

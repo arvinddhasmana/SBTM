@@ -51,6 +51,10 @@ services:
     deploy:
       replicas: 0
 
+  notification-service:
+    deploy:
+      replicas: 0
+
   parent-app:
     deploy:
       replicas: 0

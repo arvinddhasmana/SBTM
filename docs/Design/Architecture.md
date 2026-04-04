@@ -75,7 +75,7 @@ flowchart LR
     Redis[Redis and BullMQ]
     Postgres[PostgreSQL]
     OSRM[OSRM Router]
-    Notify[Future Notification Service]
+    Notify[Notification Service]
 
     Admin --> Gateway
     Driver --> Gateway
@@ -87,6 +87,7 @@ flowchart LR
     Gateway --> Compliance
     Gateway --> Video
     Gateway --> OSRM
+    Gateway --> Notify
     Alerts --> Redis
     Presence --> Redis
     GPS --> Postgres
@@ -96,6 +97,7 @@ flowchart LR
     Compliance --> Postgres
     Video --> Postgres
     Redis --> Notify
+    Notify --> Postgres
 ```
 
 ## Source-of-Truth Boundaries

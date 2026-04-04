@@ -15,6 +15,9 @@ import { NotificationsModule } from '../notifications/notifications.module';
     BullModule.registerQueue({
       name: 'alerts',
     }),
+    BullModule.registerQueue({
+      name: 'notifications',
+    }),
     RealtimeModule,
     NotificationsModule,
   ],

@@ -32,6 +32,7 @@ ALL_SERVICES=(
     "video-service"
     "student-management"
     "compliance-management"
+    "notification-service"
 )
 
 SERVICE_COMMANDS=(
@@ -42,6 +43,7 @@ SERVICE_COMMANDS=(
     "video-service:npm run start:dev"
     "student-management:npm run start:dev"
     "compliance-management:npm run start:dev"
+    "notification-service:npm run start:dev"
 )
 
 INFRA_ONLY=false

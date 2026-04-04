@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
+import { getQueueToken } from '@nestjs/bullmq';
 import { DataSource } from 'typeorm';
 import { AlertsProcessor } from './alerts.processor';
 import {
@@ -22,6 +23,10 @@ describe('AlertsProcessor', () => {
     query: jest.fn(),
   };
 
+  const mockNotificationsQueue = {
+    add: jest.fn().mockResolvedValue({ id: 'notif-job-1' }),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -33,6 +38,10 @@ describe('AlertsProcessor', () => {
         {
           provide: DataSource,
           useValue: mockDataSource,
+        },
+        {
+          provide: getQueueToken('notifications'),
+          useValue: mockNotificationsQueue,
         },
       ],
     }).compile();
@@ -78,11 +87,12 @@ describe('AlertsProcessor', () => {
 
     expect(result).toEqual({ processed: true, recipientCount: 2 });
     expect(mockLogRepo.save).toHaveBeenCalledTimes(2);
+    expect(mockNotificationsQueue.add).toHaveBeenCalledTimes(2);
     expect(mockLogRepo.create).toHaveBeenCalledWith(
       expect.objectContaining({
         alertId: 'alert-123',
         channel: NotificationChannel.PUSH,
-        status: NotificationStatus.SENT,
+        status: NotificationStatus.PENDING,
       }),
     );
   });

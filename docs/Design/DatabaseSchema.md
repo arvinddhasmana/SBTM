@@ -19,6 +19,7 @@ This document summarizes the persisted data structures currently visible in the 
 | Student Management    | `students`                                                                                        | `school_id`                      |
 | Compliance Management | `driver_compliance`, `vehicle_inspections`, `audit_logs`                                          | `school_id`                      |
 | Video Service         | `video_events`, access logs                                                                       | `school_id`                      |
+| Notification Service  | `device_tokens`, `notification_preferences`, `notification_delivery_log`                          | `schoolId`                       |
 
 ## Logical Relationships
 
@@ -36,19 +37,22 @@ erDiagram
     ROUTE ||--o{ VIDEO_EVENT : references
     VEHICLE ||--o{ VEHICLE_INSPECTION : inspected_by
     USER ||--o{ AUDIT_LOG : produces
+    USER ||--o{ DEVICE_TOKEN : registers
+    USER ||--o{ NOTIFICATION_PREFERENCE : configures
+    NOTIFICATION_PREFERENCE }o--|| NOTIFICATION_DELIVERY_LOG : governs
 ```
 
 ## Core Tables
 
 ### API Gateway Identity and Tenancy
 
-| Table           | Key Columns                                                                                                                                                                    | Notes                                                                                |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
-| `users`         | `id`, `email`, `passwordHash` (nullable), `role`, `schoolId`, `boardId`, `driverId`, `childRouteIds`, `assignedRouteIds`, `isActive`, `invitationToken`, `invitationExpiresAt` | Role and route-assignment context lives here. Invitation-based onboarding supported. |
-| `school_boards` | `id`, `name`                                                                                                                                                                   | Board catalog                                                                        |
-| `schools`       | `id`, `name`, `boardId`                                                                                                                                                        | School-to-board relationship                                                         |
-| `routes`        | `id`, `schoolId`, `name`, `direction`, `vehicleId`, `startTime`, `estimatedDuration`                                                                                           | Unique on `schoolId + name`                                                          |
-| `vehicles`      | `id`, `schoolId`, `licensePlate`, `status`                                                                                                                                     | Unique on `schoolId + licensePlate`                                                  |
+| Table           | Key Columns                                                                                                                                                                                        | Notes                                                                                                                  |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `users`         | `id`, `email`, `passwordHash` (nullable), `role`, `phone` (nullable), `schoolId`, `boardId`, `driverId`, `childRouteIds`, `assignedRouteIds`, `isActive`, `invitationToken`, `invitationExpiresAt` | Role and route-assignment context lives here. Invitation-based onboarding supported. Phone used for SMS notifications. |
+| `school_boards` | `id`, `name`                                                                                                                                                                                       | Board catalog                                                                                                          |
+| `schools`       | `id`, `name`, `boardId`                                                                                                                                                                            | School-to-board relationship                                                                                           |
+| `routes`        | `id`, `schoolId`, `name`, `direction`, `vehicleId`, `startTime`, `estimatedDuration`                                                                                                               | Unique on `schoolId + name`                                                                                            |
+| `vehicles`      | `id`, `schoolId`, `licensePlate`, `status`                                                                                                                                                         | Unique on `schoolId + licensePlate`                                                                                    |
 
 ### Student and Presence Domain
 
@@ -82,6 +86,14 @@ erDiagram
 | `driver_compliance`   | `id`, `driver_id`, `school_id`, expiry dates, `status`                                                                | Unique on `driver_id`            |
 | `vehicle_inspections` | `id`, `vehicle_id`, `driver_id`, `school_id`, `type`, `is_passed`, `checklist_json`, `photo_urls`                     | Inspection history               |
 | `audit_logs`          | `id`, `user_id`, `school_id`, `action`, `resource`, `resource_id`, `details`, `ip_address`, `user_agent`, `createdAt` | Operational and compliance trail |
+
+### Notification Service Domain
+
+| Table                       | Key Columns                                                                                                                  | Notes                                                                  |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `device_tokens`             | `id`, `userId`, `schoolId`, `token`, `platform` (android/ios/web), `isActive`                                                | Unique on `userId + token`. Indexed on `userId, isActive`              |
+| `notification_preferences`  | `id`, `userId`, `schoolId`, `eventType`, `channel`, `enabled`                                                                | Unique on `userId + eventType + channel`. EMERGENCY cannot be disabled |
+| `notification_delivery_log` | `id`, `schoolId`, `recipientUserId`, `eventType`, `eventSourceId`, `channel`, `status`, `providerMessageId`, `failureReason` | Unified audit trail for all notification deliveries                    |
 
 ## Tenant and Privacy Notes
 

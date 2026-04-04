@@ -1,4 +1,3 @@
-
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BullModule } from '@nestjs/bullmq';
@@ -11,16 +10,19 @@ import { TagsModule } from '../tags/tags.module';
 import { RealtimeModule } from '../realtime/realtime.module';
 
 @Module({
-    imports: [
-        TypeOrmModule.forFeature([PresenceEvent, PresenceNotificationLog]),
-        BullModule.registerQueue({
-            name: 'presence',
-        }),
-        TagsModule,
-        RealtimeModule,
-    ],
-    controllers: [PresenceController],
-    providers: [PresenceService, PresenceProcessor],
-    exports: [PresenceService],
+  imports: [
+    TypeOrmModule.forFeature([PresenceEvent, PresenceNotificationLog]),
+    BullModule.registerQueue({
+      name: 'presence',
+    }),
+    BullModule.registerQueue({
+      name: 'notifications',
+    }),
+    TagsModule,
+    RealtimeModule,
+  ],
+  controllers: [PresenceController],
+  providers: [PresenceService, PresenceProcessor],
+  exports: [PresenceService],
 })
-export class PresenceModule { }
+export class PresenceModule {}

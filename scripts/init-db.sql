@@ -18,10 +18,15 @@ CREATE EXTENSION IF NOT EXISTS postgis;
 -- Drop existing tables and types to ensure a clean slate (CASCADE to handle FKs)
 DROP TABLE IF EXISTS emergency_alert CASCADE;
 DROP TABLE IF EXISTS alert_notification_log CASCADE;
+DROP TABLE IF EXISTS notification_delivery_log CASCADE;
+DROP TABLE IF EXISTS notification_preferences CASCADE;
+DROP TABLE IF EXISTS device_tokens CASCADE;
 DROP TYPE IF EXISTS emergency_event_type_enum CASCADE;
 DROP TYPE IF EXISTS emergency_alert_status_enum CASCADE;
 DROP TYPE IF EXISTS notification_channel_enum CASCADE;
 DROP TYPE IF EXISTS notification_status_enum CASCADE;
+DROP TYPE IF EXISTS delivery_channel_enum CASCADE;
+DROP TYPE IF EXISTS delivery_status_enum CASCADE;
 DROP TABLE IF EXISTS route_deviation_events CASCADE;
 DROP TABLE IF EXISTS route_geofences CASCADE;
 DROP TABLE IF EXISTS route_lifecycle_events CASCADE;
@@ -68,6 +73,7 @@ CREATE TABLE users (
   role TEXT NOT NULL,
   "firstName" TEXT NULL,
   "lastName" TEXT NULL,
+  phone VARCHAR(20) NULL,
   "driverId" TEXT NULL,
   "childRouteIds" TEXT NULL,
   "assignedRouteIds" TEXT NULL,
@@ -231,7 +237,7 @@ CREATE TABLE emergency_alert (
 );
 
 CREATE TYPE notification_channel_enum AS ENUM ('PUSH', 'EMAIL', 'SMS');
-CREATE TYPE notification_status_enum AS ENUM ('SENT', 'FAILED');
+CREATE TYPE notification_status_enum AS ENUM ('SENT', 'FAILED', 'PENDING');
 
 CREATE TABLE alert_notification_log (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -241,6 +247,53 @@ CREATE TABLE alert_notification_log (
     "status" notification_status_enum NOT NULL,
     "timestamp" TIMESTAMP DEFAULT NOW()
 );
+
+-- Notification Service Tables (Phase A)
+CREATE TABLE device_tokens (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    "userId" UUID NOT NULL,
+    "schoolId" UUID NOT NULL,
+    token VARCHAR(512) NOT NULL,
+    platform VARCHAR(10) NOT NULL CHECK (platform IN ('android', 'ios', 'web')),
+    "isActive" BOOLEAN NOT NULL DEFAULT TRUE,
+    "createdAt" TIMESTAMP DEFAULT NOW(),
+    "updatedAt" TIMESTAMP DEFAULT NOW(),
+    CONSTRAINT "UQ_device_token_user_token" UNIQUE ("userId", token)
+);
+CREATE INDEX "IDX_device_tokens_user_active" ON device_tokens ("userId", "isActive");
+CREATE INDEX "IDX_device_tokens_school" ON device_tokens ("schoolId");
+
+CREATE TABLE notification_preferences (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    "userId" UUID NOT NULL,
+    "schoolId" UUID NOT NULL,
+    "eventType" VARCHAR(50) NOT NULL,
+    channel VARCHAR(10) NOT NULL,
+    enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    "createdAt" TIMESTAMP DEFAULT NOW(),
+    "updatedAt" TIMESTAMP DEFAULT NOW(),
+    CONSTRAINT "UQ_notif_pref_user_event_channel" UNIQUE ("userId", "eventType", channel)
+);
+CREATE INDEX "IDX_notif_pref_user_school" ON notification_preferences ("userId", "schoolId");
+
+CREATE TYPE delivery_channel_enum AS ENUM ('PUSH', 'EMAIL', 'SMS');
+CREATE TYPE delivery_status_enum AS ENUM ('PENDING', 'SENT', 'DELIVERED', 'FAILED');
+
+CREATE TABLE notification_delivery_log (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    "schoolId" UUID NOT NULL,
+    "recipientUserId" UUID,
+    "eventType" VARCHAR(50) NOT NULL,
+    "eventSourceId" UUID,
+    channel delivery_channel_enum NOT NULL,
+    status delivery_status_enum NOT NULL DEFAULT 'PENDING',
+    "providerMessageId" VARCHAR(255),
+    "failureReason" TEXT,
+    "createdAt" TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX "IDX_delivery_log_user_created" ON notification_delivery_log ("recipientUserId", "createdAt" DESC);
+CREATE INDEX "IDX_delivery_log_school" ON notification_delivery_log ("schoolId");
+CREATE INDEX "IDX_delivery_log_event_source" ON notification_delivery_log ("eventSourceId");
 
 
 

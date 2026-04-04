@@ -59,13 +59,16 @@ sequenceDiagram
 | Parent App -> API Gateway -> tracking and alert data | Child visibility                         | Partial, polling-heavy |
 | Admin Dashboard -> API Gateway -> domain services    | Operations monitoring and administration | Implemented            |
 | Alerts and Presence -> BullMQ                        | Event publication                        | Partial                |
-| BullMQ -> Notification workflow                      | Parent-facing delivery                   | Planned                |
+| BullMQ -> Notification workflow                      | Parent-facing delivery                   | Implemented (Phase A)  |
+| Notification Service -> FCM / Email / SMS            | Multi-channel parent delivery            | Implemented (dry-run)  |
 
 ## External Dependencies
 
 | Dependency                        | Purpose                                                 | Status                                          |
 | --------------------------------- | ------------------------------------------------------- | ----------------------------------------------- |
-| Push provider such as FCM or APNs | Parent alert and presence notifications                 | Planned                                         |
+| Push provider such as FCM or APNs | Parent alert and presence notifications                 | Implemented (dry-run mode, Phase A)             |
+| Email provider (SMTP)             | Non-urgent parent notifications and daily summaries     | Implemented (dry-run mode, Phase A)             |
+| SMS provider (Twilio)             | Emergency escalation SMS delivery                       | Implemented (dry-run mode, Phase A)             |
 | OSRM (self-hosted)                | Route geometry, optimization, and distance calculations | Implemented (v5.27.1, Ottawa region, port 5000) |
 | Object storage                    | Video upload and playback                               | Implemented via MinIO or local storage          |
 
@@ -73,7 +76,6 @@ sequenceDiagram
 
 - GPS currently persists location data without publishing `location.updated` events.
 - Parent alert delivery still relies heavily on polling despite backend SSE support.
-- Notification fan-out is not yet a complete standalone consuming workflow.
 - Service-to-service authentication remains a planned hardening step.
 
 ## Event Envelope Expectations

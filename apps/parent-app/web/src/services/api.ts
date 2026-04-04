@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { Child } from '../types';
+import type { Child, NotificationPreference } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
@@ -110,5 +110,20 @@ export const parentApi = {
 
   async cancelAbsence(absenceId: string): Promise<void> {
     await apiClient.delete(`/api/v1/absences/${absenceId}`);
+  },
+
+  async getNotificationPreferences(): Promise<NotificationPreference[]> {
+    const response = await apiClient.get<NotificationPreference[]>(
+      '/api/v1/notification-preferences',
+    );
+    return response.data;
+  },
+
+  async updateNotificationPreferences(prefs: NotificationPreference[]): Promise<void> {
+    await apiClient.put('/api/v1/notification-preferences', { preferences: prefs });
+  },
+
+  async registerDeviceToken(token: string, platform: string): Promise<void> {
+    await apiClient.post('/api/v1/device-tokens', { token, platform });
   },
 };

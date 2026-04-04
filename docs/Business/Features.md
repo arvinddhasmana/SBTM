@@ -64,7 +64,7 @@ flowchart LR
 | FEAT-ROUTE-002      | Route intelligence and optimization               | Partial     | FEAT-ROUTE-001, FEAT-TRACKING-001   | FR-ROUTE-002                                         | Route planner, GPS intelligence                       |
 | FEAT-VIDEO-001      | Video event registration and review               | Implemented | FEAT-TENANCY-001                    | FR-VIDEO-001                                         | Video Service, Admin Dashboard                        |
 | FEAT-PARENT-001     | Parent live tracking experience                   | Partial     | FEAT-TRACKING-001, FEAT-STUDENT-001 | FR-PARENT-001                                        | Parent App                                            |
-| FEAT-NOTIFY-001     | Parent-facing safety notifications                | Planned     | FEAT-ALERTS-001, FEAT-PRESENCE-001  | FR-PARENT-002, FR-PRESENCE-003, NFR-PERF-002         | Emergency Alerts, Notification Router, Parent App     |
+| FEAT-NOTIFY-001     | Parent-facing safety notifications                | Implemented | FEAT-ALERTS-001, FEAT-PRESENCE-001  | FR-PARENT-002, FR-PRESENCE-003, NFR-PERF-002         | Emergency Alerts, Notification Service, Parent App    |
 | FEAT-PARENT-002     | Parent exception handling and history             | Planned     | FEAT-NOTIFY-001                     | FR-PARENT-003, PR-CONSENT-001                        | Parent App                                            |
 | FEAT-TENANCY-002    | Tenant onboarding and user provisioning           | Partial     | FEAT-IDENTITY-001, FEAT-TENANCY-001 | FR-ONBOARD-001, FR-ROLE-001, FR-ROLE-002             | API Gateway, Admin Dashboard                          |
 

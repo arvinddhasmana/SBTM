@@ -19,6 +19,7 @@ import Dashboard from './pages/Dashboard';
 import MapPage from './pages/Map';
 import Notifications from './pages/Notifications';
 import AbsenceReport from './pages/AbsenceReport';
+import Settings from './pages/Settings';
 import 'leaflet/dist/leaflet.css';
 
 // Protected Route Wrapper
@@ -57,6 +58,7 @@ function App() {
               <Route path="map/:childId" element={<MapPage />} />
               <Route path="notifications" element={<Notifications />} />
               <Route path="absence" element={<AbsenceReport />} />
+              <Route path="settings" element={<Settings />} />
             </Route>
 
             <Route path="*" element={<Navigate to="/dashboard" replace />} />

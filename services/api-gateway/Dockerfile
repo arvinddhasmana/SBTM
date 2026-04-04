@@ -17,6 +17,7 @@ COPY services/gps-tracking/package.json          ./services/gps-tracking/
 COPY services/student-management/package.json    ./services/student-management/
 COPY services/student-presence/package.json      ./services/student-presence/
 COPY services/video-service/package.json         ./services/video-service/
+COPY services/notification-service/package.json  ./services/notification-service/
 
 RUN pnpm install --frozen-lockfile
 

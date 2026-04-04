@@ -1,0 +1,194 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import { DataSource } from 'typeorm';
+import { NotificationRouterService } from './notification-router.service';
+import { PreferencesService } from '../preferences/preferences.service';
+import { TokensService } from '../tokens/tokens.service';
+import { DeliveryLogService } from '../delivery/delivery-log.service';
+import { FcmAdapter } from '../channels/fcm/fcm.adapter';
+import { EmailAdapter } from '../channels/email/email.adapter';
+import { SmsAdapter } from '../channels/sms/sms.adapter';
+
+describe('NotificationRouterService', () => {
+  let service: NotificationRouterService;
+  let mockPreferences: any;
+  let mockTokens: any;
+  let mockDeliveryLog: any;
+  let mockFcm: any;
+  let mockEmail: any;
+  let mockSms: any;
+  let mockDataSource: any;
+
+  beforeEach(async () => {
+    mockPreferences = {
+      getEnabledChannels: jest.fn().mockResolvedValue(['PUSH']),
+    };
+    mockTokens = {
+      getActiveTokensForUser: jest
+        .fn()
+        .mockResolvedValue([{ token: 'fcm-token-1' }]),
+      deactivateByToken: jest.fn(),
+    };
+    mockDeliveryLog = {
+      create: jest.fn().mockResolvedValue({ id: 'log-1' }),
+    };
+    mockFcm = {
+      sendToDevices: jest
+        .fn()
+        .mockResolvedValue([{ success: true, messageId: 'msg-1' }]),
+    };
+    mockEmail = {
+      send: jest
+        .fn()
+        .mockResolvedValue({ success: true, messageId: 'email-1' }),
+    };
+    mockSms = {
+      send: jest.fn().mockResolvedValue({ success: true, messageId: 'sms-1' }),
+    };
+    mockDataSource = {
+      query: jest
+        .fn()
+        .mockResolvedValue([
+          { email: 'parent@test.com', phone: '+15551234567' },
+        ]),
+    };
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        NotificationRouterService,
+        { provide: PreferencesService, useValue: mockPreferences },
+        { provide: TokensService, useValue: mockTokens },
+        { provide: DeliveryLogService, useValue: mockDeliveryLog },
+        { provide: FcmAdapter, useValue: mockFcm },
+        { provide: EmailAdapter, useValue: mockEmail },
+        { provide: SmsAdapter, useValue: mockSms },
+        { provide: DataSource, useValue: mockDataSource },
+      ],
+    }).compile();
+
+    service = module.get<NotificationRouterService>(NotificationRouterService);
+  });
+
+  const baseRequest = {
+    eventType: 'BOARD',
+    eventSourceId: 'event-1',
+    recipientUserId: 'user-1',
+    schoolId: 'school-1',
+    routeId: 'route-1',
+    studentId: 'student-1',
+  };
+
+  it('should route BOARD event via PUSH', async () => {
+    await service.route(baseRequest);
+
+    expect(mockPreferences.getEnabledChannels).toHaveBeenCalledWith(
+      'user-1',
+      'BOARD',
+    );
+    expect(mockFcm.sendToDevices).toHaveBeenCalledWith(
+      ['fcm-token-1'],
+      expect.objectContaining({
+        title: 'Child Boarded',
+        body: 'Your child has boarded the bus.',
+      }),
+    );
+    expect(mockDeliveryLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        channel: 'PUSH',
+        status: 'SENT',
+        schoolId: 'school-1',
+      }),
+    );
+  });
+
+  it('should route EMERGENCY via PUSH and SMS', async () => {
+    mockPreferences.getEnabledChannels.mockResolvedValue(['PUSH', 'SMS']);
+
+    await service.route({
+      ...baseRequest,
+      eventType: 'EMERGENCY',
+      emergencyType: 'PANIC_BUTTON',
+    });
+
+    expect(mockFcm.sendToDevices).toHaveBeenCalled();
+    expect(mockSms.send).toHaveBeenCalledWith(
+      '+15551234567',
+      expect.stringContaining('Emergency'),
+    );
+  });
+
+  it('should escalate to SMS if PUSH fails for EMERGENCY', async () => {
+    mockPreferences.getEnabledChannels.mockResolvedValue(['PUSH']);
+    mockFcm.sendToDevices.mockResolvedValue([
+      { success: false, error: 'UNAVAILABLE' },
+    ]);
+
+    await service.route({
+      ...baseRequest,
+      eventType: 'EMERGENCY',
+      emergencyType: 'PANIC_BUTTON',
+    });
+
+    expect(mockSms.send).toHaveBeenCalled();
+  });
+
+  it('should not escalate to SMS for non-EMERGENCY push failure', async () => {
+    mockFcm.sendToDevices.mockResolvedValue([
+      { success: false, error: 'UNAVAILABLE' },
+    ]);
+
+    await service.route(baseRequest);
+
+    expect(mockSms.send).not.toHaveBeenCalled();
+  });
+
+  it('should log FAILED when no device tokens exist', async () => {
+    mockTokens.getActiveTokensForUser.mockResolvedValue([]);
+
+    await service.route(baseRequest);
+
+    expect(mockDeliveryLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        channel: 'PUSH',
+        status: 'FAILED',
+        failureReason: 'NO_DEVICE_TOKENS',
+      }),
+    );
+  });
+
+  it('should deactivate invalid FCM tokens', async () => {
+    mockFcm.sendToDevices.mockResolvedValue([
+      { success: false, error: 'INVALID_TOKEN' },
+    ]);
+
+    await service.route(baseRequest);
+
+    expect(mockTokens.deactivateByToken).toHaveBeenCalledWith('fcm-token-1');
+  });
+
+  it('should route EMAIL channel', async () => {
+    mockPreferences.getEnabledChannels.mockResolvedValue(['EMAIL']);
+
+    await service.route(baseRequest);
+
+    expect(mockEmail.send).toHaveBeenCalledWith(
+      'parent@test.com',
+      'Child Boarded',
+      expect.stringContaining('boarded'),
+    );
+  });
+
+  it('should log FAILED when no email address exists', async () => {
+    mockPreferences.getEnabledChannels.mockResolvedValue(['EMAIL']);
+    mockDataSource.query.mockResolvedValue([{ email: null, phone: null }]);
+
+    await service.route(baseRequest);
+
+    expect(mockDeliveryLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        channel: 'EMAIL',
+        status: 'FAILED',
+        failureReason: 'NO_EMAIL_ADDRESS',
+      }),
+    );
+  });
+});
