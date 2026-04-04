@@ -20,31 +20,80 @@
 
 ### C4 Context Diagram: Target Integration Architecture
 
+```mermaid
+C4Context
+    title SBTM Integration Architecture - Target State
+
+    System(sbtm, "SBTM Platform", "School Bus Transport Management")
+
+    System_Ext(ocsb_sis, "OCSB SIS", "Student enrollment & parent contacts")
+    System_Ext(ocdsb_sis, "OCDSB SIS", "Student enrollment & parent contacts")
+    System_Ext(osta_fleet, "OSTA Fleet DB", "Vehicle inventory & maintenance")
+    System_Ext(legacy_routes, "Legacy Data", "Excel/CSV route definitions")
+
+    System_Ext(osrm, "OSRM Engine", "Route optimization")
+    System_Ext(geocoder, "Geocoding", "Nominatim / Google Maps")
+
+    System_Ext(fcm, "Firebase", "Push notifications")
+    System_Ext(email_svc, "Email Svc", "AWS SES / SMTP")
+    System_Ext(sms_gw, "SMS Gateway", "Twilio / AWS SNS")
+
+    Rel(ocsb_sis, sbtm, "Syncs students", "Batch/API")
+    Rel(ocdsb_sis, sbtm, "Syncs students", "Batch/API")
+    Rel(osta_fleet, sbtm, "Syncs fleet", "API")
+    Rel(legacy_routes, sbtm, "Migrates data", "CSV")
+
+    Rel(sbtm, osrm, "Optimizes", "HTTPS")
+    Rel(sbtm, geocoder, "Resolves", "HTTPS")
+    Rel(sbtm, fcm, "Push alerts", "HTTPS")
+    Rel(sbtm, email_svc, "Sends email", "SMTP")
+    Rel(sbtm, sms_gw, "Sends SMS", "HTTPS")
 ```
-[C4 Context]
-title: SBTM Integration Architecture - Target State
 
-System(sbtm, "SBTM Platform", "School Bus Transport Management")
+Mermaid version of diagram
 
-System_Ext(ocsb_sis, "OCSB Student Information System", "Ottawa Catholic School Board\nStudent enrollment, parent contacts")
-System_Ext(ocdsb_sis, "OCDSB Student Information System", "Ottawa-Carleton District School Board\nStudent enrollment, parent contacts")
-System_Ext(osta_fleet, "OSTA Fleet Database", "Vehicle inventory, status,\nmaintenance records")
-System_Ext(legacy_routes, "Legacy Route Data", "Excel/CSV files with existing\nroute definitions, stops, schedules")
-System_Ext(osrm, "OSRM Routing Engine", "Self-hosted route optimization\nand polyline generation")
-System_Ext(geocoder, "Geocoding Service", "Nominatim (self-hosted) or\nGoogle/Mapbox Geocoding API")
-System_Ext(fcm, "Firebase Cloud Messaging", "Push notifications to\nparent and admin devices")
-System_Ext(email_svc, "Email Service", "AWS SES or SMTP\nfor notifications and reports")
-System_Ext(sms_gw, "SMS Gateway", "Twilio or AWS SNS\nfor emergency SMS")
+```mermaid
+graph TD
+    %% Define Groups
+    subgraph SIS ["School Information Systems"]
+        OCSB["OCSB SIS<br/>(Student enrollment)"]
+        OCDSB["OCDSB SIS<br/>(Student enrollment)"]
+    end
 
-ocsb_sis --> sbtm : "Student data sync (batch/API)"
-ocdsb_sis --> sbtm : "Student data sync (batch/API)"
-osta_fleet --> sbtm : "Fleet data sync"
-legacy_routes --> sbtm : "One-time migration"
-sbtm --> osrm : "Route optimization (existing)"
-sbtm --> geocoder : "Address geocoding (new)"
-sbtm --> fcm : "Push notifications (new)"
-sbtm --> email_svc : "Email delivery (new)"
-sbtm --> sms_gw : "SMS delivery (new)"
+    subgraph Data ["Local Data Sources"]
+        Fleet[("OSTA Fleet DB<br/>(Vehicle inventory)")]
+        Legacy["Legacy Route Data<br/>(Excel/CSV)"]
+    end
+
+    SBTM[["SBTM Platform<br/>(Core Management)"]]
+
+    subgraph Infra ["Routing & Maps"]
+        OSRM["OSRM Engine<br/>(Optimization)"]
+        Geo["Geocoding Service<br/>(Nominatim/Google)"]
+    end
+
+    subgraph Comms ["Notification Gateway"]
+        FCM["Firebase FCM<br/>(Push)"]
+        Email["Email Service<br/>(AWS SES)"]
+        SMS["SMS Gateway<br/>(Twilio)"]
+    end
+
+    %% Relationships with detailed protocols
+    OCSB -- "Student Sync | Batch/API" --> SBTM
+    OCDSB -- "Student Sync | Batch/API" --> SBTM
+    Fleet -- "Fleet Sync | API" --> SBTM
+    Legacy -- "One-time Migration | CSV" --> SBTM
+
+    SBTM -- "Optimize | HTTPS" --> OSRM
+    SBTM -- "Geocode | HTTPS" --> Geo
+    SBTM -- "Push | HTTPS" --> FCM
+    SBTM -- "Email | SMTP" --> Email
+    SBTM -- "SMS | HTTPS" --> SMS
+
+    %% Visual Styling
+    style SBTM fill:#2d3e50,color:#fff,stroke:#333,stroke-width:4px
+    style OCSB fill:#f5f5f5
+    style OCDSB fill:#f5f5f5
 ```
 
 ---
