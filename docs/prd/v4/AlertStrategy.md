@@ -59,41 +59,39 @@ Informational notifications keep parents aware of their child's transport status
 | ROUTE_CHANGE      | School Admin modifies route affecting child          | Affected parents         | Push + email                               |
 | ETA_UPDATE        | Significant ETA change (>5 min) for child's stop     | Parent of specific child | Push notification                          |
 
-### C4 Component Diagram: Alert Flow
+### Alert Processing Architecture Diagram
 
-```
-[C4 Component]
-title: Alert Processing Architecture
+```mermaid
+graph TD
+    DriverApp["Driver App<br/>(Triggers panic,<br/>reports incidents)"]
+    GPSService["GPS Tracking<br/>(Detects deviations,<br/>monitors geofences)"]
+    PresenceService["Student Presence<br/>(Board/alight events)"]
+    ComplianceService["Compliance<br/>(Expiry checks)"]
 
-Component(driver_app, "Driver App", "Triggers panic, reports incidents")
-Component(gps_service, "GPS Tracking", "Detects deviations, monitors geofences")
-Component(presence_service, "Student Presence", "Board/alight events")
-Component(compliance_service, "Compliance", "Expiry checks via scheduled jobs")
+    AlertClassifier["Alert Classifier<br/>(NEW: Classifies<br/>into Tier 1/2/3)"]
+    ConfirmationEngine["Confirmation Engine<br/>(NEW: Holds Tier 1<br/>alerts for confirmation)"]
+    NotificationRouter["Notification Router<br/>(NEW: Routes to<br/>correct audience)"]
 
-Component(alert_classifier, "Alert Classifier", "New: classifies event into Tier 1/2/3")
-Component(confirmation_engine, "Confirmation Engine", "New: holds Tier 1 alerts for admin confirmation")
-Component(notification_router, "Notification Router", "New: routes to correct audience via correct channel")
+    PushProvider["Push Provider<br/>(FCM/APNs)"]
+    EmailService["Email Service<br/>(SMTP/SES)"]
+    SMSGateway["SMS Gateway<br/>(Twilio/SNS)"]
+    WebSocket["WebSocket<br/>(Real-time admin UI)"]
+    SSE["SSE Stream<br/>(Real-time parent app)"]
 
-Component(push_provider, "Push Provider", "FCM/APNs")
-Component(email_service, "Email Service", "SMTP/SES")
-Component(sms_gateway, "SMS Gateway", "Twilio/SNS")
-Component(websocket, "WebSocket", "Real-time admin UI")
-Component(sse, "SSE Stream", "Real-time parent app")
+    DriverApp -->|"PANIC,<br/>MEDICAL,<br/>INCIDENT"| AlertClassifier
+    GPSService -->|"ROUTE_DEVIATION,<br/>LATE_ARRIVAL"| AlertClassifier
+    PresenceService -->|"CHILD_BOARDED,<br/>CHILD_ALIGHTED<br/>(Tier 3, direct)"| NotificationRouter
+    ComplianceService -->|"COMPLIANCE_EXPIRING<br/>(Tier 2, direct)"| NotificationRouter
 
-driver_app --> alert_classifier : "PANIC, MEDICAL, INCIDENT"
-gps_service --> alert_classifier : "ROUTE_DEVIATION, LATE_ARRIVAL"
-presence_service --> notification_router : "CHILD_BOARDED, CHILD_ALIGHTED (Tier 3, direct)"
-compliance_service --> notification_router : "COMPLIANCE_EXPIRING (Tier 2, direct)"
+    AlertClassifier -->|"Tier 1 events"| ConfirmationEngine
+    AlertClassifier -->|"Tier 2 events<br/>(bypass confirmation)"| NotificationRouter
 
-alert_classifier --> confirmation_engine : "Tier 1 events"
-alert_classifier --> notification_router : "Tier 2 events (bypass confirmation)"
-
-confirmation_engine --> notification_router : "After admin confirms or timeout"
-notification_router --> websocket : "Admin alerts"
-notification_router --> sse : "Parent in-app"
-notification_router --> push_provider : "Parent push"
-notification_router --> email_service : "Email delivery"
-notification_router --> sms_gateway : "SMS escalation"
+    ConfirmationEngine -->|"After admin<br/>confirms or timeout"| NotificationRouter
+    NotificationRouter -->|"Admin alerts"| WebSocket
+    NotificationRouter -->|"Parent in-app"| SSE
+    NotificationRouter -->|"Parent push"| PushProvider
+    NotificationRouter -->|"Email delivery"| EmailService
+    NotificationRouter -->|"SMS escalation"| SMSGateway
 ```
 
 ---

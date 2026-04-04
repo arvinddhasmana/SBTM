@@ -23,37 +23,35 @@ This gap analysis focuses exclusively on business functionality gaps, not techni
 
 The gaps are organized by business domain and prioritized by impact on operational readiness.
 
-## C4 Context Diagram (Current State)
+## System Context - Current State
 
-```
-[C4 Context]
-title: SBTM System Context - Current State
+```mermaid
+graph TB
+    OSTAAdmin["OSTA Admin<br/>(Manages fleet,<br/>cross-board oversight)"]
+    BoardAdmin["Board Admin<br/>(Manages schools<br/>within board)"]
+    SchoolAdmin["School Admin<br/>(Manages routes,<br/>students, drivers)"]
+    Driver["Driver<br/>(Operates bus,<br/>captures presence)"]
+    Parent["Parent<br/>(Tracks child,<br/>receives alerts)"]
 
-Person(osta_admin, "OSTA Admin", "Manages fleet, cross-board oversight")
-Person(board_admin, "Board Admin", "Manages schools within board")
-Person(school_admin, "School Admin", "Manages routes, students, drivers")
-Person(driver, "Driver", "Operates bus, captures presence")
-Person(parent, "Parent", "Tracks child, receives alerts")
+    SBTM["SBTM Platform<br/>(School Bus<br/>Transport Management)"]
 
-System(sbtm, "SBTM Platform", "School Bus Transport Management")
+    OSTAFleet["OSTA Fleet System<br/>(Existing fleet/<br/>vehicle database)"]
+    SIS["School SIS<br/>(Student Info System)"]
+    PushProvider["Push Provider<br/>(FCM/APNs)"]
+    EmailService["Email Service<br/>(SMTP/SES)"]
+    SMSGateway["SMS Gateway<br/>(Twilio/SNS)"]
 
-System_Ext(osta_fleet, "OSTA Fleet System", "Existing fleet/vehicle database")
-System_Ext(sis, "School SIS", "Student Information System")
-System_Ext(push, "Push Provider", "FCM/APNs for notifications")
-System_Ext(email, "Email Service", "SMTP/SES for email")
-System_Ext(sms, "SMS Gateway", "Twilio/SNS for SMS")
+    OSTAAdmin -->|"Fleet assignment,<br/>oversight"| SBTM
+    BoardAdmin -->|"School management,<br/>compliance review"| SBTM
+    SchoolAdmin -->|"Routes, students,<br/>daily ops"| SBTM
+    Driver -->|"GPS, presence,<br/>emergencies"| SBTM
+    Parent -->|"Track bus,<br/>report absence"| SBTM
 
-osta_admin --> sbtm : "Fleet assignment, oversight"
-board_admin --> sbtm : "School management, compliance review"
-school_admin --> sbtm : "Routes, students, daily ops"
-driver --> sbtm : "GPS, presence, emergencies"
-parent --> sbtm : "Track bus, report absence"
-
-sbtm ..> osta_fleet : "NOT INTEGRATED (Gap)"
-sbtm ..> sis : "NOT INTEGRATED (Gap)"
-sbtm ..> push : "NOT INTEGRATED (Gap)"
-sbtm ..> email : "NOT INTEGRATED (Gap)"
-sbtm ..> sms : "NOT INTEGRATED (Gap)"
+    SBTM -.->|"NOT INTEGRATED<br/>(Gap)"| OSTAFleet
+    SBTM -.->|"NOT INTEGRATED<br/>(Gap)"| SIS
+    SBTM -.->|"NOT INTEGRATED<br/>(Gap)"| PushProvider
+    SBTM -.->|"NOT INTEGRATED<br/>(Gap)"| EmailService
+    SBTM -.->|"NOT INTEGRATED<br/>(Gap)"| SMSGateway
 ```
 
 ## Gap Categories

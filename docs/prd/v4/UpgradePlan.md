@@ -64,28 +64,26 @@ Parents can receive push notifications when their child boards or alights the bu
 - Emergency notifications cannot be disabled by parents
 - Notification delivery is logged with status (SENT/DELIVERED/FAILED)
 
-### C4 Component Diagram: Phase A Additions
+### Phase A - Notification Pipeline
 
-```
-[C4 Component]
-title: Phase A - Notification Pipeline
+```mermaid
+graph TD
+    Presence["Presence Service<br/>(Existing)<br/>Board/alight events"]
+    Alerts["Alert Service<br/>(Existing)<br/>Emergency alerts"]
 
-Component(presence, "Presence Service", "Existing", "Board/alight events")
-Component(alerts, "Alert Service", "Existing", "Emergency alerts")
+    NotifRouter["Notification Router<br/>(NEW)<br/>Routes events to<br/>correct channel"]
+    FCMAdapter["FCM Adapter<br/>(NEW)<br/>Firebase Cloud<br/>Messaging"]
+    EmailAdapter["Email Adapter<br/>(NEW)<br/>AWS SES / SMTP"]
+    SMSAdapter["SMS Adapter<br/>(NEW)<br/>Twilio / AWS SNS"]
 
-Component_New(notif_router, "Notification Router", "NEW", "Routes events to correct channel")
-Component_New(fcm_adapter, "FCM Adapter", "NEW", "Firebase Cloud Messaging")
-Component_New(email_adapter, "Email Adapter", "NEW", "AWS SES / SMTP")
-Component_New(sms_adapter, "SMS Adapter", "NEW", "Twilio / AWS SNS")
+    ParentApp["Parent App<br/>(Existing)<br/>Updated with<br/>preference UI"]
 
-Component(parent_app, "Parent App", "Existing", "Updated with preference UI")
-
-presence --> notif_router : "CHILD_BOARDED, CHILD_ALIGHTED"
-alerts --> notif_router : "EMERGENCY events"
-notif_router --> fcm_adapter : "Push notifications"
-notif_router --> email_adapter : "Email delivery"
-notif_router --> sms_adapter : "SMS delivery"
-notif_router --> parent_app : "In-app via SSE (existing)"
+    Presence -->|"CHILD_BOARDED,<br/>CHILD_ALIGHTED"| NotifRouter
+    Alerts -->|"EMERGENCY events"| NotifRouter
+    NotifRouter -->|"Push notifications"| FCMAdapter
+    NotifRouter -->|"Email delivery"| EmailAdapter
+    NotifRouter -->|"SMS delivery"| SMSAdapter
+    NotifRouter -->|"In-app via SSE<br/>(existing)"| ParentApp
 ```
 
 ---

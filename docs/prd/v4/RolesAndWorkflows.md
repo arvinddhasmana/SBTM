@@ -17,29 +17,27 @@
 
 ## 1. Role Hierarchy and Scope
 
-### C4 Container Diagram: Role Access Model
+### SBTM Role Access Model
 
-```
-[C4 Container]
-title: SBTM Role Access Model
+```mermaid
+graph TB
+    SuperAdmin["Super Admin<br/>(Software Vendor)<br/>Initial setup,<br/>board provisioning"]
+    OSTAAdmin["OSTA Admin<br/>Fleet ownership,<br/>cross-board oversight,<br/>cross-board compliance"]
+    BoardAdmin["Board Admin<br/>School lifecycle<br/>within board,<br/>cross-school compliance"]
+    SchoolAdmin["School Admin<br/>Daily operations:<br/>routes, students,<br/>drivers, compliance"]
+    Driver["Driver<br/>Bus operations:<br/>GPS, presence,<br/>pre-trip, emergency"]
+    Parent["Parent<br/>Child tracking,<br/>alerts,<br/>absence reporting"]
 
-Person(super_admin, "Super Admin", "Software Vendor\nInitial setup, board provisioning")
-Person(osta_admin, "OSTA Admin", "Fleet ownership, cross-board oversight,\ncross-board compliance")
-Person(board_admin, "Board Admin", "School lifecycle within board,\ncross-school compliance for board")
-Person(school_admin, "School Admin", "Daily operations: routes, students,\ndrivers, school-level compliance")
-Person(driver, "Driver", "Bus operations: GPS, presence,\npre-trip, emergency")
-Person(parent, "Parent", "Child tracking, alerts,\nabsence reporting")
+    AdminDashboard["Admin Dashboard<br/>(Web)<br/>Shared UI for all admins<br/>Role-based views and controls"]
+    DriverApp["Driver App<br/>(Mobile - Expo)<br/>Route operations and<br/>presence capture"]
+    ParentPortal["Parent Portal<br/>(Web)<br/>Child tracking and<br/>communication"]
 
-Container(admin_ui, "Admin Dashboard", "Web", "Shared UI for Super/OSTA/Board/School admins\nRole-based views and controls")
-Container(driver_app, "Driver App", "Mobile (Expo)", "Route operations and presence capture")
-Container(parent_app, "Parent Portal", "Web", "Child tracking and communication")
-
-super_admin --> admin_ui
-osta_admin --> admin_ui
-board_admin --> admin_ui
-school_admin --> admin_ui
-driver --> driver_app
-parent --> parent_app
+    SuperAdmin --> AdminDashboard
+    OSTAAdmin --> AdminDashboard
+    BoardAdmin --> AdminDashboard
+    SchoolAdmin --> AdminDashboard
+    Driver --> DriverApp
+    Parent --> ParentPortal
 ```
 
 ### Role Definitions
