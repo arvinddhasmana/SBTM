@@ -26,7 +26,7 @@ export interface LiveLocationResponse {
   position: { lat: number; lng: number };
   etaToNextStopMinutes?: number;
   deviationFlag?: boolean;
-  status?: string;
+  status?: 'normal' | 'delay' | 'emergency';
 }
 
 export interface ActiveAlert {

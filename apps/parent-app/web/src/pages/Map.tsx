@@ -1,29 +1,22 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import {
-  MapContainer,
-  TileLayer,
-  Marker,
-  Popup,
-  Polyline,
-  CircleMarker,
-  useMap,
-} from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { useAuth } from '../context/AuthContext';
 import { parentApi } from '../services/api';
 import { queryKeys } from '../services/query-keys';
+import { useAlerts } from '../hooks/useAlerts';
 import { decodePolyline } from '../utils/polyline';
 import type { BusLocationUpdate, Child } from '../types';
 import { ArrowLeft, Navigation } from 'lucide-react';
 
 // Fix for default Leaflet marker icons not showing in React
-import icon from 'leaflet/dist/images/marker-icon.png';
+import iconImg from 'leaflet/dist/images/marker-icon.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
 
 const DefaultIcon = L.icon({
-  iconUrl: icon,
+  iconUrl: iconImg,
   shadowUrl: iconShadow,
   iconSize: [25, 41],
   iconAnchor: [12, 41],
@@ -33,15 +26,37 @@ const DefaultIcon = L.icon({
 
 L.Marker.prototype.options.icon = DefaultIcon;
 
-// Custom Bus Icon using inline SVG (matching admin dashboard style)
-const createBusIcon = () =>
-  L.divIcon({
+/**
+ * Bus status colors matching admin dashboard legend:
+ *   Normal    → #22c55e (green)
+ *   Delayed   → #eab308 (yellow)
+ *   Emergency → #ef4444 (red)
+ */
+type BusStatus = 'normal' | 'delay' | 'emergency';
+
+const BUS_STATUS_COLORS: Record<BusStatus, string> = {
+  normal: '#22c55e',
+  delay: '#eab308',
+  emergency: '#ef4444',
+};
+
+const EMERGENCY_EVENT_TYPES = new Set(['PANIC_BUTTON', 'PANIC_ALERT', 'INCIDENT']);
+const DELAY_EVENT_TYPES = new Set(['LATE_ARRIVAL', 'ROUTE_DEVIATION', 'ROUTE_DIVERSION']);
+
+/** Stale threshold: if last GPS update is older than 2 minutes, bus is not actively running */
+const STALE_THRESHOLD_MS = 2 * 60 * 1000;
+
+function createBusIcon(status: BusStatus) {
+  const bgColor = BUS_STATUS_COLORS[status];
+  const borderColor =
+    status === 'normal' ? '#f59e0b' : status === 'emergency' ? '#b91c1c' : '#a16207';
+  return L.divIcon({
     className: '',
     html: `<div style="
       width:36px;height:36px;
-      background:#22c55e;
+      background:${bgColor};
       border-radius:50%;
-      border:3px solid #f59e0b;
+      border:3px solid ${borderColor};
       box-shadow:0 4px 12px rgba(0,0,0,0.5);
       display:flex;align-items:center;justify-content:center;
     ">
@@ -53,8 +68,54 @@ const createBusIcon = () =>
     iconAnchor: [18, 18],
     popupAnchor: [0, -18],
   });
+}
 
-const busIcon = createBusIcon();
+/**
+ * Admin-style stop marker icon — matching LiveMap.tsx from admin dashboard.
+ * Child's stop: blue (#3b82f6) with white border, larger.
+ * Other stops: transparent gray with subtle border.
+ */
+function createStopIcon(sequence: number, isChildStop: boolean) {
+  const color = isChildStop ? '#3b82f6' : '#9ca3af';
+  const bg = isChildStop ? '#3b82f6' : 'rgba(156,163,175,0.35)';
+  const border = isChildStop ? '2px solid #fff' : '2px solid rgba(156,163,175,0.5)';
+  const size = isChildStop ? 32 : 28;
+  const shadow = isChildStop
+    ? 'box-shadow:0 0 15px #3b82f644, 0 2px 8px rgba(0,0,0,0.4);'
+    : 'box-shadow:0 2px 4px rgba(0,0,0,0.15);';
+  const badgeBorder = isChildStop ? '#3b82f6' : '#9ca3af';
+  const badgeColor = isChildStop ? '#3b82f6' : '#6b7280';
+  const svgFill = isChildStop ? 'white' : 'rgba(75,85,99,0.7)';
+
+  return L.divIcon({
+    className: '',
+    html: `<div style="
+      width:${size}px;height:${size}px;
+      background:${bg};
+      border:${border};
+      border-radius:50%;
+      display:flex;align-items:center;justify-content:center;
+      ${shadow}
+      position:relative;
+    ">
+      <div style="display:flex; flex-direction:column; align-items:center; transform:translateY(-1px);">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="${svgFill}">
+          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+        </svg>
+      </div>
+      <div style="
+        position:absolute; bottom:-4px; right:-4px;
+        width:16px;height:16px; background:#fff; border:2px solid ${badgeBorder};
+        border-radius:50%; display:flex; align-items:center; justify-content:center;
+        font-size:8px; font-weight:900; color:${badgeColor};
+        box-shadow:0 2px 4px rgba(0,0,0,0.2);
+      ">${sequence}</div>
+    </div>`,
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
+    popupAnchor: [0, -size / 2],
+  });
+}
 
 /** Parse WKT POINT(lng lat) to [lat, lng] */
 function parseWktPoint(wkt: string): [number, number] | null {
@@ -109,7 +170,7 @@ const MapPage: React.FC = () => {
     queryKey: queryKeys.route.details(activeRouteId),
     queryFn: () => parentApi.getRouteDetails(activeRouteId),
     enabled: !!activeRouteId,
-    staleTime: 5 * 60_000, // route geometry rarely changes
+    staleTime: 5 * 60_000,
   });
 
   // Decode polyline to coordinates
@@ -133,6 +194,13 @@ const MapPage: React.FC = () => {
       .filter((s): s is NonNullable<typeof s> => s !== null);
   }, [routeDetails?.stops]);
 
+  // Determine student's assigned stop ID for this route
+  const childStopId = useMemo(() => {
+    if (!child) return undefined;
+    const isAM = activeRouteId.includes('AM');
+    return isAM ? child.amStopId : child.pmStopId;
+  }, [child, activeRouteId]);
+
   // Fetch live location — try active route, fall back to alternate
   const alternateRouteId = child
     ? (activeRouteId === child.amRouteId ? child.pmRouteId : child.amRouteId) || ''
@@ -152,9 +220,9 @@ const MapPage: React.FC = () => {
           speed: 0,
           heading: 0,
           etaToNextStop: data.etaToNextStopMinutes,
+          status: data.status,
         } as BusLocationUpdate;
       } catch {
-        // Try alternate route if primary fails
         if (alternateRouteId) {
           const data = await parentApi.getLiveLocation(alternateRouteId);
           return {
@@ -166,6 +234,7 @@ const MapPage: React.FC = () => {
             speed: 0,
             heading: 0,
             etaToNextStop: data.etaToNextStopMinutes,
+            status: data.status,
           } as BusLocationUpdate;
         }
         throw new Error('No live location available');
@@ -176,25 +245,61 @@ const MapPage: React.FC = () => {
     retry: 1,
   });
 
+  // Fetch alerts for the route to determine bus status color
+  const routeIds = useMemo(() => {
+    if (!child) return [];
+    return [child.amRouteId, child.pmRouteId, child.routeId].filter((id): id is string => !!id);
+  }, [child]);
+  const { alerts } = useAlerts(routeIds);
+
+  // Determine bus status from API-enriched status or client-side alerts
+  const busStatus: BusStatus = useMemo(() => {
+    // Prefer server-side enriched status from live-location API
+    if (locationData?.status && ['normal', 'delay', 'emergency'].includes(locationData.status)) {
+      return locationData.status as BusStatus;
+    }
+    // Fallback: derive from client-side alert data
+    if (alerts.length === 0) return 'normal';
+    const hasEmergency = alerts.some((a) => EMERGENCY_EVENT_TYPES.has(a.eventType));
+    if (hasEmergency) return 'emergency';
+    const hasDelay = alerts.some((a) => DELAY_EVENT_TYPES.has(a.eventType));
+    if (hasDelay) return 'delay';
+    return 'emergency';
+  }, [alerts, locationData?.status]);
+
+  const busIcon = useMemo(() => createBusIcon(busStatus), [busStatus]);
+
   const busLocation = locationData ?? null;
-  const isConnected = !!locationData;
   const isAM = routeDetails?.direction === 'AM' || activeRouteId.includes('AM');
   const routeColor = isAM ? '#3b82f6' : '#f59e0b';
+
+  // Determine if the bus is actively running (not stale data)
+  const isLive = useMemo(() => {
+    if (!busLocation?.timestamp) return false;
+    const lastUpdate = new Date(busLocation.timestamp).getTime();
+    return Date.now() - lastUpdate < STALE_THRESHOLD_MS;
+  }, [busLocation?.timestamp]);
+
+  // Route status label
+  const routeStatusLabel = isLive ? 'Live' : 'Completed';
 
   // Compute map bounds from route path + bus position
   const mapBounds = useMemo(() => {
     const pts: [number, number][] = [];
     if (routePath) pts.push(...routePath);
-    if (busLocation) pts.push([busLocation.lat, busLocation.lng]);
+    if (busLocation && isLive) pts.push([busLocation.lat, busLocation.lng]);
     if (pts.length < 2) return null;
     return L.latLngBounds(pts);
-  }, [routePath, busLocation]);
+  }, [routePath, busLocation, isLive]);
 
   if (!child) return <div>Loading...</div>;
 
   const currentPosition: [number, number] = busLocation
     ? [busLocation.lat, busLocation.lng]
     : defaultCenter;
+
+  const statusLabel =
+    busStatus === 'normal' ? 'Normal' : busStatus === 'delay' ? 'Delayed' : 'Emergency';
 
   return (
     <div className="h-[calc(100vh-64px)] flex flex-col relative">
@@ -211,13 +316,18 @@ const MapPage: React.FC = () => {
             <div className="flex items-center justify-between mb-1">
               <h3 className="font-bold text-gray-900">{child.name}</h3>
               <span
-                className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${isConnected ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}
+                className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${isLive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}
               >
-                {isConnected ? 'Live' : 'Offline'}
+                {routeStatusLabel}
               </span>
             </div>
-            <p className="text-sm text-gray-500">Route: {activeRouteId}</p>
-            {busLocation && (
+            <p className="text-sm text-gray-500">
+              Route: {routeDetails?.name || activeRouteId} ({isAM ? 'AM' : 'PM'})
+            </p>
+            <p className="text-xs text-gray-400">
+              Vehicle: {routeDetails?.vehicleId || child.vehicleId || 'N/A'}
+            </p>
+            {isLive && busLocation && (
               <div className="mt-2 flex items-center justify-between border-t border-gray-100 pt-2">
                 <div className="flex items-center text-blue-600">
                   <Navigation className="h-4 w-4 mr-1" />
@@ -230,14 +340,59 @@ const MapPage: React.FC = () => {
                 </span>
               </div>
             )}
-            {!isConnected && !locationError && (
-              <p className="text-xs text-gray-400 mt-1">Waiting for bus location...</p>
+            {alerts.length > 0 && (
+              <div className="mt-2 border-t border-gray-100 pt-2">
+                <span
+                  className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold"
+                  style={{
+                    backgroundColor: BUS_STATUS_COLORS[busStatus] + '22',
+                    color: BUS_STATUS_COLORS[busStatus],
+                  }}
+                >
+                  {statusLabel}: {alerts.map((a) => a.eventType.replace(/_/g, ' ')).join(', ')}
+                </span>
+              </div>
+            )}
+            {!isLive && !locationError && (
+              <p className="text-xs text-gray-400 mt-1">Route is not currently active.</p>
             )}
             {locationError && (
               <p className="text-xs text-red-400 mt-1">
                 Bus is not currently active on this route.
               </p>
             )}
+          </div>
+        </div>
+      </div>
+
+      {/* Legend - bottom left, matching admin dashboard */}
+      <div className="absolute bottom-6 left-4 z-[1000] pointer-events-auto bg-white/95 backdrop-blur-sm px-3 py-2 rounded-lg shadow-lg text-xs">
+        <div className="font-semibold text-gray-700 mb-1.5">Legend</div>
+        {(['normal', 'delay', 'emergency'] as BusStatus[]).map((s) => (
+          <div key={s} className="flex items-center gap-2 mb-0.5">
+            <span
+              className="inline-block w-2.5 h-2.5 rounded-full"
+              style={{ backgroundColor: BUS_STATUS_COLORS[s] }}
+            />
+            <span className="text-gray-600">
+              {s === 'delay' ? 'Delayed' : s === 'emergency' ? 'Emergency' : 'Normal'}
+            </span>
+          </div>
+        ))}
+        <div className="border-t border-gray-200 mt-1.5 pt-1.5">
+          <div className="flex items-center gap-2 mb-0.5">
+            <span className="inline-block w-2.5 h-2.5 rounded-full bg-blue-500" />
+            <span className="text-gray-600">Your child's stop</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span
+              className="inline-block w-2.5 h-2.5 rounded-full"
+              style={{
+                backgroundColor: 'rgba(156,163,175,0.35)',
+                border: '1px solid rgba(156,163,175,0.5)',
+              }}
+            />
+            <span className="text-gray-600">Other stops</span>
           </div>
         </div>
       </div>
@@ -264,48 +419,70 @@ const MapPage: React.FC = () => {
           />
         )}
 
-        {/* Stop markers */}
-        {stopPositions.map((stop) => (
-          <CircleMarker
-            key={stop.id}
-            center={stop.pos}
-            radius={10}
-            pathOptions={{
-              color: '#fff',
-              weight: 2,
-              fillColor: routeColor,
-              fillOpacity: 1,
-            }}
-          >
-            <Popup>
-              <div style={{ minWidth: '140px', fontFamily: 'sans-serif' }}>
-                <strong
-                  style={{
-                    display: 'block',
-                    borderBottom: '1px solid #e2e8f0',
-                    paddingBottom: '4px',
-                    marginBottom: '4px',
-                  }}
-                >
-                  Stop {stop.sequence}: {stop.address}
-                </strong>
-                <div style={{ fontSize: '11px', color: '#64748b' }}>
-                  Route: {activeRouteId}
-                  <br />
-                  Vehicle: {routeDetails?.vehicleId || child.vehicleId || 'N/A'}
+        {/* Stop markers — admin-style divIcon with person SVG and sequence badge */}
+        {stopPositions.map((stop) => {
+          const isChildStop = stop.id === childStopId;
+          const seq = stop.sequence ?? 0;
+          const stopIcon = createStopIcon(seq, isChildStop);
+          return (
+            <Marker
+              key={stop.id}
+              position={stop.pos}
+              icon={stopIcon}
+              zIndexOffset={isChildStop ? 500 : 0}
+            >
+              <Popup>
+                <div style={{ minWidth: '140px', fontFamily: 'sans-serif' }}>
+                  <strong
+                    style={{
+                      color: '#1e293b',
+                      display: 'block',
+                      borderBottom: '1px solid #e2e8f0',
+                      paddingBottom: '4px',
+                      marginBottom: '4px',
+                    }}
+                  >
+                    {isChildStop
+                      ? `Stop ${seq}: ${child.name}'s Stop`
+                      : `Stop ${seq}: ${stop.address}`}
+                  </strong>
+                  <div
+                    style={{
+                      fontSize: '11px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '2px',
+                    }}
+                  >
+                    <span style={{ color: '#64748b' }}>
+                      Route:{' '}
+                      <span style={{ color: '#1e293b', fontWeight: 600 }}>
+                        {routeDetails?.name || activeRouteId}
+                      </span>
+                    </span>
+                    <span style={{ color: '#64748b' }}>
+                      Vehicle:{' '}
+                      <span style={{ color: '#1e293b', fontWeight: 600 }}>
+                        {routeDetails?.vehicleId || child.vehicleId || 'N/A'}
+                      </span>
+                    </span>
+                  </div>
                 </div>
-              </div>
-            </Popup>
-          </CircleMarker>
-        ))}
+              </Popup>
+            </Marker>
+          );
+        })}
 
-        {/* Bus marker */}
-        {busLocation && (
+        {/* Bus marker — only show if actively running (not stale) */}
+        {busLocation && isLive && (
           <Marker position={currentPosition} icon={busIcon}>
             <Popup>
               <div className="text-center">
                 <p className="font-bold">Bus {busLocation.vehicleId}</p>
-                <p>Route: {busLocation.routeId}</p>
+                <p>Route: {routeDetails?.name || busLocation.routeId}</p>
+                <p className="text-xs mt-1" style={{ color: BUS_STATUS_COLORS[busStatus] }}>
+                  Status: {statusLabel}
+                </p>
               </div>
             </Popup>
           </Marker>

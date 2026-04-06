@@ -90,7 +90,7 @@ CREATE TABLE users (
 
 -- Operational Data (Gateway Core)
 CREATE TABLE vehicles (
-  id UUID PRIMARY KEY,
+  id VARCHAR(255) PRIMARY KEY,
   "schoolId" UUID NOT NULL,
   "licensePlate" TEXT NOT NULL,
   status TEXT NOT NULL DEFAULT 'ACTIVE',
@@ -103,7 +103,7 @@ CREATE TABLE routes (
   "schoolId" UUID NOT NULL,
   name TEXT NOT NULL,
   direction TEXT NOT NULL,
-  "vehicleId" UUID NULL,
+  "vehicleId" VARCHAR(255) NULL,
   "startTime" TIME NOT NULL,
   "estimatedDuration" INT NOT NULL DEFAULT 60,
   polyline TEXT NULL,
@@ -338,6 +338,8 @@ CREATE TABLE students_reference (
     "assignedRouteId" VARCHAR(255),
     "amRouteId" VARCHAR(255),
     "pmRouteId" VARCHAR(255),
+    "amStopId" VARCHAR(255),
+    "pmStopId" VARCHAR(255),
     "createdAt" TIMESTAMP DEFAULT NOW()
 );
 
@@ -383,7 +385,7 @@ INSERT INTO users (id, email, "passwordHash", role, "firstName", "lastName", "ch
 -- ===================== Vehicle (1 bus) =====================
 
 INSERT INTO vehicles (id, "schoolId", "licensePlate", status) VALUES
-    ('20000000-0000-0000-0000-000000000001', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'ON-1001', 'ACTIVE');
+    ('BUS-01', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'ON-1001', 'ACTIVE');
 
 INSERT INTO vehicles_reference (id, "plateNumber", capacity, status) VALUES
     ('BUS-01', 'ON-1001', 40, 'ACTIVE');

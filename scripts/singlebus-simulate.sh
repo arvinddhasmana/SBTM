@@ -76,7 +76,7 @@ PM_ROUTE_ID=$(node_config "config.pm.routeId")
 PM_POLYLINE=$(node_config "config.pm.polyline")
 
 # Ensure Schema is ready
-docker exec "sbtm_antigravity-postgres-1" psql -U postgres -d sbms -c "ALTER TABLE routes_reference ADD COLUMN IF NOT EXISTS direction text; ALTER TABLE routes_reference ADD COLUMN IF NOT EXISTS \"schoolId\" uuid;" > /dev/null 2>&1 || true
+docker exec "sbtm_antigravity-postgres-1" psql -U postgres -d sbms -c "ALTER TABLE routes_reference ADD COLUMN IF NOT EXISTS direction text; ALTER TABLE routes_reference ADD COLUMN IF NOT EXISTS \"schoolId\" uuid; ALTER TABLE students_reference ADD COLUMN IF NOT EXISTS \"amStopId\" varchar(255); ALTER TABLE students_reference ADD COLUMN IF NOT EXISTS \"pmStopId\" varchar(255);" > /dev/null 2>&1 || true
 
 # Sync route geometry and attributes to database
 sync_route() {
@@ -144,12 +144,19 @@ node -e "
   const amRouteId = config.am.routeId;
   const pmRouteId = config.pm.routeId;
   const routesCsv = amRouteId + ',' + pmRouteId;
+  // Build student→stopId maps from config stops
+  const amStopMap = {};
+  const pmStopMap = {};
+  config.am.stops.forEach((s, i) => { const sid = 'STOP-' + amRouteId + '-' + (i+1); s.students.forEach(id => { amStopMap[id] = sid; }); });
+  config.pm.stops.forEach((s, i) => { const sid = 'STOP-' + pmRouteId + '-' + (i+1); s.students.forEach(id => { pmStopMap[id] = sid; }); });
   for (const parent of config.parents) {
     for (const studentId of parent.studentIds) {
       process.stdout.write(\"UPDATE students SET parent_user_id = '\" + parent.userId + \"' WHERE id = '\" + studentId + \"';\n\");
       const student = config.students.find(s => s.id === studentId);
       if (student) {
-        process.stdout.write(\"INSERT INTO students_reference (id, \\\"firstName\\\", \\\"lastName\\\", grade, \\\"parentId\\\", \\\"schoolId\\\", \\\"assignedRouteId\\\", \\\"amRouteId\\\", \\\"pmRouteId\\\") VALUES ('\" + studentId + \"', '\" + student.firstName + \"', '\" + student.lastName + \"', 1, '\" + parent.userId + \"', '\" + schoolId + \"', '\" + amRouteId + \"', '\" + amRouteId + \"', '\" + pmRouteId + \"') ON CONFLICT (id) DO UPDATE SET \\\"parentId\\\" = EXCLUDED.\\\"parentId\\\", \\\"schoolId\\\" = EXCLUDED.\\\"schoolId\\\", \\\"assignedRouteId\\\" = EXCLUDED.\\\"assignedRouteId\\\", \\\"amRouteId\\\" = EXCLUDED.\\\"amRouteId\\\", \\\"pmRouteId\\\" = EXCLUDED.\\\"pmRouteId\\\", \\\"firstName\\\" = EXCLUDED.\\\"firstName\\\", \\\"lastName\\\" = EXCLUDED.\\\"lastName\\\";\n\");
+        const amSid = amStopMap[studentId] || '';
+        const pmSid = pmStopMap[studentId] || '';
+        process.stdout.write(\"INSERT INTO students_reference (id, \\\"firstName\\\", \\\"lastName\\\", grade, \\\"parentId\\\", \\\"schoolId\\\", \\\"assignedRouteId\\\", \\\"amRouteId\\\", \\\"pmRouteId\\\", \\\"amStopId\\\", \\\"pmStopId\\\") VALUES ('\" + studentId + \"', '\" + student.firstName + \"', '\" + student.lastName + \"', 1, '\" + parent.userId + \"', '\" + schoolId + \"', '\" + amRouteId + \"', '\" + amRouteId + \"', '\" + pmRouteId + \"', '\" + amSid + \"', '\" + pmSid + \"') ON CONFLICT (id) DO UPDATE SET \\\"parentId\\\" = EXCLUDED.\\\"parentId\\\", \\\"schoolId\\\" = EXCLUDED.\\\"schoolId\\\", \\\"assignedRouteId\\\" = EXCLUDED.\\\"assignedRouteId\\\", \\\"amRouteId\\\" = EXCLUDED.\\\"amRouteId\\\", \\\"pmRouteId\\\" = EXCLUDED.\\\"pmRouteId\\\", \\\"amStopId\\\" = EXCLUDED.\\\"amStopId\\\", \\\"pmStopId\\\" = EXCLUDED.\\\"pmStopId\\\", \\\"firstName\\\" = EXCLUDED.\\\"firstName\\\", \\\"lastName\\\" = EXCLUDED.\\\"lastName\\\";\n\");
       }
     }
     // Append simulation routes to childRouteIds (preserve existing, avoid duplicates)

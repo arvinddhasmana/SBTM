@@ -91,9 +91,7 @@ const Vehicles: React.FC = () => {
                         <div className="w-10 h-10 bg-slate-800 rounded-lg flex items-center justify-center text-primary-400">
                           <Bus size={20} />
                         </div>
-                        <span className="font-medium text-white">
-                          Bus #{vehicle.id.slice(0, 4)}
-                        </span>
+                        <span className="font-medium text-white">{vehicle.id}</span>
                       </div>
                     </td>
                     <td className="py-4 text-slate-300 font-mono">{vehicle.licensePlate}</td>

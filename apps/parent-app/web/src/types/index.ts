@@ -5,6 +5,8 @@ export interface Child {
   routeId: string;
   amRouteId?: string;
   pmRouteId?: string;
+  amStopId?: string;
+  pmStopId?: string;
   vehicleId: string;
   status: 'on_bus' | 'at_school' | 'at_home' | 'unknown';
   avatarUrl?: string;
@@ -31,6 +33,7 @@ export interface BusLocationUpdate {
   speed: number;
   heading: number;
   etaToNextStop?: number; // minutes
+  status?: 'normal' | 'delay' | 'emergency';
 }
 
 export interface NotificationPreference {

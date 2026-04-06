@@ -11,6 +11,7 @@ export interface LiveLocationDto {
   position: { lat: number; lng: number };
   etaToNextStopMinutes: number;
   deviationFlag?: boolean;
+  status?: 'normal' | 'delay' | 'emergency';
 }
 
 export interface CreateLocationDto {
@@ -94,7 +95,31 @@ export class GpsGatewayService {
     this.checkRouteAccess(routeId, user);
 
     const url = `${this.gpsServiceUrl}/api/v1/routes/${routeId}/live-location`;
-    return this.httpClient.get<LiveLocationDto>(url);
+    const result = await this.httpClient.get<LiveLocationDto>(url);
+
+    // Enrich with alert-based status
+    try {
+      const alertRows = (await this.dataSource.query(
+        `SELECT "eventType" FROM emergency_alert WHERE "routeId" = $1 AND status = 'ACTIVE'`,
+        [routeId],
+      )) as Array<{ eventType: string }>;
+      const EMERGENCY_TYPES = new Set([
+        'PANIC_BUTTON',
+        'PANIC_ALERT',
+        'INCIDENT',
+      ]);
+      if (alertRows.length === 0) {
+        result.status = 'normal';
+      } else if (alertRows.some((r) => EMERGENCY_TYPES.has(r.eventType))) {
+        result.status = 'emergency';
+      } else {
+        result.status = 'delay';
+      }
+    } catch {
+      result.status = 'normal';
+    }
+
+    return result;
   }
 
   async getLocationHistory(
@@ -243,11 +268,13 @@ export class GpsGatewayService {
           location: `POINT(${s.lng} ${s.lat})`,
         }));
 
+      const direction = r.id.toUpperCase().includes('PM') ? 'PM' : 'AM';
+
       return {
         id: r.id,
         name: r.name,
         schoolId: demoSchoolId,
-        direction: 'AM',
+        direction,
         vehicleId: r.vehicleId || undefined,
         startTime,
         estimatedDuration: 60,
@@ -302,11 +329,13 @@ export class GpsGatewayService {
         location: `POINT(${s.lng} ${s.lat})`,
       }));
 
+    const direction = r.id.toUpperCase().includes('PM') ? 'PM' : 'AM';
+
     return {
       id: r.id,
       name: r.name,
       schoolId: demoSchoolId,
-      direction: 'AM',
+      direction,
       vehicleId: r.vehicleId || undefined,
       startTime,
       estimatedDuration: 60,
@@ -337,6 +366,46 @@ export class GpsGatewayService {
         // Ignore per-route failures; demo UI will just omit that marker
       }
     }
+
+    // Enrich with alert-based status: check active alerts per route
+    if (results.length > 0) {
+      try {
+        const activeRouteIds = results.map((r) => r.routeId);
+        const alertRows = (await this.dataSource.query(
+          `SELECT "routeId", "eventType" FROM emergency_alert WHERE "routeId" = ANY($1) AND status = 'ACTIVE'`,
+          [activeRouteIds],
+        )) as Array<{ routeId: string; eventType: string }>;
+
+        const routeAlertMap = new Map<string, string[]>();
+        for (const row of alertRows) {
+          const existing = routeAlertMap.get(row.routeId) || [];
+          existing.push(row.eventType);
+          routeAlertMap.set(row.routeId, existing);
+        }
+
+        const EMERGENCY_TYPES = new Set([
+          'PANIC_BUTTON',
+          'PANIC_ALERT',
+          'INCIDENT',
+        ]);
+        for (const loc of results) {
+          const alertTypes = routeAlertMap.get(loc.routeId);
+          if (!alertTypes || alertTypes.length === 0) {
+            loc.status = 'normal';
+          } else if (alertTypes.some((t) => EMERGENCY_TYPES.has(t))) {
+            loc.status = 'emergency';
+          } else {
+            loc.status = 'delay';
+          }
+        }
+      } catch {
+        // If alert enrichment fails, default to normal
+        for (const loc of results) {
+          loc.status = loc.status || 'normal';
+        }
+      }
+    }
+
     return results;
   }
 

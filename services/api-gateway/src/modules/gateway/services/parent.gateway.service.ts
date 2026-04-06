@@ -31,6 +31,8 @@ interface ReferenceStudentRow {
   assignedRouteId: string | null;
   amRouteId: string | null;
   pmRouteId: string | null;
+  amStopId: string | null;
+  pmStopId: string | null;
 }
 
 interface ParentChildDto {
@@ -40,6 +42,8 @@ interface ParentChildDto {
   routeId?: string;
   amRouteId?: string;
   pmRouteId?: string;
+  amStopId?: string;
+  pmStopId?: string;
   vehicleId?: string;
   status: 'on_bus' | 'at_school' | 'at_home' | 'unknown';
   avatarUrl?: string;
@@ -72,7 +76,7 @@ export class ParentGatewayService {
     let refStudents: ReferenceStudentRow[] = [];
     try {
       refStudents = await this.dataSource.query(
-        `SELECT id, "firstName" as "firstName", "lastName" as "lastName", "parentId" as "parentId", "schoolId" as "schoolId", "assignedRouteId" as "assignedRouteId", "amRouteId" as "amRouteId", "pmRouteId" as "pmRouteId"
+        `SELECT id, "firstName" as "firstName", "lastName" as "lastName", "parentId" as "parentId", "schoolId" as "schoolId", "assignedRouteId" as "assignedRouteId", "amRouteId" as "amRouteId", "pmRouteId" as "pmRouteId", "amStopId" as "amStopId", "pmStopId" as "pmStopId"
                  FROM students_reference
                  WHERE "parentId" = $1
                  ORDER BY id ASC`,
@@ -131,6 +135,8 @@ export class ParentGatewayService {
           routeId,
           amRouteId,
           pmRouteId,
+          amStopId: student.amStopId || undefined,
+          pmStopId: student.pmStopId || undefined,
           vehicleId,
           status: statusMap.get(student.id) || ('unknown' as const),
           avatarUrl: name
