@@ -2,21 +2,35 @@ import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Filter } from 'lucide-react';
 import { Header, Card, LoadingSpinner } from '../components/common';
-import { AlertList, AlertDetail } from '../components/alerts';
+import { AlertList, AlertDetail, AlertConfirmationModal } from '../components/alerts';
 import { alertsApi } from '../services/api';
 import { queryKeys } from '../services/query-keys';
+import { useAuth } from '../context/AuthContext';
 import type { Alert } from '../types';
+
+type FilterOption = 'all' | 'active' | 'pending' | 'resolved';
 
 const Alerts: React.FC = () => {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null);
-  const [filter, setFilter] = useState<'all' | 'active' | 'resolved'>('all');
+  const [confirmationAlert, setConfirmationAlert] = useState<Alert | null>(null);
+  const [filter, setFilter] = useState<FilterOption>('all');
   const [isResolving, setIsResolving] = useState(false);
+  const [isActing, setIsActing] = useState(false);
 
   const { data: alerts = [], isLoading } = useQuery({
     queryKey: queryKeys.alerts.all,
     queryFn: () => alertsApi.getAllAlerts(),
   });
+
+  // Auto-surface the first PENDING_CONFIRMATION alert for admins who can act on it.
+  const pendingAlerts = alerts.filter((a) => a.status === 'PENDING_CONFIRMATION');
+  const canConfirm =
+    user?.role === 'SCHOOL_ADMIN' ||
+    user?.role === 'BOARD_ADMIN' ||
+    user?.role === 'OSTA_ADMIN' ||
+    user?.role === 'ADMIN';
 
   const handleResolve = async (id: string) => {
     setIsResolving(true);
@@ -31,14 +45,66 @@ const Alerts: React.FC = () => {
     }
   };
 
+  const handleConfirm = async (id: string) => {
+    setIsActing(true);
+    try {
+      await alertsApi.confirmAlert(id, user?.id, user?.role);
+      queryClient.invalidateQueries({ queryKey: queryKeys.alerts.all });
+      setConfirmationAlert(null);
+      setSelectedAlert(null);
+    } catch (error) {
+      console.error('Error confirming alert:', error);
+    } finally {
+      setIsActing(false);
+    }
+  };
+
+  const handleFalseAlarm = async (id: string) => {
+    setIsActing(true);
+    try {
+      await alertsApi.falseAlarmAlert(id, undefined, user?.id, user?.role);
+      queryClient.invalidateQueries({ queryKey: queryKeys.alerts.all });
+      setConfirmationAlert(null);
+      setSelectedAlert(null);
+    } catch (error) {
+      console.error('Error marking false alarm:', error);
+    } finally {
+      setIsActing(false);
+    }
+  };
+
+  const handleRequestInfo = async (id: string) => {
+    setIsActing(true);
+    try {
+      await alertsApi.requestInfoAlert(id, user?.id, user?.role);
+      queryClient.invalidateQueries({ queryKey: queryKeys.alerts.all });
+    } catch (error) {
+      console.error('Error requesting info:', error);
+    } finally {
+      setIsActing(false);
+    }
+  };
+
+  const handleAlertClick = (alert: Alert) => {
+    if (alert.status === 'PENDING_CONFIRMATION' && canConfirm) {
+      setConfirmationAlert(alert);
+    } else {
+      setSelectedAlert(alert);
+    }
+  };
+
   const filteredAlerts = alerts.filter((alert) => {
     if (filter === 'active') return alert.status === 'ACTIVE';
-    if (filter === 'resolved') return alert.status === 'RESOLVED';
+    if (filter === 'resolved') return alert.status === 'RESOLVED' || alert.status === 'FALSE_ALARM';
+    if (filter === 'pending') return alert.status === 'PENDING_CONFIRMATION';
     return true;
   });
 
   const activeCount = alerts.filter((a) => a.status === 'ACTIVE').length;
-  const resolvedCount = alerts.filter((a) => a.status === 'RESOLVED').length;
+  const resolvedCount = alerts.filter(
+    (a) => a.status === 'RESOLVED' || a.status === 'FALSE_ALARM',
+  ).length;
+  const pendingCount = pendingAlerts.length;
 
   if (isLoading) {
     return (
@@ -55,7 +121,7 @@ const Alerts: React.FC = () => {
     <>
       <Header
         title="Alerts Management"
-        subtitle={`${activeCount} active alert${activeCount !== 1 ? 's' : ''}`}
+        subtitle={`${activeCount} active alert${activeCount !== 1 ? 's' : ''}${pendingCount > 0 ? ` · ${pendingCount} awaiting confirmation` : ''}`}
       />
 
       <div className="p-6 space-y-6">
@@ -66,7 +132,7 @@ const Alerts: React.FC = () => {
               <Filter size={18} />
               <span className="font-medium">Filter:</span>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <button
                 onClick={() => setFilter('all')}
                 className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
@@ -87,6 +153,21 @@ const Alerts: React.FC = () => {
               >
                 Active ({activeCount})
               </button>
+              {canConfirm && (
+                <button
+                  onClick={() => setFilter('pending')}
+                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+                    filter === 'pending'
+                      ? 'bg-yellow-500 text-white'
+                      : 'bg-dashboard-bg text-slate-400 hover:text-white'
+                  }`}
+                >
+                  Pending ({pendingCount})
+                  {pendingCount > 0 && (
+                    <span className="ml-1.5 inline-block w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
+                  )}
+                </button>
+              )}
               <button
                 onClick={() => setFilter('resolved')}
                 className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
@@ -105,11 +186,22 @@ const Alerts: React.FC = () => {
         <Card>
           <AlertList
             alerts={filteredAlerts}
-            onAlertClick={(alert) => setSelectedAlert(alert)}
+            onAlertClick={handleAlertClick}
             emptyMessage={`No ${filter === 'all' ? '' : filter + ' '}alerts found`}
           />
         </Card>
       </div>
+
+      {/* Tier 1 Confirmation Modal — shown when admin clicks a pending alert */}
+      {confirmationAlert && canConfirm && (
+        <AlertConfirmationModal
+          alert={confirmationAlert}
+          onConfirm={handleConfirm}
+          onFalseAlarm={handleFalseAlarm}
+          onRequestInfo={handleRequestInfo}
+          onClose={() => setConfirmationAlert(null)}
+        />
+      )}
 
       {/* Alert Detail Modal */}
       {selectedAlert && (
@@ -117,7 +209,11 @@ const Alerts: React.FC = () => {
           alert={selectedAlert}
           onClose={() => setSelectedAlert(null)}
           onResolve={handleResolve}
+          onConfirm={canConfirm ? handleConfirm : undefined}
+          onFalseAlarm={canConfirm ? handleFalseAlarm : undefined}
+          onRequestInfo={canConfirm ? handleRequestInfo : undefined}
           isResolving={isResolving}
+          isActing={isActing}
         />
       )}
     </>
