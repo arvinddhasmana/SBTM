@@ -2,7 +2,6 @@ import {
   IsString,
   IsIn,
   IsBoolean,
-  IsUUID,
   ValidateNested,
   IsArray,
 } from 'class-validator';
@@ -24,10 +23,10 @@ export class PreferenceItemDto {
 }
 
 export class UpdatePreferencesDto {
-  @IsUUID()
+  @IsString()
   userId: string;
 
-  @IsUUID()
+  @IsString()
   schoolId: string;
 
   @IsArray()

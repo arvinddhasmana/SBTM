@@ -128,22 +128,33 @@ echo "Syncing students to database..."
 node -e "
   const fs = require('fs');
   const config = JSON.parse(fs.readFileSync('$CONFIG_PATH', 'utf8'));
-  const students = config.students;
-  const schoolId = config.school.id;
-  const inserts = students.map(s => {
-    return \"INSERT INTO students (id, first_name, last_name, external_student_id, school_id) VALUES ('\" + s.id + \"', '\" + s.firstName + \"', '\" + s.lastName + \"', '\" + s.id + \"', '\" + schoolId + \"') ON CONFLICT (id) DO UPDATE SET first_name = EXCLUDED.first_name, last_name = EXCLUDED.last_name;\";
-  }).join('\n');
-  console.log(inserts);
-" | xargs -0 -I {} docker exec -i "sbtm_antigravity-postgres-1" psql -U postgres -d sbms -c "{}" > /dev/null 2>&1 || true
-# Wait, xargs -0 might be overkill, I'll just use a simple loop or one psql call.
-# Actually, I'll just pipe the output of node directly to psql.
-node -e "
-  const fs = require('fs');
-  const config = JSON.parse(fs.readFileSync('$CONFIG_PATH', 'utf8'));
   const schoolId = config.school.id;
   config.students.forEach(s => {
     process.stdout.write(\"INSERT INTO students (id, first_name, last_name, external_student_id, school_id, grade) VALUES ('\" + s.id + \"', '\" + s.firstName + \"', '\" + s.lastName + \"', '\" + s.id + \"', '\" + schoolId + \"', '1') ON CONFLICT (id) DO UPDATE SET first_name = EXCLUDED.first_name, last_name = EXCLUDED.last_name, grade = EXCLUDED.grade;\n\");
   });
+" | docker exec -i "sbtm_antigravity-postgres-1" psql -U postgres -d sbms > /dev/null
+
+# Link parents to students and sync reference data
+echo "Linking parents to students..."
+node -e "
+  const fs = require('fs');
+  const config = JSON.parse(fs.readFileSync('$CONFIG_PATH', 'utf8'));
+  if (!config.parents) { process.exit(0); }
+  const schoolId = config.school.id;
+  const amRouteId = config.am.routeId;
+  const pmRouteId = config.pm.routeId;
+  const routesCsv = amRouteId + ',' + pmRouteId;
+  for (const parent of config.parents) {
+    for (const studentId of parent.studentIds) {
+      process.stdout.write(\"UPDATE students SET parent_user_id = '\" + parent.userId + \"' WHERE id = '\" + studentId + \"';\n\");
+      const student = config.students.find(s => s.id === studentId);
+      if (student) {
+        process.stdout.write(\"INSERT INTO students_reference (id, \\\"firstName\\\", \\\"lastName\\\", grade, \\\"parentId\\\", \\\"schoolId\\\", \\\"assignedRouteId\\\", \\\"amRouteId\\\", \\\"pmRouteId\\\") VALUES ('\" + studentId + \"', '\" + student.firstName + \"', '\" + student.lastName + \"', 1, '\" + parent.userId + \"', '\" + schoolId + \"', '\" + amRouteId + \"', '\" + amRouteId + \"', '\" + pmRouteId + \"') ON CONFLICT (id) DO UPDATE SET \\\"parentId\\\" = EXCLUDED.\\\"parentId\\\", \\\"schoolId\\\" = EXCLUDED.\\\"schoolId\\\", \\\"assignedRouteId\\\" = EXCLUDED.\\\"assignedRouteId\\\", \\\"amRouteId\\\" = EXCLUDED.\\\"amRouteId\\\", \\\"pmRouteId\\\" = EXCLUDED.\\\"pmRouteId\\\", \\\"firstName\\\" = EXCLUDED.\\\"firstName\\\", \\\"lastName\\\" = EXCLUDED.\\\"lastName\\\";\n\");
+      }
+    }
+    // Append simulation routes to childRouteIds (preserve existing, avoid duplicates)
+    process.stdout.write(\"UPDATE users SET \\\"childRouteIds\\\" = CASE WHEN \\\"childRouteIds\\\" IS NULL OR \\\"childRouteIds\\\" = '' THEN '\" + routesCsv + \"' WHEN \\\"childRouteIds\\\" LIKE '%\" + amRouteId + \"%' THEN \\\"childRouteIds\\\" ELSE \\\"childRouteIds\\\" || ',\" + routesCsv + \"' END, \\\"schoolId\\\" = '\" + schoolId + \"' WHERE id = '\" + parent.userId + \"';\n\");
+  }
 " | docker exec -i "sbtm_antigravity-postgres-1" psql -U postgres -d sbms > /dev/null
 
 # Clear old location points to prevent duplicate bus on map

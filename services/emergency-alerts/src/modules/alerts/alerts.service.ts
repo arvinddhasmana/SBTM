@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import {
   EmergencyAlert,
   EmergencyAlertStatus,
@@ -15,6 +15,16 @@ import {
   NotificationStatus,
 } from './entities/alert-notification-log.entity';
 
+const EVENT_TYPE_LABELS: Record<string, string> = {
+  LATE_ARRIVAL: 'Late Arrival',
+  ROUTE_DEVIATION: 'Route Deviation',
+  PANIC_BUTTON: 'Panic Button',
+  INCIDENT: 'Incident',
+  ROUTE_DIVERSION: 'Route Diversion',
+  PANIC_ALERT: 'Panic Alert',
+  OTHER: 'Other',
+};
+
 @Injectable()
 export class AlertsService {
   constructor(
@@ -23,7 +33,7 @@ export class AlertsService {
     @InjectQueue('alerts') private alertsQueue: Queue,
     private wsGateway: WebsocketGateway,
     private notificationsService: NotificationsService,
-  ) { }
+  ) {}
 
   async create(createDto: CreateEmergencyEventDto): Promise<EmergencyAlert> {
     const alert = this.alertsRepo.create(createDto);
@@ -65,7 +75,12 @@ export class AlertsService {
       throw new Error('Alert not found');
     }
     alert.status = EmergencyAlertStatus.RESOLVED;
-    return this.alertsRepo.save(alert);
+    const resolved = await this.alertsRepo.save(alert);
+
+    // Broadcast resolution via SSE/WebSocket so clients get real-time updates
+    this.wsGateway.broadcastAlert(resolved);
+
+    return resolved;
   }
 
   async findOne(id: string): Promise<EmergencyAlert | null> {
@@ -79,14 +94,24 @@ export class AlertsService {
     });
 
     if (activeAlert) {
+      const label =
+        EVENT_TYPE_LABELS[activeAlert.eventType] || activeAlert.eventType;
+      const message =
+        activeAlert.description ||
+        `${label}: ${activeAlert.vehicleId} on route ${routeId}`;
+
       return {
         id: activeAlert.id,
         routeId,
         vehicleId: activeAlert.vehicleId,
         eventType: activeAlert.eventType,
+        description: activeAlert.description || null,
+        message,
+        status: activeAlert.status,
+        lat: activeAlert.lat,
+        lng: activeAlert.lng,
         createdAt: activeAlert.createdAt,
         alertActive: true,
-        message: "Emergency reported on your child's bus.",
       };
     }
 
@@ -95,5 +120,13 @@ export class AlertsService {
       alertActive: false,
       message: 'No active alerts.',
     };
+  }
+
+  async findByRoutes(routeIds: string[]): Promise<EmergencyAlert[]> {
+    if (routeIds.length === 0) return [];
+    return this.alertsRepo.find({
+      where: { routeId: In(routeIds) },
+      order: { createdAt: 'DESC' },
+    });
   }
 }

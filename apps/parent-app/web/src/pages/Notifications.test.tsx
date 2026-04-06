@@ -8,11 +8,11 @@ import { parentApi } from '../services/api';
 
 vi.mock('../services/api', () => ({
   parentApi: {
-    getNotifications: vi.fn(),
+    getAlertHistory: vi.fn(),
   },
 }));
 
-const mockGetNotifications = vi.mocked(parentApi.getNotifications);
+const mockGetAlertHistory = vi.mocked(parentApi.getAlertHistory);
 
 describe('Notifications page', () => {
   beforeEach(() => {
@@ -31,82 +31,103 @@ describe('Notifications page', () => {
   };
 
   it('shows loading state initially', () => {
-    mockGetNotifications.mockReturnValue(new Promise(() => {}));
+    mockGetAlertHistory.mockReturnValue(new Promise(() => {}));
     renderWithProviders(<Notifications />);
-    // The refresh icon should be spinning during load
-    expect(screen.getByLabelText('Refresh notifications')).toBeInTheDocument();
+    expect(screen.getByLabelText('Refresh alerts')).toBeInTheDocument();
   });
 
-  it('shows empty state when there are no notifications', async () => {
-    mockGetNotifications.mockResolvedValue([]);
+  it('shows empty state when there are no alerts', async () => {
+    mockGetAlertHistory.mockResolvedValue([]);
     renderWithProviders(<Notifications />);
     await waitFor(() => {
-      expect(screen.getByText('No notifications yet.')).toBeInTheDocument();
+      expect(screen.getByText('No alerts yet')).toBeInTheDocument();
     });
   });
 
-  it('renders a list of notifications', async () => {
-    mockGetNotifications.mockResolvedValue([
+  it('renders a list of alerts', async () => {
+    mockGetAlertHistory.mockResolvedValue([
       {
-        id: 'n-1',
-        alertId: 'a-1',
-        recipientUserId: 'parent-001',
-        channel: 'PUSH',
-        status: 'SENT',
+        id: 'a-1',
+        schoolId: 's1',
+        vehicleId: 'BUS-01',
+        routeId: 'ROUTE-1',
+        driverId: 'd1',
         timestamp: '2026-03-25T10:00:00Z',
+        lat: 45.42,
+        lng: -75.69,
+        eventType: 'PANIC_BUTTON',
+        description: 'Emergency panic button pressed',
+        status: 'RESOLVED' as const,
+        createdAt: '2026-03-25T10:00:00Z',
+        updatedAt: '2026-03-25T10:05:00Z',
       },
       {
-        id: 'n-2',
-        alertId: 'a-2',
-        recipientUserId: 'parent-001',
-        channel: 'PUSH',
-        status: 'FAILED',
+        id: 'a-2',
+        schoolId: 's1',
+        vehicleId: 'BUS-01',
+        routeId: 'ROUTE-1',
+        driverId: 'd1',
         timestamp: '2026-03-25T09:00:00Z',
+        lat: 45.42,
+        lng: -75.69,
+        eventType: 'LATE_ARRIVAL',
+        description: 'Bus is running late',
+        status: 'ACTIVE' as const,
+        createdAt: '2026-03-25T09:00:00Z',
+        updatedAt: '2026-03-25T09:00:00Z',
       },
     ]);
 
     renderWithProviders(<Notifications />);
 
     await waitFor(() => {
-      expect(screen.getAllByText('Alert notification')).toHaveLength(2);
+      expect(screen.getByText('Panic Button')).toBeInTheDocument();
     });
-    expect(screen.getAllByText('SENT')).toHaveLength(1);
-    expect(screen.getAllByText('FAILED')).toHaveLength(1);
+    expect(screen.getByText('Late Arrival')).toBeInTheDocument();
+    expect(screen.getByText('RESOLVED')).toBeInTheDocument();
+    expect(screen.getByText('ACTIVE')).toBeInTheDocument();
   });
 
   it('shows error state when API call fails', async () => {
-    mockGetNotifications.mockRejectedValue(new Error('Network error'));
+    mockGetAlertHistory.mockRejectedValue(new Error('Network error'));
     renderWithProviders(<Notifications />);
     await waitFor(
       () => {
-        expect(screen.getByText(/Unable to load notifications/i)).toBeInTheDocument();
+        expect(screen.getByText(/Unable to load alert history/i)).toBeInTheDocument();
       },
       { timeout: 5000 },
     );
   });
 
-  it('refreshes notifications on button click', async () => {
-    mockGetNotifications.mockResolvedValue([]);
+  it('refreshes alerts on button click', async () => {
+    mockGetAlertHistory.mockResolvedValue([]);
     renderWithProviders(<Notifications />);
     await waitFor(() => {
-      expect(screen.getByText('No notifications yet.')).toBeInTheDocument();
+      expect(screen.getByText('No alerts yet')).toBeInTheDocument();
     });
 
-    mockGetNotifications.mockResolvedValue([
+    mockGetAlertHistory.mockResolvedValue([
       {
-        id: 'n-3',
-        alertId: 'a-3',
-        recipientUserId: 'parent-001',
-        channel: 'PUSH',
-        status: 'SENT',
+        id: 'a-3',
+        schoolId: 's1',
+        vehicleId: 'BUS-01',
+        routeId: 'ROUTE-1',
+        driverId: 'd1',
         timestamp: '2026-03-25T11:00:00Z',
+        lat: 45.42,
+        lng: -75.69,
+        eventType: 'INCIDENT',
+        description: 'Incident reported',
+        status: 'ACTIVE' as const,
+        createdAt: '2026-03-25T11:00:00Z',
+        updatedAt: '2026-03-25T11:00:00Z',
       },
     ]);
 
-    await userEvent.click(screen.getByLabelText('Refresh notifications'));
+    await userEvent.click(screen.getByLabelText('Refresh alerts'));
 
     await waitFor(() => {
-      expect(screen.getAllByText('Alert notification')).toHaveLength(1);
+      expect(screen.getByText('Incident')).toBeInTheDocument();
     });
   });
 });

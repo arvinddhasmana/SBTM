@@ -29,13 +29,13 @@ export class NotificationPreference {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ name: 'user_id', type: 'uuid' })
+  @Column({ type: 'uuid' })
   userId: string;
 
-  @Column({ name: 'school_id', type: 'uuid' })
+  @Column({ type: 'uuid' })
   schoolId: string;
 
-  @Column({ name: 'event_type', type: 'varchar', length: 50 })
+  @Column({ type: 'varchar', length: 50 })
   eventType: string;
 
   @Column({ type: 'varchar', length: 10 })
@@ -44,9 +44,9 @@ export class NotificationPreference {
   @Column({ type: 'boolean', default: true })
   enabled: boolean;
 
-  @CreateDateColumn({ name: 'created_at' })
+  @CreateDateColumn()
   createdAt: Date;
 
-  @UpdateDateColumn({ name: 'updated_at' })
+  @UpdateDateColumn()
   updatedAt: Date;
 }

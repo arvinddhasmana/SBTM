@@ -5,7 +5,7 @@ import type { LiveLocation, Route } from '../../types';
 import { getStatusColorClass } from '../../utils/formatters';
 
 /** Route IDs assigned to live drivers using the phone app (highlighted on map) */
-const LIVE_DRIVER_ROUTE_IDS = ['ROUTE-R01', 'ROUTE-R02', 'ROUTE-R11', 'ROUTE-R12'];
+const LIVE_DRIVER_ROUTE_IDS = ['ROUTE-SingleBus-AM', 'ROUTE-SingleBus-PM'];
 
 const parseWktPoint = (wkt: string): [number, number] => {
   const coords = wkt.match(/POINT\(([-\d.]+) ([-\d.]+)\)/);

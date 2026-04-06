@@ -2,6 +2,7 @@
   "school": {
     "id": "c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c",
     "name": "Greenfield Elementary",
+    "boardId": "b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c",
     "lat": 45.3876,
     "lng": -75.696
   },
@@ -10,6 +11,36 @@
     "driverId": "driver-001",
     "driverEmail": "driver1@sbtm.demo"
   },
+  "parents": [
+    {
+      "userId": "10000000-0000-0000-0000-000000000201",
+      "email": "parent1@sbtm.demo",
+      "firstName": "Sarah",
+      "lastName": "Smith",
+      "studentIds": ["10000000-0000-0000-0000-000000000001", "10000000-0000-0000-0000-000000000002"]
+    },
+    {
+      "userId": "10000000-0000-0000-0000-000000000202",
+      "email": "parent2@sbtm.demo",
+      "firstName": "David",
+      "lastName": "Johnson",
+      "studentIds": ["10000000-0000-0000-0000-000000000003"]
+    },
+    {
+      "userId": "10000000-0000-0000-0000-000000000204",
+      "email": "parent4@sbtm.demo",
+      "firstName": "Linda",
+      "lastName": "Brown",
+      "studentIds": ["10000000-0000-0000-0000-000000000004", "10000000-0000-0000-0000-000000000005"]
+    },
+    {
+      "userId": "10000000-0000-0000-0000-000000000205",
+      "email": "parent5@sbtm.demo",
+      "firstName": "Jennifer",
+      "lastName": "Martinez",
+      "studentIds": ["10000000-0000-0000-0000-000000000006", "10000000-0000-0000-0000-000000000007"]
+    }
+  ],
   "students": [
     {
       "id": "10000000-0000-0000-0000-000000000001",
@@ -48,7 +79,7 @@
     }
   ],
   "am": {
-    "routeId": "ROUTE-CUSTOM-AM",
+    "routeId": "ROUTE-SingleBus-AM",
     "polyline": "k~{sG`k|lMTBJN@dA@pA?D?NO?C?mED_BFoAHM@M@qBPMBwANcAXQHy@Xm@\\m@d@GFs@n@e@d@MTe@n@W`@MHY`@EDQNECGAEAC?Y[EECGIOOUo@u@QQIMKKGKISIOGUCQCOAS?S?Q@OBQBQBQFQHSHOJMHIJGLGLAJAJ@LBJFHFDHFJBNBRAPANEPGLGHQRONkAbA_@PWLWLSFu@Xq@V{Af@cGtBaBl@SHiBr@YLULWNWNWRURYTWXUTSVSXqAfBMTMNORUXSVUTONOLOJi@^a@Xq@`@A@y@h@e@TmLlH{BzAqA|@aAp@iBjAo@b@y@j@qA|@KFMJcAr@GDiBnAwB|Ao@d@q@f@WPu@j@m@b@]VGFKFMHLd@HTBHDP|@`CDLd@hAHRb@hA@FBRAH@JBHBFDBFBB?FCDCBGBIHGDCDADCVGRCNCHCJEpBYHA",
     "decoded": [
       [45.36822, -75.68065],
@@ -281,7 +312,7 @@
     "end": [45.3876, -75.696]
   },
   "pm": {
-    "routeId": "ROUTE-CUSTOM-PM",
+    "routeId": "ROUTE-SingleBus-PM",
     "polyline": "k~{sG`k|lMTBJN@dA@pA?D?NO?C?mED_BFoAHM@M@qBPMBwANcAXQHy@Xm@\\m@d@GFs@n@e@d@MTe@n@W`@MHY`@EDQNECGAEAC?Y[EECGIOOUo@u@QQIMKKGKISIOGUCQCOAS?S?Q@OBQBQBQFQHSHOJMHIJGLGLAJAJ@LBJFHFDHFJBNBRAPANEPGLGHQRONkAbA_@PWLWLSFu@Xq@V{Af@cGtBaBl@SHiBr@YLULWNWNWRURYTWXUTSVSXqAfBMTMNORUXSVUTONOLOJi@^a@Xq@`@A@y@h@e@TmLlH{BzAqA|@aAp@iBjAo@b@y@j@qA|@KFMJcAr@GDiBnAwB|Ao@d@q@f@WPu@j@m@b@]VGFKFMHLd@HTBHDP|@`CDLd@hAHRb@hA@FBRAH@JBHBFDBFBB?FCDCBGBIHGDCDADCVGRCNCHCJEpBYHA",
     "decoded": [
       [45.38764, -75.69566],

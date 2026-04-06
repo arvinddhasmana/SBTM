@@ -1,21 +1,38 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Bell, CheckCircle, XCircle, RefreshCw } from 'lucide-react';
-import { parentApi, type NotificationRecord } from '../services/api';
+import { AlertTriangle, CheckCircle, RefreshCw, ShieldAlert } from 'lucide-react';
+import { parentApi, type AlertHistoryRecord } from '../services/api';
 import { queryKeys } from '../services/query-keys';
+
+const EVENT_TYPE_LABELS: Record<string, string> = {
+  LATE_ARRIVAL: 'Late Arrival',
+  ROUTE_DEVIATION: 'Route Deviation',
+  PANIC_BUTTON: 'Panic Button',
+  INCIDENT: 'Incident',
+  ROUTE_DIVERSION: 'Route Diversion',
+  PANIC_ALERT: 'Panic Alert',
+};
+
+const EVENT_TYPE_COLORS: Record<string, string> = {
+  LATE_ARRIVAL: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+  ROUTE_DEVIATION: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+  PANIC_BUTTON: 'bg-red-500/20 text-red-400 border-red-500/30',
+  INCIDENT: 'bg-pink-500/20 text-pink-400 border-pink-500/30',
+};
 
 const Notifications: React.FC = () => {
   const {
-    data: notifications = [],
+    data: alerts = [],
     isLoading: loading,
     error: queryError,
     refetch,
   } = useQuery({
-    queryKey: queryKeys.notifications.all,
-    queryFn: () => parentApi.getNotifications(),
+    queryKey: queryKeys.alerts.history,
+    queryFn: () => parentApi.getAlertHistory(),
+    refetchInterval: 30_000,
   });
 
-  const error = queryError ? 'Unable to load notifications. Please try again.' : null;
+  const error = queryError ? 'Unable to load alert history. Please try again.' : null;
 
   const formatTimestamp = (ts: string): string => {
     try {
@@ -27,67 +44,103 @@ const Notifications: React.FC = () => {
 
   return (
     <div className="px-4 sm:px-0">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Notifications</h1>
+      <div className="flex items-center justify-between mb-2">
+        <h1 className="text-3xl font-bold text-white tracking-tight">Alert History</h1>
         <button
           onClick={() => refetch()}
           disabled={loading}
-          className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 disabled:opacity-50"
-          aria-label="Refresh notifications"
+          className="flex items-center gap-2 text-sm text-indigo-400 hover:text-indigo-300 disabled:opacity-50 transition-colors"
+          aria-label="Refresh alerts"
         >
           <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
           Refresh
         </button>
       </div>
+      <p className="text-slate-400 mb-8">Emergency alerts and safety events for your routes.</p>
 
       {error && (
-        <div className="mb-4 rounded-md bg-red-50 border border-red-200 p-4 text-red-700 text-sm">
+        <div className="mb-4 rounded-2xl bg-red-500/10 border border-red-500/30 p-4 text-red-300 text-sm backdrop-blur-md">
           {error}
         </div>
       )}
 
-      {loading && notifications.length === 0 && (
+      {loading && alerts.length === 0 && (
         <div className="flex justify-center py-12">
-          <RefreshCw className="h-6 w-6 animate-spin text-gray-400" />
+          <RefreshCw className="h-6 w-6 animate-spin text-slate-500" />
         </div>
       )}
 
-      {!loading && notifications.length === 0 && !error && (
-        <div className="text-center py-12">
-          <Bell className="mx-auto h-12 w-12 text-gray-300" />
-          <p className="mt-3 text-gray-500">No notifications yet.</p>
-          <p className="text-sm text-gray-400">You will see alerts and boarding events here.</p>
+      {!loading && alerts.length === 0 && !error && (
+        <div className="text-center py-16">
+          <ShieldAlert className="mx-auto h-14 w-14 text-slate-600" />
+          <p className="mt-4 text-lg text-slate-400 font-medium">No alerts yet</p>
+          <p className="text-sm text-slate-500 mt-1">
+            Safety alerts for your children's routes will appear here.
+          </p>
         </div>
       )}
 
-      {notifications.length > 0 && (
-        <ul className="divide-y divide-gray-200 bg-white rounded-lg shadow overflow-hidden">
-          {notifications.map((n) => (
-            <li key={n.id} className="flex items-start gap-4 p-4 hover:bg-gray-50">
-              <div className="flex-shrink-0 mt-0.5">
-                {n.status === 'SENT' ? (
-                  <CheckCircle className="h-5 w-5 text-green-500" />
-                ) : (
-                  <XCircle className="h-5 w-5 text-red-400" />
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900">Alert notification</p>
-                <p className="text-xs text-gray-500 mt-0.5">
-                  Channel: {n.channel} &bull; Status: {n.status}
-                </p>
-                <p className="text-xs text-gray-400 mt-0.5">{formatTimestamp(n.timestamp)}</p>
-              </div>
-              <span
-                className={`flex-shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                  n.status === 'SENT' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+      {alerts.length > 0 && (
+        <div className="space-y-4">
+          {alerts.map((alert: AlertHistoryRecord) => {
+            const label = EVENT_TYPE_LABELS[alert.eventType] || alert.eventType;
+            const colorClass =
+              EVENT_TYPE_COLORS[alert.eventType] ||
+              'bg-slate-500/20 text-slate-400 border-slate-500/30';
+            const isActive = alert.status === 'ACTIVE';
+
+            return (
+              <div
+                key={alert.id}
+                className={`glass-card overflow-hidden group hover:border-white/20 transition-all duration-300 ${
+                  isActive ? 'ring-1 ring-pink-500/40' : ''
                 }`}
               >
-                {n.status}
-              </span>
-            </li>
-          ))}
-        </ul>
+                <div className="p-5">
+                  <div className="flex items-start gap-4">
+                    <div className="flex-shrink-0 mt-0.5">
+                      {isActive ? (
+                        <AlertTriangle className="h-6 w-6 text-pink-500 animate-pulse" />
+                      ) : (
+                        <CheckCircle className="h-6 w-6 text-emerald-500" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-3 flex-wrap mb-2">
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider border ${colorClass}`}
+                        >
+                          {label}
+                        </span>
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider border ${
+                            isActive
+                              ? 'bg-pink-500/20 text-pink-400 border-pink-500/30'
+                              : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                          }`}
+                        >
+                          {alert.status}
+                        </span>
+                      </div>
+                      {alert.description && (
+                        <p className="text-slate-200 text-sm mb-2">{alert.description}</p>
+                      )}
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
+                        <span>
+                          Route: <span className="text-slate-300 font-medium">{alert.routeId}</span>
+                        </span>
+                        <span>
+                          Bus: <span className="text-slate-300 font-medium">{alert.vehicleId}</span>
+                        </span>
+                        <span>{formatTimestamp(alert.createdAt)}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       )}
     </div>
   );

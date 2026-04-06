@@ -9,10 +9,13 @@ const Layout: React.FC = () => {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  // Show a dot on the bell when there is an active emergency alert on the parent's first route
-  const firstRouteId = user?.children?.[0]?.routeId;
-  const { alert: activeAlert } = useAlerts(firstRouteId);
-  const hasUnread = !!activeAlert;
+  // Show a dot on the bell when there is an active emergency alert on any of the parent's routes
+  const routeIds =
+    user?.children
+      ?.flatMap((c) => [c.amRouteId, c.pmRouteId, c.routeId])
+      .filter((id): id is string => !!id) ?? [];
+  const { alerts } = useAlerts(routeIds);
+  const hasUnread = alerts.length > 0;
 
   const handleLogout = () => {
     logout();

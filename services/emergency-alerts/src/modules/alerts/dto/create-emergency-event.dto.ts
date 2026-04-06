@@ -4,6 +4,7 @@ import {
   IsDateString,
   IsNumber,
   IsEnum,
+  IsOptional,
 } from 'class-validator';
 import { EmergencyEventType } from '../entities/emergency-alert.entity';
 
@@ -35,4 +36,8 @@ export class CreateEmergencyEventDto {
 
   @IsEnum(EmergencyEventType)
   eventType: EmergencyEventType;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
 }

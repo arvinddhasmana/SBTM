@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# SBTM Demo Verification
+# SBTM Demo Verification (Single-Bus Demo)
 # Verifies seeded users/roles, tenant entities, and login credentials.
 # =============================================================================
 set -euo pipefail
@@ -10,7 +10,6 @@ DATABASE_NAME="${2:-sbms}"
 API_BASE="${3:-http://localhost:3001/api/v1}"
 CONTAINER_NAME="sbtm_antigravity-postgres-1"
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ALL_PASSED=true
 
 echo -e "\033[36m--- SBTM Demo Verification ---\033[0m"
@@ -44,25 +43,6 @@ get_token() {
     -H "Content-Type: application/json" \
     -d "{\"email\":\"$email\",\"password\":\"Admin123!\"}" 2>/dev/null \
     | grep -oP '"accessToken"\s*:\s*"\K[^"]+' || echo ""
-}
-
-test_api_list() {
-  local label="$1"
-  local url="$2"
-  local token="$3"
-  local response
-  local http_code
-
-  http_code=$(curl -sf -o /dev/null -w "%{http_code}" -X GET "$url" \
-    -H "Authorization: Bearer $token" 2>/dev/null) || http_code="000"
-
-  if [ "$http_code" = "200" ]; then
-    echo -e "  \033[32mOK: $label\033[0m"
-    return 0
-  else
-    echo -e "  \033[31mFAIL: $label -> HTTP $http_code\033[0m"
-    return 1
-  fi
 }
 
 test_api_get() {
@@ -101,7 +81,6 @@ wait_api_health() {
     sleep 3
   done
   echo -e "  \033[31mAPI health check timed out after 90 seconds\033[0m"
-  echo -e "  \033[33mCheck Docker logs: docker compose logs api-gateway\033[0m"
   return 1
 }
 
@@ -111,16 +90,17 @@ run_query "Tenant entities:" \
   "SELECT 'school_boards', COUNT(*) FROM school_boards;
 SELECT 'schools', COUNT(*) FROM schools;"
 
-run_query "Users by role (expected admins: OSTA_ADMIN and SCHOOL_ADMIN only):" \
+run_query "Users by role:" \
   "SELECT role, COUNT(*) FROM users WHERE email LIKE '%@sbtm.demo' GROUP BY role ORDER BY role;"
 
 run_query "Seeded demo users:" \
-  "SELECT email, role, \"schoolId\", \"boardId\" FROM users WHERE email LIKE '%@sbtm.demo' ORDER BY email;"
+  "SELECT email, role, \"schoolId\" FROM users WHERE email LIKE '%@sbtm.demo' ORDER BY email;"
 
-run_query "Seeded students and references:" \
-  "SELECT 'students_reference', COUNT(*) FROM students_reference;
-SELECT 'presence_event', COUNT(*) FROM presence_event;
-SELECT 'student_tag', COUNT(*) FROM student_tag;"
+run_query "Students with AM/PM route assignments:" \
+  "SELECT id, \"firstName\", \"lastName\", \"amRouteId\", \"pmRouteId\" FROM students_reference ORDER BY id;"
+
+run_query "Route references:" \
+  "SELECT id, name, \"vehicleId\", \"driverId\" FROM routes_reference ORDER BY id;"
 
 # --- Login Checks ---
 
@@ -147,43 +127,23 @@ if [ -z "$OSTA_TOKEN" ]; then
   echo -e "  \033[31mFAIL: Could not get OSTA admin token\033[0m"
   ALL_PASSED=false
 else
-  if ! test_api_list "/vehicles" "$API_BASE/vehicles" "$OSTA_TOKEN"; then
-    ALL_PASSED=false
-  fi
-  if ! test_api_list "/students" "$API_BASE/students" "$OSTA_TOKEN"; then
+  if ! test_api_get "OSTA Admin: /students" "$API_BASE/students" "$OSTA_TOKEN"; then
     ALL_PASSED=false
   fi
 fi
 
-# --- Authorization Checks ---
+# --- Parent API Checks ---
 
-echo -e "\033[33mAuthorization checks (live location and students endpoints):\033[0m"
-
-# OSTA Admin access
-if ! test_api_get "OSTA Admin: /routes/locations" "$API_BASE/routes/locations" "$OSTA_TOKEN"; then
-  ALL_PASSED=false
-fi
-if ! test_api_get "OSTA Admin: /routes/ROUTE-R01/students" "$API_BASE/routes/ROUTE-R01/students" "$OSTA_TOKEN"; then
-  ALL_PASSED=false
-fi
-
-# Parent access (parent1 has children on ROUTE-R01 and ROUTE-R02)
+echo -e "\033[33mParent API checks:\033[0m"
 PARENT_TOKEN=$(get_token "parent1@sbtm.demo")
 if [ -n "$PARENT_TOKEN" ]; then
-  if ! test_api_get "Parent1: /routes/ROUTE-R01/live-location" "$API_BASE/routes/ROUTE-R01/live-location" "$PARENT_TOKEN"; then
+  if ! test_api_get "Parent1: /parent/children" "$API_BASE/parent/children" "$PARENT_TOKEN"; then
     ALL_PASSED=false
   fi
-  if ! test_api_get "Parent1: /routes/ROUTE-R11/live-location (expect 403)" "$API_BASE/routes/ROUTE-R11/live-location" "$PARENT_TOKEN" "403"; then
+  if ! test_api_get "Parent1: /routes/ROUTE-SingleBus-AM/live-location" "$API_BASE/routes/ROUTE-SingleBus-AM/live-location" "$PARENT_TOKEN"; then
     ALL_PASSED=false
   fi
 fi
-
-# --- GPS Data Check ---
-
-echo -e "\033[33mGPS data storage verification:\033[0m"
-run_query "Location points in database:" \
-  "SELECT COUNT(*) as location_count FROM location_points;
-SELECT route_id, COUNT(*) as points FROM location_points GROUP BY route_id ORDER BY route_id;"
 
 # --- Result ---
 

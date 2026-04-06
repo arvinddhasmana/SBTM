@@ -3,6 +3,8 @@ export interface Child {
   name: string;
   schoolName: string;
   routeId: string;
+  amRouteId?: string;
+  pmRouteId?: string;
   vehicleId: string;
   status: 'on_bus' | 'at_school' | 'at_home' | 'unknown';
   avatarUrl?: string;

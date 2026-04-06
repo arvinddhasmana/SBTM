@@ -55,6 +55,9 @@ export class EmergencyAlert {
   })
   eventType: EmergencyEventType;
 
+  @Column({ type: 'text', nullable: true })
+  description: string;
+
   @Column({
     type: 'enum',
     enum: EmergencyAlertStatus,

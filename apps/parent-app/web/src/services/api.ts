@@ -34,8 +34,28 @@ export interface ActiveAlert {
   routeId: string;
   vehicleId: string;
   eventType: string;
+  description?: string;
   message: string;
+  status?: 'ACTIVE' | 'RESOLVED';
+  lat?: number;
+  lng?: number;
   createdAt: string;
+}
+
+export interface AlertHistoryRecord {
+  id: string;
+  schoolId: string;
+  vehicleId: string;
+  routeId: string;
+  driverId: string;
+  timestamp: string;
+  lat: number;
+  lng: number;
+  eventType: string;
+  description?: string;
+  status: 'ACTIVE' | 'RESOLVED';
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface NotificationRecord {
@@ -63,6 +83,25 @@ export interface AbsenceRecord {
   routeType: 'AM' | 'PM' | 'BOTH';
   notes?: string;
   createdAt: string;
+}
+
+export interface RouteStop {
+  id: string;
+  routeId: string;
+  sequence: number;
+  address: string;
+  location?: string; // WKT "POINT(lng lat)"
+  lat?: number;
+  lng?: number;
+}
+
+export interface RouteDetails {
+  id: string;
+  name: string;
+  direction: string;
+  vehicleId?: string;
+  polyline?: string;
+  stops: RouteStop[];
 }
 
 export const parentApi = {
@@ -98,6 +137,11 @@ export const parentApi = {
     return response.data as ActiveAlert;
   },
 
+  async getAlertHistory(): Promise<AlertHistoryRecord[]> {
+    const response = await apiClient.get<AlertHistoryRecord[]>('/api/v1/alerts/parent-history');
+    return response.data;
+  },
+
   async getNotifications(): Promise<NotificationRecord[]> {
     const response = await apiClient.get<NotificationRecord[]>('/api/v1/parent/notifications');
     return response.data;
@@ -125,5 +169,10 @@ export const parentApi = {
 
   async registerDeviceToken(token: string, platform: string): Promise<void> {
     await apiClient.post('/api/v1/device-tokens', { token, platform });
+  },
+
+  async getRouteDetails(routeId: string): Promise<RouteDetails> {
+    const response = await apiClient.get<RouteDetails>(`/api/v1/routes/reference/${routeId}`);
+    return response.data;
   },
 };

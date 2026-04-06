@@ -44,9 +44,23 @@ export class AlertsController {
   }
 
   @Patch('alerts/:id/resolve')
-  @Roles(Role.ADMIN, Role.SCHOOL_ADMIN)
+  @Roles(Role.OSTA_ADMIN, Role.ADMIN, Role.SCHOOL_ADMIN)
   async resolveAlert(@Param('id') id: string) {
     return this.alertsGatewayService.resolveAlert(id);
+  }
+
+  @Get('alerts/parent-view/:routeId')
+  @Roles(Role.PARENT)
+  async getAlertsForRoute(@Param('routeId') routeId: string) {
+    return this.alertsGatewayService.getAlertsForRoute(routeId);
+  }
+
+  @Get('alerts/parent-history')
+  @Roles(Role.PARENT)
+  async getParentAlertHistory(@Request() req: { user: any }) {
+    const user = req.user;
+    const routeIds: string[] = user.childRouteIds || [];
+    return this.alertsGatewayService.getAlertsByRoutes(routeIds);
   }
 
   @Get('alerts/:id')

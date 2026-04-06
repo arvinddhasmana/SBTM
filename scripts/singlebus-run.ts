@@ -21,12 +21,33 @@ async function apiPost(url: string, body: any, token?: string) {
     if (!response.ok) {
       console.error(`[API ERROR] ${url} - Status: ${response.status} ${response.statusText}`);
       console.error(`  > Body: ${JSON.stringify(body)}`);
-      return false;
+      return null;
     }
-    return true;
+    return response.json();
   } catch (e: any) {
     console.error(`[API FETCH ERROR] ${url} - Error: ${e.message}`);
-    return false;
+    return null;
+  }
+}
+
+async function apiPatch(url: string, token: string) {
+  try {
+    const response = await fetch(url, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: '{}',
+    });
+    if (!response.ok) {
+      console.error(`[API ERROR] PATCH ${url} - Status: ${response.status} ${response.statusText}`);
+      return null;
+    }
+    return response.json();
+  } catch (e: any) {
+    console.error(`[API FETCH ERROR] PATCH ${url} - Error: ${e.message}`);
+    return null;
   }
 }
 
@@ -56,10 +77,22 @@ async function startGpsLoop(driverToken: string, intervalSeconds: number) {
   }
 }
 
+const ALERT_DESCRIPTIONS: Record<string, (vehicleId: string, routeId: string) => string> = {
+  LATE_ARRIVAL: (v, r) =>
+    `Bus ${v} is running approximately 15 minutes behind schedule on route ${r}. Traffic congestion reported on the planned path.`,
+  ROUTE_DEVIATION: (v, r) =>
+    `Bus ${v} has deviated from the planned route ${r}. Driver has taken an alternate path due to road construction ahead.`,
+  PANIC_BUTTON: (v, _r) =>
+    `Emergency panic button was pressed on Bus ${v}. Driver has reported a safety concern near the current location.`,
+  INCIDENT: (v, r) =>
+    `An incident has been reported on Bus ${v} on route ${r}. A minor fender-bender occurred near the bus stop. All students are safe.`,
+};
+
 async function runLap(
   config: any,
   routeKey: 'am' | 'pm',
   driverToken: string,
+  adminToken: string,
   intervalSeconds: number,
 ) {
   const route = config[routeKey];
@@ -69,6 +102,7 @@ async function runLap(
   const allStudents = config.students;
   const visitedStops = new Set<string>();
   const sentAlerts = new Set<string>();
+  const pendingAlerts: Array<{ alertId: string; eventType: string; resolveAt: number }> = [];
 
   currentRouteId = routeId;
   currentVehicleId = vehicleId;
@@ -164,13 +198,26 @@ async function runLap(
       }
     }
 
+    // Check for pending alert resolutions
+    if (routeKey === 'pm') {
+      for (let a = pendingAlerts.length - 1; a >= 0; a--) {
+        const pending = pendingAlerts[a];
+        if (i >= pending.resolveAt) {
+          console.log(`[ALERT RESOLVED] Resolving ${pending.eventType} (${pending.alertId})`);
+          await apiPatch(`${API_BASE}/alerts/${pending.alertId}/resolve`, adminToken);
+          pendingAlerts.splice(a, 1);
+        }
+      }
+    }
+
     // Trigger Tactical Alerts throughout the journey for demonstration
     if (routeKey === 'pm') {
       // 1. Late Arrival Alert early in the route (20%)
       if (i === Math.floor(decoded.length * 0.2) && !sentAlerts.has('LATE_ARRIVAL')) {
         sentAlerts.add('LATE_ARRIVAL');
-        console.log('[ALERT] Dispatching LATE_ARRIVAL notification');
-        await apiPost(
+        const desc = ALERT_DESCRIPTIONS.LATE_ARRIVAL(vehicleId, routeId);
+        console.log(`[ALERT] Dispatching LATE_ARRIVAL: ${desc.substring(0, 60)}...`);
+        const result = await apiPost(
           `${API_BASE}/emergency-events`,
           {
             schoolId,
@@ -181,16 +228,26 @@ async function runLap(
             lat,
             lng,
             eventType: 'LATE_ARRIVAL',
+            description: desc,
           },
           driverToken,
         );
+        if (result?.alertId) {
+          pendingAlerts.push({
+            alertId: result.alertId,
+            eventType: 'LATE_ARRIVAL',
+            resolveAt: Math.floor(decoded.length * 0.3),
+          });
+        }
+        await new Promise((r) => setTimeout(r, 3000));
       }
 
-      // 2. Route Diversion Alert in the middle (40%)
+      // 2. Route Deviation Alert in the middle (40%)
       if (i === Math.floor(decoded.length * 0.4) && !sentAlerts.has('ROUTE_DEVIATION')) {
         sentAlerts.add('ROUTE_DEVIATION');
-        console.log('[ALERT] Dispatching ROUTE_DEVIATION notification');
-        await apiPost(
+        const desc = ALERT_DESCRIPTIONS.ROUTE_DEVIATION(vehicleId, routeId);
+        console.log(`[ALERT] Dispatching ROUTE_DEVIATION: ${desc.substring(0, 60)}...`);
+        const result = await apiPost(
           `${API_BASE}/emergency-events`,
           {
             schoolId,
@@ -201,16 +258,26 @@ async function runLap(
             lat,
             lng,
             eventType: 'ROUTE_DEVIATION',
+            description: desc,
           },
           driverToken,
         );
+        if (result?.alertId) {
+          pendingAlerts.push({
+            alertId: result.alertId,
+            eventType: 'ROUTE_DEVIATION',
+            resolveAt: Math.floor(decoded.length * 0.5),
+          });
+        }
+        await new Promise((r) => setTimeout(r, 3000));
       }
 
       // 3. Panic Alert late in the route (60%)
       if (i === Math.floor(decoded.length * 0.6) && !sentAlerts.has('PANIC_BUTTON')) {
         sentAlerts.add('PANIC_BUTTON');
-        console.log('[ALERT] Dispatching PANIC_BUTTON notification');
-        await apiPost(
+        const desc = ALERT_DESCRIPTIONS.PANIC_BUTTON(vehicleId, routeId);
+        console.log(`[ALERT] Dispatching PANIC_BUTTON: ${desc.substring(0, 60)}...`);
+        const result = await apiPost(
           `${API_BASE}/emergency-events`,
           {
             schoolId,
@@ -221,9 +288,48 @@ async function runLap(
             lat,
             lng,
             eventType: 'PANIC_BUTTON',
+            description: desc,
           },
           driverToken,
         );
+        if (result?.alertId) {
+          pendingAlerts.push({
+            alertId: result.alertId,
+            eventType: 'PANIC_BUTTON',
+            resolveAt: Math.floor(decoded.length * 0.7),
+          });
+        }
+        await new Promise((r) => setTimeout(r, 3000));
+      }
+
+      // 4. Incident Alert near end of route (80%)
+      if (i === Math.floor(decoded.length * 0.8) && !sentAlerts.has('INCIDENT')) {
+        sentAlerts.add('INCIDENT');
+        const desc = ALERT_DESCRIPTIONS.INCIDENT(vehicleId, routeId);
+        console.log(`[ALERT] Dispatching INCIDENT: ${desc.substring(0, 60)}...`);
+        const result = await apiPost(
+          `${API_BASE}/emergency-events`,
+          {
+            schoolId,
+            vehicleId,
+            routeId,
+            driverId,
+            timestamp,
+            lat,
+            lng,
+            eventType: 'INCIDENT',
+            description: desc,
+          },
+          driverToken,
+        );
+        if (result?.alertId) {
+          pendingAlerts.push({
+            alertId: result.alertId,
+            eventType: 'INCIDENT',
+            resolveAt: Math.floor(decoded.length * 0.9),
+          });
+        }
+        await new Promise((r) => setTimeout(r, 3000));
       }
     }
 
@@ -255,16 +361,32 @@ async function main() {
     process.exit(1);
   }
 
+  // Authenticate Admin (for resolving alerts)
+  const adminLoginRes = await fetch(`${API_BASE}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: 'osta.admin@sbtm.demo', password: 'Admin123!' }),
+  });
+  if (!adminLoginRes.ok) {
+    console.error(`[AUTH ERROR] Failed to login admin for alert resolution`);
+    process.exit(1);
+  }
+  const { accessToken: adminToken } = (await adminLoginRes.json()) as any;
+  if (!adminToken) {
+    console.error(`[AUTH ERROR] No access token returned for admin.`);
+    process.exit(1);
+  }
+
   // Start the background GPS broadcaster
   startGpsLoop(driverToken, interval);
 
   // Execute Laps
-  await runLap(config, 'am', driverToken, interval);
+  await runLap(config, 'am', driverToken, adminToken, interval);
 
   console.log('\n--- Simulation Hiatus (5s) ---');
   await new Promise((r) => setTimeout(r, 5000));
 
-  await runLap(config, 'pm', driverToken, interval);
+  await runLap(config, 'pm', driverToken, adminToken, interval);
 
   isSimulationRunning = false;
   console.log('\n[COMPLETE] Simulation cycle finished.');

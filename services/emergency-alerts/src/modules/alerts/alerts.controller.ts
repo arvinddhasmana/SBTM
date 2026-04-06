@@ -38,13 +38,19 @@ export class AlertsController {
     return this.alertsService.resolve(alertId);
   }
 
-  @Get('alerts/:alertId')
-  async findOne(@Param('alertId') alertId: string) {
-    return this.alertsService.findOne(alertId);
-  }
-
   @Get('alerts/parent-view/:routeId')
   async findForRoute(@Param('routeId') routeId: string) {
     return this.alertsService.findForRoute(routeId);
+  }
+
+  @Get('alerts/by-routes')
+  async findByRoutes(@Query('routeIds') routeIds: string) {
+    const ids = routeIds ? routeIds.split(',').filter(Boolean) : [];
+    return this.alertsService.findByRoutes(ids);
+  }
+
+  @Get('alerts/:alertId')
+  async findOne(@Param('alertId') alertId: string) {
+    return this.alertsService.findOne(alertId);
   }
 }

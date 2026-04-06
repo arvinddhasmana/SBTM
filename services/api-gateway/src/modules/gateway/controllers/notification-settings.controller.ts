@@ -25,7 +25,7 @@ export class NotificationSettingsController {
   async getPreferences(@Request() req: { user: any }) {
     const user = req.user;
     return this.notificationSettingsService.getPreferences(
-      user.sub,
+      user.id,
       user.schoolId,
     );
   }
@@ -41,7 +41,7 @@ export class NotificationSettingsController {
   ) {
     const user = req.user;
     return this.notificationSettingsService.updatePreferences({
-      userId: user.sub,
+      userId: user.id,
       schoolId: user.schoolId,
       preferences: body.preferences,
     });
@@ -55,7 +55,7 @@ export class NotificationSettingsController {
   ) {
     const user = req.user;
     return this.notificationSettingsService.registerDeviceToken({
-      userId: user.sub,
+      userId: user.id,
       schoolId: user.schoolId,
       token: body.token,
       platform: body.platform,
@@ -71,7 +71,7 @@ export class NotificationSettingsController {
     const user = req.user;
     return this.notificationSettingsService.deactivateDeviceToken(
       tokenId,
-      user.sub,
+      user.id,
     );
   }
 
@@ -80,7 +80,7 @@ export class NotificationSettingsController {
   async getDeviceTokens(@Request() req: { user: any }) {
     const user = req.user;
     return this.notificationSettingsService.getDeviceTokens(
-      user.sub,
+      user.id,
       user.schoolId,
     );
   }
@@ -90,7 +90,7 @@ export class NotificationSettingsController {
   async getDeliveryLog(@Request() req: { user: any }) {
     const user = req.user;
     return this.notificationSettingsService.getDeliveryLog(
-      user.sub,
+      user.id,
       user.schoolId,
     );
   }
