@@ -55,7 +55,7 @@ function App() {
             >
               <Route index element={<Navigate to="/dashboard" replace />} />
               <Route path="dashboard" element={<Dashboard />} />
-              <Route path="map/:childId" element={<MapPage />} />
+              <Route path="map" element={<MapPage />} />
               <Route path="notifications" element={<Notifications />} />
               <Route path="absence" element={<AbsenceReport />} />
               <Route path="settings" element={<Settings />} />

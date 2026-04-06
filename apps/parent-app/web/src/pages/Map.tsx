@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
@@ -78,7 +78,7 @@ function createBusIcon(status: BusStatus) {
 function createStopIcon(sequence: number, isChildStop: boolean) {
   const bg = isChildStop ? '#3b82f6' : 'rgba(156,163,175,0.35)';
   const border = isChildStop ? '2px solid #fff' : '2px solid rgba(156,163,175,0.5)';
-  const size = isChildStop ? 32 : 28;
+  const size = isChildStop ? 20 : 16;
   const shadow = isChildStop
     ? 'box-shadow:0 0 15px #3b82f644, 0 2px 8px rgba(0,0,0,0.4);'
     : 'box-shadow:0 2px 4px rgba(0,0,0,0.15);';
@@ -98,15 +98,15 @@ function createStopIcon(sequence: number, isChildStop: boolean) {
       position:relative;
     ">
       <div style="display:flex; flex-direction:column; align-items:center; transform:translateY(-1px);">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="${svgFill}">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="${svgFill}">
           <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
         </svg>
       </div>
       <div style="
-        position:absolute; bottom:-4px; right:-4px;
-        width:16px;height:16px; background:#fff; border:2px solid ${badgeBorder};
+        position:absolute; bottom:-3px; right:-3px;
+        width:10px;height:10px; background:#fff; border:2px solid ${badgeBorder};
         border-radius:50%; display:flex; align-items:center; justify-content:center;
-        font-size:8px; font-weight:900; color:${badgeColor};
+        font-size:6px; font-weight:900; color:${badgeColor};
         box-shadow:0 2px 4px rgba(0,0,0,0.2);
       ">${sequence}</div>
     </div>`,
@@ -138,11 +138,10 @@ function MapInstanceCapture({
 }
 
 const MapPage: React.FC = () => {
-  const { childId } = useParams<{ childId: string }>();
+  const location = useLocation();
+  const childId = (location.state as { childId?: string } | null)?.childId;
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [child, setChild] = useState<Child | null>(null);
-
   // --- Admin Dashboard pattern: refs for map instance and bound-fitting guard ---
   const mapInstanceRef = useRef<L.Map | null>(null);
   const lastActiveRouteIdRef = useRef<string>('');
@@ -159,16 +158,13 @@ const MapPage: React.FC = () => {
     staleTime: 15 * 1000,
   });
 
-  useEffect(() => {
-    const childrenList = freshChildren || user?.children || [];
-    if (!childrenList.length || !childId) return;
-    const foundChild = childrenList.find((c) => c.id === childId);
-    if (foundChild) {
-      setChild(foundChild);
-    } else {
-      navigate('/dashboard');
-    }
-  }, [user, freshChildren, childId, navigate]);
+  // Derive child reactively — avoids setState-in-effect cascade
+  const child = useMemo<Child | null>(() => {
+    const childrenList = freshChildren ?? user?.children ?? [];
+    if (!childrenList.length) return null;
+    const foundChild = childId ? childrenList.find((c) => c.id === childId) : undefined;
+    return foundChild ?? childrenList[0] ?? null;
+  }, [freshChildren, user, childId]);
 
   // --- Admin Dashboard pattern: poll BOTH AM and PM live-location endpoints
   //     in parallel (every 5 s). Reactively pick whichever has fresh GPS data. ---
@@ -246,7 +242,7 @@ const MapPage: React.FC = () => {
     if (pmLocation) return { activeRouteId: pmRouteId, locationData: pmLocation };
     if (amLocation) return { activeRouteId: amRouteId, locationData: amLocation };
     return { activeRouteId: amRouteId || pmRouteId, locationData: null };
-  }, [amLocation, pmLocation, amRouteId, pmRouteId]);
+  }, [amLocation, pmLocation, amRouteId, pmRouteId, nowMs]);
 
   // Fetch route details (polyline + stops) for the active route
   const { data: routeDetails } = useQuery({
@@ -260,7 +256,7 @@ const MapPage: React.FC = () => {
   const routePath = useMemo(() => {
     if (routeDetails?.polyline) return decodePolyline(routeDetails.polyline);
     return null;
-  }, [routeDetails?.polyline]);
+  }, [routeDetails]);
 
   // Parse stops positions
   const stopPositions = useMemo(() => {
@@ -273,7 +269,7 @@ const MapPage: React.FC = () => {
         return pos ? { ...stop, pos } : null;
       })
       .filter((s): s is NonNullable<typeof s> => s !== null);
-  }, [routeDetails?.stops]);
+  }, [routeDetails]);
 
   // Determine student's assigned stop for the active route
   const childStopId = useMemo(() => {
@@ -301,7 +297,7 @@ const MapPage: React.FC = () => {
     const hasDelay = alerts.some((a) => DELAY_EVENT_TYPES.has(a.eventType));
     if (hasDelay) return 'delay';
     return 'emergency';
-  }, [alerts, locationData?.status]);
+  }, [alerts, locationData]);
 
   const busIcon = useMemo(() => createBusIcon(busStatus), [busStatus]);
 
@@ -314,7 +310,7 @@ const MapPage: React.FC = () => {
     if (!busLocation?.timestamp) return false;
     const lastUpdate = new Date(busLocation.timestamp).getTime();
     return nowMs - lastUpdate < STALE_THRESHOLD_MS;
-  }, [busLocation?.timestamp, nowMs]);
+  }, [busLocation, nowMs]);
 
   // Route status label — mirrors Admin Dashboard: cross-check child presence status
   const routeStatusLabel = (() => {
@@ -363,7 +359,7 @@ const MapPage: React.FC = () => {
     busStatus === 'normal' ? 'Normal' : busStatus === 'delay' ? 'Delayed' : 'Emergency';
 
   return (
-    <div className="h-[calc(100vh-64px)] flex flex-col relative">
+    <div className="fixed inset-x-0 bottom-0 top-16 z-40">
       <div className="absolute top-4 left-4 right-4 z-[1000] pointer-events-none">
         <div className="max-w-7xl mx-auto flex flex-col gap-2">
           <div className="flex justify-between items-start">

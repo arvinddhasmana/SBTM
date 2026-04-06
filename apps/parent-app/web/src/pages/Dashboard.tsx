@@ -217,7 +217,7 @@ const Dashboard: React.FC = () => {
               </div>
               <div className="bg-white/5 px-6 py-4 border-t border-white/5">
                 <button
-                  onClick={() => navigate(`/map/${child.id}`)}
+                  onClick={() => navigate('/map', { state: { childId: child.id } })}
                   className="w-full flex justify-center items-center py-2.5 rounded-xl tactical-gradient-active text-white font-bold text-sm shadow-[0_4px_20px_rgba(99,102,241,0.3)] hover:shadow-[0_4px_25px_rgba(99,102,241,0.5)] transition-all transform hover:scale-[1.02] active:scale-95"
                 >
                   Track Bus Live
