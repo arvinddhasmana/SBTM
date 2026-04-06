@@ -27,6 +27,21 @@ const CONFIRMATION_TIMEOUT_MS = 120_000; // 2 minutes
 const BOARD_ESCALATION_MS = 300_000; // 5 minutes
 const OSTA_ESCALATION_MS = 900_000; // 15 minutes
 
+/** Shape returned by findForRoute — used by the parent-app API endpoint. */
+export interface RouteAlertView {
+  routeId: string;
+  alertActive: boolean;
+  message: string;
+  id?: string;
+  vehicleId?: string;
+  eventType?: string;
+  description?: string | null;
+  status?: string;
+  lat?: number;
+  lng?: number;
+  createdAt?: Date;
+}
+
 const EVENT_TYPE_LABELS: Record<string, string> = {
   LATE_ARRIVAL: 'Late Arrival',
   ROUTE_DEVIATION: 'Route Deviation',
@@ -279,7 +294,7 @@ export class AlertsService {
     return this.alertsRepo.findOneBy({ id });
   }
 
-  async findForRoute(routeId: string): Promise<object> {
+  async findForRoute(routeId: string): Promise<RouteAlertView> {
     const activeAlert = await this.alertsRepo.findOne({
       where: { routeId, status: EmergencyAlertStatus.ACTIVE },
       order: { createdAt: 'DESC' },

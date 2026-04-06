@@ -158,6 +158,9 @@ export class AlertsProcessor extends WorkerHost {
     }
 
     // Update status and record escalation timestamp.
+    // escalationLevel=SCHOOL records that this alert is still within the school
+    // tier of the escalation chain (auto-escalated to parents, not yet escalated
+    // to Board or OSTA admins). The board-escalation job will advance this to BOARD.
     alert.status = EmergencyAlertStatus.AUTO_ESCALATED;
     alert.autoEscalatedAt = new Date();
     alert.escalationLevel = AlertEscalationLevel.SCHOOL;

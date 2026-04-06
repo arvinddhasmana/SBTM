@@ -37,7 +37,11 @@ export class AlertAuditLog {
   @Column({ nullable: true })
   actorRole: string | null;
 
-  /** Optional operational notes (must not contain T4 PII). */
+  /**
+   * Optional operational notes.
+   * Callers are responsible for ensuring no T4 PII (names, addresses, etc.)
+   * is included — only operational context (route IDs, event types) is permitted.
+   */
   @Column({ type: 'text', nullable: true })
   notes: string | null;
 
