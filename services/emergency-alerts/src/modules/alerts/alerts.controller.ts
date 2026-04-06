@@ -10,6 +10,9 @@ import {
 } from '@nestjs/common';
 import { AlertsService } from './alerts.service';
 import { CreateEmergencyEventDto } from './dto/create-emergency-event.dto';
+import { ConfirmAlertDto } from './dto/confirm-alert.dto';
+import { FalseAlarmDto } from './dto/false-alarm.dto';
+import { RequestInfoDto } from './dto/request-info.dto';
 import { InternalServiceAuthGuard } from '@sbtm/common';
 
 @Controller('api/v1')
@@ -33,9 +36,65 @@ export class AlertsController {
     return this.alertsService.findAllActive(schoolId);
   }
 
+  /**
+   * GET /api/v1/alerts/audit/:alertId
+   * Returns the full lifecycle audit trail for the given alert.
+   * Accessible to School Admin, Board Admin, and OSTA Admin via the API Gateway RBAC.
+   */
+  @Get('alerts/audit/:alertId')
+  async getAuditLog(@Param('alertId') alertId: string) {
+    return this.alertsService.getAuditLog(alertId);
+  }
+
   @Patch('alerts/:alertId/resolve')
   async resolve(@Param('alertId') alertId: string) {
     return this.alertsService.resolve(alertId);
+  }
+
+  /**
+   * PATCH /api/v1/alerts/:alertId/confirm
+   * School Admin confirms a Tier 1 alert, triggering parent notification.
+   */
+  @Patch('alerts/:alertId/confirm')
+  async confirm(
+    @Param('alertId') alertId: string,
+    @Body() dto: ConfirmAlertDto,
+  ) {
+    return this.alertsService.confirm(alertId, dto.actorUserId, dto.actorRole);
+  }
+
+  /**
+   * PATCH /api/v1/alerts/:alertId/false-alarm
+   * School Admin marks a Tier 1 alert as a false alarm, suppressing parent notification.
+   */
+  @Patch('alerts/:alertId/false-alarm')
+  async falseAlarm(
+    @Param('alertId') alertId: string,
+    @Body() dto: FalseAlarmDto,
+  ) {
+    return this.alertsService.falseAlarm(
+      alertId,
+      dto.actorUserId,
+      dto.actorRole,
+      dto.notes,
+    );
+  }
+
+  /**
+   * PATCH /api/v1/alerts/:alertId/request-info
+   * School Admin requests more information about a Tier 1 alert.
+   * Logs the event; escalation timers continue running.
+   */
+  @Patch('alerts/:alertId/request-info')
+  async requestInfo(
+    @Param('alertId') alertId: string,
+    @Body() dto: RequestInfoDto,
+  ) {
+    return this.alertsService.requestInfo(
+      alertId,
+      dto.actorUserId,
+      dto.actorRole,
+    );
   }
 
   @Get('alerts/parent-view/:routeId')

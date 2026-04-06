@@ -13,6 +13,7 @@ vi.mock('../services/api', () => ({
         id: 'alert-1',
         eventType: 'PANIC_BUTTON',
         status: 'ACTIVE',
+        tier: 'TIER_1',
         timestamp: new Date().toISOString(),
         routeId: 'route-1',
         vehicleId: 'bus-1',
@@ -22,13 +23,30 @@ vi.mock('../services/api', () => ({
         id: 'alert-2',
         eventType: 'INCIDENT',
         status: 'RESOLVED',
+        tier: 'TIER_1',
         timestamp: new Date().toISOString(),
         routeId: 'route-2',
         vehicleId: 'bus-2',
         description: 'Resolved alert',
       },
+      {
+        id: 'alert-3',
+        eventType: 'LATE_ARRIVAL',
+        status: 'ACTIVE',
+        tier: 'TIER_2',
+        timestamp: new Date().toISOString(),
+        routeId: 'route-3',
+        vehicleId: 'bus-3',
+        description: 'Late arrival',
+      },
     ]),
     resolveAlert: vi.fn().mockImplementation((id) => Promise.resolve({ id, status: 'RESOLVED' })),
+    confirmAlert: vi.fn().mockImplementation((id) => Promise.resolve({ id, status: 'CONFIRMED' })),
+    falseAlarmAlert: vi
+      .fn()
+      .mockImplementation((id) => Promise.resolve({ id, status: 'FALSE_ALARM' })),
+    requestInfoAlert: vi.fn().mockImplementation((id) => Promise.resolve({ id, status: 'ACTIVE' })),
+    getAlertAuditLog: vi.fn().mockResolvedValue([]),
   },
 }));
 
@@ -73,7 +91,23 @@ describe('Alerts Page', () => {
 
     await waitFor(
       () => {
-        expect(screen.getByRole('button', { name: /all/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /^All \(/i })).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
+  }, 10000);
+
+  it('renders tier filter tabs', async () => {
+    renderAlerts();
+
+    await waitFor(
+      () => {
+        expect(screen.getByRole('button', { name: /All Tiers/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /Safety \(Tier 1\)/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /Operational \(Tier 2\)/i })).toBeInTheDocument();
+        expect(
+          screen.getByRole('button', { name: /Informational \(Tier 3\)/i }),
+        ).toBeInTheDocument();
       },
       { timeout: 5000 },
     );

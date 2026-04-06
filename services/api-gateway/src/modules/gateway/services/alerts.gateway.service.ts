@@ -9,7 +9,17 @@ export interface AlertDto {
   timestamp: string;
   eventType: string;
   description?: string;
-  status: 'ACTIVE' | 'RESOLVED';
+  status:
+    | 'ACTIVE'
+    | 'RESOLVED'
+    | 'PENDING_CONFIRMATION'
+    | 'CONFIRMED'
+    | 'AUTO_ESCALATED'
+    | 'FALSE_ALARM';
+  tier?: 'TIER_1' | 'TIER_2' | 'TIER_3';
+  confirmedBy?: string;
+  confirmedAt?: string;
+  escalationLevel?: 'SCHOOL' | 'BOARD' | 'OSTA';
 }
 
 export interface CreateEmergencyEventDto {
@@ -77,5 +87,34 @@ export class AlertsGatewayService {
     return this.httpClient.get<AlertDto[]>(url, {
       params: { routeIds: routeIds.join(',') },
     });
+  }
+
+  async confirmAlert(
+    id: string,
+    body: { actorUserId?: string; actorRole?: string },
+  ): Promise<AlertDto> {
+    const url = `${this.alertsServiceUrl}/api/v1/alerts/${id}/confirm`;
+    return this.httpClient.patch<AlertDto>(url, body);
+  }
+
+  async falseAlarmAlert(
+    id: string,
+    body: { actorUserId?: string; actorRole?: string; notes?: string },
+  ): Promise<AlertDto> {
+    const url = `${this.alertsServiceUrl}/api/v1/alerts/${id}/false-alarm`;
+    return this.httpClient.patch<AlertDto>(url, body);
+  }
+
+  async requestInfoAlert(
+    id: string,
+    body: { actorUserId?: string; actorRole?: string },
+  ): Promise<AlertDto> {
+    const url = `${this.alertsServiceUrl}/api/v1/alerts/${id}/request-info`;
+    return this.httpClient.patch<AlertDto>(url, body);
+  }
+
+  async getAuditTrail(alertId: string): Promise<any[]> {
+    const url = `${this.alertsServiceUrl}/api/v1/alerts/audit/${alertId}`;
+    return this.httpClient.get<any[]>(url);
   }
 }

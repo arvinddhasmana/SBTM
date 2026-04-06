@@ -6,8 +6,31 @@ export type AlertEventType =
   | 'LATE_ARRIVAL'
   | 'ROUTE_DIVERSION'
   | 'PANIC_ALERT'
+  | 'MEDICAL'
+  | 'LATE_DEPARTURE'
+  | 'COMPLIANCE'
   | 'OTHER';
-export type AlertStatus = 'ACTIVE' | 'RESOLVED';
+
+export type AlertStatus =
+  | 'ACTIVE'
+  | 'RESOLVED'
+  | 'PENDING_CONFIRMATION'
+  | 'CONFIRMED'
+  | 'AUTO_ESCALATED'
+  | 'FALSE_ALARM';
+
+export type AlertTier = 'TIER_1' | 'TIER_2' | 'TIER_3';
+
+export interface AlertAuditEntry {
+  id: string;
+  alertId: string;
+  eventType: string;
+  actorUserId: string | null;
+  actorRole: string | null;
+  notes: string | null;
+  escalationLevel: string | null;
+  eventTimestamp: string;
+}
 
 export interface Alert {
   id: string;
@@ -21,6 +44,11 @@ export interface Alert {
   eventType: AlertEventType;
   status: AlertStatus;
   description?: string;
+  tier?: AlertTier;
+  confirmedBy?: string;
+  confirmedAt?: string;
+  escalationLevel?: string;
+  createdAt?: string;
 }
 
 // Live Location Types

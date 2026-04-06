@@ -145,6 +145,34 @@ if [ -n "$PARENT_TOKEN" ]; then
   fi
 fi
 
+# --- Alert Governance Checks (Phase B) ---
+
+echo -e "\033[33mAlert governance checks:\033[0m"
+
+run_query "Alert counts by tier:" \
+  "SELECT tier, COUNT(*) FROM emergency_alert GROUP BY tier ORDER BY tier;"
+
+run_query "Alert counts by status:" \
+  "SELECT status, COUNT(*) FROM emergency_alert GROUP BY status ORDER BY status;"
+
+run_query "Audit log summary:" \
+  "SELECT \"eventType\", COUNT(*) FROM alert_audit_log GROUP BY \"eventType\" ORDER BY \"eventType\";"
+
+run_query "Recent audit log entries:" \
+  "SELECT \"alertId\", \"eventType\", \"actorRole\", \"escalationLevel\", \"eventTimestamp\" FROM alert_audit_log ORDER BY \"eventTimestamp\" DESC LIMIT 10;"
+
+run_query "Confirmed/False-alarm alerts:" \
+  "SELECT id, \"eventType\", status, tier, \"confirmedBy\", \"confirmedAt\" FROM emergency_alert WHERE status IN ('CONFIRMED', 'FALSE_ALARM') ORDER BY \"createdAt\" DESC LIMIT 5;"
+
+if [ -n "$OSTA_TOKEN" ]; then
+  if ! test_api_get "OSTA Admin: /alerts" "$API_BASE/alerts" "$OSTA_TOKEN"; then
+    ALL_PASSED=false
+  fi
+  if ! test_api_get "OSTA Admin: /alerts/active" "$API_BASE/alerts/active" "$OSTA_TOKEN"; then
+    ALL_PASSED=false
+  fi
+fi
+
 # --- Result ---
 
 if [ "$ALL_PASSED" = true ]; then

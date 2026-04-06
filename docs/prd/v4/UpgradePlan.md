@@ -1,7 +1,7 @@
 # SBTM v4 Upgrade Plan
 
 - Document owner: Product and Architecture
-- Last reviewed: 2026-04-02
+- Last reviewed: 2026-04-06
 - Scope: Phased delivery plan from current state to production-ready system
 - Audience: AI Agents, Product Managers, Architects, Project Managers, Development Team
 
@@ -13,6 +13,19 @@
 - [Integration and Migration](./IntegrationAndMigration.md)
 - [Production Rollout Guide](./ProductionRolloutGuide.md)
 - [Previous Upgrade Plans](../v1/PhaseWiseImplementationPlan.md)
+
+---
+
+## Phase Status
+
+| Phase       | Name                                    | Status      | Completion Notes                                                                         |
+| ----------- | --------------------------------------- | ----------- | ---------------------------------------------------------------------------------------- |
+| **Phase A** | Parent Safety Communication             | ✅ Complete | Alert notification pipeline, BullMQ fan-out, presence notifications, WebSocket real-time |
+| **Phase B** | Alert Governance and Confirmation       | ✅ Complete | See implementation notes below                                                           |
+| **Phase C** | Role Boundary Enforcement and Workflows | 🔲 Planned  | Depends on Phase A                                                                       |
+| **Phase D** | External System Integration             | 🔲 Planned  | Depends on Phase C                                                                       |
+| **Phase E** | Operational Maturity                    | 🔲 Planned  | Depends on Phase C                                                                       |
+| **Phase F** | Production Deployment and Hardening     | 🔲 Planned  | Depends on all above                                                                     |
 
 ---
 
@@ -113,6 +126,36 @@ Emergency alerts follow a governed process: classified by tier, confirmed by Sch
 - Tier 2 alerts (LATE_DEPARTURE, COMPLIANCE) only visible to admins
 - Tier 3 events (boarding/alighting) bypass confirmation and go directly to parents
 - Full audit trail for every alert state transition
+
+### Implementation Notes
+
+**Implemented in branch `copilot/update-upgrade-plan-phase-b`:**
+
+| Deliverable                   | Implementation                                                                                                                                                                                                                                                     |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| B.1 Alert classifier          | `services/emergency-alerts/src/modules/alerts/alert-classifier.service.ts` — classifies `EmergencyEventType` into `AlertTier.TIER_1/2/3` using static `Set` lookups                                                                                                |
+| B.2 Confirmation engine       | `AlertsService.create()` — Tier 1 alerts set status `PENDING_CONFIRMATION` and schedule 3 BullMQ delayed jobs: `confirmation-timeout` (2 min), `board-escalation` (5 min), `osta-escalation` (15 min). State-guard pattern in processor prevents double-execution. |
+| B.3 Admin confirmation UI     | `AlertConfirmationModal.tsx` — modal with live countdown timer, Confirm/False Alarm/Request Info actions. Shown automatically when admin clicks a `PENDING_CONFIRMATION` alert.                                                                                    |
+| B.4 Escalation chain          | `AlertsProcessor.handleBoardEscalation()` / `handleOstaEscalation()` — update `escalationLevel` on the alert entity and fan out via `notifications` queue.                                                                                                         |
+| B.5 Tier 2 operational alerts | `AlertsService.create()` — Tier 2 alerts set status `ACTIVE` with no parent notification. Frontend `Alerts.tsx` shows these only in admin views.                                                                                                                   |
+| B.6 Audit trail               | `AlertAuditLog` entity. `AlertsService` writes audit entries on every state transition: `CREATED → PENDING_CONFIRMATION → CONFIRMED/AUTO_ESCALATED/FALSE_ALARM → PARENT_NOTIFIED → RESOLVED`. Processor writes `BOARD_ESCALATED` / `OSTA_ESCALATED`.               |
+
+**New API endpoints:**
+
+- `PATCH /api/v1/alerts/:id/confirm` — School Admin confirms Tier 1 alert
+- `PATCH /api/v1/alerts/:id/false-alarm` — School Admin marks as false alarm
+- `PATCH /api/v1/alerts/:id/request-info` — School Admin requests more information
+- `GET /api/v1/alerts/audit/:id` — Full lifecycle audit trail for an alert
+
+**Entity changes:**
+
+- `EmergencyEventType` extended with `MEDICAL`, `LATE_DEPARTURE`, `COMPLIANCE`
+- `EmergencyAlertStatus` extended with `PENDING_CONFIRMATION`, `CONFIRMED`, `AUTO_ESCALATED`, `FALSE_ALARM`
+- New enums: `AlertTier`, `AlertEscalationLevel`
+- New columns on `EmergencyAlert`: `tier`, `confirmedBy`, `confirmedAt`, `escalationLevel`, `autoEscalatedAt`, `parentNotifiedAt`
+- New entity: `AlertAuditLog` with full transition history
+
+**Threat model note:** The delayed BullMQ job chain introduces a new attack surface — a stale/replayed job could trigger parent notifications for an already-resolved alert. Mitigated by re-fetching alert status from the database in each job handler before acting (state guard pattern). See `AlertsProcessor.handleConfirmationTimeout()`.
 
 ---
 
@@ -285,3 +328,24 @@ flowchart TD
 | Alert confirmation timeout causes delayed parent notification | Low        | High   | 2-minute timeout is short enough for safety. Auto-escalation ensures delivery even without admin action. |
 | OSTA fleet DB access is restricted                            | Medium     | Medium | Manual fleet entry fallback remains available. Sync is an enhancement, not a dependency.                 |
 | Privacy concern with geocoding external service               | Low        | High   | Default to self-hosted Nominatim. External geocoder only with privacy assessment approval.               |
+
+---
+
+## Further Considerations
+
+### Phase C — Role Boundary Enforcement: Pre-work Notes
+
+Phase B establishes the confirmation and escalation model but intentionally defers RBAC enforcement at the API layer to Phase C. The following gaps should be addressed in Phase C:
+
+- **Alert endpoint RBAC**: `PATCH /alerts/:id/confirm` must be restricted to `SCHOOL_ADMIN`, `BOARD_ADMIN`, `OSTA_ADMIN` roles at the API Gateway. Currently the `InternalServiceAuthGuard` validates that the request comes from the gateway, but role checking within the alert service is not yet enforced.
+- **Tier 2 admin-only visibility**: The API currently does not filter alerts by tier when returning results. Phase C should add role-aware filtering so parents never see Tier 2 alerts even if they somehow reach the endpoint.
+- **Alert ownership**: Phase C should enforce that only the owning school's admin can confirm an alert. Board and OSTA admins should only intervene at their escalation tier.
+
+### Phase D — Integration: Alert Data Export
+
+- Incident reports generated from resolved Tier 1 alerts (deliverable E.4) will rely on the `AlertAuditLog` entity introduced in Phase B. The audit trail schema is designed to support this use case.
+
+### Phase E — Operational Maturity: Confirmation Timeout Tuning
+
+- The 2-minute confirmation timeout and 5/15-minute escalation delays are constants in `alerts.service.ts`. Phase E should expose these as per-school configurable values stored in school settings, allowing boards with different response-time SLAs to adjust timing without code changes.
+- The `requestInfo` action currently only logs an audit event. Phase E should consider extending the timer window when info is requested, to give the admin adequate response time without forcing auto-escalation.

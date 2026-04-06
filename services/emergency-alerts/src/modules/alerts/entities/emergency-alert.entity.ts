@@ -13,12 +13,31 @@ export enum EmergencyEventType {
   LATE_ARRIVAL = 'LATE_ARRIVAL',
   ROUTE_DIVERSION = 'ROUTE_DIVERSION',
   PANIC_ALERT = 'PANIC_ALERT',
+  MEDICAL = 'MEDICAL',
+  LATE_DEPARTURE = 'LATE_DEPARTURE',
+  COMPLIANCE = 'COMPLIANCE',
   OTHER = 'OTHER',
 }
 
 export enum EmergencyAlertStatus {
   ACTIVE = 'ACTIVE',
   RESOLVED = 'RESOLVED',
+  PENDING_CONFIRMATION = 'PENDING_CONFIRMATION',
+  CONFIRMED = 'CONFIRMED',
+  AUTO_ESCALATED = 'AUTO_ESCALATED',
+  FALSE_ALARM = 'FALSE_ALARM',
+}
+
+export enum AlertTier {
+  TIER_1 = 'TIER_1',
+  TIER_2 = 'TIER_2',
+  TIER_3 = 'TIER_3',
+}
+
+export enum AlertEscalationLevel {
+  SCHOOL = 'SCHOOL',
+  BOARD = 'BOARD',
+  OSTA = 'OSTA',
 }
 
 @Entity()
@@ -50,7 +69,7 @@ export class EmergencyAlert {
   @Column({
     type: 'enum',
     enum: EmergencyEventType,
-    enumName: 'emergency_alert_eventtype_enum',
+    enumName: 'emergency_event_type_enum',
     default: EmergencyEventType.PANIC_BUTTON,
   })
   eventType: EmergencyEventType;
@@ -65,6 +84,34 @@ export class EmergencyAlert {
     default: EmergencyAlertStatus.ACTIVE,
   })
   status: EmergencyAlertStatus;
+
+  @Column({
+    type: 'enum',
+    enum: AlertTier,
+    enumName: 'emergency_alert_tier_enum',
+    nullable: true,
+  })
+  tier: AlertTier | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  confirmedBy: string | null;
+
+  @Column({ nullable: true, type: 'timestamptz' })
+  confirmedAt: Date | null;
+
+  @Column({
+    type: 'enum',
+    enum: AlertEscalationLevel,
+    enumName: 'emergency_alert_escalation_level_enum',
+    nullable: true,
+  })
+  escalationLevel: AlertEscalationLevel | null;
+
+  @Column({ nullable: true, type: 'timestamptz' })
+  autoEscalatedAt: Date | null;
+
+  @Column({ nullable: true, type: 'timestamptz' })
+  parentNotifiedAt: Date | null;
 
   @CreateDateColumn()
   createdAt: Date;

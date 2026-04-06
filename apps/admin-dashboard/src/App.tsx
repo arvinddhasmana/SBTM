@@ -18,6 +18,7 @@ import {
   Login,
   Dashboard,
   Alerts,
+  OperationalAlerts,
   Routes as RoutesPage,
   Students,
   Videos,
@@ -80,6 +81,7 @@ const AppRoutes: React.FC = () => {
       <Route element={<ProtectedRoute />}>
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/alerts" element={<Alerts />} />
+        <Route path="/alerts/operational" element={<OperationalAlerts />} />
         <Route path="/routes" element={<RoutesPage />} />
         <Route path="/routes/planner" element={<RoutePlanner />} />
         <Route path="/students" element={<Students />} />

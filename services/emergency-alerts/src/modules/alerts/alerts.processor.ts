@@ -8,6 +8,15 @@ import {
   NotificationChannel,
   NotificationStatus,
 } from './entities/alert-notification-log.entity';
+import {
+  EmergencyAlert,
+  EmergencyAlertStatus,
+  AlertEscalationLevel,
+} from './entities/emergency-alert.entity';
+import {
+  AlertAuditLog,
+  AlertAuditEventType,
+} from './entities/alert-audit-log.entity';
 
 interface ParentRow {
   parentId: string;
@@ -21,6 +30,10 @@ export class AlertsProcessor extends WorkerHost {
   constructor(
     @InjectRepository(AlertNotificationLog)
     private readonly notificationLogRepo: Repository<AlertNotificationLog>,
+    @InjectRepository(EmergencyAlert)
+    private readonly alertsRepo: Repository<EmergencyAlert>,
+    @InjectRepository(AlertAuditLog)
+    private readonly auditLogRepo: Repository<AlertAuditLog>,
     private readonly dataSource: DataSource,
     @InjectQueue('notifications')
     private readonly notificationsQueue: Queue,
@@ -33,10 +46,27 @@ export class AlertsProcessor extends WorkerHost {
   ): Promise<{ processed: boolean; recipientCount: number }> {
     this.logger.log(`Processing alert job ${job.id}, name=${job.name}`);
 
-    if (job.name !== 'emergency-event') {
-      return { processed: true, recipientCount: 0 };
+    switch (job.name) {
+      case 'emergency-event':
+        return this.handleEmergencyEvent(job);
+      case 'confirmation-timeout':
+        return this.handleConfirmationTimeout(job);
+      case 'board-escalation':
+        return this.handleBoardEscalation(job);
+      case 'osta-escalation':
+        return this.handleOstaEscalation(job);
+      default:
+        return { processed: true, recipientCount: 0 };
     }
+  }
 
+  // ---------------------------------------------------------------------------
+  // Job handlers
+  // ---------------------------------------------------------------------------
+
+  private async handleEmergencyEvent(
+    job: Job,
+  ): Promise<{ processed: boolean; recipientCount: number }> {
     const alert = job.data as {
       id?: string;
       alertId?: string;
@@ -87,6 +117,191 @@ export class AlertsProcessor extends WorkerHost {
     );
     return { processed: true, recipientCount: sent };
   }
+
+  /**
+   * Handles the 2-minute confirmation timeout for Tier 1 alerts.
+   * If the alert is still PENDING_CONFIRMATION, auto-escalates to parents.
+   * State guard: if the alert has already been confirmed/resolved/false-alarmed,
+   * this job is a no-op.
+   */
+  private async handleConfirmationTimeout(
+    job: Job,
+  ): Promise<{ processed: boolean; recipientCount: number }> {
+    const { alertId, routeId, schoolId, eventType } = job.data as {
+      alertId: string;
+      routeId: string;
+      schoolId: string;
+      eventType: string;
+    };
+
+    if (!alertId) {
+      this.logger.warn(
+        `confirmation-timeout job ${job.id} missing alertId — skipping`,
+      );
+      return { processed: false, recipientCount: 0 };
+    }
+
+    const alert = await this.alertsRepo.findOneBy({ id: alertId });
+    if (!alert) {
+      this.logger.warn(
+        `confirmation-timeout: alert ${alertId} not found — skipping`,
+      );
+      return { processed: false, recipientCount: 0 };
+    }
+
+    // State guard: only auto-escalate if still waiting for confirmation.
+    if (alert.status !== EmergencyAlertStatus.PENDING_CONFIRMATION) {
+      this.logger.log(
+        `confirmation-timeout: alert ${alertId} already handled (status=${alert.status}) — skipping`,
+      );
+      return { processed: true, recipientCount: 0 };
+    }
+
+    // Update status and record escalation timestamp.
+    // escalationLevel=SCHOOL records that this alert is still within the school
+    // tier of the escalation chain (auto-escalated to parents, not yet escalated
+    // to Board or OSTA admins). The board-escalation job will advance this to BOARD.
+    alert.status = EmergencyAlertStatus.AUTO_ESCALATED;
+    alert.autoEscalatedAt = new Date();
+    alert.escalationLevel = AlertEscalationLevel.SCHOOL;
+    await this.alertsRepo.save(alert);
+
+    await this.writeAuditLog(alertId, AlertAuditEventType.AUTO_ESCALATED, {
+      escalationLevel: AlertEscalationLevel.SCHOOL,
+      notes: 'Auto-escalated after 2-minute confirmation timeout',
+    });
+
+    this.logger.log(
+      `Auto-escalating alert ${alertId} to parents after confirmation timeout`,
+    );
+
+    // Fan out to parents.
+    await this.notificationsQueue.add('notification-request', {
+      eventType: 'EMERGENCY_AUTO_ESCALATED',
+      eventSourceId: alertId,
+      routeId,
+      schoolId,
+      emergencyType: eventType,
+    });
+
+    return { processed: true, recipientCount: 1 };
+  }
+
+  /**
+   * Handles the 5-minute Board Admin escalation for unacknowledged Tier 1 alerts.
+   * State guard: only escalates if the alert is still PENDING_CONFIRMATION.
+   */
+  private async handleBoardEscalation(
+    job: Job,
+  ): Promise<{ processed: boolean; recipientCount: number }> {
+    const { alertId, schoolId } = job.data as {
+      alertId: string;
+      schoolId: string;
+    };
+
+    if (!alertId) {
+      this.logger.warn(
+        `board-escalation job ${job.id} missing alertId — skipping`,
+      );
+      return { processed: false, recipientCount: 0 };
+    }
+
+    const alert = await this.alertsRepo.findOneBy({ id: alertId });
+    if (!alert) {
+      this.logger.warn(
+        `board-escalation: alert ${alertId} not found — skipping`,
+      );
+      return { processed: false, recipientCount: 0 };
+    }
+
+    // State guard: Board escalation only if still unacknowledged.
+    if (alert.status !== EmergencyAlertStatus.PENDING_CONFIRMATION) {
+      this.logger.log(
+        `board-escalation: alert ${alertId} already handled (status=${alert.status}) — skipping`,
+      );
+      return { processed: true, recipientCount: 0 };
+    }
+
+    alert.escalationLevel = AlertEscalationLevel.BOARD;
+    await this.alertsRepo.save(alert);
+
+    await this.writeAuditLog(alertId, AlertAuditEventType.BOARD_ESCALATED, {
+      escalationLevel: AlertEscalationLevel.BOARD,
+      notes: 'Unacknowledged after 5 minutes — escalated to Board Admin',
+    });
+
+    await this.notificationsQueue.add('notification-request', {
+      eventType: 'EMERGENCY_BOARD_ESCALATION',
+      eventSourceId: alertId,
+      schoolId,
+      escalationLevel: AlertEscalationLevel.BOARD,
+    });
+
+    this.logger.log(
+      `Board escalation triggered for alert ${alertId} (schoolId=${schoolId})`,
+    );
+    return { processed: true, recipientCount: 1 };
+  }
+
+  /**
+   * Handles the 15-minute OSTA Admin escalation for unacknowledged Tier 1 alerts.
+   * State guard: only escalates if the alert is still PENDING_CONFIRMATION.
+   */
+  private async handleOstaEscalation(
+    job: Job,
+  ): Promise<{ processed: boolean; recipientCount: number }> {
+    const { alertId, schoolId } = job.data as {
+      alertId: string;
+      schoolId: string;
+    };
+
+    if (!alertId) {
+      this.logger.warn(
+        `osta-escalation job ${job.id} missing alertId — skipping`,
+      );
+      return { processed: false, recipientCount: 0 };
+    }
+
+    const alert = await this.alertsRepo.findOneBy({ id: alertId });
+    if (!alert) {
+      this.logger.warn(
+        `osta-escalation: alert ${alertId} not found — skipping`,
+      );
+      return { processed: false, recipientCount: 0 };
+    }
+
+    // State guard: OSTA escalation only if still unacknowledged.
+    if (alert.status !== EmergencyAlertStatus.PENDING_CONFIRMATION) {
+      this.logger.log(
+        `osta-escalation: alert ${alertId} already handled (status=${alert.status}) — skipping`,
+      );
+      return { processed: true, recipientCount: 0 };
+    }
+
+    alert.escalationLevel = AlertEscalationLevel.OSTA;
+    await this.alertsRepo.save(alert);
+
+    await this.writeAuditLog(alertId, AlertAuditEventType.OSTA_ESCALATED, {
+      escalationLevel: AlertEscalationLevel.OSTA,
+      notes: 'Unacknowledged after 15 minutes — escalated to OSTA Admin',
+    });
+
+    await this.notificationsQueue.add('notification-request', {
+      eventType: 'EMERGENCY_OSTA_ESCALATION',
+      eventSourceId: alertId,
+      schoolId,
+      escalationLevel: AlertEscalationLevel.OSTA,
+    });
+
+    this.logger.log(
+      `OSTA escalation triggered for alert ${alertId} (schoolId=${schoolId})`,
+    );
+    return { processed: true, recipientCount: 1 };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Shared helpers
+  // ---------------------------------------------------------------------------
 
   /**
    * Look up all parent user IDs assigned to a given route.
@@ -145,5 +360,21 @@ export class AlertsProcessor extends WorkerHost {
       status,
     });
     await this.notificationLogRepo.save(log);
+  }
+
+  private async writeAuditLog(
+    alertId: string,
+    eventType: AlertAuditEventType,
+    opts: { escalationLevel?: string; notes?: string } = {},
+  ): Promise<void> {
+    const entry = this.auditLogRepo.create({
+      alertId,
+      eventType,
+      actorUserId: null,
+      actorRole: 'SYSTEM',
+      notes: opts.notes ?? null,
+      escalationLevel: opts.escalationLevel ?? null,
+    });
+    await this.auditLogRepo.save(entry);
   }
 }
