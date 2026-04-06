@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
@@ -9,7 +9,7 @@ import { queryKeys } from '../services/query-keys';
 import { useAlerts } from '../hooks/useAlerts';
 import { decodePolyline } from '../utils/polyline';
 import type { BusLocationUpdate, Child } from '../types';
-import { ArrowLeft, Navigation } from 'lucide-react';
+import { ArrowLeft, Navigation, RotateCcw } from 'lucide-react';
 
 // Fix for default Leaflet marker icons not showing in React
 import iconImg from 'leaflet/dist/images/marker-icon.png';
@@ -43,8 +43,8 @@ const BUS_STATUS_COLORS: Record<BusStatus, string> = {
 const EMERGENCY_EVENT_TYPES = new Set(['PANIC_BUTTON', 'PANIC_ALERT', 'INCIDENT']);
 const DELAY_EVENT_TYPES = new Set(['LATE_ARRIVAL', 'ROUTE_DEVIATION', 'ROUTE_DIVERSION']);
 
-/** Stale threshold: if last GPS update is older than 2 minutes, bus is not actively running */
-const STALE_THRESHOLD_MS = 2 * 60 * 1000;
+/** Stale threshold: if last GPS update is older than 30 seconds, bus is not actively running */
+const STALE_THRESHOLD_MS = 30 * 1000;
 
 function createBusIcon(status: BusStatus) {
   const bgColor = BUS_STATUS_COLORS[status];
@@ -76,7 +76,6 @@ function createBusIcon(status: BusStatus) {
  * Other stops: transparent gray with subtle border.
  */
 function createStopIcon(sequence: number, isChildStop: boolean) {
-  const color = isChildStop ? '#3b82f6' : '#9ca3af';
   const bg = isChildStop ? '#3b82f6' : 'rgba(156,163,175,0.35)';
   const border = isChildStop ? '2px solid #fff' : '2px solid rgba(156,163,175,0.5)';
   const size = isChildStop ? 32 : 28;
@@ -124,14 +123,17 @@ function parseWktPoint(wkt: string): [number, number] | null {
   return null;
 }
 
-// Component to fit map bounds
-function FitBounds({ bounds }: { bounds: L.LatLngBoundsExpression | null }) {
+// Writes the Leaflet map instance into a ref — mirrors Admin Dashboard mapInstanceRef pattern.
+// Using a ref (not state) avoids triggering re-renders on map interaction.
+function MapInstanceCapture({
+  mapInstanceRef,
+}: {
+  mapInstanceRef: React.MutableRefObject<L.Map | null>;
+}) {
   const map = useMap();
   useEffect(() => {
-    if (bounds) {
-      map.fitBounds(bounds, { padding: [60, 60], maxZoom: 15 });
-    }
-  }, [bounds, map]);
+    mapInstanceRef.current = map;
+  }, [map, mapInstanceRef]);
   return null;
 }
 
@@ -140,32 +142,113 @@ const MapPage: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [child, setChild] = useState<Child | null>(null);
-  const [activeRouteId, setActiveRouteId] = useState<string>('');
+
+  // --- Admin Dashboard pattern: refs for map instance and bound-fitting guard ---
+  const mapInstanceRef = useRef<L.Map | null>(null);
+  const lastActiveRouteIdRef = useRef<string>('');
+  const initialFitDoneRef = useRef(false);
 
   // Ottawa coords center
   const defaultCenter: [number, number] = [45.4215, -75.6972];
 
-  useEffect(() => {
-    if (user && childId) {
-      const foundChild = user.children.find((c) => c.id === childId);
-      if (foundChild) {
-        setChild(foundChild);
-        // Pick active route: AM before noon, PM after noon
-        const hour = new Date().getHours();
-        if (hour < 12 && foundChild.amRouteId) {
-          setActiveRouteId(foundChild.amRouteId);
-        } else if (hour >= 12 && foundChild.pmRouteId) {
-          setActiveRouteId(foundChild.pmRouteId);
-        } else {
-          setActiveRouteId(foundChild.amRouteId || foundChild.pmRouteId || foundChild.routeId);
-        }
-      } else {
-        navigate('/dashboard');
-      }
-    }
-  }, [user, childId, navigate]);
+  // Fresh fetch for children to bypass stale context (Issue 2)
+  const { data: freshChildren } = useQuery({
+    queryKey: queryKeys.children?.all || ['children'],
+    queryFn: () => parentApi.getChildren(),
+    enabled: !!user,
+    staleTime: 15 * 1000,
+  });
 
-  // Fetch route details (polyline + stops)
+  useEffect(() => {
+    const childrenList = freshChildren || user?.children || [];
+    if (!childrenList.length || !childId) return;
+    const foundChild = childrenList.find((c) => c.id === childId);
+    if (foundChild) {
+      setChild(foundChild);
+    } else {
+      navigate('/dashboard');
+    }
+  }, [user, freshChildren, childId, navigate]);
+
+  // --- Admin Dashboard pattern: poll BOTH AM and PM live-location endpoints
+  //     in parallel (every 5 s). Reactively pick whichever has fresh GPS data. ---
+  const amRouteId = child?.amRouteId ?? '';
+  const pmRouteId = child?.pmRouteId ?? '';
+
+  const mapLiveResult = (
+    data: Awaited<ReturnType<typeof parentApi.getLiveLocation>>,
+  ): BusLocationUpdate => ({
+    routeId: data.routeId,
+    vehicleId: data.vehicleId,
+    timestamp: data.lastUpdate,
+    lat: data.position.lat,
+    lng: data.position.lng,
+    speed: 0,
+    heading: 0,
+    etaToNextStop: data.etaToNextStopMinutes,
+    status: data.status,
+  });
+
+  const { data: amLocation } = useQuery({
+    queryKey: queryKeys.location.live(amRouteId),
+    queryFn: () => parentApi.getLiveLocation(amRouteId).then(mapLiveResult),
+    enabled: !!child && !!amRouteId,
+    refetchInterval: 5_000,
+    retry: false,
+  });
+
+  const { data: pmLocation } = useQuery({
+    queryKey: queryKeys.location.live(pmRouteId),
+    queryFn: () => parentApi.getLiveLocation(pmRouteId).then(mapLiveResult),
+    enabled: !!child && !!pmRouteId,
+    refetchInterval: 5_000,
+    retry: false,
+  });
+
+  // Mirrors Admin Dashboard: pick the route that is currently live (freshest GPS).
+  // If both are stale/absent fall back to the most recently updated one.
+  // Date.now() is intentionally moved into a callback-safe context via a state tick.
+  const [nowMs, setNowMs] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = setInterval(() => setNowMs(Date.now()), 5_000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const { activeRouteId, locationData } = useMemo<{
+    activeRouteId: string;
+    locationData: BusLocationUpdate | null;
+  }>(() => {
+    const now = nowMs;
+    const amFresh =
+      amLocation && now - new Date(amLocation.timestamp).getTime() < STALE_THRESHOLD_MS;
+    const pmFresh =
+      pmLocation && now - new Date(pmLocation.timestamp).getTime() < STALE_THRESHOLD_MS;
+
+    if (amFresh && pmFresh) {
+      // Both live — pick the most recently updated
+      const amAge = now - new Date(amLocation!.timestamp).getTime();
+      const pmAge = now - new Date(pmLocation!.timestamp).getTime();
+      return pmAge <= amAge
+        ? { activeRouteId: pmRouteId, locationData: pmLocation! }
+        : { activeRouteId: amRouteId, locationData: amLocation! };
+    }
+    if (pmFresh) return { activeRouteId: pmRouteId, locationData: pmLocation! };
+    if (amFresh) return { activeRouteId: amRouteId, locationData: amLocation! };
+
+    // Neither live — show whichever was most recently updated (or fall back to AM)
+    if (amLocation && pmLocation) {
+      const amAge = now - new Date(amLocation.timestamp).getTime();
+      const pmAge = now - new Date(pmLocation.timestamp).getTime();
+      return pmAge <= amAge
+        ? { activeRouteId: pmRouteId, locationData: pmLocation }
+        : { activeRouteId: amRouteId, locationData: amLocation };
+    }
+    if (pmLocation) return { activeRouteId: pmRouteId, locationData: pmLocation };
+    if (amLocation) return { activeRouteId: amRouteId, locationData: amLocation };
+    return { activeRouteId: amRouteId || pmRouteId, locationData: null };
+  }, [amLocation, pmLocation, amRouteId, pmRouteId]);
+
+  // Fetch route details (polyline + stops) for the active route
   const { data: routeDetails } = useQuery({
     queryKey: queryKeys.route.details(activeRouteId),
     queryFn: () => parentApi.getRouteDetails(activeRouteId),
@@ -175,9 +258,7 @@ const MapPage: React.FC = () => {
 
   // Decode polyline to coordinates
   const routePath = useMemo(() => {
-    if (routeDetails?.polyline) {
-      return decodePolyline(routeDetails.polyline);
-    }
+    if (routeDetails?.polyline) return decodePolyline(routeDetails.polyline);
     return null;
   }, [routeDetails?.polyline]);
 
@@ -194,56 +275,11 @@ const MapPage: React.FC = () => {
       .filter((s): s is NonNullable<typeof s> => s !== null);
   }, [routeDetails?.stops]);
 
-  // Determine student's assigned stop ID for this route
+  // Determine student's assigned stop for the active route
   const childStopId = useMemo(() => {
     if (!child) return undefined;
-    const isAM = activeRouteId.includes('AM');
-    return isAM ? child.amStopId : child.pmStopId;
+    return activeRouteId.includes('AM') ? child.amStopId : child.pmStopId;
   }, [child, activeRouteId]);
-
-  // Fetch live location — try active route, fall back to alternate
-  const alternateRouteId = child
-    ? (activeRouteId === child.amRouteId ? child.pmRouteId : child.amRouteId) || ''
-    : '';
-
-  const { data: locationData, error: locationError } = useQuery({
-    queryKey: queryKeys.location.live(activeRouteId),
-    queryFn: async () => {
-      try {
-        const data = await parentApi.getLiveLocation(activeRouteId);
-        return {
-          routeId: data.routeId,
-          vehicleId: data.vehicleId,
-          timestamp: data.lastUpdate,
-          lat: data.position.lat,
-          lng: data.position.lng,
-          speed: 0,
-          heading: 0,
-          etaToNextStop: data.etaToNextStopMinutes,
-          status: data.status,
-        } as BusLocationUpdate;
-      } catch {
-        if (alternateRouteId) {
-          const data = await parentApi.getLiveLocation(alternateRouteId);
-          return {
-            routeId: data.routeId,
-            vehicleId: data.vehicleId,
-            timestamp: data.lastUpdate,
-            lat: data.position.lat,
-            lng: data.position.lng,
-            speed: 0,
-            heading: 0,
-            etaToNextStop: data.etaToNextStopMinutes,
-            status: data.status,
-          } as BusLocationUpdate;
-        }
-        throw new Error('No live location available');
-      }
-    },
-    enabled: !!child && !!activeRouteId,
-    refetchInterval: 5_000,
-    retry: 1,
-  });
 
   // Fetch alerts for the route to determine bus status color
   const routeIds = useMemo(() => {
@@ -277,11 +313,17 @@ const MapPage: React.FC = () => {
   const isLive = useMemo(() => {
     if (!busLocation?.timestamp) return false;
     const lastUpdate = new Date(busLocation.timestamp).getTime();
-    return Date.now() - lastUpdate < STALE_THRESHOLD_MS;
-  }, [busLocation?.timestamp]);
+    return nowMs - lastUpdate < STALE_THRESHOLD_MS;
+  }, [busLocation?.timestamp, nowMs]);
 
-  // Route status label
-  const routeStatusLabel = isLive ? 'Live' : 'Completed';
+  // Route status label — mirrors Admin Dashboard: cross-check child presence status
+  const routeStatusLabel = (() => {
+    const isPM = child ? activeRouteId === child.pmRouteId : false;
+    const isCurrentAM = child ? activeRouteId === child.amRouteId : false;
+    if (isPM && child?.status === 'at_home') return 'Completed';
+    if (isCurrentAM && child?.status === 'at_school') return 'Completed';
+    return isLive ? 'Live' : 'Completed';
+  })();
 
   // Compute map bounds from route path + bus position
   const mapBounds = useMemo(() => {
@@ -291,6 +333,25 @@ const MapPage: React.FC = () => {
     if (pts.length < 2) return null;
     return L.latLngBounds(pts);
   }, [routePath, busLocation, isLive]);
+
+  // --- Admin Dashboard pattern: fitBounds only on initial load OR when active route changes ---
+  useEffect(() => {
+    if (!mapBounds) return;
+    const routeChanged = lastActiveRouteIdRef.current !== activeRouteId;
+    const initialLoad = !initialFitDoneRef.current;
+    if (routeChanged || initialLoad) {
+      mapInstanceRef.current?.fitBounds(mapBounds, { padding: [60, 60], maxZoom: 15 });
+      initialFitDoneRef.current = true;
+      lastActiveRouteIdRef.current = activeRouteId;
+    }
+  }, [mapBounds, activeRouteId]);
+
+  // Map Reset — same as Admin Dashboard onReset pattern
+  const handleResetMap = () => {
+    if (mapBounds) {
+      mapInstanceRef.current?.fitBounds(mapBounds, { padding: [60, 60], maxZoom: 15 });
+    }
+  };
 
   if (!child) return <div>Loading...</div>;
 
@@ -304,15 +365,17 @@ const MapPage: React.FC = () => {
   return (
     <div className="h-[calc(100vh-64px)] flex flex-col relative">
       <div className="absolute top-4 left-4 right-4 z-[1000] pointer-events-none">
-        <div className="max-w-7xl mx-auto flex justify-between items-start">
-          <button
-            onClick={() => navigate('/dashboard')}
-            className="pointer-events-auto bg-white p-2 rounded-full shadow-lg hover:bg-gray-50 flex items-center text-gray-700"
-          >
-            <ArrowLeft className="h-6 w-6" />
-          </button>
+        <div className="max-w-7xl mx-auto flex flex-col gap-2">
+          <div className="flex justify-between items-start">
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="pointer-events-auto bg-white p-2 rounded-full shadow-lg hover:bg-gray-50 flex items-center text-gray-700"
+            >
+              <ArrowLeft className="h-6 w-6" />
+            </button>
+          </div>
 
-          <div className="pointer-events-auto bg-white p-3 rounded-lg shadow-lg max-w-sm w-full ml-4">
+          <div className="self-end pointer-events-auto bg-white p-3 rounded-lg shadow-lg max-w-sm w-full">
             <div className="flex items-center justify-between mb-1">
               <h3 className="font-bold text-gray-900">{child.name}</h3>
               <span
@@ -353,17 +416,22 @@ const MapPage: React.FC = () => {
                 </span>
               </div>
             )}
-            {!isLive && !locationError && (
+            {!isLive && (
               <p className="text-xs text-gray-400 mt-1">Route is not currently active.</p>
-            )}
-            {locationError && (
-              <p className="text-xs text-red-400 mt-1">
-                Bus is not currently active on this route.
-              </p>
             )}
           </div>
         </div>
       </div>
+
+      {/* Map Reset Button — identical positioning & style as Admin Dashboard */}
+      <button
+        onClick={handleResetMap}
+        className="absolute top-[80px] left-1/2 -translate-x-1/2 z-[1000] px-4 py-2 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 rounded-lg text-white shadow-lg transition-all flex items-center gap-2 group pointer-events-auto"
+        title="Reset Map"
+      >
+        <RotateCcw size={16} className="group-hover:rotate-[-45deg] transition-transform" />
+        <span className="text-xs font-black uppercase tracking-widest pt-0.5">Map Reset</span>
+      </button>
 
       {/* Legend - bottom left, matching admin dashboard */}
       <div className="absolute bottom-6 left-4 z-[1000] pointer-events-auto bg-white/95 backdrop-blur-sm px-3 py-2 rounded-lg shadow-lg text-xs">
@@ -408,8 +476,8 @@ const MapPage: React.FC = () => {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
-        {/* Fit map to route bounds initially */}
-        {mapBounds && <FitBounds bounds={mapBounds} />}
+        {/* Capture map instance into ref — mirrors Admin Dashboard mapInstanceRef pattern */}
+        <MapInstanceCapture mapInstanceRef={mapInstanceRef} />
 
         {/* Route polyline */}
         {routePath && (
