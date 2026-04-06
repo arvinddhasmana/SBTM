@@ -26,15 +26,19 @@ export class AlertAuditLog {
   @Column()
   alertId: string;
 
-  @Column({ type: 'enum', enum: AlertAuditEventType })
+  @Column({
+    type: 'enum',
+    enum: AlertAuditEventType,
+    enumName: 'alert_audit_event_type_enum',
+  })
   eventType: AlertAuditEventType;
 
   /** User ID of the actor performing the action (log ID only — no PII). */
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   actorUserId: string | null;
 
   /** Role of the actor at the time of the action. */
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   actorRole: string | null;
 
   /**
@@ -46,7 +50,7 @@ export class AlertAuditLog {
   notes: string | null;
 
   /** Escalation level at the time of the event. */
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   escalationLevel: string | null;
 
   @CreateDateColumn()

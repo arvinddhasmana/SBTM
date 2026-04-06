@@ -49,6 +49,46 @@ export class AlertsController {
     return this.alertsGatewayService.resolveAlert(id);
   }
 
+  @Patch('alerts/:id/confirm')
+  @Roles(Role.OSTA_ADMIN, Role.ADMIN, Role.SCHOOL_ADMIN, Role.BOARD_ADMIN)
+  async confirmAlert(
+    @Param('id') id: string,
+    @Request() req: { user: any },
+    @Body() body: { actorUserId?: string; actorRole?: string },
+  ) {
+    return this.alertsGatewayService.confirmAlert(id, {
+      actorUserId: body.actorUserId || req.user.id,
+      actorRole: body.actorRole || req.user.role,
+    });
+  }
+
+  @Patch('alerts/:id/false-alarm')
+  @Roles(Role.OSTA_ADMIN, Role.ADMIN, Role.SCHOOL_ADMIN, Role.BOARD_ADMIN)
+  async falseAlarmAlert(
+    @Param('id') id: string,
+    @Request() req: { user: any },
+    @Body() body: { actorUserId?: string; actorRole?: string; notes?: string },
+  ) {
+    return this.alertsGatewayService.falseAlarmAlert(id, {
+      actorUserId: body.actorUserId || req.user.id,
+      actorRole: body.actorRole || req.user.role,
+      notes: body.notes,
+    });
+  }
+
+  @Patch('alerts/:id/request-info')
+  @Roles(Role.OSTA_ADMIN, Role.ADMIN, Role.SCHOOL_ADMIN, Role.BOARD_ADMIN)
+  async requestInfoAlert(
+    @Param('id') id: string,
+    @Request() req: { user: any },
+    @Body() body: { actorUserId?: string; actorRole?: string },
+  ) {
+    return this.alertsGatewayService.requestInfoAlert(id, {
+      actorUserId: body.actorUserId || req.user.id,
+      actorRole: body.actorRole || req.user.role,
+    });
+  }
+
   @Get('alerts/parent-view/:routeId')
   @Roles(Role.PARENT)
   async getAlertsForRoute(@Param('routeId') routeId: string) {
@@ -61,6 +101,12 @@ export class AlertsController {
     const user = req.user;
     const routeIds: string[] = user.childRouteIds || [];
     return this.alertsGatewayService.getAlertsByRoutes(routeIds);
+  }
+
+  @Get('alerts/:id/audit-trail')
+  @Roles(Role.OSTA_ADMIN, Role.ADMIN, Role.SCHOOL_ADMIN, Role.BOARD_ADMIN)
+  async getAuditTrail(@Param('id') id: string) {
+    return this.alertsGatewayService.getAuditTrail(id);
   }
 
   @Get('alerts/:id')

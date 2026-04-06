@@ -9,6 +9,14 @@ import { useAuth } from '../context/AuthContext';
 import type { Alert } from '../types';
 
 type FilterOption = 'all' | 'active' | 'pending' | 'resolved';
+type TierFilter = 'all' | 'TIER_1' | 'TIER_2' | 'TIER_3';
+
+const TIER_TABS: { value: TierFilter; label: string; color: string }[] = [
+  { value: 'all', label: 'All Tiers', color: 'bg-primary-500' },
+  { value: 'TIER_1', label: 'Safety (Tier 1)', color: 'bg-red-500' },
+  { value: 'TIER_2', label: 'Operational (Tier 2)', color: 'bg-amber-500' },
+  { value: 'TIER_3', label: 'Informational (Tier 3)', color: 'bg-blue-500' },
+];
 
 const Alerts: React.FC = () => {
   const queryClient = useQueryClient();
@@ -16,6 +24,7 @@ const Alerts: React.FC = () => {
   const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null);
   const [confirmationAlert, setConfirmationAlert] = useState<Alert | null>(null);
   const [filter, setFilter] = useState<FilterOption>('all');
+  const [tierFilter, setTierFilter] = useState<TierFilter>('all');
   const [isResolving, setIsResolving] = useState(false);
   const [isActing, setIsActing] = useState(false);
 
@@ -94,6 +103,9 @@ const Alerts: React.FC = () => {
   };
 
   const filteredAlerts = alerts.filter((alert) => {
+    // Tier filter
+    if (tierFilter !== 'all' && alert.tier !== tierFilter) return false;
+    // Status filter
     if (filter === 'active') return alert.status === 'ACTIVE';
     if (filter === 'resolved') return alert.status === 'RESOLVED' || alert.status === 'FALSE_ALARM';
     if (filter === 'pending') return alert.status === 'PENDING_CONFIRMATION';
@@ -181,6 +193,23 @@ const Alerts: React.FC = () => {
             </div>
           </div>
         </Card>
+
+        {/* Tier Tabs */}
+        <div className="flex gap-2 flex-wrap">
+          {TIER_TABS.map((tab) => (
+            <button
+              key={tab.value}
+              onClick={() => setTierFilter(tab.value)}
+              className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+                tierFilter === tab.value
+                  ? `${tab.color} text-white`
+                  : 'bg-dashboard-card text-slate-400 hover:text-white border border-dashboard-border'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
 
         {/* Alerts List */}
         <Card>

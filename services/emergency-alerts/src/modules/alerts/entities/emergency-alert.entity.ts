@@ -69,7 +69,7 @@ export class EmergencyAlert {
   @Column({
     type: 'enum',
     enum: EmergencyEventType,
-    enumName: 'emergency_alert_eventtype_enum',
+    enumName: 'emergency_event_type_enum',
     default: EmergencyEventType.PANIC_BUTTON,
   })
   eventType: EmergencyEventType;
@@ -93,7 +93,7 @@ export class EmergencyAlert {
   })
   tier: AlertTier | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   confirmedBy: string | null;
 
   @Column({ nullable: true, type: 'timestamptz' })

@@ -30,7 +30,7 @@ async function apiPost(url: string, body: any, token?: string) {
   }
 }
 
-async function apiPatch(url: string, token: string) {
+async function apiPatch(url: string, token: string, body: Record<string, unknown> = {}) {
   try {
     const response = await fetch(url, {
       method: 'PATCH',
@@ -38,7 +38,7 @@ async function apiPatch(url: string, token: string) {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
-      body: '{}',
+      body: JSON.stringify(body),
     });
     if (!response.ok) {
       console.error(`[API ERROR] PATCH ${url} - Status: ${response.status} ${response.statusText}`);
@@ -86,6 +86,22 @@ const ALERT_DESCRIPTIONS: Record<string, (vehicleId: string, routeId: string) =>
     `Emergency panic button was pressed on Bus ${v}. Driver has reported a safety concern near the current location.`,
   INCIDENT: (v, r) =>
     `An incident has been reported on Bus ${v} on route ${r}. A minor fender-bender occurred near the bus stop. All students are safe.`,
+  MEDICAL: (v, _r) =>
+    `Medical concern reported on Bus ${v}. A student reported feeling unwell — possible motion sickness.`,
+  LATE_DEPARTURE: (v, r) =>
+    `Bus ${v} departed 12 minutes behind schedule on route ${r}. Driver was delayed at the depot.`,
+};
+
+// Governance action to take for each alert type when the simulation "resolves" it.
+// Tier 1 alerts use confirm/false-alarm; Tier 2 alerts use resolve.
+type GovernanceAction = 'confirm' | 'false-alarm' | 'resolve';
+const ALERT_GOVERNANCE: Record<string, GovernanceAction> = {
+  PANIC_BUTTON: 'confirm',
+  INCIDENT: 'confirm',
+  MEDICAL: 'false-alarm',
+  LATE_ARRIVAL: 'resolve',
+  ROUTE_DEVIATION: 'resolve',
+  LATE_DEPARTURE: 'resolve',
 };
 
 async function runLap(
@@ -198,21 +214,111 @@ async function runLap(
       }
     }
 
-    // Check for pending alert resolutions
+    // Check for pending alert resolutions (using governance actions)
     if (routeKey === 'pm') {
       for (let a = pendingAlerts.length - 1; a >= 0; a--) {
         const pending = pendingAlerts[a];
         if (i >= pending.resolveAt) {
-          console.log(`[ALERT RESOLVED] Resolving ${pending.eventType} (${pending.alertId})`);
-          await apiPatch(`${API_BASE}/alerts/${pending.alertId}/resolve`, adminToken);
+          const action = ALERT_GOVERNANCE[pending.eventType] || 'resolve';
+          if (action === 'confirm') {
+            console.log(
+              `[GOVERNANCE] Confirming Tier 1 alert ${pending.eventType} (${pending.alertId}) — parents will be notified`,
+            );
+            await apiPatch(`${API_BASE}/alerts/${pending.alertId}/confirm`, adminToken, {
+              actorUserId: '10000000-0000-0000-0000-000000000002',
+              actorRole: 'SCHOOL_ADMIN',
+            });
+          } else if (action === 'false-alarm') {
+            console.log(
+              `[GOVERNANCE] Marking ${pending.eventType} (${pending.alertId}) as FALSE ALARM — no parent notification`,
+            );
+            await apiPatch(`${API_BASE}/alerts/${pending.alertId}/false-alarm`, adminToken, {
+              actorUserId: '10000000-0000-0000-0000-000000000002',
+              actorRole: 'SCHOOL_ADMIN',
+              notes: `${pending.eventType} determined to be a false alarm during simulation.`,
+            });
+          } else {
+            console.log(
+              `[ALERT RESOLVED] Resolving Tier 2 alert ${pending.eventType} (${pending.alertId})`,
+            );
+            await apiPatch(`${API_BASE}/alerts/${pending.alertId}/resolve`, adminToken);
+          }
           pendingAlerts.splice(a, 1);
         }
       }
     }
 
     // Trigger Tactical Alerts throughout the journey for demonstration
+    // Alert schedule:  10% LATE_DEPARTURE (Tier 2, resolve)
+    //                  15% MEDICAL (Tier 1, false-alarm)
+    //                  20% LATE_ARRIVAL (Tier 2, resolve)
+    //                  40% ROUTE_DEVIATION (Tier 2, resolve)
+    //                  60% PANIC_BUTTON (Tier 1, confirm → parents notified)
+    //                  80% INCIDENT (Tier 1, confirm → parents notified)
     if (routeKey === 'pm') {
-      // 1. Late Arrival Alert early in the route (20%)
+      // 0. Late Departure Alert early (10%) — Tier 2, admin-only
+      if (i === Math.floor(decoded.length * 0.1) && !sentAlerts.has('LATE_DEPARTURE')) {
+        sentAlerts.add('LATE_DEPARTURE');
+        const desc = ALERT_DESCRIPTIONS.LATE_DEPARTURE(vehicleId, routeId);
+        console.log(`[ALERT] Dispatching LATE_DEPARTURE (Tier 2): ${desc.substring(0, 60)}...`);
+        const result = await apiPost(
+          `${API_BASE}/emergency-events`,
+          {
+            schoolId,
+            vehicleId,
+            routeId,
+            driverId,
+            timestamp,
+            lat,
+            lng,
+            eventType: 'LATE_DEPARTURE',
+            description: desc,
+          },
+          driverToken,
+        );
+        if (result?.alertId) {
+          pendingAlerts.push({
+            alertId: result.alertId,
+            eventType: 'LATE_DEPARTURE',
+            resolveAt: Math.floor(decoded.length * 0.25),
+          });
+        }
+        await new Promise((r) => setTimeout(r, 3000));
+      }
+
+      // 0b. Medical Alert (15%) — Tier 1, will be marked as false alarm
+      if (i === Math.floor(decoded.length * 0.15) && !sentAlerts.has('MEDICAL')) {
+        sentAlerts.add('MEDICAL');
+        const desc = ALERT_DESCRIPTIONS.MEDICAL(vehicleId, routeId);
+        console.log(
+          `[ALERT] Dispatching MEDICAL (Tier 1 — will be false-alarmed): ${desc.substring(0, 60)}...`,
+        );
+        const result = await apiPost(
+          `${API_BASE}/emergency-events`,
+          {
+            schoolId,
+            vehicleId,
+            routeId,
+            driverId,
+            timestamp,
+            lat,
+            lng,
+            eventType: 'MEDICAL',
+            description: desc,
+          },
+          driverToken,
+        );
+        if (result?.alertId) {
+          pendingAlerts.push({
+            alertId: result.alertId,
+            eventType: 'MEDICAL',
+            resolveAt: Math.floor(decoded.length * 0.25),
+          });
+        }
+        await new Promise((r) => setTimeout(r, 3000));
+      }
+
+      // 1. Late Arrival Alert (20%) — Tier 2, resolve
       if (i === Math.floor(decoded.length * 0.2) && !sentAlerts.has('LATE_ARRIVAL')) {
         sentAlerts.add('LATE_ARRIVAL');
         const desc = ALERT_DESCRIPTIONS.LATE_ARRIVAL(vehicleId, routeId);
@@ -242,11 +348,11 @@ async function runLap(
         await new Promise((r) => setTimeout(r, 3000));
       }
 
-      // 2. Route Deviation Alert in the middle (40%)
+      // 2. Route Deviation Alert in the middle (40%) — Tier 2, resolve
       if (i === Math.floor(decoded.length * 0.4) && !sentAlerts.has('ROUTE_DEVIATION')) {
         sentAlerts.add('ROUTE_DEVIATION');
         const desc = ALERT_DESCRIPTIONS.ROUTE_DEVIATION(vehicleId, routeId);
-        console.log(`[ALERT] Dispatching ROUTE_DEVIATION: ${desc.substring(0, 60)}...`);
+        console.log(`[ALERT] Dispatching ROUTE_DEVIATION (Tier 2): ${desc.substring(0, 60)}...`);
         const result = await apiPost(
           `${API_BASE}/emergency-events`,
           {
@@ -272,11 +378,13 @@ async function runLap(
         await new Promise((r) => setTimeout(r, 3000));
       }
 
-      // 3. Panic Alert late in the route (60%)
+      // 3. Panic Alert late in the route (60%) — Tier 1, will be confirmed
       if (i === Math.floor(decoded.length * 0.6) && !sentAlerts.has('PANIC_BUTTON')) {
         sentAlerts.add('PANIC_BUTTON');
         const desc = ALERT_DESCRIPTIONS.PANIC_BUTTON(vehicleId, routeId);
-        console.log(`[ALERT] Dispatching PANIC_BUTTON: ${desc.substring(0, 60)}...`);
+        console.log(
+          `[ALERT] Dispatching PANIC_BUTTON (Tier 1 — will be confirmed): ${desc.substring(0, 60)}...`,
+        );
         const result = await apiPost(
           `${API_BASE}/emergency-events`,
           {
@@ -302,11 +410,13 @@ async function runLap(
         await new Promise((r) => setTimeout(r, 3000));
       }
 
-      // 4. Incident Alert near end of route (80%)
+      // 4. Incident Alert near end of route (80%) — Tier 1, will be confirmed
       if (i === Math.floor(decoded.length * 0.8) && !sentAlerts.has('INCIDENT')) {
         sentAlerts.add('INCIDENT');
         const desc = ALERT_DESCRIPTIONS.INCIDENT(vehicleId, routeId);
-        console.log(`[ALERT] Dispatching INCIDENT: ${desc.substring(0, 60)}...`);
+        console.log(
+          `[ALERT] Dispatching INCIDENT (Tier 1 — will be confirmed): ${desc.substring(0, 60)}...`,
+        );
         const result = await apiPost(
           `${API_BASE}/emergency-events`,
           {

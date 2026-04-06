@@ -16,6 +16,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS postgis;
 
 -- Drop existing tables and types to ensure a clean slate (CASCADE to handle FKs)
+DROP TABLE IF EXISTS alert_audit_log CASCADE;
 DROP TABLE IF EXISTS emergency_alert CASCADE;
 DROP TABLE IF EXISTS alert_notification_log CASCADE;
 DROP TABLE IF EXISTS notification_delivery_log CASCADE;
@@ -23,6 +24,9 @@ DROP TABLE IF EXISTS notification_preferences CASCADE;
 DROP TABLE IF EXISTS device_tokens CASCADE;
 DROP TYPE IF EXISTS emergency_event_type_enum CASCADE;
 DROP TYPE IF EXISTS emergency_alert_status_enum CASCADE;
+DROP TYPE IF EXISTS emergency_alert_tier_enum CASCADE;
+DROP TYPE IF EXISTS emergency_alert_escalation_level_enum CASCADE;
+DROP TYPE IF EXISTS alert_audit_event_type_enum CASCADE;
 DROP TYPE IF EXISTS notification_channel_enum CASCADE;
 DROP TYPE IF EXISTS notification_status_enum CASCADE;
 DROP TYPE IF EXISTS delivery_channel_enum CASCADE;
@@ -216,9 +220,18 @@ CREATE TABLE route_geofences (
 );
 CREATE INDEX "IDX_route_geofences_school" ON route_geofences(school_id);
 
--- Emergency Alerts (Matching emergency-alerts entity)
-CREATE TYPE emergency_event_type_enum AS ENUM ('PANIC_BUTTON', 'ROUTE_DEVIATION', 'INCIDENT', 'LATE_ARRIVAL', 'ROUTE_DIVERSION', 'PANIC_ALERT', 'OTHER');
-CREATE TYPE emergency_alert_status_enum AS ENUM ('ACTIVE', 'RESOLVED');
+-- Emergency Alerts (Matching emergency-alerts entity — Phase B governance)
+CREATE TYPE emergency_event_type_enum AS ENUM (
+    'PANIC_BUTTON', 'ROUTE_DEVIATION', 'INCIDENT', 'LATE_ARRIVAL',
+    'ROUTE_DIVERSION', 'PANIC_ALERT', 'MEDICAL', 'LATE_DEPARTURE',
+    'COMPLIANCE', 'OTHER'
+);
+CREATE TYPE emergency_alert_status_enum AS ENUM (
+    'ACTIVE', 'RESOLVED', 'PENDING_CONFIRMATION', 'CONFIRMED',
+    'AUTO_ESCALATED', 'FALSE_ALARM'
+);
+CREATE TYPE emergency_alert_tier_enum AS ENUM ('TIER_1', 'TIER_2', 'TIER_3');
+CREATE TYPE emergency_alert_escalation_level_enum AS ENUM ('SCHOOL', 'BOARD', 'OSTA');
 
 CREATE TABLE emergency_alert (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -232,8 +245,32 @@ CREATE TABLE emergency_alert (
     "eventType" emergency_event_type_enum DEFAULT 'PANIC_BUTTON',
     "description" TEXT,
     "status" emergency_alert_status_enum DEFAULT 'ACTIVE',
+    "tier" emergency_alert_tier_enum,
+    "confirmedBy" VARCHAR,
+    "confirmedAt" TIMESTAMPTZ,
+    "escalationLevel" emergency_alert_escalation_level_enum,
+    "autoEscalatedAt" TIMESTAMPTZ,
+    "parentNotifiedAt" TIMESTAMPTZ,
     "createdAt" TIMESTAMP DEFAULT NOW(),
     "updatedAt" TIMESTAMP DEFAULT NOW()
+);
+
+-- Alert Audit Log (Phase B — governance audit trail)
+CREATE TYPE alert_audit_event_type_enum AS ENUM (
+    'CREATED', 'PENDING_CONFIRMATION', 'CONFIRMED', 'AUTO_ESCALATED',
+    'FALSE_ALARM', 'PARENT_NOTIFIED', 'BOARD_ESCALATED', 'OSTA_ESCALATED',
+    'RESOLVED', 'INFO_REQUESTED'
+);
+
+CREATE TABLE alert_audit_log (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    "alertId" VARCHAR NOT NULL,
+    "eventType" alert_audit_event_type_enum NOT NULL,
+    "actorUserId" VARCHAR,
+    "actorRole" VARCHAR,
+    "notes" TEXT,
+    "escalationLevel" VARCHAR,
+    "eventTimestamp" TIMESTAMP DEFAULT NOW()
 );
 
 CREATE TYPE notification_channel_enum AS ENUM ('PUSH', 'EMAIL', 'SMS');

@@ -346,19 +346,56 @@ Then open the Videos page in the Admin Dashboard.
 - Absence reporting: parent can report absence in the portal but driver's roster does not reflect it yet. v4 will integrate absence into the driver roster.
 - Student boarding notifications: presence events are captured but no push notification is sent to parents yet. v4 will add the presence-to-notification pipeline.
 
-## 7. v4 Demo Additions (When Available)
+## 7. Alert Governance Demo (Phase B — Implemented)
 
-When v4 features are implemented, the demo can be extended with these additional scenes:
+The simulation script (`singlebus-simulate.sh`) now demonstrates the full Phase B alert governance workflow during the PM route:
 
-### Scene G: Alert Confirmation Workflow
+### Alert Schedule During PM Route
 
-1. Driver triggers panic button (Step C).
-2. Show School Admin receiving confirmation modal in the admin dashboard.
-3. School Admin confirms alert -> parents receive push + SMS.
-4. Show parent receiving the emergency notification.
-5. School Admin resolves alert -> parents receive resolution notification.
+| Route % | Event Type      | Tier   | Governance Action                                         |
+| ------- | --------------- | ------ | --------------------------------------------------------- |
+| 10%     | LATE_DEPARTURE  | Tier 2 | Auto-resolved at 25% (admin-only, no parent notification) |
+| 15%     | MEDICAL         | Tier 1 | Marked as False Alarm at 25% (no parent notification)     |
+| 20%     | LATE_ARRIVAL    | Tier 2 | Auto-resolved at 30% (admin-only)                         |
+| 40%     | ROUTE_DEVIATION | Tier 2 | Auto-resolved at 50% (admin-only)                         |
+| 60%     | PANIC_BUTTON    | Tier 1 | School Admin confirms at 70% → parents notified           |
+| 80%     | INCIDENT        | Tier 1 | School Admin confirms at 90% → parents notified           |
 
-### Scene H: Fleet Assignment Coordination
+### Scene G: Alert Governance Workflow (Live)
+
+1. Start the simulation: `cd scripts && bash singlebus-simulate.sh`
+2. Open Admin Dashboard at http://localhost:5173 (login: `school.admin@sbtm.demo` / `Admin123!`)
+3. Navigate to **Alerts** page — observe tier filter tabs: Safety (Tier 1) / Operational (Tier 2) / All
+4. At ~10% route progress: LATE_DEPARTURE appears as Tier 2 (amber badge), no confirmation needed
+5. At ~15% route progress: MEDICAL appears as Tier 1 with **PENDING_CONFIRMATION** (pulsing yellow) — click to see confirmation modal with 2-min countdown
+6. Simulation auto-marks MEDICAL as **False Alarm** — observe status change, no parent notification sent
+7. At ~60%: PANIC_BUTTON appears as Tier 1 PENDING_CONFIRMATION — simulation confirms it → status changes to **CONFIRMED**, parents receive notification
+8. Navigate to **Operational** (sidebar) — shows only Tier 2 alerts (LATE_DEPARTURE, LATE_ARRIVAL, ROUTE_DEVIATION)
+
+### Verification
+
+After simulation completes:
+
+```bash
+bash scripts/verify-demo.sh
+```
+
+Check the output for:
+
+- **Alert counts by tier**: Should show TIER_1 and TIER_2 alerts
+- **Alert counts by status**: Should show CONFIRMED, FALSE_ALARM, RESOLVED entries
+- **Audit log summary**: Should show CREATED, PENDING_CONFIRMATION, CONFIRMED, FALSE_ALARM, RESOLVED events
+- **Confirmed/False-alarm alerts**: Should show PANIC_BUTTON/INCIDENT as CONFIRMED, MEDICAL as FALSE_ALARM
+
+SQL verification:
+
+```bash
+docker exec -i sbtm_antigravity-postgres-1 psql -U postgres -d sbms < scripts/verify.sql
+```
+
+## 8. v4 Demo Additions (When Available)
+
+When remaining v4 features are implemented, extend the demo with these scenes:
 
 1. Login as OSTA Admin.
 2. Show fleet pool with unassigned vehicles (imported from OSTA fleet DB).

@@ -82,19 +82,37 @@ curl -X POST http://localhost:3001/api/v1/student-presence-events \
 1. Describe how video events are created and stored in the Video Service.
 2. Show the Videos page in the Admin Dashboard.
 
+## Scene 6: Alert Governance (Phase B) (10 min)
+
+> This scene demonstrates the Tier 1 confirmation workflow and Tier 2 operational alerts.
+
+1. Start the single-bus simulation: `cd scripts && bash singlebus-simulate.sh`
+2. Open Admin Dashboard and login as `school.admin@sbtm.demo` / `Admin123!`
+3. Navigate to **Alerts** page — point out the **tier filter tabs** at the top (Safety / Operational / All)
+4. When LATE_DEPARTURE appears (~10% route):
+   - "This is a Tier 2 operational alert — visible to admins only, no parent notification. Click the **Operational** page in the sidebar to see only these."
+5. When MEDICAL appears (~15% route) with PENDING_CONFIRMATION status:
+   - "This is a Tier 1 safety alert. The pulsing yellow badge means it's awaiting School Admin confirmation."
+   - Click the alert to see the **Confirmation Modal** with the 2-minute countdown timer
+   - "The admin has 2 minutes to confirm, mark as false alarm, or request more info. If they don't act, the system auto-escalates."
+   - The simulation marks this as **False Alarm** — point out that parents were NOT notified
+6. When PANIC_BUTTON appears (~60% route):
+   - "Another Tier 1 alert — this time the School Admin confirms it."
+   - The simulation confirms → show status changing to **CONFIRMED** and explain parents are now notified
+7. Show the audit trail: "Every action — creation, confirmation, false alarm — is logged in the audit trail for compliance."
+
 ## Wrap-up
 
 - Highlight that backend services are live and the frontend apps use gateway APIs.
-- Note that some workflows shown in the demo are guided limitations rather than completed v1 product flows.
-- Mention that late notifications are simulated as OTHER alerts in the demo.
-- Run `./scripts/verify-demo.sh` to validate seeded data and logins after setup.
+- Alert governance ensures safety-critical alerts are verified before reaching parents.
+- Run `./scripts/verify-demo.sh` to validate seeded data, logins, and audit trail after setup.
 
 ### Forward-Looking Narration Points (v4)
 
 When presenting to stakeholders, use these talking points to describe upcoming capabilities:
 
 - **Parent Notifications**: "In the next release, parents will receive push notifications the moment their child boards or alights the bus. Emergency alerts will also be delivered via SMS as a fallback."
-- **Alert Governance**: "Emergency alerts will go through a confirmation workflow. School Admin will review the alert and confirm before it reaches parents, preventing false-alarm panic. If the admin doesn't respond within 2 minutes, the system auto-escalates."
+- **Alert Governance**: "Already implemented — Tier 1 alerts go through confirmation. Tier 2 alerts are admin-only. Auto-escalation at 2/5/15 minute thresholds."
 - **Fleet Assignment**: "OSTA will be able to propose vehicle assignments to schools, and School Admins will review and accept or reject with comments, creating an auditable decision trail."
 - **SIS Integration**: "Student data will sync from existing school board information systems, eliminating the need for duplicate data entry."
 - **Bulk Route Import**: "Schools with hundreds of existing routes in Excel can import them in bulk, with automatic geocoding and OSRM road-following polyline generation."
