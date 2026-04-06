@@ -78,7 +78,7 @@ function createBusIcon(status: BusStatus) {
 function createStopIcon(sequence: number, isChildStop: boolean) {
   const bg = isChildStop ? '#3b82f6' : 'rgba(156,163,175,0.35)';
   const border = isChildStop ? '2px solid #fff' : '2px solid rgba(156,163,175,0.5)';
-  const size = isChildStop ? 20 : 16;
+  const size = isChildStop ? 28 : 22;
   const shadow = isChildStop
     ? 'box-shadow:0 0 15px #3b82f644, 0 2px 8px rgba(0,0,0,0.4);'
     : 'box-shadow:0 2px 4px rgba(0,0,0,0.15);';
@@ -98,15 +98,15 @@ function createStopIcon(sequence: number, isChildStop: boolean) {
       position:relative;
     ">
       <div style="display:flex; flex-direction:column; align-items:center; transform:translateY(-1px);">
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="${svgFill}">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="${svgFill}">
           <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
         </svg>
       </div>
       <div style="
         position:absolute; bottom:-3px; right:-3px;
-        width:10px;height:10px; background:#fff; border:2px solid ${badgeBorder};
+        width:14px;height:14px; background:#fff; border:2px solid ${badgeBorder};
         border-radius:50%; display:flex; align-items:center; justify-content:center;
-        font-size:6px; font-weight:900; color:${badgeColor};
+        font-size:8px; font-weight:900; color:${badgeColor};
         box-shadow:0 2px 4px rgba(0,0,0,0.2);
       ">${sequence}</div>
     </div>`,
@@ -127,13 +127,16 @@ function parseWktPoint(wkt: string): [number, number] | null {
 // Using a ref (not state) avoids triggering re-renders on map interaction.
 function MapInstanceCapture({
   mapInstanceRef,
+  onReady,
 }: {
   mapInstanceRef: React.MutableRefObject<L.Map | null>;
+  onReady: () => void;
 }) {
   const map = useMap();
   useEffect(() => {
     mapInstanceRef.current = map;
-  }, [map, mapInstanceRef]);
+    onReady();
+  }, [map, mapInstanceRef, onReady]);
   return null;
 }
 
@@ -330,9 +333,14 @@ const MapPage: React.FC = () => {
     return L.latLngBounds(pts);
   }, [routePath, busLocation, isLive]);
 
+  // Track when Leaflet map instance is captured — state change triggers fitBounds effect
+  const [mapReady, setMapReady] = useState(false);
+
+  const handleMapReady = React.useCallback(() => setMapReady(true), []);
+
   // --- Admin Dashboard pattern: fitBounds only on initial load OR when active route changes ---
   useEffect(() => {
-    if (!mapBounds) return;
+    if (!mapBounds || !mapReady) return;
     const routeChanged = lastActiveRouteIdRef.current !== activeRouteId;
     const initialLoad = !initialFitDoneRef.current;
     if (routeChanged || initialLoad) {
@@ -340,7 +348,7 @@ const MapPage: React.FC = () => {
       initialFitDoneRef.current = true;
       lastActiveRouteIdRef.current = activeRouteId;
     }
-  }, [mapBounds, activeRouteId]);
+  }, [mapBounds, activeRouteId, mapReady]);
 
   // Map Reset — same as Admin Dashboard onReset pattern
   const handleResetMap = () => {
@@ -360,69 +368,63 @@ const MapPage: React.FC = () => {
 
   return (
     <div className="fixed inset-x-0 bottom-0 top-16 z-40">
-      <div className="absolute top-4 left-4 right-4 z-[1000] pointer-events-none">
-        <div className="max-w-7xl mx-auto flex flex-col gap-2">
-          <div className="flex justify-between items-start">
-            <button
-              onClick={() => navigate('/dashboard')}
-              className="pointer-events-auto bg-white p-2 rounded-full shadow-lg hover:bg-gray-50 flex items-center text-gray-700"
-            >
-              <ArrowLeft className="h-6 w-6" />
-            </button>
-          </div>
+      {/* Back button — top-left */}
+      <button
+        onClick={() => navigate('/dashboard')}
+        className="absolute top-[15px] left-4 z-[1000] bg-white p-2 rounded-full shadow-lg hover:bg-gray-50 flex items-center text-gray-700"
+      >
+        <ArrowLeft className="h-6 w-6" />
+      </button>
 
-          <div className="self-end pointer-events-auto bg-white p-3 rounded-lg shadow-lg max-w-sm w-full">
-            <div className="flex items-center justify-between mb-1">
-              <h3 className="font-bold text-gray-900">{child.name}</h3>
-              <span
-                className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${isLive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}
-              >
-                {routeStatusLabel}
+      {/* Status panel — top-right */}
+      <div className="absolute top-[15px] right-4 z-[1000] bg-white p-3 rounded-lg shadow-lg max-w-sm w-full">
+        <div className="flex items-center justify-between mb-1">
+          <h3 className="font-bold text-gray-900">{child.name}</h3>
+          <span
+            className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${isLive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}
+          >
+            {routeStatusLabel}
+          </span>
+        </div>
+        <p className="text-sm text-gray-500">
+          Route: {routeDetails?.name || activeRouteId} ({isAM ? 'AM' : 'PM'})
+        </p>
+        <p className="text-xs text-gray-400">
+          Vehicle: {routeDetails?.vehicleId || child.vehicleId || 'N/A'}
+        </p>
+        {isLive && busLocation && (
+          <div className="mt-2 flex items-center justify-between border-t border-gray-100 pt-2">
+            <div className="flex items-center text-blue-600">
+              <Navigation className="h-4 w-4 mr-1" />
+              <span className="font-semibold text-sm">
+                ETA: {busLocation.etaToNextStop ?? '—'} min
               </span>
             </div>
-            <p className="text-sm text-gray-500">
-              Route: {routeDetails?.name || activeRouteId} ({isAM ? 'AM' : 'PM'})
-            </p>
-            <p className="text-xs text-gray-400">
-              Vehicle: {routeDetails?.vehicleId || child.vehicleId || 'N/A'}
-            </p>
-            {isLive && busLocation && (
-              <div className="mt-2 flex items-center justify-between border-t border-gray-100 pt-2">
-                <div className="flex items-center text-blue-600">
-                  <Navigation className="h-4 w-4 mr-1" />
-                  <span className="font-semibold text-sm">
-                    ETA: {busLocation.etaToNextStop ?? '—'} min
-                  </span>
-                </div>
-                <span className="text-xs text-gray-400">
-                  Updated: {new Date(busLocation.timestamp).toLocaleTimeString()}
-                </span>
-              </div>
-            )}
-            {alerts.length > 0 && (
-              <div className="mt-2 border-t border-gray-100 pt-2">
-                <span
-                  className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold"
-                  style={{
-                    backgroundColor: BUS_STATUS_COLORS[busStatus] + '22',
-                    color: BUS_STATUS_COLORS[busStatus],
-                  }}
-                >
-                  {statusLabel}: {alerts.map((a) => a.eventType.replace(/_/g, ' ')).join(', ')}
-                </span>
-              </div>
-            )}
-            {!isLive && (
-              <p className="text-xs text-gray-400 mt-1">Route is not currently active.</p>
-            )}
+            <span className="text-xs text-gray-400">
+              Updated: {new Date(busLocation.timestamp).toLocaleTimeString()}
+            </span>
           </div>
-        </div>
+        )}
+        {alerts.length > 0 && (
+          <div className="mt-2 border-t border-gray-100 pt-2">
+            <span
+              className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold"
+              style={{
+                backgroundColor: BUS_STATUS_COLORS[busStatus] + '22',
+                color: BUS_STATUS_COLORS[busStatus],
+              }}
+            >
+              {statusLabel}: {alerts.map((a) => a.eventType.replace(/_/g, ' ')).join(', ')}
+            </span>
+          </div>
+        )}
+        {!isLive && <p className="text-xs text-gray-400 mt-1">Route is not currently active.</p>}
       </div>
 
-      {/* Map Reset Button — identical positioning & style as Admin Dashboard */}
+      {/* Map Reset Button */}
       <button
         onClick={handleResetMap}
-        className="absolute top-[80px] left-1/2 -translate-x-1/2 z-[1000] px-4 py-2 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 rounded-lg text-white shadow-lg transition-all flex items-center gap-2 group pointer-events-auto"
+        className="absolute top-[15px] left-1/2 -translate-x-1/2 z-[1000] px-4 py-2 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 rounded-lg text-white shadow-lg transition-all flex items-center gap-2 group"
         title="Reset Map"
       >
         <RotateCcw size={16} className="group-hover:rotate-[-45deg] transition-transform" />
@@ -473,7 +475,7 @@ const MapPage: React.FC = () => {
         />
 
         {/* Capture map instance into ref — mirrors Admin Dashboard mapInstanceRef pattern */}
-        <MapInstanceCapture mapInstanceRef={mapInstanceRef} />
+        <MapInstanceCapture mapInstanceRef={mapInstanceRef} onReady={handleMapReady} />
 
         {/* Route polyline */}
         {routePath && (
