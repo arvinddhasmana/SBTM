@@ -4,6 +4,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { DashboardLayout } from './components/common';
+import type { UserRole } from './types';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -35,6 +36,8 @@ import {
 } from './pages';
 import './index.css';
 
+const ALL_ADMIN_ROLES: UserRole[] = ['SUPER_ADMIN', 'OSTA_ADMIN', 'BOARD_ADMIN', 'SCHOOL_ADMIN'];
+
 // Protected Route wrapper
 const ProtectedRoute: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -65,6 +68,18 @@ const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return <>{children}</>;
 };
 
+// Role-based route guard — redirects to /dashboard if user lacks the required role
+const RoleGuard: React.FC<{ allowedRoles: UserRole[]; children: React.ReactNode }> = ({
+  allowedRoles,
+  children,
+}) => {
+  const { user } = useAuth();
+  if (!user?.role || !allowedRoles.includes(user.role as UserRole)) {
+    return <Navigate to="/dashboard" replace />;
+  }
+  return <>{children}</>;
+};
+
 const AppRoutes: React.FC = () => {
   return (
     <Routes>
@@ -78,7 +93,7 @@ const AppRoutes: React.FC = () => {
         }
       />
 
-      {/* Protected routes */}
+      {/* Protected routes — all require admin role */}
       <Route element={<ProtectedRoute />}>
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/alerts" element={<Alerts />} />
@@ -88,12 +103,47 @@ const AppRoutes: React.FC = () => {
         <Route path="/students" element={<Students />} />
         <Route path="/videos" element={<Videos />} />
         <Route path="/settings" element={<Settings />} />
-        <Route path="/vehicles" element={<Vehicles />} />
+        <Route
+          path="/vehicles"
+          element={
+            <RoleGuard allowedRoles={['SUPER_ADMIN', 'OSTA_ADMIN']}>
+              <Vehicles />
+            </RoleGuard>
+          }
+        />
         <Route path="/compliance" element={<Compliance />} />
-        <Route path="/boards" element={<BoardsList />} />
-        <Route path="/schools" element={<SchoolsList />} />
-        <Route path="/users" element={<UserManagement />} />
-        <Route path="/tenant-overview" element={<TenantDashboard />} />
+        <Route
+          path="/boards"
+          element={
+            <RoleGuard allowedRoles={['SUPER_ADMIN', 'OSTA_ADMIN']}>
+              <BoardsList />
+            </RoleGuard>
+          }
+        />
+        <Route
+          path="/schools"
+          element={
+            <RoleGuard allowedRoles={['SUPER_ADMIN', 'OSTA_ADMIN', 'BOARD_ADMIN']}>
+              <SchoolsList />
+            </RoleGuard>
+          }
+        />
+        <Route
+          path="/users"
+          element={
+            <RoleGuard allowedRoles={['SUPER_ADMIN']}>
+              <UserManagement />
+            </RoleGuard>
+          }
+        />
+        <Route
+          path="/tenant-overview"
+          element={
+            <RoleGuard allowedRoles={['SUPER_ADMIN', 'OSTA_ADMIN', 'BOARD_ADMIN']}>
+              <TenantDashboard />
+            </RoleGuard>
+          }
+        />
         <Route path="/absences" element={<AbsenceManagement />} />
         <Route path="/fleet-assignments" element={<FleetAssignments />} />
       </Route>

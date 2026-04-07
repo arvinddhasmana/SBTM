@@ -33,7 +33,10 @@ export class OrganizationGatewayService {
   // ---------- Board CRUD ----------
 
   async listBoards(): Promise<SchoolBoard[]> {
-    return this.boardRepository.find({ order: { name: 'ASC' } });
+    return this.boardRepository.find({
+      relations: ['schools'],
+      order: { name: 'ASC' },
+    });
   }
 
   async getBoard(id: string, caller: CallerContext): Promise<SchoolBoard> {
@@ -75,6 +78,29 @@ export class OrganizationGatewayService {
     });
 
     return saved;
+  }
+
+  async deleteBoard(id: string): Promise<{ message: string }> {
+    const board = await this.boardRepository.findOne({
+      where: { id },
+      relations: ['schools'],
+    });
+    if (!board) throw new NotFoundException('Board not found');
+
+    if (board.schools && board.schools.length > 0) {
+      throw new ForbiddenException(
+        'Cannot delete a board that still has schools. Remove all schools first.',
+      );
+    }
+
+    await this.boardRepository.remove(board);
+
+    this.logger.log('Board deleted', {
+      boardId: id,
+      action: 'board.deleted',
+    });
+
+    return { message: 'Board deleted successfully' };
   }
 
   // ---------- School CRUD ----------
@@ -191,6 +217,25 @@ export class OrganizationGatewayService {
     });
 
     return saved;
+  }
+
+  async deleteSchool(
+    id: string,
+    caller: CallerContext,
+  ): Promise<{ message: string }> {
+    const school = await this.schoolRepository.findOne({ where: { id } });
+    if (!school) throw new NotFoundException('School not found');
+
+    this.assertSchoolScope(school, caller);
+
+    await this.schoolRepository.remove(school);
+
+    this.logger.log('School deleted', {
+      schoolId: id,
+      action: 'school.deleted',
+    });
+
+    return { message: 'School deleted successfully' };
   }
 
   // ---------- private helpers ----------

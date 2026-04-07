@@ -44,13 +44,24 @@ DROP TABLE IF EXISTS students_reference CASCADE;
 DROP TABLE IF EXISTS route_stops CASCADE;
 DROP TABLE IF EXISTS routes CASCADE;
 DROP TABLE IF EXISTS vehicles CASCADE;
+DROP TABLE IF EXISTS fleet_assignments CASCADE;
+DROP TABLE IF EXISTS student_absences CASCADE;
 DROP TABLE IF EXISTS students CASCADE;
+DROP TABLE IF EXISTS video_access_logs CASCADE;
+DROP TABLE IF EXISTS video_events CASCADE;
+DROP TABLE IF EXISTS audit_logs CASCADE;
+DROP TABLE IF EXISTS vehicle_inspections CASCADE;
+DROP TABLE IF EXISTS driver_compliance CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 DROP TABLE IF EXISTS schools CASCADE;
 DROP TABLE IF EXISTS school_boards CASCADE;
 
 DROP TYPE IF EXISTS presence_event_eventtype_enum CASCADE;
 DROP TYPE IF EXISTS presence_event_source_enum CASCADE;
+DROP TYPE IF EXISTS compliance_status_enum CASCADE;
+DROP TYPE IF EXISTS inspection_type_enum CASCADE;
+DROP TYPE IF EXISTS video_event_type_enum CASCADE;
+DROP TYPE IF EXISTS video_event_status_enum CASCADE;
 
 -- --------------------------------------------------------------------------
 -- 2. Create Schema (Gateway & Microservices)
@@ -59,7 +70,9 @@ DROP TYPE IF EXISTS presence_event_source_enum CASCADE;
 -- Tenants
 CREATE TABLE school_boards (
   id UUID PRIMARY KEY,
-  name TEXT NOT NULL
+  name TEXT NOT NULL UNIQUE,
+  "createdAt" TIMESTAMP DEFAULT NOW(),
+  "updatedAt" TIMESTAMP DEFAULT NOW()
 );
 
 CREATE TABLE schools (
@@ -372,6 +385,104 @@ CREATE TABLE fleet_assignments (
 );
 CREATE INDEX "IDX_fleet_assign_school" ON fleet_assignments ("schoolId");
 CREATE INDEX "IDX_fleet_assign_status" ON fleet_assignments (status);
+
+-- Compliance — Driver Compliance (Matching compliance-management entity)
+CREATE TYPE compliance_status_enum AS ENUM ('VALID', 'EXPIRING_SOON', 'EXPIRED', 'PENDING');
+
+CREATE TABLE driver_compliance (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    driver_id UUID NOT NULL UNIQUE,
+    school_id UUID NOT NULL,
+    license_expiry DATE,
+    background_check_last_date DATE,
+    medical_check_due_date DATE,
+    status compliance_status_enum DEFAULT 'PENDING',
+    "createdAt" TIMESTAMP DEFAULT NOW(),
+    "updatedAt" TIMESTAMP DEFAULT NOW()
+);
+CREATE INDEX "IDX_driver_compliance_driver" ON driver_compliance (driver_id);
+CREATE INDEX "IDX_driver_compliance_school" ON driver_compliance (school_id);
+
+-- Compliance — Vehicle Inspections (Matching compliance-management entity)
+CREATE TYPE inspection_type_enum AS ENUM ('PRE_TRIP', 'POST_TRIP', 'MAINTENANCE');
+
+CREATE TABLE vehicle_inspections (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    vehicle_id UUID NOT NULL,
+    driver_id UUID NOT NULL,
+    school_id UUID NOT NULL,
+    type inspection_type_enum DEFAULT 'PRE_TRIP',
+    is_passed BOOLEAN DEFAULT TRUE,
+    checklist_json JSONB,
+    photo_urls TEXT[],
+    comments VARCHAR,
+    "createdAt" TIMESTAMP DEFAULT NOW(),
+    "updatedAt" TIMESTAMP DEFAULT NOW()
+);
+CREATE INDEX "IDX_vehicle_inspections_vehicle" ON vehicle_inspections (vehicle_id);
+CREATE INDEX "IDX_vehicle_inspections_driver" ON vehicle_inspections (driver_id);
+CREATE INDEX "IDX_vehicle_inspections_school" ON vehicle_inspections (school_id);
+
+-- Compliance — Audit Logs (Matching compliance-management entity, append-only)
+CREATE TABLE audit_logs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL,
+    school_id UUID NOT NULL,
+    action VARCHAR NOT NULL,
+    resource VARCHAR,
+    resource_id VARCHAR,
+    details JSONB,
+    ip_address VARCHAR,
+    user_agent VARCHAR,
+    "createdAt" TIMESTAMP DEFAULT NOW()
+);
+CREATE INDEX "IDX_audit_logs_user" ON audit_logs (user_id);
+CREATE INDEX "IDX_audit_logs_school" ON audit_logs (school_id);
+CREATE INDEX "IDX_audit_logs_resource" ON audit_logs (resource);
+CREATE INDEX "IDX_audit_logs_resource_id" ON audit_logs (resource_id);
+CREATE INDEX "IDX_audit_logs_created" ON audit_logs ("createdAt");
+
+-- Video Service Tables (Matching video-service entities)
+CREATE TYPE video_event_type_enum AS ENUM ('EMERGENCY', 'INCIDENT', 'MANUAL');
+CREATE TYPE video_event_status_enum AS ENUM ('UPLOADING', 'READY', 'FAILED');
+
+CREATE TABLE video_events (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    school_id VARCHAR NOT NULL,
+    vehicle_id VARCHAR NOT NULL,
+    route_id VARCHAR NOT NULL,
+    driver_id VARCHAR NOT NULL,
+    "timestamp" TIMESTAMP NOT NULL,
+    event_type video_event_type_enum NOT NULL,
+    duration_seconds INT NOT NULL,
+    video_url VARCHAR,
+    thumbnail_url VARCHAR,
+    status video_event_status_enum DEFAULT 'UPLOADING',
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+CREATE INDEX "IDX_video_events_school" ON video_events (school_id);
+CREATE INDEX "IDX_video_events_vehicle" ON video_events (vehicle_id);
+CREATE INDEX "IDX_video_events_route" ON video_events (route_id);
+CREATE INDEX "IDX_video_events_driver" ON video_events (driver_id);
+CREATE INDEX "IDX_video_events_timestamp" ON video_events ("timestamp");
+CREATE INDEX "IDX_video_events_vehicle_ts" ON video_events (vehicle_id, "timestamp");
+CREATE INDEX "IDX_video_events_route_ts" ON video_events (route_id, "timestamp");
+CREATE INDEX "IDX_video_events_status" ON video_events (status);
+
+CREATE TABLE video_access_logs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    video_event_id VARCHAR NOT NULL,
+    user_id VARCHAR NOT NULL,
+    "timestamp" TIMESTAMP NOT NULL,
+    ip_address VARCHAR NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+CREATE INDEX "IDX_video_access_video" ON video_access_logs (video_event_id);
+CREATE INDEX "IDX_video_access_user" ON video_access_logs (user_id);
+CREATE INDEX "IDX_video_access_timestamp" ON video_access_logs ("timestamp");
+CREATE INDEX "IDX_video_access_video_ts" ON video_access_logs (video_event_id, "timestamp");
+CREATE INDEX "IDX_video_access_user_ts" ON video_access_logs (user_id, "timestamp");
 
 
 -- --------------------------------------------------------------------------

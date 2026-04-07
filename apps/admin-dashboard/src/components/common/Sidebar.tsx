@@ -31,9 +31,19 @@ interface NavItem {
 const ALL_ADMIN_ROLES: UserRole[] = ['SUPER_ADMIN', 'OSTA_ADMIN', 'BOARD_ADMIN', 'SCHOOL_ADMIN'];
 
 const navItems: NavItem[] = [
-  { path: '/dashboard', icon: <LayoutDashboard size={20} />, label: 'Dashboard' },
-  { path: '/alerts', icon: <Bell size={20} />, label: 'Alerts' },
-  { path: '/alerts/operational', icon: <ClipboardList size={20} />, label: 'Operational' },
+  {
+    path: '/dashboard',
+    icon: <LayoutDashboard size={20} />,
+    label: 'Dashboard',
+    allowedRoles: ALL_ADMIN_ROLES,
+  },
+  { path: '/alerts', icon: <Bell size={20} />, label: 'Alerts', allowedRoles: ALL_ADMIN_ROLES },
+  {
+    path: '/alerts/operational',
+    icon: <ClipboardList size={20} />,
+    label: 'Operational',
+    allowedRoles: ALL_ADMIN_ROLES,
+  },
   { path: '/routes', icon: <Route size={20} />, label: 'Routes', allowedRoles: ALL_ADMIN_ROLES },
   {
     path: '/routes/planner',
@@ -41,7 +51,12 @@ const navItems: NavItem[] = [
     label: 'Planner',
     allowedRoles: ALL_ADMIN_ROLES,
   },
-  { path: '/vehicles', icon: <Bus size={20} />, label: 'Fleet', allowedRoles: ALL_ADMIN_ROLES },
+  {
+    path: '/vehicles',
+    icon: <Bus size={20} />,
+    label: 'Fleet',
+    allowedRoles: ['SUPER_ADMIN', 'OSTA_ADMIN'],
+  },
   {
     path: '/compliance',
     icon: <Shield size={20} />,
@@ -52,7 +67,7 @@ const navItems: NavItem[] = [
     path: '/fleet-assignments',
     icon: <Truck size={20} />,
     label: 'Assignments',
-    allowedRoles: ['SUPER_ADMIN', 'OSTA_ADMIN', 'SCHOOL_ADMIN'],
+    allowedRoles: ALL_ADMIN_ROLES,
   },
   {
     path: '/students',
@@ -66,7 +81,6 @@ const navItems: NavItem[] = [
     label: 'Absences',
     allowedRoles: ALL_ADMIN_ROLES,
   },
-  { path: '/videos', icon: <Video size={20} />, label: 'Videos' },
   {
     path: '/boards',
     icon: <Building2 size={20} />,
@@ -79,8 +93,13 @@ const navItems: NavItem[] = [
     label: 'Schools',
     allowedRoles: ['SUPER_ADMIN', 'OSTA_ADMIN', 'BOARD_ADMIN'],
   },
-  { path: '/users', icon: <UserCog size={20} />, label: 'Users', allowedRoles: ALL_ADMIN_ROLES },
-  { path: '/settings', icon: <Settings size={20} />, label: 'Settings' },
+  { path: '/users', icon: <UserCog size={20} />, label: 'Users', allowedRoles: ['SUPER_ADMIN'] },
+  {
+    path: '/settings',
+    icon: <Settings size={20} />,
+    label: 'Settings',
+    allowedRoles: ALL_ADMIN_ROLES,
+  },
 ];
 
 interface SidebarProps {

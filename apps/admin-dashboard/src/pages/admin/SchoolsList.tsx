@@ -21,7 +21,7 @@ export const SchoolsList: React.FC = () => {
   const [formError, setFormError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
-  const isOstaAdmin = user?.role === 'OSTA_ADMIN';
+  const isOstaAdmin = user?.role === 'OSTA_ADMIN' || user?.role === 'SUPER_ADMIN';
   const isBoardAdmin = user?.role === 'BOARD_ADMIN';
   const canManage = isOstaAdmin || isBoardAdmin;
 

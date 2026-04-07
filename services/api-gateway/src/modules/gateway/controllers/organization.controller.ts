@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Patch,
+  Delete,
   Param,
   Body,
   Query,
@@ -60,6 +61,12 @@ export class OrganizationController {
     return this.organizationService.updateBoard(id, dto);
   }
 
+  @Delete('boards/:id')
+  @Roles(Role.OSTA_ADMIN)
+  async deleteBoard(@Param('id') id: string) {
+    return this.organizationService.deleteBoard(id);
+  }
+
   // ---------- Schools ----------
 
   @Get('schools')
@@ -106,5 +113,14 @@ export class OrganizationController {
     @Request() req: AuthenticatedRequest,
   ) {
     return this.organizationService.deactivateSchool(id, req.user);
+  }
+
+  @Delete('schools/:id')
+  @Roles(Role.OSTA_ADMIN)
+  async deleteSchool(
+    @Param('id') id: string,
+    @Request() req: AuthenticatedRequest,
+  ) {
+    return this.organizationService.deleteSchool(id, req.user);
   }
 }

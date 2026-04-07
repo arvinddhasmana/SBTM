@@ -69,7 +69,7 @@ export class FleetAssignmentGatewayService {
       });
     }
 
-    // OSTA_ADMIN / SUPER_ADMIN sees all
+    // OSTA_ADMIN / SUPER_ADMIN / BOARD_ADMIN sees all
     return this.assignmentRepository.find({ order: { createdAt: 'DESC' } });
   }
 

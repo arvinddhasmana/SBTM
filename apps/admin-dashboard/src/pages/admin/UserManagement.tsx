@@ -12,6 +12,7 @@ import type {
 import type { School } from '../../services/api/organization.api';
 
 const INVITABLE_ROLES: { value: InvitableRole; label: string }[] = [
+  { value: 'OSTA_ADMIN', label: 'OSTA Admin' },
   { value: 'BOARD_ADMIN', label: 'Board Admin' },
   { value: 'SCHOOL_ADMIN', label: 'School Admin' },
   { value: 'DRIVER', label: 'Driver' },
@@ -19,6 +20,7 @@ const INVITABLE_ROLES: { value: InvitableRole; label: string }[] = [
 ];
 
 const ROLE_LABELS: Record<string, string> = {
+  SUPER_ADMIN: 'Super Admin',
   OSTA_ADMIN: 'OSTA Admin',
   BOARD_ADMIN: 'Board Admin',
   SCHOOL_ADMIN: 'School Admin',
@@ -56,7 +58,7 @@ export const UserManagement: React.FC = () => {
     queryFn: async () => {
       const [usersData, schoolsData] = await Promise.all([
         provisioningApi.listUsers(),
-        user?.role === 'OSTA_ADMIN' || user?.role === 'BOARD_ADMIN'
+        user?.role === 'SUPER_ADMIN' || user?.role === 'OSTA_ADMIN' || user?.role === 'BOARD_ADMIN'
           ? organizationApi.listSchools(user?.boardId)
           : Promise.resolve([]),
       ]);
@@ -172,6 +174,10 @@ export const UserManagement: React.FC = () => {
                 {INVITABLE_ROLES.filter((r) => {
                   if (user?.role === 'SCHOOL_ADMIN')
                     return r.value === 'DRIVER' || r.value === 'PARENT';
+                  if (user?.role === 'BOARD_ADMIN')
+                    return r.value !== 'OSTA_ADMIN' && r.value !== 'BOARD_ADMIN';
+                  // SUPER_ADMIN and OSTA_ADMIN can see all roles
+                  if (user?.role === 'OSTA_ADMIN') return r.value !== 'OSTA_ADMIN';
                   return true;
                 }).map((r) => (
                   <option key={r.value} value={r.value}>

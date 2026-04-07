@@ -430,3 +430,35 @@ This approach does not require PKI-based signing but provides an auditable digit
 
 - **Super Admin**: Platform upgrades, database migrations, infrastructure changes
 - **OSTA Admin**: Communicate changes to boards, verify post-upgrade operations
+
+---
+
+## 6. Navigation Items by Role (Admin Dashboard)
+
+The Admin Dashboard sidebar displays navigation items based on the authenticated user's role. Items are filtered at the component level and also protected by route-level guards to prevent direct URL access.
+
+| Navigation Item | Path                  | Super Admin | OSTA Admin | Board Admin | School Admin | Notes                                  |
+| --------------- | --------------------- | :---------: | :--------: | :---------: | :----------: | -------------------------------------- |
+| Dashboard       | `/dashboard`          |      ✓      |     ✓      |      ✓      |      ✓       | Role-appropriate overview              |
+| Alerts          | `/alerts`             |      ✓      |     ✓      |      ✓      |      ✓       | Scope varies by role                   |
+| Operational     | `/alerts/operational` |      ✓      |     ✓      |      ✓      |      ✓       | Operational alert management           |
+| Routes          | `/routes`             |      ✓      |     ✓      |      ✓      |      ✓       | School Admin: own school only          |
+| Planner         | `/routes/planner`     |      ✓      |     ✓      |      ✓      |      ✓       | Route planning tool                    |
+| Fleet           | `/vehicles`           |      ✓      |     ✓      |      ✗      |      ✗       | Fleet ownership is OSTA responsibility |
+| Compliance      | `/compliance`         |      ✓      |     ✓      |      ✓      |      ✓       | Scope varies by role                   |
+| Assignments     | `/fleet-assignments`  |      ✓      |     ✓      |      ✓      |      ✓       | OSTA proposes, School accepts/rejects  |
+| Students        | `/students`           |      ✓      |     ✓      |      ✓      |      ✓       | Scope varies by role                   |
+| Absences        | `/absences`           |      ✓      |     ✓      |      ✓      |      ✓       | Scope varies by role                   |
+| Boards          | `/boards`             |      ✓      |     ✓      |      ✗      |      ✗       | Board management is OSTA-level         |
+| Schools         | `/schools`            |      ✓      |     ✓      |      ✓      |      ✗       | Board Admin sees own board schools     |
+| Users           | `/users`              |      ✓      |     ✗      |      ✗      |      ✗       | User management is Super Admin only    |
+| Settings        | `/settings`           |      ✓      |     ✓      |      ✓      |      ✓       | Role-appropriate settings              |
+
+**Key decisions:**
+
+- **Fleet (Vehicles)**: Restricted to OSTA Admin and Super Admin. Fleet ownership and management is an OSTA-level responsibility per the RACI matrix (Section 2). Board and School Admins are only Consulted/Informed.
+- **Boards**: Restricted to OSTA Admin and Super Admin. Board lifecycle management is an OSTA-level responsibility.
+- **Schools**: Available to Board Admin and above. Board Admin manages schools within their board; School Admin accesses their own school via other pages.
+- **Users**: Restricted to Super Admin only for system-wide user management.
+- **Videos**: Removed from navigation. Video functionality is not part of the Phase C scope.
+- **Driver and Parent roles**: These roles do not access the Admin Dashboard. Drivers use the Driver App (mobile) and Parents use the Parent Portal (web).

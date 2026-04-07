@@ -89,11 +89,13 @@ export class AbsenceGatewayService {
   ): Promise<StudentAbsence[]> {
     const resolvedSchoolId = this.resolveCallerSchoolId(caller, schoolId);
 
+    const where: any = { tripDate };
+    if (resolvedSchoolId) {
+      where.schoolId = resolvedSchoolId;
+    }
+
     return this.absenceRepository.find({
-      where: {
-        tripDate,
-        schoolId: resolvedSchoolId,
-      },
+      where,
       order: { createdAt: 'DESC' },
     });
   }
@@ -113,9 +115,14 @@ export class AbsenceGatewayService {
     const resolvedSchoolId = this.resolveCallerSchoolId(caller, schoolId);
     const query = this.absenceRepository
       .createQueryBuilder('absence')
-      .where('absence.schoolId = :schoolId', { schoolId: resolvedSchoolId })
       .orderBy('absence.tripDate', 'DESC')
       .addOrderBy('absence.createdAt', 'DESC');
+
+    if (resolvedSchoolId) {
+      query.where('absence.schoolId = :schoolId', {
+        schoolId: resolvedSchoolId,
+      });
+    }
 
     if (tripDate) {
       query.andWhere('absence.tripDate = :tripDate', { tripDate });
@@ -228,7 +235,7 @@ export class AbsenceGatewayService {
   private resolveCallerSchoolId(
     caller: CallerContext,
     requestedSchoolId?: string,
-  ): string {
+  ): string | undefined {
     if (
       caller.role === Role.SCHOOL_ADMIN ||
       caller.role === Role.DRIVER ||
@@ -240,10 +247,7 @@ export class AbsenceGatewayService {
       return caller.schoolId;
     }
 
-    if (!requestedSchoolId) {
-      throw new ForbiddenException('schoolId is required for this operation');
-    }
-
-    return requestedSchoolId;
+    // OSTA_ADMIN, SUPER_ADMIN, BOARD_ADMIN: use requested schoolId if provided, otherwise undefined (all)
+    return requestedSchoolId || undefined;
   }
 }

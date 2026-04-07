@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Shield, CheckCircle, AlertTriangle, FileText, Search, Filter } from 'lucide-react';
+import { Shield, CheckCircle, AlertTriangle } from 'lucide-react';
 import { Header, Card, LoadingSpinner } from '../components/common';
 import { complianceApi } from '../services/api';
 import { queryKeys } from '../services/query-keys';
@@ -8,15 +8,23 @@ import { queryKeys } from '../services/query-keys';
 const Compliance: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'drivers' | 'inspections' | 'audit'>('drivers');
 
-  const { data, isLoading } = useQuery({
+  const {
+    data,
+    isLoading,
+    error: queryError,
+  } = useQuery({
     queryKey: queryKeys.compliance.all,
     queryFn: async () => {
       const [dData, iData, aData] = await Promise.all([
-        complianceApi.getAllCompliance(),
-        complianceApi.getAllInspections(),
-        complianceApi.getAuditLogs(),
+        complianceApi.getAllCompliance().catch(() => []),
+        complianceApi.getAllInspections().catch(() => []),
+        complianceApi.getAuditLogs().catch(() => []),
       ]);
-      return { drivers: dData, inspections: iData, auditLogs: aData };
+      return {
+        drivers: Array.isArray(dData) ? dData : [],
+        inspections: Array.isArray(iData) ? iData : [],
+        auditLogs: Array.isArray(aData) ? aData : [],
+      };
     },
   });
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Download, Plus } from 'lucide-react';
 import { fleetAssignmentApi } from '../../services/api/fleet-assignment.api';
@@ -8,6 +8,7 @@ import type {
 } from '../../services/api/fleet-assignment.api';
 import { useAuth } from '../../context/AuthContext';
 import { queryKeys } from '../../services/query-keys';
+import { apiClient } from '../../services/api/api-client';
 
 const STATUS_STYLES: Record<string, string> = {
   PROPOSED: 'bg-amber-500/10 text-amber-400 border border-amber-500/20',
@@ -15,8 +16,6 @@ const STATUS_STYLES: Record<string, string> = {
   REJECTED: 'bg-red-500/10 text-red-400 border border-red-500/20',
   SUPERSEDED: 'bg-slate-500/10 text-slate-400 border border-slate-500/20',
 };
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 export const FleetAssignments: React.FC = () => {
   const { user } = useAuth();
@@ -35,6 +34,25 @@ export const FleetAssignments: React.FC = () => {
 
   const isOstaAdmin = user?.role === 'OSTA_ADMIN' || user?.role === 'SUPER_ADMIN';
   const isSchoolAdmin = user?.role === 'SCHOOL_ADMIN';
+
+  const handleDownloadPdf = useCallback(async (assignmentId: string) => {
+    try {
+      const response = await apiClient.get(
+        `/api/v1/documents/fleet-assignment/${assignmentId}/pdf`,
+        { responseType: 'blob' },
+      );
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `fleet-assignment-${assignmentId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch {
+      setError('Failed to download PDF.');
+    }
+  }, []);
 
   const { data: assignments = [], isLoading } = useQuery({
     queryKey: queryKeys.fleetAssignments.all,
@@ -246,15 +264,13 @@ export const FleetAssignments: React.FC = () => {
                         </>
                       )}
                       {assignment.status === 'ACCEPTED' && (
-                        <a
-                          href={`${API_BASE_URL}/api/v1/documents/fleet-assignment/${assignment.id}/pdf`}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                        <button
+                          onClick={() => handleDownloadPdf(assignment.id)}
                           className="flex items-center gap-1 text-blue-400 hover:text-blue-300 text-sm"
                         >
                           <Download size={14} />
                           PDF
-                        </a>
+                        </button>
                       )}
                     </div>
                     {rejectingId === assignment.id && (

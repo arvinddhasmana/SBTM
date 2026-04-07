@@ -23,7 +23,18 @@ export class StudentGatewayService {
     // Enforce parent scoping
     if (user.role === Role.PARENT) {
       query.parent_id = user.id;
-    } else if (user.role !== Role.ADMIN && user.role !== Role.OSTA_ADMIN) {
+    } else if (
+      user.role === Role.ADMIN ||
+      user.role === Role.OSTA_ADMIN ||
+      user.role === Role.SUPER_ADMIN
+    ) {
+      // Unrestricted access - see all students
+    } else if (user.role === Role.BOARD_ADMIN) {
+      // Board admin: if they have a schoolId use it, otherwise show all (board-scoped via UI)
+      if (user.schoolId) {
+        query.school_id = user.schoolId;
+      }
+    } else {
       if (!user.schoolId) {
         throw new ForbiddenException(
           'School ID is required for this operation',
@@ -123,7 +134,12 @@ export class StudentGatewayService {
             'You do not have access to this student',
           );
         }
-      } else if (user.role !== Role.ADMIN && user.role !== Role.OSTA_ADMIN) {
+      } else if (
+        user.role !== Role.ADMIN &&
+        user.role !== Role.OSTA_ADMIN &&
+        user.role !== Role.SUPER_ADMIN &&
+        user.role !== Role.BOARD_ADMIN
+      ) {
         if (student.school_id !== user.schoolId) {
           throw new ForbiddenException(
             'You do not have access to this student',
@@ -176,7 +192,12 @@ export class StudentGatewayService {
       if (student.parentId !== user.id) {
         throw new ForbiddenException('You do not have access to this student');
       }
-    } else if (user.role !== Role.ADMIN && user.role !== Role.OSTA_ADMIN) {
+    } else if (
+      user.role !== Role.ADMIN &&
+      user.role !== Role.OSTA_ADMIN &&
+      user.role !== Role.SUPER_ADMIN &&
+      user.role !== Role.BOARD_ADMIN
+    ) {
       if (student.schoolId !== user.schoolId) {
         throw new ForbiddenException('You do not have access to this student');
       }
