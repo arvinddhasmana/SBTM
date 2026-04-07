@@ -11,6 +11,10 @@ import { ParentGatewayService } from './services/parent.gateway.service';
 import { DriverGatewayService } from './services/driver.gateway.service';
 import { AbsenceGatewayService } from './services/absence.gateway.service';
 import { NotificationSettingsGatewayService } from './services/notification-settings.gateway.service';
+import { OrganizationGatewayService } from './services/organization.gateway.service';
+import { FleetAssignmentGatewayService } from './services/fleet-assignment.gateway.service';
+import { PdfGeneratorService } from './services/pdf-generator.service';
+import { RouteChangeNotifierService } from './services/route-change-notifier.service';
 import { GpsController } from './controllers/gps.controller';
 import { AlertsController } from './controllers/alerts.controller';
 import { PresenceController } from './controllers/presence.controller';
@@ -21,14 +25,25 @@ import { ParentController } from './controllers/parent.controller';
 import { DriverController } from './controllers/driver.controller';
 import { AbsenceController } from './controllers/absence.controller';
 import { NotificationSettingsController } from './controllers/notification-settings.controller';
+import { OrganizationController } from './controllers/organization.controller';
+import { FleetAssignmentController } from './controllers/fleet-assignment.controller';
+import { DocumentController } from './controllers/document.controller';
 import { School } from '../auth/entities/school.entity';
+import { SchoolBoard } from '../auth/entities/school-board.entity';
 import { Route } from '../auth/entities/route.entity';
 import { StudentAbsence } from './entities/student-absence.entity';
+import { FleetAssignment } from './entities/fleet-assignment.entity';
 
 @Module({
   imports: [
     CommonModule,
-    TypeOrmModule.forFeature([School, Route, StudentAbsence]),
+    TypeOrmModule.forFeature([
+      School,
+      SchoolBoard,
+      Route,
+      StudentAbsence,
+      FleetAssignment,
+    ]),
   ],
   controllers: [
     GpsController,
@@ -41,6 +56,9 @@ import { StudentAbsence } from './entities/student-absence.entity';
     DriverController,
     AbsenceController,
     NotificationSettingsController,
+    OrganizationController,
+    FleetAssignmentController,
+    DocumentController,
   ],
   providers: [
     GpsGatewayService,
@@ -53,6 +71,10 @@ import { StudentAbsence } from './entities/student-absence.entity';
     DriverGatewayService,
     AbsenceGatewayService,
     NotificationSettingsGatewayService,
+    OrganizationGatewayService,
+    FleetAssignmentGatewayService,
+    PdfGeneratorService,
+    RouteChangeNotifierService,
   ],
   exports: [
     GpsGatewayService,
@@ -65,6 +87,10 @@ import { StudentAbsence } from './entities/student-absence.entity';
     DriverGatewayService,
     AbsenceGatewayService,
     NotificationSettingsGatewayService,
+    OrganizationGatewayService,
+    FleetAssignmentGatewayService,
+    PdfGeneratorService,
+    RouteChangeNotifierService,
   ],
 })
 export class GatewayModule {}

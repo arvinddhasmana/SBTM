@@ -14,27 +14,72 @@ import {
   School,
   Wand2,
   Shield,
+  UserCog,
+  CalendarOff,
+  Truck,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import type { UserRole } from '../../types';
 
 interface NavItem {
   path: string;
   icon: React.ReactNode;
   label: string;
+  allowedRoles?: UserRole[];
 }
+
+const ALL_ADMIN_ROLES: UserRole[] = ['SUPER_ADMIN', 'OSTA_ADMIN', 'BOARD_ADMIN', 'SCHOOL_ADMIN'];
 
 const navItems: NavItem[] = [
   { path: '/dashboard', icon: <LayoutDashboard size={20} />, label: 'Dashboard' },
   { path: '/alerts', icon: <Bell size={20} />, label: 'Alerts' },
   { path: '/alerts/operational', icon: <ClipboardList size={20} />, label: 'Operational' },
-  { path: '/routes', icon: <Route size={20} />, label: 'Routes' },
-  { path: '/routes/planner', icon: <Wand2 size={20} />, label: 'Planner' },
-  { path: '/vehicles', icon: <Bus size={20} />, label: 'Fleet' },
-  { path: '/compliance', icon: <Shield size={20} />, label: 'Compliance' },
-  { path: '/students', icon: <Users size={20} />, label: 'Students' },
+  { path: '/routes', icon: <Route size={20} />, label: 'Routes', allowedRoles: ALL_ADMIN_ROLES },
+  {
+    path: '/routes/planner',
+    icon: <Wand2 size={20} />,
+    label: 'Planner',
+    allowedRoles: ALL_ADMIN_ROLES,
+  },
+  { path: '/vehicles', icon: <Bus size={20} />, label: 'Fleet', allowedRoles: ALL_ADMIN_ROLES },
+  {
+    path: '/compliance',
+    icon: <Shield size={20} />,
+    label: 'Compliance',
+    allowedRoles: ALL_ADMIN_ROLES,
+  },
+  {
+    path: '/fleet-assignments',
+    icon: <Truck size={20} />,
+    label: 'Assignments',
+    allowedRoles: ['SUPER_ADMIN', 'OSTA_ADMIN', 'SCHOOL_ADMIN'],
+  },
+  {
+    path: '/students',
+    icon: <Users size={20} />,
+    label: 'Students',
+    allowedRoles: ALL_ADMIN_ROLES,
+  },
+  {
+    path: '/absences',
+    icon: <CalendarOff size={20} />,
+    label: 'Absences',
+    allowedRoles: ALL_ADMIN_ROLES,
+  },
   { path: '/videos', icon: <Video size={20} />, label: 'Videos' },
-  { path: '/boards', icon: <Building2 size={20} />, label: 'Boards' },
-  { path: '/schools', icon: <School size={20} />, label: 'Schools' },
+  {
+    path: '/boards',
+    icon: <Building2 size={20} />,
+    label: 'Boards',
+    allowedRoles: ['SUPER_ADMIN', 'OSTA_ADMIN'],
+  },
+  {
+    path: '/schools',
+    icon: <School size={20} />,
+    label: 'Schools',
+    allowedRoles: ['SUPER_ADMIN', 'OSTA_ADMIN', 'BOARD_ADMIN'],
+  },
+  { path: '/users', icon: <UserCog size={20} />, label: 'Users', allowedRoles: ALL_ADMIN_ROLES },
   { path: '/settings', icon: <Settings size={20} />, label: 'Settings' },
 ];
 
@@ -45,13 +90,18 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ width, isCollapsed, onToggleCollapse }) => {
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
+
+  const visibleItems = navItems.filter(
+    (item) =>
+      !item.allowedRoles || (user?.role && item.allowedRoles.includes(user.role as UserRole)),
+  );
 
   return (
     <aside
@@ -77,7 +127,7 @@ const Sidebar: React.FC<SidebarProps> = ({ width, isCollapsed, onToggleCollapse 
       <nav
         className={`flex-1 p-4 space-y-1 w-full overflow-y-auto custom-scrollbar ${isCollapsed ? 'px-2' : ''}`}
       >
-        {navItems.map((item) => (
+        {visibleItems.map((item) => (
           <NavLink
             key={item.path}
             to={item.path}

@@ -1,22 +1,40 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  OneToMany,
+  JoinColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { SchoolBoard } from './school-board.entity';
 import { User } from './user.entity';
 
 @Entity('schools')
 export class School {
-    @PrimaryGeneratedColumn('uuid')
-    id: string;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
-    @Column()
-    name: string;
+  @Column()
+  name: string;
 
-    @Column()
-    boardId: string;
+  @Column()
+  boardId: string;
 
-    @ManyToOne(() => SchoolBoard, (board) => board.schools)
-    @JoinColumn({ name: 'boardId' })
-    board: SchoolBoard;
+  @Column({ default: 'ACTIVE' })
+  status: string;
 
-    @OneToMany(() => User, (user) => user.school)
-    users: User[];
+  @ManyToOne(() => SchoolBoard, (board) => board.schools)
+  @JoinColumn({ name: 'boardId' })
+  board: SchoolBoard;
+
+  @OneToMany(() => User, (user) => user.school)
+  users: User[];
+
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
 }

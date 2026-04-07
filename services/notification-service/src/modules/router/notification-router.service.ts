@@ -93,6 +93,21 @@ export class NotificationRouterService {
           title: 'Emergency Alert',
           body: `Emergency reported on your child's bus route: ${request.emergencyType ?? 'ALERT'}`,
         };
+      case 'ROUTE_CHANGE':
+        return {
+          title: 'Route Update',
+          body: 'A route your child uses has been updated. Please check the app for details.',
+        };
+      case 'ABSENCE_REPORTED':
+        return {
+          title: 'Absence Reported',
+          body: 'A student absence has been reported for your route.',
+        };
+      case 'ABSENCE_CONFIRMED':
+        return {
+          title: 'Absence Confirmed',
+          body: 'The absence report has been confirmed.',
+        };
       default:
         return {
           title: 'Bus Notification',

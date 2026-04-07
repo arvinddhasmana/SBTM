@@ -128,7 +128,7 @@ export class ProvisioningService {
   > {
     let users: User[] = [];
 
-    if (caller.role === Role.OSTA_ADMIN) {
+    if (caller.role === Role.SUPER_ADMIN || caller.role === Role.OSTA_ADMIN) {
       users = await this.userRepository.find();
     } else if (caller.role === Role.BOARD_ADMIN && caller.boardId) {
       users = await this.userRepository.find({
@@ -209,10 +209,17 @@ export class ProvisioningService {
   // ---------- private helpers ----------
 
   private validateInviterScope(dto: InviteUserDto, inviter: InviterUser): void {
+    // Only SUPER_ADMIN can invite OSTA_ADMIN
+    if ((dto.role as Role) === Role.OSTA_ADMIN) {
+      if (inviter.role !== Role.SUPER_ADMIN) {
+        throw new ForbiddenException(
+          'Only Super Admin can invite OSTA administrators',
+        );
+      }
+      return;
+    }
     if (inviter.role === Role.BOARD_ADMIN) {
       // Board admins cannot invite BOARD_ADMIN or above.
-      // InvitableRole excludes OSTA_ADMIN at the DTO level; cast to Role for
-      // a defence-in-depth check that satisfies strict type analysis.
       if ((dto.role as Role) === Role.BOARD_ADMIN) {
         throw new ForbiddenException(
           'Board admins cannot create admins above their scope',
@@ -256,6 +263,7 @@ export class ProvisioningService {
   }
 
   private assertCallerCanManageUser(target: User, caller: InviterUser): void {
+    if (caller.role === Role.SUPER_ADMIN) return;
     if (caller.role === Role.OSTA_ADMIN) return;
     if (caller.role === Role.BOARD_ADMIN && target.boardId === caller.boardId)
       return;

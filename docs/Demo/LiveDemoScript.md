@@ -1,7 +1,7 @@
 # SBTM Live Demo Script
 
 - Document owner: Product, QA, and Engineering
-- Last reviewed: 2026-04-02
+- Last reviewed: 2026-04-06
 - Primary use: Stakeholder-facing demo narrative and walkthrough script
 
 This script is a presentation flow for stakeholders and internal walkthroughs. It is not the source of truth for implementation status. For verified current gaps and planned completion order, use `docs/prd/GapAnalysis.md` and `docs/prd/PhaseWiseImplementationPlan.md`. For v4 business enhancements, see `docs/prd/v4/GapAnalysis.md`.
@@ -101,6 +101,39 @@ curl -X POST http://localhost:3001/api/v1/student-presence-events \
    - The simulation confirms → show status changing to **CONFIRMED** and explain parents are now notified
 7. Show the audit trail: "Every action — creation, confirmation, false alarm — is logged in the audit trail for compliance."
 
+## Scene 7: Role Boundaries and Phase C Workflows (10 min)
+
+> This scene demonstrates role-based sidebar, fleet assignment, and absence confirmation.
+
+### Role-Based Sidebar
+
+1. Log in as `super.admin@sbtm.demo` / `Admin123!` — show that all navigation items are visible
+2. Log out, log in as `board.admin@sbtm.demo` / `Admin123!` — show limited sidebar (schools, students, alerts, compliance — no boards management)
+3. Log out, log in as `school.admin@sbtm.demo` / `Admin123!` — show school-level sidebar (students, routes, alerts, absences, fleet assignments)
+4. "Each role sees only the pages relevant to their responsibilities."
+
+### Fleet Assignment Workflow
+
+1. Log in as `osta.admin@sbtm.demo` / `Admin123!`
+2. Navigate to **Fleet Assignments** page
+3. Click "Create Proposal" — fill in school, route (AM), vehicle (BUS-01), driver, effective date
+4. "OSTA proposes assignments. School admins must review and accept."
+5. Log out, log in as `school.admin@sbtm.demo`
+6. Navigate to **Fleet Assignments** — show the pending proposal with PROPOSED status
+7. Click "Accept" — show status changes to ACCEPTED
+8. (Optional) Click "Download PDF" to show the generated fleet assignment agreement
+
+### Absence Confirmation Workflow
+
+1. Log in as `parent1@sbtm.demo` in the Parent Portal
+2. Report an absence for Alice Smith (PM, family appointment)
+3. Switch to Admin Dashboard as `school.admin@sbtm.demo`
+4. Navigate to **Absences** page — show the pending absence with PENDING badge
+5. Click "Confirm" — show status changes to CONFIRMED
+6. "Confirmed absences automatically update the driver's roster, so Alice won't be expected at the PM stop."
+
+> Note: The single-bus simulation (`singlebus-simulate.sh`) runs both these workflows automatically.
+
 ## Wrap-up
 
 - Highlight that backend services are live and the frontend apps use gateway APIs.
@@ -113,7 +146,9 @@ When presenting to stakeholders, use these talking points to describe upcoming c
 
 - **Parent Notifications**: "In the next release, parents will receive push notifications the moment their child boards or alights the bus. Emergency alerts will also be delivered via SMS as a fallback."
 - **Alert Governance**: "Already implemented — Tier 1 alerts go through confirmation. Tier 2 alerts are admin-only. Auto-escalation at 2/5/15 minute thresholds."
-- **Fleet Assignment**: "OSTA will be able to propose vehicle assignments to schools, and School Admins will review and accept or reject with comments, creating an auditable decision trail."
+- **Fleet Assignment**: "Already implemented — OSTA proposes vehicle assignments, School Admins review and accept or reject with comments, generating printable PDF agreements."
+- **Absence Confirmation**: "Already implemented — Parents report absences, School Admins confirm or reject, and the driver's roster is automatically updated."
+- **Role-Based Dashboard**: "Already implemented — sidebar navigation adapts to each user's role. Super Admin and OSTA Admin see everything; Board Admin and School Admin see only their relevant pages."
 - **SIS Integration**: "Student data will sync from existing school board information systems, eliminating the need for duplicate data entry."
 - **Bulk Route Import**: "Schools with hundreds of existing routes in Excel can import them in bulk, with automatic geocoding and OSRM road-following polyline generation."
 - **Pre-Trip Inspection**: "Drivers will complete a mandatory inspection checklist before starting their route. Failed inspections block route start and alert the school admin."

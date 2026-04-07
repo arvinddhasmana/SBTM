@@ -14,3 +14,4 @@ export * from './admin/SchoolsList';
 export * from './admin/UserManagement';
 export * from './admin/TenantDashboard';
 export * from './admin/AbsenceManagement';
+export * from './admin/FleetAssignments';

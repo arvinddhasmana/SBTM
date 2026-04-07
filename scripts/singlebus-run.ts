@@ -30,6 +30,22 @@ async function apiPost(url: string, body: any, token?: string) {
   }
 }
 
+async function apiGet(url: string, token: string) {
+  try {
+    const response = await fetch(url, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!response.ok) {
+      console.error(`[API ERROR] GET ${url} - Status: ${response.status} ${response.statusText}`);
+      return null;
+    }
+    return response.json();
+  } catch (e: any) {
+    console.error(`[API FETCH ERROR] GET ${url} - Error: ${e.message}`);
+    return null;
+  }
+}
+
 async function apiPatch(url: string, token: string, body: Record<string, unknown> = {}) {
   try {
     const response = await fetch(url, {
@@ -49,6 +65,24 @@ async function apiPatch(url: string, token: string, body: Record<string, unknown
     console.error(`[API FETCH ERROR] PATCH ${url} - Error: ${e.message}`);
     return null;
   }
+}
+
+async function login(email: string): Promise<string> {
+  const res = await fetch(`${API_BASE}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password: 'Admin123!' }),
+  });
+  if (!res.ok) {
+    console.error(`[AUTH ERROR] Failed to login: ${email}`);
+    process.exit(1);
+  }
+  const { accessToken } = (await res.json()) as any;
+  if (!accessToken) {
+    console.error(`[AUTH ERROR] No access token for: ${email}`);
+    process.exit(1);
+  }
+  return accessToken;
 }
 
 /**
@@ -448,6 +482,106 @@ async function runLap(
   }
 }
 
+/**
+ * Phase C: Fleet Assignment Workflow Demo
+ * OSTA admin proposes BUS-01 for the AM route → School admin accepts.
+ */
+async function runFleetAssignmentDemo(config: any) {
+  console.log('\n\x1b[33m========== PHASE C: Fleet Assignment Workflow ==========\x1b[0m');
+
+  const ostaToken = await login(config.ostaAdmin.email);
+  const schoolAdminToken = await login(config.schoolAdmin.email);
+  const today = new Date().toISOString().split('T')[0];
+
+  // 1. OSTA proposes a fleet assignment
+  console.log('[FLEET] OSTA Admin proposing BUS-01 for AM route...');
+  const proposal = await apiPost(
+    `${API_BASE}/fleet-assignments`,
+    {
+      schoolId: config.school.id,
+      routeId: config.am.routeId,
+      vehicleId: config.bus.vehicleId,
+      driverId: config.bus.driverId,
+      effectiveDate: today,
+      notes: 'Initial fleet assignment for Single Bus AM route demo.',
+    },
+    ostaToken,
+  );
+  if (proposal?.id) {
+    console.log(`[FLEET] Proposal created: ${proposal.id} (status: ${proposal.status})`);
+
+    // 2. OSTA lists fleet assignments to verify
+    const assignments = await apiGet(`${API_BASE}/fleet-assignments`, ostaToken);
+    console.log(`[FLEET] OSTA sees ${assignments?.length ?? 0} fleet assignment(s)`);
+
+    // 3. School Admin accepts the proposal
+    console.log('[FLEET] School Admin accepting the proposal...');
+    const accepted = await apiPatch(
+      `${API_BASE}/fleet-assignments/${proposal.id}/accept`,
+      schoolAdminToken,
+    );
+    if (accepted) {
+      console.log(`[FLEET] Assignment ${proposal.id} → status: ${accepted.status}`);
+    }
+  } else {
+    console.error('[FLEET] Failed to create fleet assignment proposal');
+  }
+
+  console.log('\x1b[33m========== Fleet Assignment Demo Complete ==========\x1b[0m');
+}
+
+/**
+ * Phase C: Absence Confirmation Workflow Demo
+ * Parent reports Alice absent for PM → School admin confirms.
+ */
+async function runAbsenceConfirmationDemo(config: any) {
+  console.log('\n\x1b[33m========== PHASE C: Absence Confirmation Workflow ==========\x1b[0m');
+
+  const parent1Token = await login(config.parents[0].email);
+  const schoolAdminToken = await login(config.schoolAdmin.email);
+  const today = new Date().toISOString().split('T')[0];
+  const aliceId = config.students[0].id;
+  const aliceName = `${config.students[0].firstName} ${config.students[0].lastName}`;
+
+  // 1. Parent reports Alice absent for PM
+  console.log(
+    `[ABSENCE] Parent (${config.parents[0].firstName}) reporting ${aliceName} absent for PM...`,
+  );
+  const absence = await apiPost(
+    `${API_BASE}/absences`,
+    {
+      studentId: aliceId,
+      tripDate: today,
+      routeType: 'PM',
+      notes: 'Family appointment this afternoon.',
+    },
+    parent1Token,
+  );
+  if (absence?.id) {
+    console.log(
+      `[ABSENCE] Absence reported: ${absence.id} (status: ${absence.confirmationStatus ?? 'PENDING'})`,
+    );
+
+    // 2. School Admin views absences
+    const absences = await apiGet(`${API_BASE}/absences?date=${today}`, schoolAdminToken);
+    console.log(`[ABSENCE] School Admin sees ${absences?.length ?? 0} absence(s) for today`);
+
+    // 3. School Admin confirms the absence
+    console.log('[ABSENCE] School Admin confirming the absence...');
+    const confirmed = await apiPatch(
+      `${API_BASE}/absences/${absence.id}/confirm`,
+      schoolAdminToken,
+    );
+    if (confirmed) {
+      console.log(`[ABSENCE] Absence ${absence.id} → status: ${confirmed.confirmationStatus}`);
+    }
+  } else {
+    console.error('[ABSENCE] Failed to report absence');
+  }
+
+  console.log('\x1b[33m========== Absence Confirmation Demo Complete ==========\x1b[0m');
+}
+
 async function main() {
   const configPath = path.join(process.cwd(), 'scripts/singlebus-config.json');
   const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
@@ -456,42 +590,22 @@ async function main() {
   console.log('--- SBTM Single-Bus High-Fidelity Simulation ---');
 
   // Authenticate Driver
-  const loginRes = await fetch(`${API_BASE}/auth/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: config.bus.driverEmail, password: 'Admin123!' }),
-  });
-  if (!loginRes.ok) {
-    console.error(`[AUTH ERROR] Failed to login driver: ${config.bus.driverEmail}`);
-    process.exit(1);
-  }
-  const { accessToken: driverToken } = (await loginRes.json()) as any;
-  if (!driverToken) {
-    console.error(`[AUTH ERROR] No access token returned for driver.`);
-    process.exit(1);
-  }
+  const driverToken = await login(config.bus.driverEmail);
 
   // Authenticate Admin (for resolving alerts)
-  const adminLoginRes = await fetch(`${API_BASE}/auth/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: 'osta.admin@sbtm.demo', password: 'Admin123!' }),
-  });
-  if (!adminLoginRes.ok) {
-    console.error(`[AUTH ERROR] Failed to login admin for alert resolution`);
-    process.exit(1);
-  }
-  const { accessToken: adminToken } = (await adminLoginRes.json()) as any;
-  if (!adminToken) {
-    console.error(`[AUTH ERROR] No access token returned for admin.`);
-    process.exit(1);
-  }
+  const adminToken = await login('osta.admin@sbtm.demo');
+
+  // ===== Phase C: Fleet Assignment Workflow (before AM lap) =====
+  await runFleetAssignmentDemo(config);
 
   // Start the background GPS broadcaster
   startGpsLoop(driverToken, interval);
 
-  // Execute Laps
+  // Execute AM Lap
   await runLap(config, 'am', driverToken, adminToken, interval);
+
+  // ===== Phase C: Absence Confirmation Workflow (between laps) =====
+  await runAbsenceConfirmationDemo(config);
 
   console.log('\n--- Simulation Hiatus (5s) ---');
   await new Promise((r) => setTimeout(r, 5000));

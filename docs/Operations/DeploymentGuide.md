@@ -74,6 +74,38 @@ Several services have code-level default ports that differ from docker-compose:
 
 Always set the `PORT` environment variable explicitly to avoid collisions.
 
+## Phase C Dependencies
+
+| Package   | Version | Service     | Purpose                                                   |
+| --------- | ------- | ----------- | --------------------------------------------------------- |
+| `pdf-lib` | 1.17.1  | api-gateway | PDF document generation (pure JS, no native dependencies) |
+
+## Phase C Database Changes
+
+### New Tables
+
+| Table               | Purpose                                                                         |
+| ------------------- | ------------------------------------------------------------------------------- |
+| `fleet_assignments` | Stores fleet assignment proposals with lifecycle (PROPOSED → ACCEPTED/REJECTED) |
+
+### Altered Tables
+
+| Table              | New Columns                                                                   | Notes                         |
+| ------------------ | ----------------------------------------------------------------------------- | ----------------------------- |
+| `student_absences` | `confirmationStatus`, `confirmedByUserId`, `confirmedAt`, `confirmationNotes` | Absence confirmation workflow |
+| `schools`          | `status`, `createdAt`, `updatedAt`                                            | School lifecycle tracking     |
+
+### New Seed Users
+
+| Email                 | Role        | Password    |
+| --------------------- | ----------- | ----------- |
+| super.admin@sbtm.demo | SUPER_ADMIN | `Admin123!` |
+| board.admin@sbtm.demo | BOARD_ADMIN | `Admin123!` |
+
+### Migration Notes
+
+These changes are included in `scripts/init-db.sql` — run this for fresh deployments. For existing deployments, apply the corresponding ALTER TABLE statements manually before starting services.
+
 ## Production-Oriented Requirements
 
 Before production rollout, the deployment model should include:

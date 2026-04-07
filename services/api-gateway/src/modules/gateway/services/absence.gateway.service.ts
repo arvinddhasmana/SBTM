@@ -145,6 +145,84 @@ export class AbsenceGatewayService {
     });
   }
 
+  /**
+   * Confirm a pending absence. Caller must be SCHOOL_ADMIN with matching schoolId.
+   */
+  async confirmAbsence(
+    absenceId: string,
+    caller: CallerContext,
+  ): Promise<StudentAbsence> {
+    const absence = await this.absenceRepository.findOne({
+      where: { id: absenceId },
+    });
+    if (!absence) throw new NotFoundException('Absence record not found');
+
+    if (
+      caller.role === Role.SCHOOL_ADMIN &&
+      absence.schoolId !== caller.schoolId
+    ) {
+      throw new ForbiddenException(
+        'You can only confirm absences from your own school',
+      );
+    }
+
+    absence.confirmationStatus = 'CONFIRMED';
+    absence.confirmedByUserId = caller.id;
+    absence.confirmedAt = new Date();
+
+    const saved = await this.absenceRepository.save(absence);
+
+    this.logger.log('Absence confirmed', {
+      absenceId,
+      tenantId: absence.schoolId,
+      callerId: caller.id,
+      action: 'absence.confirmed',
+    });
+
+    return saved;
+  }
+
+  /**
+   * Reject a pending absence. Caller must be SCHOOL_ADMIN with matching schoolId.
+   */
+  async rejectAbsence(
+    absenceId: string,
+    caller: CallerContext,
+    notes?: string,
+  ): Promise<StudentAbsence> {
+    const absence = await this.absenceRepository.findOne({
+      where: { id: absenceId },
+    });
+    if (!absence) throw new NotFoundException('Absence record not found');
+
+    if (
+      caller.role === Role.SCHOOL_ADMIN &&
+      absence.schoolId !== caller.schoolId
+    ) {
+      throw new ForbiddenException(
+        'You can only reject absences from your own school',
+      );
+    }
+
+    absence.confirmationStatus = 'REJECTED';
+    absence.confirmedByUserId = caller.id;
+    absence.confirmedAt = new Date();
+    if (notes) {
+      absence.confirmationNotes = notes;
+    }
+
+    const saved = await this.absenceRepository.save(absence);
+
+    this.logger.log('Absence rejected', {
+      absenceId,
+      tenantId: absence.schoolId,
+      callerId: caller.id,
+      action: 'absence.rejected',
+    });
+
+    return saved;
+  }
+
   // ---------- private helpers ----------
 
   private resolveCallerSchoolId(

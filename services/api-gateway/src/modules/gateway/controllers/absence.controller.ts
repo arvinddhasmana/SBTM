@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Delete,
+  Patch,
   Body,
   Param,
   Query,
@@ -67,6 +68,31 @@ export class AbsenceController {
     @Request() req: AuthenticatedRequest,
   ) {
     return this.absenceService.listAbsencesForAdmin(req.user, date, schoolId);
+  }
+
+  /**
+   * School admin confirms a pending absence. FR-ABS-003
+   */
+  @Patch(':id/confirm')
+  @Roles(Role.SCHOOL_ADMIN)
+  async confirmAbsence(
+    @Param('id') id: string,
+    @Request() req: AuthenticatedRequest,
+  ) {
+    return this.absenceService.confirmAbsence(id, req.user);
+  }
+
+  /**
+   * School admin rejects a pending absence. FR-ABS-004
+   */
+  @Patch(':id/reject')
+  @Roles(Role.SCHOOL_ADMIN)
+  async rejectAbsence(
+    @Param('id') id: string,
+    @Body() body: { notes?: string },
+    @Request() req: AuthenticatedRequest,
+  ) {
+    return this.absenceService.rejectAbsence(id, req.user, body.notes);
   }
 
   /**

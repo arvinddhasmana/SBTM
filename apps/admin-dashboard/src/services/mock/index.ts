@@ -17,3 +17,4 @@ export { mockOrganizationApi } from './handlers/organization.mock';
 export { mockProvisioningApi } from './handlers/provisioning.mock';
 export { mockStudentManagementApi } from './handlers/student-management.mock';
 export { mockAbsenceApi } from './handlers/absence.mock';
+export { mockFleetAssignmentApi } from './handlers/fleet-assignment.mock';

@@ -31,6 +31,7 @@ import {
   UserManagement,
   TenantDashboard,
   AbsenceManagement,
+  FleetAssignments,
 } from './pages';
 import './index.css';
 
@@ -94,6 +95,7 @@ const AppRoutes: React.FC = () => {
         <Route path="/users" element={<UserManagement />} />
         <Route path="/tenant-overview" element={<TenantDashboard />} />
         <Route path="/absences" element={<AbsenceManagement />} />
+        <Route path="/fleet-assignments" element={<FleetAssignments />} />
       </Route>
 
       {/* Default redirect */}

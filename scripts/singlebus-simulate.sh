@@ -168,6 +168,13 @@ node -e "
 echo "Cleaning up old location data for $VEHICLE_ID..."
 docker exec "sbtm_antigravity-postgres-1" psql -U postgres -d sbms -c "DELETE FROM location_points WHERE \"vehicle_id\" = '$VEHICLE_ID';" > /dev/null
 
+# Clear old fleet assignments and absences for clean demo
+echo "Cleaning up old Phase C demo data..."
+docker exec "sbtm_antigravity-postgres-1" psql -U postgres -d sbms -c "
+  DELETE FROM fleet_assignments WHERE \"schoolId\" = '$SCHOOL_ID';
+  DELETE FROM student_absences WHERE \"schoolId\" = '$SCHOOL_ID';
+" > /dev/null 2>&1 || true
+
 # --- Run ---
 
 echo -e "\033[36mStarting Single-Bus Simulation (Interval: ${INTERVAL_SECONDS}s)...\033[0m"

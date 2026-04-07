@@ -2,6 +2,7 @@ import { IsEmail, IsEnum, IsOptional, IsUUID } from 'class-validator';
 import { Role } from '@sbtm/common';
 
 const INVITABLE_ROLES = [
+  Role.OSTA_ADMIN,
   Role.BOARD_ADMIN,
   Role.SCHOOL_ADMIN,
   Role.DRIVER,

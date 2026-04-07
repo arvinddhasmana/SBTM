@@ -1,4 +1,20 @@
 {
+  "superAdmin": {
+    "userId": "10000000-0000-0000-0000-000000000000",
+    "email": "super.admin@sbtm.demo"
+  },
+  "ostaAdmin": {
+    "userId": "10000000-0000-0000-0000-000000000001",
+    "email": "osta.admin@sbtm.demo"
+  },
+  "boardAdmin": {
+    "userId": "10000000-0000-0000-0000-000000000003",
+    "email": "board.admin@sbtm.demo"
+  },
+  "schoolAdmin": {
+    "userId": "10000000-0000-0000-0000-000000000002",
+    "email": "school.admin@sbtm.demo"
+  },
   "school": {
     "id": "c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c",
     "name": "Greenfield Elementary",

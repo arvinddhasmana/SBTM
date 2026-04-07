@@ -127,6 +127,7 @@ export interface Route {
 
 // User and Auth Types
 export type UserRole =
+  | 'SUPER_ADMIN'
   | 'ADMIN'
   | 'DRIVER'
   | 'PARENT'

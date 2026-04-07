@@ -16,8 +16,9 @@ export class MultiTenancyGuard implements CanActivate {
       return false;
     }
 
-    // OSTA_ADMIN can access everything
+    // SUPER_ADMIN and OSTA_ADMIN can access everything
     if (
+      user.role === Role.SUPER_ADMIN ||
       user.role === Role.OSTA_ADMIN ||
       user.role === Role.ADMIN ||
       user.role === Role.SYSTEM

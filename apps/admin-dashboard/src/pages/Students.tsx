@@ -5,7 +5,14 @@ import { Header, LoadingSpinner } from '../components/common';
 import { PresenceStats } from '../components/presence/PresenceStats';
 import { PresenceFilters } from '../components/presence/PresenceFilters';
 import { PresenceTable } from '../components/presence/PresenceTable';
-import { StudentTable, BulkImportModal, RouteAssignmentModal } from '../components/students';
+import {
+  StudentTable,
+  BulkImportModal,
+  RouteAssignmentModal,
+  EnrollStudentModal,
+  EditStudentModal,
+  WithdrawStudentModal,
+} from '../components/students';
 import { presenceApi, routesApi, studentManagementApi } from '../services/api';
 import { presenceWs } from '../services/websocket/presence.ws';
 import { queryKeys } from '../services/query-keys';
@@ -27,6 +34,9 @@ const Students: React.FC = () => {
   // Management State
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+  const [isEnrollModalOpen, setIsEnrollModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
 
   const presenceQueryKey = queryKeys.presence.events({ ...filters, page });
@@ -180,7 +190,10 @@ const Students: React.FC = () => {
                   <Upload size={18} />
                   Bulk Import
                 </button>
-                <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-500 text-white hover:bg-blue-600 transition-colors shadow-lg shadow-blue-500/25">
+                <button
+                  onClick={() => setIsEnrollModalOpen(true)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-500 text-white hover:bg-blue-600 transition-colors shadow-lg shadow-blue-500/25"
+                >
                   <Plus size={18} />
                   Enroll Student
                 </button>
@@ -190,8 +203,17 @@ const Students: React.FC = () => {
             <div className="glass-card p-0 overflow-hidden">
               <StudentTable
                 students={managedStudents}
-                onEdit={() => {}}
-                onDelete={() => {}}
+                onEdit={(s) => {
+                  setSelectedStudent(s);
+                  setIsEditModalOpen(true);
+                }}
+                onDelete={(id) => {
+                  const student = managedStudents.find((s: any) => s.id === id);
+                  if (student) {
+                    setSelectedStudent(student);
+                    setIsWithdrawModalOpen(true);
+                  }
+                }}
                 onAssign={(s) => {
                   setSelectedStudent(s);
                   setIsAssignModalOpen(true);
@@ -213,6 +235,26 @@ const Students: React.FC = () => {
         onClose={() => setIsAssignModalOpen(false)}
         student={selectedStudent}
         onSave={handleAssignSave}
+      />
+
+      <EnrollStudentModal
+        isOpen={isEnrollModalOpen}
+        onClose={() => setIsEnrollModalOpen(false)}
+        onSuccess={() => queryClient.invalidateQueries({ queryKey: queryKeys.students.all })}
+      />
+
+      <EditStudentModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        student={selectedStudent}
+        onSuccess={() => queryClient.invalidateQueries({ queryKey: queryKeys.students.all })}
+      />
+
+      <WithdrawStudentModal
+        isOpen={isWithdrawModalOpen}
+        onClose={() => setIsWithdrawModalOpen(false)}
+        student={selectedStudent}
+        onSuccess={() => queryClient.invalidateQueries({ queryKey: queryKeys.students.all })}
       />
     </>
   );

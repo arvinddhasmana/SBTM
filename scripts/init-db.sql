@@ -66,6 +66,9 @@ CREATE TABLE schools (
   id UUID PRIMARY KEY,
   name TEXT NOT NULL,
   "boardId" UUID NOT NULL,
+  status TEXT DEFAULT 'ACTIVE',
+  "createdAt" TIMESTAMP DEFAULT NOW(),
+  "updatedAt" TIMESTAMP DEFAULT NOW(),
   CONSTRAINT "FK_schools_board" FOREIGN KEY ("boardId") REFERENCES school_boards(id) ON DELETE RESTRICT
 );
 
@@ -332,6 +335,44 @@ CREATE INDEX "IDX_delivery_log_user_created" ON notification_delivery_log ("reci
 CREATE INDEX "IDX_delivery_log_school" ON notification_delivery_log ("schoolId");
 CREATE INDEX "IDX_delivery_log_event_source" ON notification_delivery_log ("eventSourceId");
 
+-- Student Absences (with confirmation workflow)
+CREATE TABLE IF NOT EXISTS student_absences (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    "studentId" TEXT NOT NULL,
+    "guardianUserId" TEXT NOT NULL,
+    "schoolId" TEXT NOT NULL,
+    "tripDate" DATE NOT NULL,
+    "routeType" TEXT DEFAULT 'BOTH' CHECK ("routeType" IN ('AM', 'PM', 'BOTH')),
+    notes TEXT,
+    "confirmationStatus" TEXT DEFAULT 'PENDING' CHECK ("confirmationStatus" IN ('PENDING', 'CONFIRMED', 'REJECTED')),
+    "confirmedByUserId" TEXT,
+    "confirmedAt" TIMESTAMPTZ,
+    "confirmationNotes" TEXT,
+    "createdAt" TIMESTAMP DEFAULT NOW(),
+    "updatedAt" TIMESTAMP DEFAULT NOW()
+);
+CREATE INDEX "IDX_absence_school_date" ON student_absences ("schoolId", "tripDate");
+CREATE INDEX "IDX_absence_student_date" ON student_absences ("studentId", "tripDate");
+
+-- Fleet Assignments (OSTA proposes -> School confirms)
+CREATE TABLE fleet_assignments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    "schoolId" UUID NOT NULL,
+    "routeId" TEXT NOT NULL,
+    "vehicleId" TEXT NOT NULL,
+    "driverId" TEXT,
+    status TEXT DEFAULT 'PROPOSED' CHECK (status IN ('PROPOSED', 'ACCEPTED', 'REJECTED', 'SUPERSEDED')),
+    "proposedByUserId" UUID NOT NULL,
+    "reviewedByUserId" UUID,
+    "reviewNotes" TEXT,
+    "reviewedAt" TIMESTAMPTZ,
+    "effectiveDate" DATE,
+    "createdAt" TIMESTAMP DEFAULT NOW(),
+    "updatedAt" TIMESTAMP DEFAULT NOW()
+);
+CREATE INDEX "IDX_fleet_assign_school" ON fleet_assignments ("schoolId");
+CREATE INDEX "IDX_fleet_assign_status" ON fleet_assignments (status);
+
 
 -- --------------------------------------------------------------------------
 -- 3. Create Reference Schema (Demo)
@@ -403,10 +444,18 @@ INSERT INTO schools (id, name, "boardId") VALUES
 
 -- ===================== Users =====================
 
+-- Super Admin (system bootstrap)
+INSERT INTO users (id, email, "passwordHash", role, "firstName", "lastName") VALUES
+    ('10000000-0000-0000-0000-000000000000', 'super.admin@sbtm.demo', crypt('Admin123!', gen_salt('bf')), 'SUPER_ADMIN', 'Super', 'Admin');
+
 -- Admins
 INSERT INTO users (id, email, "passwordHash", role, "firstName", "lastName", "schoolId", "boardId") VALUES
     ('10000000-0000-0000-0000-000000000001', 'osta.admin@sbtm.demo',   crypt('Admin123!', gen_salt('bf')), 'OSTA_ADMIN',   'OSTA',   'Admin',  'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c'),
     ('10000000-0000-0000-0000-000000000002', 'school.admin@sbtm.demo', crypt('Admin123!', gen_salt('bf')), 'SCHOOL_ADMIN', 'School', 'Admin',  'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c');
+
+-- Board Admin
+INSERT INTO users (id, email, "passwordHash", role, "firstName", "lastName", "boardId") VALUES
+    ('10000000-0000-0000-0000-000000000003', 'board.admin@sbtm.demo', crypt('Admin123!', gen_salt('bf')), 'BOARD_ADMIN', 'Board', 'Admin', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c');
 
 -- Driver (matches singlebus-config.json: driverId=driver-001, email=driver1@sbtm.demo)
 INSERT INTO users (id, email, "passwordHash", role, "firstName", "lastName", "driverId", "assignedRouteIds", "schoolId", "boardId") VALUES

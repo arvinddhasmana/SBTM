@@ -9,34 +9,36 @@ import { complianceApi as realComplianceApi } from './compliance.api';
 import { organizationApi as realOrganizationApi } from './organization.api';
 import { provisioningApi as realProvisioningApi } from './provisioning.api';
 import { absenceApi as realAbsenceApi } from './absence.api';
+import { fleetAssignmentApi as realFleetAssignmentApi } from './fleet-assignment.api';
 
 import {
-    mockAuthApi,
-    mockAlertsApi,
-    mockRoutesApi,
-    mockPresenceApi,
-    mockVideoApi,
-    mockFleetApi,
-    mockComplianceApi,
-    mockOrganizationApi,
-    mockProvisioningApi,
-    mockStudentManagementApi,
-    mockAbsenceApi,
+  mockAuthApi,
+  mockAlertsApi,
+  mockRoutesApi,
+  mockPresenceApi,
+  mockVideoApi,
+  mockFleetApi,
+  mockComplianceApi,
+  mockOrganizationApi,
+  mockProvisioningApi,
+  mockStudentManagementApi,
+  mockAbsenceApi,
+  mockFleetAssignmentApi,
 } from '../mock';
 
 export const useMock =
-    import.meta.env.VITE_USE_MOCK === 'true' ||
-    localStorage.getItem('VITE_USE_MOCK') === 'true' ||
-    window.location.search.includes('mock=true');
+  import.meta.env.VITE_USE_MOCK === 'true' ||
+  localStorage.getItem('VITE_USE_MOCK') === 'true' ||
+  window.location.search.includes('mock=true');
 
 if (useMock) {
-    if (typeof window !== 'undefined' && !window.hasOwnProperty('__MOCK_LOGGED__')) {
-        console.log('--- ADMIN DASHBOARD: MOCK MODE ACTIVE ---');
-        (window as any).__MOCK_LOGGED__ = true;
-    }
-    if (window.location.search.includes('mock=true')) {
-        localStorage.setItem('VITE_USE_MOCK', 'true');
-    }
+  if (typeof window !== 'undefined' && !window.hasOwnProperty('__MOCK_LOGGED__')) {
+    console.log('--- ADMIN DASHBOARD: MOCK MODE ACTIVE ---');
+    (window as any).__MOCK_LOGGED__ = true;
+  }
+  if (window.location.search.includes('mock=true')) {
+    localStorage.setItem('VITE_USE_MOCK', 'true');
+  }
 }
 
 // Core APIs (always have both real and mock)
@@ -53,3 +55,4 @@ export const complianceApi = useMock ? mockComplianceApi : realComplianceApi;
 export const organizationApi = useMock ? mockOrganizationApi : realOrganizationApi;
 export const provisioningApi = useMock ? mockProvisioningApi : realProvisioningApi;
 export const absenceApi = useMock ? mockAbsenceApi : realAbsenceApi;
+export const fleetAssignmentApi = useMock ? mockFleetAssignmentApi : realFleetAssignmentApi;

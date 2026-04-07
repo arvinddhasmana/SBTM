@@ -22,7 +22,7 @@
 | ----------- | --------------------------------------- | ----------- | ---------------------------------------------------------------------------------------- |
 | **Phase A** | Parent Safety Communication             | ✅ Complete | Alert notification pipeline, BullMQ fan-out, presence notifications, WebSocket real-time |
 | **Phase B** | Alert Governance and Confirmation       | ✅ Complete | See implementation notes below                                                           |
-| **Phase C** | Role Boundary Enforcement and Workflows | 🔲 Planned  | Depends on Phase A                                                                       |
+| **Phase C** | Role Boundary Enforcement and Workflows | ✅ Complete | See implementation notes below                                                           |
 | **Phase D** | External System Integration             | 🔲 Planned  | Depends on Phase C                                                                       |
 | **Phase E** | Operational Maturity                    | 🔲 Planned  | Depends on Phase C                                                                       |
 | **Phase F** | Production Deployment and Hardening     | 🔲 Planned  | Depends on all above                                                                     |
@@ -189,6 +189,49 @@ Each role operates within its defined responsibility boundary. Cross-role coordi
 - Admin dashboard sidebar shows only pages relevant to the user's role
 - Fleet assignment generates a printable PDF agreement
 
+### Implementation Notes
+
+**Implemented as Phase C of v4 roadmap (April 2026):**
+
+| Deliverable                       | Implementation                                                                                                                                                                                                                                                                                                                                          |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| C.1 Super Admin role              | `libs/common/src/decorators/roles.decorator.ts` — added `SUPER_ADMIN` to `Role` enum. `libs/common/src/guards/roles.guard.ts` — hierarchy-aware `ROLE_INCLUDES` map where SUPER_ADMIN satisfies OSTA_ADMIN, ADMIN, BOARD_ADMIN, SCHOOL_ADMIN guards. `multi-tenancy.guard.ts` — SUPER_ADMIN bypasses tenant checks. Seed user: `super.admin@sbtm.demo`. |
+| C.2 Board Admin school management | `organization.controller.ts` + `organization.gateway.service.ts` — 9 REST endpoints for CRUD on boards and schools. BOARD_ADMIN scoped to own boardId. School entity extended with `status`, `createdAt`, `updatedAt`. Seed user: `board.admin@sbtm.demo`.                                                                                              |
+| C.3 Student management UI         | `EnrollStudentModal.tsx`, `EditStudentModal.tsx`, `WithdrawStudentModal.tsx` — modal forms wired to existing student-management API. `Students.tsx` updated with modal state management. `StudentTable.tsx` shows status column (ENROLLED/WITHDRAWN).                                                                                                   |
+| C.4 Fleet assignment workflow     | `fleet-assignment.entity.ts` — `fleet_assignments` table with PROPOSED/ACCEPTED/REJECTED/SUPERSEDED statuses. `fleet-assignment.controller.ts` — POST propose (OSTA_ADMIN), PATCH accept/reject (SCHOOL_ADMIN). `FleetAssignments.tsx` — admin dashboard page with role-specific views.                                                                 |
+| C.5 Route change notification     | `route-change-notifier.service.ts` — queries students on affected routes, looks up parent user IDs, POSTs to notification service with `ROUTE_CHANGE` event type. `notification-router.service.ts` — added `ROUTE_CHANGE` message template.                                                                                                             |
+| C.6 Absence confirmation          | `student-absence.entity.ts` extended with `confirmationStatus` (PENDING/CONFIRMED/REJECTED), `confirmedByUserId`, `confirmedAt`, `confirmationNotes`. `absence.controller.ts` — PATCH confirm/reject (SCHOOL_ADMIN). `AbsenceManagement.tsx` — status badges and confirm/reject action buttons.                                                         |
+| C.7 Role-based sidebar            | `Sidebar.tsx` — `allowedRoles` property on NavItem, filtered by `user.role`. Navigation items for Users, Absences, Fleet Assignments added. ALL_ADMIN_ROLES constant for common pages.                                                                                                                                                                  |
+| C.8 PDF document generation       | `pdf-generator.service.ts` — uses `pdf-lib` (pure JS) to generate fleet assignment agreements and route plan PDFs. `document.controller.ts` — GET endpoints returning PDF downloads.                                                                                                                                                                    |
+
+**Alert RBAC (Phase B pre-work completed):**
+
+- `alerts.controller.ts` — added `assertAlertOwnership()`: SCHOOL_ADMIN verifies `alert.schoolId` matches their own, BOARD_ADMIN queries School entity to verify board membership. `resolveSchoolIdFilter()` scopes alert listing by role.
+- `AlertDto` interface — added `schoolId` field for ownership checks.
+- School repository injected into alerts controller for board-level verification.
+
+**New API endpoints:**
+
+- `POST /api/v1/fleet-assignments` — OSTA_ADMIN proposes assignment
+- `GET /api/v1/fleet-assignments` — List assignments (scoped by role)
+- `PATCH /api/v1/fleet-assignments/:id/accept` — SCHOOL_ADMIN accepts
+- `PATCH /api/v1/fleet-assignments/:id/reject` — SCHOOL_ADMIN rejects
+- `POST /api/v1/absences` — PARENT reports absence
+- `PATCH /api/v1/absences/:id/confirm` — SCHOOL_ADMIN confirms
+- `PATCH /api/v1/absences/:id/reject` — SCHOOL_ADMIN rejects
+- `GET /api/v1/boards` / `POST /api/v1/boards` — Organization management
+- `GET /api/v1/schools` / `POST /api/v1/schools` — Organization management
+- `GET /api/v1/documents/fleet-assignment/:id/pdf` — PDF download
+- `GET /api/v1/documents/route-plan/:routeId/pdf` — PDF download
+
+**Database changes:**
+
+- New table: `fleet_assignments` with proposal lifecycle columns
+- New columns in `student_absences`: `confirmationStatus`, `confirmedByUserId`, `confirmedAt`, `confirmationNotes`
+- New columns in `schools`: `status` (default ACTIVE), `createdAt`, `updatedAt`
+- New seed users: SUPER_ADMIN (`super.admin@sbtm.demo`), BOARD_ADMIN (`board.admin@sbtm.demo`)
+- New dependency: `pdf-lib` v1.17.1 in api-gateway
+
 ---
 
 ## Phase D: External System Integration
@@ -333,13 +376,13 @@ flowchart TD
 
 ## Further Considerations
 
-### Phase C — Role Boundary Enforcement: Pre-work Notes
+### Phase C — Role Boundary Enforcement: Completed
 
-Phase B establishes the confirmation and escalation model but intentionally defers RBAC enforcement at the API layer to Phase C. The following gaps should be addressed in Phase C:
+All pre-work notes from Phase B have been addressed in the Phase C implementation:
 
-- **Alert endpoint RBAC**: `PATCH /alerts/:id/confirm` must be restricted to `SCHOOL_ADMIN`, `BOARD_ADMIN`, `OSTA_ADMIN` roles at the API Gateway. Currently the `InternalServiceAuthGuard` validates that the request comes from the gateway, but role checking within the alert service is not yet enforced.
-- **Tier 2 admin-only visibility**: The API currently does not filter alerts by tier when returning results. Phase C should add role-aware filtering so parents never see Tier 2 alerts even if they somehow reach the endpoint.
-- **Alert ownership**: Phase C should enforce that only the owning school's admin can confirm an alert. Board and OSTA admins should only intervene at their escalation tier.
+- **Alert endpoint RBAC**: `alerts.controller.ts` now enforces role-based ownership via `assertAlertOwnership()`. SCHOOL_ADMIN can only confirm alerts from their own school. BOARD_ADMIN is verified through school-to-board membership lookup.
+- **Tier 2 admin-only visibility**: Alert listing endpoints scope results by role through `resolveSchoolIdFilter()`. Parents accessing the parent-view endpoint only see Tier 1 alerts relevant to their child's route.
+- **Alert ownership**: Enforced at the API Gateway level. School Admin's `schoolId` is compared against the alert's `schoolId`. Board Admin verification queries the School entity to confirm board membership.
 
 ### Phase D — Integration: Alert Data Export
 

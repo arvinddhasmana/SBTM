@@ -1,26 +1,37 @@
 # Admin Guide
 
 - Document owner: Product and Operations
-- Last reviewed: 2026-04-02
+- Last reviewed: 2026-04-06
 - Primary use: Administrative guide for dashboard usage, tenant oversight, and incident visibility
 
 ---
 
 ## Your Role in SBTM
 
-SBTM has three distinct admin roles with different scopes and responsibilities:
+SBTM has four distinct admin roles arranged in a clear hierarchy:
 
-| Role                          | Scope                     | What You Manage                                                                                                               |
-| ----------------------------- | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| **OSTA Admin**                | System-wide, cross-board  | Fleet ownership, vehicle-to-school assignment, system-wide compliance oversight, alert escalation, regulatory reporting       |
-| **Board Admin** (OCSB, OCDSB) | Board-level, cross-school | School lifecycle within your board, academic calendar, cross-school compliance, route change approval, incident report review |
-| **School Admin**              | Single school             | Students, routes, stops, drivers, daily operations, alert confirmation, parent onboarding, pre-trip inspection review         |
+**Role Hierarchy:** `SUPER_ADMIN` > `OSTA_ADMIN` > `BOARD_ADMIN` > `SCHOOL_ADMIN`
+
+| Role                          | Scope                     | What You Manage                                                                                                                                |
+| ----------------------------- | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Super Admin**               | Platform-wide             | System bootstrap role with full access to all boards, schools, and operations. Can invite OSTA Admins and manage all users across the platform |
+| **OSTA Admin**                | System-wide, cross-board  | Fleet ownership, vehicle-to-school assignment, system-wide compliance oversight, alert escalation, regulatory reporting                        |
+| **Board Admin** (OCSB, OCDSB) | Board-level, cross-school | School lifecycle within your board, academic calendar, cross-school compliance, route change approval, incident report review                  |
+| **School Admin**              | Single school             | Students, routes, stops, drivers, daily operations, alert confirmation, parent onboarding, pre-trip inspection review                          |
 
 See [v4 Roles and Workflows](../../prd/v4/RolesAndWorkflows.md) for the full RACI responsibility matrix.
 
 ---
 
 ## Your Quick-Start Checklist
+
+### Super Admin
+
+- [ ] Sign in with your Super Admin credentials
+- [ ] Review platform-wide dashboard for system health across all boards and schools
+- [ ] Invite or manage OSTA Admins as needed
+- [ ] Review all user accounts and roles across the platform
+- [ ] Check organization management (boards and schools)
 
 ### OSTA Admin
 
@@ -65,8 +76,13 @@ See [v4 Roles and Workflows](../../prd/v4/RolesAndWorkflows.md) for the full RAC
 | Tenant overview dashboard                       | Available                 | OSTA, Board         |
 | Absence management                              | Available                 | School              |
 | Student bulk CSV import                         | Available                 | School              |
+| Super Admin role                                | Available                 | Super Admin         |
+| Role-based sidebar navigation                   | Available                 | All admins          |
+| Fleet assignment workflow (propose/confirm)     | Available                 | OSTA, School        |
+| Absence confirmation workflow                   | Available                 | School              |
+| Organization management (boards/schools)        | Available                 | Super Admin, OSTA   |
+| PDF document generation                         | Available                 | OSTA, School        |
 | Confirm emergency alerts before parent delivery | Planned (v4)              | School              |
-| Fleet assignment workflow (propose/confirm)     | Planned (v4)              | OSTA/School         |
 | Board Admin school creation                     | Planned (v4)              | Board               |
 | Bulk route import from Excel/CSV                | Planned (v4)              | School              |
 | SIS student data sync                           | Planned (v4)              | School              |
@@ -118,6 +134,52 @@ When a safety-tier emergency alert arrives (PANIC, MEDICAL, INCIDENT):
 5. Unacknowledged alerts further escalate: 5 min -> Board Admin, 15 min -> OSTA Admin
 
 See [v4 Alert Strategy](../../prd/v4/AlertStrategy.md) for the complete alert tier model.
+
+## Fleet Assignment Workflow (Phase C)
+
+OSTA Admins manage vehicle-to-school assignments through a proposal-based workflow:
+
+1. **OSTA Admin proposes** a fleet assignment by selecting a vehicle, route, and school.
+2. The assignment is created with status **PROPOSED** and appears on the School Admin's Fleet Assignments page.
+3. **School Admin reviews** the proposal and can:
+   - **Accept**: Confirms the assignment. Status moves to **ACCEPTED**.
+   - **Reject**: Declines the assignment with required notes explaining the reason. Status moves to **REJECTED**.
+4. Accepted assignments can be **downloaded as PDF agreements** for record-keeping and compliance.
+
+| Status       | Set By       | Description                                 |
+| ------------ | ------------ | ------------------------------------------- |
+| **PROPOSED** | OSTA Admin   | Assignment created, awaiting school review  |
+| **ACCEPTED** | School Admin | School confirmed the assignment             |
+| **REJECTED** | School Admin | School declined the assignment (with notes) |
+
+## Absence Confirmation Workflow (Phase C)
+
+Parents report student absences through the parent portal. School Admins review and action them:
+
+1. **Parent reports** an absence via the parent portal for a specific date and reason.
+2. The absence appears with status **PENDING** on the School Admin's Absences page.
+3. **School Admin reviews** the absence and can:
+   - **Confirm**: Validates the absence. Status moves to **CONFIRMED**. The student is automatically excluded from the driver's roster for the affected route(s).
+   - **Reject**: Declines the absence with required notes. Status moves to **REJECTED**. The student remains on the roster.
+
+| Status        | Set By       | Description                                            |
+| ------------- | ------------ | ------------------------------------------------------ |
+| **PENDING**   | Parent       | Absence reported, awaiting school review               |
+| **CONFIRMED** | School Admin | Absence validated; student excluded from driver roster |
+| **REJECTED**  | School Admin | Absence declined (with notes); student stays on roster |
+
+## Role-Based Dashboard (Phase C)
+
+The admin dashboard adapts its sidebar navigation based on the logged-in user's role. Each role sees only the pages relevant to their responsibilities:
+
+| Role             | Visible Pages                                         |
+| ---------------- | ----------------------------------------------------- |
+| **Super Admin**  | All pages (full platform access)                      |
+| **OSTA Admin**   | All pages (system-wide operations)                    |
+| **Board Admin**  | Schools, Students, Alerts, Compliance                 |
+| **School Admin** | Students, Routes, Alerts, Absences, Fleet Assignments |
+
+This ensures a clean, focused experience: administrators are not overwhelmed by controls outside their scope, and sensitive operations are restricted to the appropriate role level.
 
 ## Key Business Use Cases You Cover
 

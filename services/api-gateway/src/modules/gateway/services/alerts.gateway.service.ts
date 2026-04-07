@@ -4,6 +4,7 @@ import { HttpClientService } from '../../../common/utils/http-client.service';
 
 export interface AlertDto {
   id: string;
+  schoolId?: string;
   routeId: string;
   vehicleId: string;
   timestamp: string;

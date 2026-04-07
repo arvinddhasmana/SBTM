@@ -8,18 +8,26 @@ import {
   Request,
   Query,
   Patch,
+  ForbiddenException,
 } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import {
   AlertsGatewayService,
   CreateEmergencyEventDto,
 } from '../services/alerts.gateway.service';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard, Roles, Role } from '@sbtm/common';
+import { School } from '../../auth/entities/school.entity';
 
 @Controller()
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class AlertsController {
-  constructor(private readonly alertsGatewayService: AlertsGatewayService) {}
+  constructor(
+    private readonly alertsGatewayService: AlertsGatewayService,
+    @InjectRepository(School)
+    private readonly schoolRepository: Repository<School>,
+  ) {}
 
   @Get('alerts')
   async getAllAlerts(
@@ -27,8 +35,7 @@ export class AlertsController {
     @Query('schoolId') schoolId?: string,
   ) {
     const user = req.user;
-    const filterSchoolId =
-      user.role === Role.OSTA_ADMIN ? schoolId : user.schoolId;
+    const filterSchoolId = this.resolveSchoolIdFilter(user, schoolId);
     return this.alertsGatewayService.getAllAlerts(filterSchoolId);
   }
 
@@ -38,14 +45,14 @@ export class AlertsController {
     @Query('schoolId') schoolId?: string,
   ) {
     const user = req.user;
-    const filterSchoolId =
-      user.role === Role.OSTA_ADMIN ? schoolId : user.schoolId;
+    const filterSchoolId = this.resolveSchoolIdFilter(user, schoolId);
     return this.alertsGatewayService.getActiveAlerts(filterSchoolId);
   }
 
   @Patch('alerts/:id/resolve')
   @Roles(Role.OSTA_ADMIN, Role.ADMIN, Role.SCHOOL_ADMIN)
-  async resolveAlert(@Param('id') id: string) {
+  async resolveAlert(@Param('id') id: string, @Request() req: { user: any }) {
+    await this.assertAlertOwnership(id, req.user);
     return this.alertsGatewayService.resolveAlert(id);
   }
 
@@ -56,6 +63,7 @@ export class AlertsController {
     @Request() req: { user: any },
     @Body() body: { actorUserId?: string; actorRole?: string },
   ) {
+    await this.assertAlertOwnership(id, req.user);
     return this.alertsGatewayService.confirmAlert(id, {
       actorUserId: body.actorUserId || req.user.id,
       actorRole: body.actorRole || req.user.role,
@@ -69,6 +77,7 @@ export class AlertsController {
     @Request() req: { user: any },
     @Body() body: { actorUserId?: string; actorRole?: string; notes?: string },
   ) {
+    await this.assertAlertOwnership(id, req.user);
     return this.alertsGatewayService.falseAlarmAlert(id, {
       actorUserId: body.actorUserId || req.user.id,
       actorRole: body.actorRole || req.user.role,
@@ -83,6 +92,7 @@ export class AlertsController {
     @Request() req: { user: any },
     @Body() body: { actorUserId?: string; actorRole?: string },
   ) {
+    await this.assertAlertOwnership(id, req.user);
     return this.alertsGatewayService.requestInfoAlert(id, {
       actorUserId: body.actorUserId || req.user.id,
       actorRole: body.actorRole || req.user.role,
@@ -127,5 +137,64 @@ export class AlertsController {
       schoolId,
       driverId: dto.driverId || user.driverId || user.id,
     });
+  }
+
+  // ---------- private helpers ----------
+
+  /**
+   * Enforce alert ownership: SCHOOL_ADMIN can only act on alerts from their own school,
+   * BOARD_ADMIN can only act on alerts from schools within their board.
+   * OSTA_ADMIN, SUPER_ADMIN, and ADMIN bypass this check (via role hierarchy).
+   */
+  private async assertAlertOwnership(
+    alertId: string,
+    user: any,
+  ): Promise<void> {
+    if (
+      user.role === Role.SUPER_ADMIN ||
+      user.role === Role.OSTA_ADMIN ||
+      user.role === Role.ADMIN
+    ) {
+      return;
+    }
+
+    const alert = await this.alertsGatewayService.getAlertById(alertId);
+    if (!alert) return;
+
+    if (user.role === Role.SCHOOL_ADMIN) {
+      if (alert.schoolId && alert.schoolId !== user.schoolId) {
+        throw new ForbiddenException(
+          'You can only manage alerts from your own school',
+        );
+      }
+    }
+
+    if (user.role === Role.BOARD_ADMIN) {
+      if (alert.schoolId) {
+        const school = await this.schoolRepository.findOne({
+          where: { id: alert.schoolId },
+        });
+        if (school && school.boardId !== user.boardId) {
+          throw new ForbiddenException(
+            'You can only manage alerts from schools within your board',
+          );
+        }
+      }
+    }
+  }
+
+  private resolveSchoolIdFilter(
+    user: any,
+    requestedSchoolId?: string,
+  ): string | undefined {
+    if (
+      user.role === Role.SUPER_ADMIN ||
+      user.role === Role.OSTA_ADMIN ||
+      user.role === Role.ADMIN
+    ) {
+      return requestedSchoolId;
+    }
+    // SCHOOL_ADMIN and BOARD_ADMIN scoped to own context
+    return user.schoolId || requestedSchoolId;
   }
 }

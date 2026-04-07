@@ -50,4 +50,7 @@ export const queryKeys = {
   dashboard: {
     all: ['dashboard'] as const,
   },
+  fleetAssignments: {
+    all: ['fleetAssignments'] as const,
+  },
 } as const;
