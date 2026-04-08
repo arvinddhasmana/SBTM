@@ -28,7 +28,7 @@ export class MultiTenancyGuard implements CanActivate {
 
     const params = request.params;
     const query = request.query;
-    const body = request.body;
+    const body = request.body ?? {};
 
     const schoolId = params.schoolId || query.schoolId || body.schoolId;
     const boardId = params.boardId || query.boardId || body.boardId;

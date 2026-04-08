@@ -147,6 +147,52 @@ cd apps/admin-dashboard && npm run test
 cd services/<service-name> && npm run test:e2e
 ```
 
+### E2E Browser UI Tests (Playwright)
+
+Playwright tests run against the live admin dashboard and backend APIs. All 87 tests cover authentication, role-based sidebar navigation, route guards, compliance, students, and fleet pages.
+
+**Prerequisites**: Hybrid or Full Docker mode must be running (backend + DB + admin-dashboard Vite dev server).
+
+```bash
+# Start the full stack first (choose one)
+./scripts/dev-hybrid.sh           # Recommended for local E2E testing
+# OR
+docker compose up -d              # Full Docker mode
+
+# Run all 87 E2E tests
+pnpm --filter admin-dashboard test:e2e
+
+# Run a single spec file
+npx playwright test apps/admin-dashboard/e2e/auth.spec.ts
+
+# Run with visible browser (headed mode)
+pnpm --filter admin-dashboard test:e2e:headed
+
+# Open the interactive Playwright UI
+pnpm --filter admin-dashboard test:e2e:ui
+
+# View the HTML test report after a run
+npx playwright show-report apps/admin-dashboard/playwright-report
+```
+
+**Test files and coverage**:
+
+| Spec file                    | Test IDs    | What it covers                           |
+| :--------------------------- | :---------- | :--------------------------------------- |
+| `auth.spec.ts`               | AT01–AT12   | Login form, role blocking, session flows |
+| `sidebar-navigation.spec.ts` | SN01–SN18   | Role-based nav item visibility           |
+| `route-guards.spec.ts`       | RG01–RG16   | Direct URL access enforcement per role   |
+| `compliance.spec.ts`         | CP01–CP16   | Compliance page API + tab switching      |
+| `students.spec.ts`           | STU01–STU12 | Students page tabs + API calls           |
+| `fleet-assignments.spec.ts`  | FA01–FA10   | Fleet/assignments access per role        |
+
+**loginAs fixture**: Tests use a shared `loginAs(page, role)` helper that:
+
+1. Navigates to `/login`
+2. Makes a real `POST /api/v1/auth/login` to obtain the `access_token` cookie (prevents 401 redirect from the api-client interceptor)
+3. Sets `auth_user` in localStorage (used by `AuthContext` to set `isAuthenticated`)
+4. Navigates to `/dashboard` and waits for React to fully bootstrap
+
 ### TypeScript Check
 
 ```bash

@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, useCallback, ReactNode } fr
 import type { User, AuthState } from '../types';
 import { authApi } from '../services/api';
 
+const ADMIN_ROLES = ['SUPER_ADMIN', 'OSTA_ADMIN', 'BOARD_ADMIN', 'SCHOOL_ADMIN'];
+
 interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
@@ -18,11 +20,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const storedUser = localStorage.getItem('auth_user');
 
     if (storedUser) {
-      return {
-        user: JSON.parse(storedUser),
-        isAuthenticated: true,
-        isLoading: false,
-      };
+      const user = JSON.parse(storedUser);
+      if (ADMIN_ROLES.includes(user.role)) {
+        return { user, isAuthenticated: true, isLoading: false };
+      }
+      localStorage.removeItem('auth_user');
     }
 
     return {
@@ -37,6 +39,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     try {
       const response = await authApi.login(email, password);
+
+      if (!ADMIN_ROLES.includes(response.user.role)) {
+        setAuthState((prev) => ({ ...prev, isLoading: false }));
+        throw new Error('UNAUTHORIZED_ROLE');
+      }
 
       localStorage.setItem('auth_user', JSON.stringify(response.user));
 

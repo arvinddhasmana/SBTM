@@ -1,0 +1,176 @@
+import { type Page } from '@playwright/test';
+
+/**
+ * Passwords for admin test users (all share the same password in the demo seed).
+ * Used by loginAs to perform a real backend login and obtain the access_token cookie.
+ */
+const ADMIN_PASSWORDS: Partial<Record<string, string>> = {
+  SUPER_ADMIN: 'Admin123!',
+  OSTA_ADMIN: 'Admin123!',
+  BOARD_ADMIN: 'Admin123!',
+  SCHOOL_ADMIN: 'Admin123!',
+};
+
+/**
+ * Seed user data matching the `auth_user` localStorage format expected by AuthContext.
+ * IDs and school/boardIds match the single-bus demo seed (scripts/init-db.sql).
+ */
+export const TEST_USERS = {
+  SUPER_ADMIN: {
+    id: '10000000-0000-0000-0000-000000000001',
+    email: 'super.admin@sbtm.demo',
+    role: 'SUPER_ADMIN',
+    name: 'Super Admin',
+    schoolId: null,
+    boardId: null,
+  },
+  OSTA_ADMIN: {
+    id: '10000000-0000-0000-0000-000000000002',
+    email: 'osta.admin@sbtm.demo',
+    role: 'OSTA_ADMIN',
+    name: 'Osta Admin',
+    schoolId: null,
+    boardId: null,
+  },
+  BOARD_ADMIN: {
+    id: '10000000-0000-0000-0000-000000000003',
+    email: 'board.admin@sbtm.demo',
+    role: 'BOARD_ADMIN',
+    name: 'Board Admin',
+    schoolId: null,
+    boardId: 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c',
+  },
+  SCHOOL_ADMIN: {
+    id: '10000000-0000-0000-0000-000000000004',
+    email: 'school.admin@sbtm.demo',
+    role: 'SCHOOL_ADMIN',
+    name: 'School Admin',
+    schoolId: 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c',
+    boardId: 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c',
+  },
+  DRIVER: {
+    id: '10000000-0000-0000-0000-000000000101',
+    email: 'driver1@sbtm.demo',
+    role: 'DRIVER',
+    name: 'Driver One',
+    schoolId: null,
+    boardId: null,
+  },
+  PARENT: {
+    id: '10000000-0000-0000-0000-000000000201',
+    email: 'parent1@sbtm.demo',
+    role: 'PARENT',
+    name: 'Parent One',
+    schoolId: null,
+    boardId: null,
+  },
+} as const;
+
+export type TestRole = keyof typeof TEST_USERS;
+
+export const ADMIN_ROLES: TestRole[] = ['SUPER_ADMIN', 'OSTA_ADMIN', 'BOARD_ADMIN', 'SCHOOL_ADMIN'];
+
+/**
+ * Common nav items visible to ALL admin roles.
+ * Matches Sidebar.tsx allowedRoles: ALL_ADMIN_ROLES.
+ */
+export const COMMON_NAV_ITEMS = [
+  'Dashboard',
+  'Alerts',
+  'Operational',
+  'Routes',
+  'Planner',
+  'Compliance',
+  'Assignments',
+  'Students',
+  'Absences',
+  'Settings',
+] as const;
+
+/**
+ * Inject an admin user into localStorage and navigate to /dashboard.
+ * Bypasses the login form — use this for page/content tests, not auth flow tests.
+ *
+ * Strategy:
+ *   1. Navigate to /login (ensures localStorage is writable for this origin)
+ *   2. Perform a real POST /api/v1/auth/login so the backend sets the access_token
+ *      cookie in the browser context.  Without this cookie, every authenticated API
+ *      call returns 401 and the api-client interceptor fires window.location=/login,
+ *      which would navigate away from the dashboard during the test.
+ *   3. Inject the user session into localStorage (AuthContext reads this on init).
+ *   4. Navigate to /dashboard with waitUntil:'load' — this waits for React to fully
+ *      bootstrap (all Vite modules downloaded + executed). With auth in localStorage
+ *      AND a valid cookie, ProtectedRoute renders the dashboard and API calls succeed.
+ *
+ * In a fresh browser context (no module cache) the Vite dev-server may take several
+ * seconds to serve all ES modules.  'load' ensures we don't race React's hydration.
+ */
+export async function loginAs(page: Page, role: TestRole): Promise<void> {
+  // Navigate first — localStorage is inaccessible on about:blank
+  await page.goto('/login', { waitUntil: 'domcontentloaded' });
+
+  // Obtain a real access_token cookie so backend API calls are authorised.
+  const password = ADMIN_PASSWORDS[role];
+  if (password) {
+    await page.request.post('http://localhost:3001/api/v1/auth/login', {
+      data: { email: TEST_USERS[role].email, password },
+    });
+  }
+
+  // Store the local user state used by AuthContext to set isAuthenticated.
+  await page.evaluate(
+    (user) => localStorage.setItem('auth_user', JSON.stringify(user)),
+    TEST_USERS[role],
+  );
+  // 'load' fires after all scripts execute (React runs, stays on /dashboard).
+  // .catch() absorbs any ERR_ABORTED from an in-flight redirect on the previous page.
+  await page.goto('/dashboard', { waitUntil: 'load' }).catch(() => {});
+}
+
+/**
+ * Navigate to a URL within the SPA, tolerating React Router client-side redirects.
+ *
+ * React Router v7 performs redirects (via pushState/replaceState) before the 'load'
+ * event fires. Playwright's page.goto() waits for 'load' by default and treats the
+ * pre-load redirect as ERR_ABORTED. This helper:
+ *   1. Uses domcontentloaded to avoid the aborted-load issue
+ *   2. Swallows any navigation error (the URL is verified by the test assertion)
+ *   3. Waits a fixed ms for React Router to settle on the final URL
+ */
+export async function gotoAndWait(page: Page, url: string, waitMs = 600): Promise<void> {
+  await page.goto(url, { waitUntil: 'domcontentloaded' }).catch(() => {
+    /* redirect abort — URL is checked by the test */
+  });
+  await page.waitForTimeout(waitMs);
+}
+
+/**
+ * Inject a non-admin user (DRIVER or PARENT) into localStorage then reload.
+ * AuthContext detects the disallowed role, clears localStorage, and redirects to /login.
+ */
+export async function injectNonAdminSession(page: Page, role: 'DRIVER' | 'PARENT'): Promise<void> {
+  await page.goto('/login', { waitUntil: 'domcontentloaded' });
+  await page.evaluate(
+    (user) => localStorage.setItem('auth_user', JSON.stringify(user)),
+    TEST_USERS[role],
+  );
+  await page.reload({ waitUntil: 'domcontentloaded' });
+}
+
+/** Clear all auth state. */
+export async function clearAuth(page: Page): Promise<void> {
+  await page.evaluate(() => localStorage.removeItem('auth_user'));
+}
+
+/**
+ * Collect console errors on the page at or above the 'error' level.
+ * Call at the start of a test; harvest errors at the end.
+ */
+export function collectConsoleErrors(page: Page): () => string[] {
+  const errors: string[] = [];
+  page.on('console', (msg) => {
+    if (msg.type() === 'error') errors.push(msg.text());
+  });
+  page.on('pageerror', (err) => errors.push(err.message));
+  return () => errors;
+}

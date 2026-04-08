@@ -190,7 +190,14 @@ const MapPage: React.FC = () => {
 
   const { data: amLocation } = useQuery({
     queryKey: queryKeys.location.live(amRouteId),
-    queryFn: () => parentApi.getLiveLocation(amRouteId).then(mapLiveResult),
+    queryFn: () =>
+      parentApi
+        .getLiveLocation(amRouteId)
+        .then(mapLiveResult)
+        .catch((e: { response?: { status?: number } }) => {
+          if (e?.response?.status === 404) return null;
+          throw e;
+        }),
     enabled: !!child && !!amRouteId,
     refetchInterval: 5_000,
     retry: false,
@@ -198,7 +205,14 @@ const MapPage: React.FC = () => {
 
   const { data: pmLocation } = useQuery({
     queryKey: queryKeys.location.live(pmRouteId),
-    queryFn: () => parentApi.getLiveLocation(pmRouteId).then(mapLiveResult),
+    queryFn: () =>
+      parentApi
+        .getLiveLocation(pmRouteId)
+        .then(mapLiveResult)
+        .catch((e: { response?: { status?: number } }) => {
+          if (e?.response?.status === 404) return null;
+          throw e;
+        }),
     enabled: !!child && !!pmRouteId,
     refetchInterval: 5_000,
     retry: false,

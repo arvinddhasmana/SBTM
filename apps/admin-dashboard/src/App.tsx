@@ -40,7 +40,7 @@ const ALL_ADMIN_ROLES: UserRole[] = ['SUPER_ADMIN', 'OSTA_ADMIN', 'BOARD_ADMIN',
 
 // Protected Route wrapper
 const ProtectedRoute: React.FC = () => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
 
   if (isLoading) {
     return (
@@ -50,18 +50,18 @@ const ProtectedRoute: React.FC = () => {
     );
   }
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated || !user?.role || !ALL_ADMIN_ROLES.includes(user.role as UserRole)) {
     return <Navigate to="/login" replace />;
   }
 
   return <DashboardLayout />;
 };
 
-// Public Route wrapper (redirects to dashboard if already logged in)
+// Public Route wrapper (redirects to dashboard if already logged in as admin)
 const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
-  if (isAuthenticated) {
+  if (isAuthenticated && user?.role && ALL_ADMIN_ROLES.includes(user.role as UserRole)) {
     return <Navigate to="/dashboard" replace />;
   }
 

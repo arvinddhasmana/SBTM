@@ -1,7 +1,7 @@
 # SBTM Testing Guide
 
 - Document owner: QA and Engineering
-- Last reviewed: 2026-03-30
+- Last reviewed: 2026-04-07
 - Primary use: Test pyramid, operational verification, smoke checks, and test scenario index
 
 This guide is the testing reference for the SBTM platform. It covers test layers, coverage targets, scenario indices, and operational verification procedures.
@@ -22,7 +22,7 @@ This guide is the testing reference for the SBTM platform. It covers test layers
 | **Unit Tests**          | `services/*/src/**/*.spec.ts`           | None (Jest mocks)                 | 80%+ (90%+ for guards/auth) |
 | **Integration Tests**   | `services/*/test/*.e2e-spec.ts`         | Docker Compose (Postgres + Redis) | Scenario-complete           |
 | **API Smoke Tests**     | `scripts/verify-demo.sh`                | Full Docker stack                 | All critical paths          |
-| **E2E Tests**           | `apps/admin-dashboard/e2e/` (planned)   | Playwright + full stack           | Critical user flows         |
+| **E2E Tests**           | `apps/admin-dashboard/e2e/`             | Playwright + full stack           | Critical user flows         |
 | **Frontend Unit Tests** | `apps/admin-dashboard/src/**/*.test.ts` | Vitest                            | 80%+                        |
 
 ---
@@ -54,8 +54,18 @@ SBTM_AntiGravity/
 │       ├── src/**/*.spec.ts
 │       └── test/*.e2e-spec.ts
 ├── apps/
-│   ├── admin-dashboard/src/**/*.test.ts  # Vitest frontend unit tests
-│   └── driver-app/src/**/*.test.ts       # Jest React Native tests
+│   ├── admin-dashboard/
+│   │   ├── src/**/*.test.ts         # Vitest frontend unit tests
+│   │   └── e2e/                     # Playwright E2E browser UI tests
+│   │       ├── auth.spec.ts         # Authentication flows (AT01–AT12)
+│   │       ├── sidebar-navigation.spec.ts  # Role-based nav (SN01–SN18)
+│   │       ├── route-guards.spec.ts # URL access enforcement (RG01–RG16)
+│   │       ├── compliance.spec.ts   # Compliance page (CP01–CP16)
+│   │       ├── students.spec.ts     # Students page (STU01–STU12)
+│   │       ├── fleet-assignments.spec.ts   # Fleet & assignments (FA01–FA10)
+│   │       ├── fixtures.ts          # Shared loginAs helper, TEST_USERS, roles
+│   │       └── playwright.config.ts # Playwright config (baseURL, browser, retries)
+│   └── driver-app/src/**/*.test.ts  # Jest React Native tests
 ├── scripts/
 │   ├── verify-demo.sh                    # API smoke test suite
 │   └── simulate-demo.sh                  # GPS + events simulation
@@ -135,6 +145,132 @@ These are executed by `scripts/verify-demo.sh`:
 | AZ03 | DRIVER can POST GPS but cannot GET student lists      |
 | AZ04 | SCHOOL_ADMIN can read students only for own school_id |
 | AZ05 | Unauthenticated requests return 401                   |
+
+### E2E Browser UI Tests — Authentication (AT01–AT12)
+
+File: `apps/admin-dashboard/e2e/auth.spec.ts`
+
+| ID   | Validates                                                                       |
+| ---- | ------------------------------------------------------------------------------- |
+| AT01 | Login form renders email, password and sign-in button                           |
+| AT02 | Empty form submit shows "Please enter both email and password"                  |
+| AT03 | Wrong credentials show "Invalid credentials" error                              |
+| AT04 | DRIVER stale localStorage session is detected and cleared, redirected to /login |
+| AT05 | PARENT stale localStorage session is detected and cleared, redirected to /login |
+| AT06 | DRIVER is redirected from /dashboard to /login                                  |
+| AT07 | PARENT is redirected from /dashboard to /login                                  |
+| AT08 | DRIVER cannot access /compliance via direct URL                                 |
+| AT09 | SUPER_ADMIN session persists across page reload                                 |
+| AT10 | Logout clears localStorage and redirects to /login                              |
+| AT11 | Unauthenticated direct navigation to /dashboard redirects to /login             |
+| AT12 | Already-authenticated admin visiting /login is redirected to /dashboard         |
+
+### E2E Browser UI Tests — Sidebar Navigation (SN01–SN18)
+
+File: `apps/admin-dashboard/e2e/sidebar-navigation.spec.ts`
+
+| ID   | Role         | Validates                                            |
+| ---- | ------------ | ---------------------------------------------------- |
+| SN01 | SUPER_ADMIN  | Sees all 10 common admin navigation items            |
+| SN02 | SUPER_ADMIN  | Sees Fleet, Boards, Schools and Users nav items      |
+| SN03 | SUPER_ADMIN  | Fleet nav link URL is /vehicles                      |
+| SN04 | SUPER_ADMIN  | Users nav link URL is /users                         |
+| SN05 | OSTA_ADMIN   | Sees all common items plus Fleet, Boards and Schools |
+| SN06 | OSTA_ADMIN   | Does NOT see Users nav item                          |
+| SN07 | BOARD_ADMIN  | Sees all 10 common admin navigation items            |
+| SN08 | BOARD_ADMIN  | Sees Schools nav item                                |
+| SN09 | BOARD_ADMIN  | Does NOT see Fleet, Boards or Users                  |
+| SN10 | SCHOOL_ADMIN | Sees exactly the 10 common admin navigation items    |
+| SN11 | SCHOOL_ADMIN | Does NOT see Fleet, Boards, Schools or Users         |
+| SN12 | SUPER_ADMIN  | Assignments nav link URL is /fleet-assignments       |
+| SN13 | SUPER_ADMIN  | Compliance nav link URL is /compliance               |
+| SN14 | SUPER_ADMIN  | Clicking Dashboard navigates to /dashboard           |
+| SN15 | SUPER_ADMIN  | Clicking Settings navigates to /settings             |
+| SN16 | SCHOOL_ADMIN | SCHOOL_ADMIN role label is displayed in the header   |
+| SN17 | BOARD_ADMIN  | BOARD_ADMIN role label is displayed in the header    |
+| SN18 | OSTA_ADMIN   | OSTA_ADMIN role label is displayed in the header     |
+
+### E2E Browser UI Tests — Route Guards (RG01–RG16)
+
+File: `apps/admin-dashboard/e2e/route-guards.spec.ts`
+
+| ID   | Role         | Validates                                              |
+| ---- | ------------ | ------------------------------------------------------ |
+| RG01 | SUPER_ADMIN  | Can navigate to /vehicles                              |
+| RG02 | SUPER_ADMIN  | Can navigate to /boards                                |
+| RG03 | SUPER_ADMIN  | Can navigate to /schools                               |
+| RG04 | SUPER_ADMIN  | Can navigate to /users                                 |
+| RG05 | OSTA_ADMIN   | Can navigate to /vehicles                              |
+| RG06 | OSTA_ADMIN   | Direct navigation to /users redirects to /dashboard    |
+| RG07 | BOARD_ADMIN  | Direct navigation to /vehicles redirects to /dashboard |
+| RG08 | BOARD_ADMIN  | Direct navigation to /boards redirects to /dashboard   |
+| RG09 | BOARD_ADMIN  | Direct navigation to /users redirects to /dashboard    |
+| RG10 | BOARD_ADMIN  | Can navigate to /schools                               |
+| RG11 | SCHOOL_ADMIN | Direct navigation to /vehicles redirects to /dashboard |
+| RG12 | SCHOOL_ADMIN | Direct navigation to /boards redirects to /dashboard   |
+| RG13 | SCHOOL_ADMIN | Direct navigation to /schools redirects to /dashboard  |
+| RG14 | SCHOOL_ADMIN | Direct navigation to /users redirects to /dashboard    |
+| RG15 | SCHOOL_ADMIN | Can navigate to /fleet-assignments                     |
+| RG16 | SCHOOL_ADMIN | Can navigate to /compliance                            |
+
+### E2E Browser UI Tests — Compliance Page (CP01–CP16)
+
+File: `apps/admin-dashboard/e2e/compliance.spec.ts`
+
+| ID   | Role         | Validates                                                  |
+| ---- | ------------ | ---------------------------------------------------------- |
+| CP01 | SUPER_ADMIN  | /compliance, /inspections, /audit API endpoints return 200 |
+| CP02 | SUPER_ADMIN  | "Compliance & Safety" heading is visible                   |
+| CP03 | SUPER_ADMIN  | Drivers, Inspections and Audit tabs are visible            |
+| CP04 | SUPER_ADMIN  | Switching compliance tabs produces no 500 errors           |
+| CP05 | OSTA_ADMIN   | /compliance, /inspections, /audit API endpoints return 200 |
+| CP06 | OSTA_ADMIN   | "Compliance & Safety" heading is visible                   |
+| CP07 | OSTA_ADMIN   | Drivers, Inspections and Audit tabs are visible            |
+| CP08 | OSTA_ADMIN   | Switching compliance tabs produces no 500 errors           |
+| CP09 | BOARD_ADMIN  | /compliance, /inspections, /audit API endpoints return 200 |
+| CP10 | BOARD_ADMIN  | "Compliance & Safety" heading is visible                   |
+| CP11 | BOARD_ADMIN  | Drivers, Inspections and Audit tabs are visible            |
+| CP12 | BOARD_ADMIN  | Switching compliance tabs produces no 500 errors           |
+| CP13 | SCHOOL_ADMIN | /compliance, /inspections, /audit API endpoints return 200 |
+| CP14 | SCHOOL_ADMIN | "Compliance & Safety" heading is visible                   |
+| CP15 | SCHOOL_ADMIN | Drivers, Inspections and Audit tabs are visible            |
+| CP16 | SCHOOL_ADMIN | Switching compliance tabs produces no 500 errors           |
+
+### E2E Browser UI Tests — Students Page (STU01–STU12)
+
+File: `apps/admin-dashboard/e2e/students.spec.ts`
+
+| ID    | Validates                                                                             |
+| ----- | ------------------------------------------------------------------------------------- |
+| STU01 | SUPER_ADMIN loads /students without console errors                                    |
+| STU02 | SUPER_ADMIN — Live Presence tab is active by default                                  |
+| STU03 | SUPER_ADMIN — can switch to Administration tab without 500 errors                     |
+| STU04 | OSTA_ADMIN loads /students without console errors                                     |
+| STU05 | OSTA_ADMIN — Live Presence tab is active by default                                   |
+| STU06 | OSTA_ADMIN — can switch to Administration tab without 500 errors                      |
+| STU07 | BOARD_ADMIN loads /students without console errors                                    |
+| STU08 | BOARD_ADMIN — Live Presence tab is active by default                                  |
+| STU09 | BOARD_ADMIN — can switch to Administration tab without 500 errors                     |
+| STU10 | SCHOOL_ADMIN — switching Live Presence → Administration → Live Presence is error-free |
+| STU11 | Administration tab triggers a GET /students API call                                  |
+| STU12 | No console errors on initial /students load                                           |
+
+### E2E Browser UI Tests — Fleet & Assignments (FA01–FA10)
+
+File: `apps/admin-dashboard/e2e/fleet-assignments.spec.ts`
+
+| ID   | Validates                                                                   |
+| ---- | --------------------------------------------------------------------------- |
+| FA01 | SUPER_ADMIN loads /vehicles without 500 errors                              |
+| FA02 | OSTA_ADMIN loads /vehicles without 500 errors                               |
+| FA03 | BOARD_ADMIN is redirected from /vehicles to /dashboard                      |
+| FA04 | SCHOOL_ADMIN is redirected from /vehicles to /dashboard                     |
+| FA05 | OSTA_ADMIN sees Fleet item in the sidebar                                   |
+| FA06 | SCHOOL_ADMIN does NOT see Fleet item in the sidebar                         |
+| FA07 | SCHOOL_ADMIN can access /fleet-assignments page without 500 errors          |
+| FA08 | BOARD_ADMIN can access /fleet-assignments page without 500 errors           |
+| FA09 | OSTA_ADMIN sees Fleet Assignments page heading                              |
+| FA10 | SCHOOL_ADMIN sees Fleet Assignments heading but no "Create Proposal" button |
 
 ---
 
@@ -268,6 +404,32 @@ docker compose -f docker-compose.yml -f docker-compose.infra.yml down -v
 ./scripts/verify-demo.sh
 ```
 
+### Run E2E browser UI tests (Playwright)
+
+Prerequisites: admin-dashboard Vite dev server and all backend services must be running (Hybrid or Full Docker mode).
+
+```bash
+# Run all E2E tests (87 tests across 6 spec files)
+pnpm --filter admin-dashboard test:e2e
+
+# Run a single spec file
+npx playwright test e2e/auth.spec.ts
+
+# Run tests matching a pattern
+npx playwright test --grep "AT09|AT10"
+
+# Run in headed mode (see the browser)
+pnpm --filter admin-dashboard test:e2e:headed
+
+# Open the interactive Playwright UI
+pnpm --filter admin-dashboard test:e2e:ui
+
+# Show the HTML test report
+npx playwright show-report apps/admin-dashboard/playwright-report
+```
+
+> Tip: Run `./scripts/dev-hybrid.sh` before running E2E tests to start the full stack locally.
+
 ### Full demo environment test
 
 ```bash
@@ -284,7 +446,7 @@ docker compose -f docker-compose.yml -f docker-compose.infra.yml down -v
 - No documented contract tests for event payloads between services
 - No documented authorization regression suite for cross-tenant access
 - No documented mobile BLE verification flow
-- No Playwright E2E tests for admin dashboard or parent portal
+- No Playwright E2E tests for the parent portal (`apps/parent-app`)
 - No performance/load benchmarks for GPS ingest throughput
 
 ## 11. Integration Focus By Upgrade Phase
