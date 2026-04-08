@@ -1,10 +1,12 @@
-import { Injectable, ForbiddenException } from '@nestjs/common';
+import { Injectable, ForbiddenException, HttpException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpClientService } from '../../../common/utils/http-client.service';
 import { Role } from '@sbtm/common';
 import { DataSource } from 'typeorm';
 
 export interface LiveLocationDto {
+  /** false when the GPS service has no active location for this route yet (bus not started). */
+  active?: boolean;
   routeId: string;
   vehicleId: string;
   lastUpdate: string;
@@ -95,7 +97,20 @@ export class GpsGatewayService {
     this.checkRouteAccess(routeId, user);
 
     const url = `${this.gpsServiceUrl}/api/v1/routes/${routeId}/live-location`;
-    const result = await this.httpClient.get<LiveLocationDto>(url);
+
+    let result: LiveLocationDto;
+    try {
+      result = await this.httpClient.get<LiveLocationDto>(url);
+    } catch (e: unknown) {
+      // GPS service returns 404 when the route has no active location data yet
+      // (bus hasn't started its run). Convert to HTTP 200 { active: false } so the
+      // parent app receives a clean response — 4xx responses always appear in the
+      // browser console in red even when caught by JavaScript.
+      if (e instanceof HttpException && e.getStatus() === 404) {
+        return { active: false, routeId } as LiveLocationDto;
+      }
+      throw e;
+    }
 
     // Enrich with alert-based status
     try {
@@ -193,7 +208,7 @@ export class GpsGatewayService {
     });
   }
 
-  private checkRouteAccess(routeId: string, user: RequestUser): void {
+  checkRouteAccess(routeId: string, user: RequestUser): void {
     // System admins can access all routes
     if (
       user.role === Role.ADMIN ||

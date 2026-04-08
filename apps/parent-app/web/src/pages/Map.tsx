@@ -7,6 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import { parentApi } from '../services/api';
 import { queryKeys } from '../services/query-keys';
 import { useAlerts } from '../hooks/useAlerts';
+import { useGpsLocation } from '../hooks/useGpsLocation';
 import { decodePolyline } from '../utils/polyline';
 import type { BusLocationUpdate, Child } from '../types';
 import { ArrowLeft, Navigation, RotateCcw } from 'lucide-react';
@@ -153,10 +154,23 @@ const MapPage: React.FC = () => {
   // Ottawa coords center
   const defaultCenter: [number, number] = [45.4215, -75.6972];
 
-  // Fresh fetch for children to bypass stale context (Issue 2)
+  // Fresh fetch for children to bypass stale context (Issue 2).
+  // On 403 the session is mismatched (e.g. admin cookie in the browser) — redirect
+  // to login so the parent can re-authenticate with correct credentials.
   const { data: freshChildren } = useQuery({
     queryKey: queryKeys.children?.all || ['children'],
-    queryFn: () => parentApi.getChildren(),
+    queryFn: async () => {
+      try {
+        return await parentApi.getChildren();
+      } catch (e: unknown) {
+        const err = e as { response?: { status?: number } };
+        if (err?.response?.status === 403 || err?.response?.status === 401) {
+          navigate('/login', { replace: true });
+          return [];
+        }
+        throw e;
+      }
+    },
     enabled: !!user,
     staleTime: 15 * 1000,
   });
@@ -174,49 +188,10 @@ const MapPage: React.FC = () => {
   const amRouteId = child?.amRouteId ?? '';
   const pmRouteId = child?.pmRouteId ?? '';
 
-  const mapLiveResult = (
-    data: Awaited<ReturnType<typeof parentApi.getLiveLocation>>,
-  ): BusLocationUpdate => ({
-    routeId: data.routeId,
-    vehicleId: data.vehicleId,
-    timestamp: data.lastUpdate,
-    lat: data.position.lat,
-    lng: data.position.lng,
-    speed: 0,
-    heading: 0,
-    etaToNextStop: data.etaToNextStopMinutes,
-    status: data.status,
-  });
-
-  const { data: amLocation } = useQuery({
-    queryKey: queryKeys.location.live(amRouteId),
-    queryFn: () =>
-      parentApi
-        .getLiveLocation(amRouteId)
-        .then(mapLiveResult)
-        .catch((e: { response?: { status?: number } }) => {
-          if (e?.response?.status === 404) return null;
-          throw e;
-        }),
-    enabled: !!child && !!amRouteId,
-    refetchInterval: 5_000,
-    retry: false,
-  });
-
-  const { data: pmLocation } = useQuery({
-    queryKey: queryKeys.location.live(pmRouteId),
-    queryFn: () =>
-      parentApi
-        .getLiveLocation(pmRouteId)
-        .then(mapLiveResult)
-        .catch((e: { response?: { status?: number } }) => {
-          if (e?.response?.status === 404) return null;
-          throw e;
-        }),
-    enabled: !!child && !!pmRouteId,
-    refetchInterval: 5_000,
-    retry: false,
-  });
+  // SSE push (with polling fallback) via useGpsLocation.
+  // Inactive routes return null silently — no console errors.
+  const { location: amLocation } = useGpsLocation(child && amRouteId ? amRouteId : undefined);
+  const { location: pmLocation } = useGpsLocation(child && pmRouteId ? pmRouteId : undefined);
 
   // Mirrors Admin Dashboard: pick the route that is currently live (freshest GPS).
   // If both are stale/absent fall back to the most recently updated one.

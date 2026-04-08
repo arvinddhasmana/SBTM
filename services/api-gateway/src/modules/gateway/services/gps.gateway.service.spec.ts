@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { GpsGatewayService } from './gps.gateway.service';
 import { HttpClientService } from '../../../common/utils/http-client.service';
 import { ConfigService } from '@nestjs/config';
-import { ForbiddenException } from '@nestjs/common';
+import { ForbiddenException, HttpException } from '@nestjs/common';
 import { Role } from '@sbtm/common';
 import { DataSource } from 'typeorm';
 
@@ -122,6 +122,20 @@ describe('GpsGatewayService', () => {
       await expect(
         service.getLiveLocation('route-999', driverUser),
       ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('returns { active: false, routeId } when GPS service has no location data (404)', async () => {
+      // Simulates the GPS tracking service returning 404 when the bus has not
+      // started its run yet. The gateway must NOT re-throw this as a 404 to the
+      // client — instead it returns HTTP 200 { active: false } to keep the
+      // browser console clean.
+      mockHttpClient.get.mockRejectedValue(new HttpException('Not Found', 404));
+      mockDataSource.query.mockResolvedValue([]);
+
+      const result = await service.getLiveLocation('route-123', adminUser);
+
+      expect(result.active).toBe(false);
+      expect(result.routeId).toBe('route-123');
     });
   });
 

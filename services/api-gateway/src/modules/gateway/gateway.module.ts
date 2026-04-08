@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CommonModule } from '../../common/common.module';
 import { GpsGatewayService } from './services/gps.gateway.service';
+import { GpsSseService } from './services/gps-sse.service';
+import { GpsRouteAccessGuard } from './guards/gps-route-access.guard';
 import { AlertsGatewayService } from './services/alerts.gateway.service';
 import { PresenceGatewayService } from './services/presence.gateway.service';
 import { VideoGatewayService } from './services/video.gateway.service';
@@ -62,6 +64,8 @@ import { FleetAssignment } from './entities/fleet-assignment.entity';
   ],
   providers: [
     GpsGatewayService,
+    GpsSseService,
+    GpsRouteAccessGuard,
     AlertsGatewayService,
     PresenceGatewayService,
     VideoGatewayService,
@@ -78,6 +82,7 @@ import { FleetAssignment } from './entities/fleet-assignment.entity';
   ],
   exports: [
     GpsGatewayService,
+    GpsSseService,
     AlertsGatewayService,
     PresenceGatewayService,
     VideoGatewayService,

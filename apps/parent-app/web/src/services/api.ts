@@ -20,6 +20,8 @@ export interface AuthLoginResponse {
 }
 
 export interface LiveLocationResponse {
+  /** false when the gateway has no active GPS location for this route (bus not yet running). */
+  active?: boolean;
   routeId: string;
   vehicleId: string;
   lastUpdate: string;
@@ -174,5 +176,22 @@ export const parentApi = {
   async getRouteDetails(routeId: string): Promise<RouteDetails> {
     const response = await apiClient.get<RouteDetails>(`/api/v1/routes/reference/${routeId}`);
     return response.data;
+  },
+
+  /**
+   * Validates the current browser session against the API gateway.
+   * Returns the server-side user profile including role, or null if the session
+   * is invalid (401/403) or the network is unavailable.
+   * Used by AuthContext on startup to detect a stale/mismatched session.
+   */
+  async getMe(): Promise<{ id: string; email: string; role: string } | null> {
+    try {
+      const response = await apiClient.get<{ id: string; email: string; role: string }>(
+        '/api/v1/auth/me',
+      );
+      return response.data;
+    } catch {
+      return null;
+    }
   },
 };

@@ -36,11 +36,22 @@ export function useAlerts(routeId: string | string[] | undefined) {
           const result = await parentApi.getActiveAlert(rid);
           successCount++;
           if (result) results.push(result);
-        } catch {
+        } catch (e: unknown) {
+          const err = e as { response?: { status?: number } };
+          // 403: session is invalid or wrong role — stop polling silently.
+          // 404: route has no alert data — treat as no alert (continue).
+          // Other errors: skip this route and try the next.
+          if (err?.response?.status === 403 || err?.response?.status === 404) {
+            successCount++; // Count as handled, not a hard failure
+          }
           // continue checking other routes
         }
       }
-      if (successCount === 0) {
+      // Return whatever we gathered; avoid throwing so TanStack Query does not
+      // log a console error for expected auth/no-data conditions.
+      if (successCount === 0 && routeIds.length > 0) {
+        // Network-level failure — re-throw so TanStack Query marks the query
+        // as errored and retries with backoff (legitimate connectivity issue).
         throw new Error('Unable to fetch alert status for any route.');
       }
       return results;

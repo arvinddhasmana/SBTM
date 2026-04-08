@@ -20,10 +20,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     const storedUser = localStorage.getItem('parent_user');
 
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
+    if (!storedUser) {
+      setIsLoading(false);
+      return;
     }
-    setIsLoading(false);
+
+    // Validate the server-side session before trusting localStorage.
+    // This catches the case where the cookie belongs to a different role
+    // (e.g., an admin session from the admin dashboard) or has expired.
+    parentApi.getMe().then((me) => {
+      if (me && me.role === 'PARENT') {
+        setUser(JSON.parse(storedUser));
+      } else {
+        // Session invalid or wrong role — clear stale state and force login.
+        localStorage.removeItem('parent_user');
+      }
+      setIsLoading(false);
+    });
   }, []);
 
   const login = async (email: string, password: string) => {

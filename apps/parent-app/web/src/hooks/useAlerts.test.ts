@@ -90,4 +90,63 @@ describe('useAlerts', () => {
       expect(result.current.error).toBe('Unable to fetch alert status.');
     });
   });
+
+  it('treats 403 response as handled (returns empty, no throw)', async () => {
+    const forbiddenError = { response: { status: 403 } };
+    vi.mocked(parentApi.getActiveAlert).mockRejectedValue(forbiddenError);
+
+    const { result } = renderHook(() => useAlerts('ROUTE-1'), {
+      wrapper: createWrapper(),
+    });
+
+    await waitFor(() => {
+      expect(parentApi.getActiveAlert).toHaveBeenCalled();
+    });
+
+    // Should return empty array without an error state (not throwing to TanStack)
+    expect(result.current.alerts).toEqual([]);
+    expect(result.current.error).toBeNull();
+  });
+
+  it('treats 404 response as handled (returns empty, no throw)', async () => {
+    const notFoundError = { response: { status: 404 } };
+    vi.mocked(parentApi.getActiveAlert).mockRejectedValue(notFoundError);
+
+    const { result } = renderHook(() => useAlerts('ROUTE-1'), {
+      wrapper: createWrapper(),
+    });
+
+    await waitFor(() => {
+      expect(parentApi.getActiveAlert).toHaveBeenCalled();
+    });
+
+    expect(result.current.alerts).toEqual([]);
+    expect(result.current.error).toBeNull();
+  });
+
+  it('returns successful alerts when some routes 403 and others succeed', async () => {
+    const mockAlert = {
+      id: 'alert-2',
+      routeId: 'ROUTE-2',
+      vehicleId: 'BUS-01',
+      eventType: 'PANIC_BUTTON',
+      message: 'Emergency.',
+      createdAt: '2026-04-08T09:00:00Z',
+      alertActive: true,
+    };
+    vi.mocked(parentApi.getActiveAlert)
+      .mockRejectedValueOnce({ response: { status: 403 } }) // ROUTE-1 fails
+      .mockResolvedValueOnce(mockAlert); // ROUTE-2 succeeds
+
+    const { result } = renderHook(() => useAlerts(['ROUTE-1', 'ROUTE-2']), {
+      wrapper: createWrapper(),
+    });
+
+    await waitFor(() => {
+      expect(result.current.alerts.length).toBe(1);
+    });
+
+    expect(result.current.alerts[0].routeId).toBe('ROUTE-2');
+    expect(result.current.error).toBeNull();
+  });
 });
