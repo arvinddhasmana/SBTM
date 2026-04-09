@@ -159,6 +159,19 @@ async function runLap(
 
   console.log(`\n--- Starting ${routeKey.toUpperCase()} Lap (${routeId}) ---`);
 
+  // Record ROUTE_STARTED lifecycle event
+  console.log(`[LIFECYCLE] Sending ROUTE_STARTED for ${routeId}`);
+  await apiPost(
+    `${API_BASE}/routes/lifecycle-events`,
+    {
+      routeId,
+      vehicleId,
+      eventType: 'ROUTE_STARTED',
+      timestamp: new Date().toISOString(),
+    },
+    driverToken,
+  );
+
   // 1. Initial State Check: PM route starts with boarding everyone at school
   if (routeKey === 'pm') {
     const [lat, lng] = decoded[0];
@@ -480,6 +493,19 @@ async function runLap(
     // Control movement speed between polyline points
     await new Promise((r) => setTimeout(r, intervalSeconds * 1000));
   }
+
+  // Record ROUTE_COMPLETED lifecycle event
+  console.log(`[LIFECYCLE] Sending ROUTE_COMPLETED for ${routeId}`);
+  await apiPost(
+    `${API_BASE}/routes/lifecycle-events`,
+    {
+      routeId,
+      vehicleId,
+      eventType: 'ROUTE_COMPLETED',
+      timestamp: new Date().toISOString(),
+    },
+    driverToken,
+  );
 }
 
 /**

@@ -26,6 +26,13 @@ describe('GpsGatewayService', () => {
     query: jest.fn(),
   };
 
+  const superAdminUser = {
+    id: 'super-admin-1',
+    role: Role.SUPER_ADMIN,
+    childRouteIds: [],
+    assignedRouteIds: [],
+  };
+
   const adminUser = {
     id: 'admin-1',
     role: Role.ADMIN,
@@ -96,6 +103,17 @@ describe('GpsGatewayService', () => {
       );
     });
 
+    it('should allow super_admin to access any route', async () => {
+      mockHttpClient.get.mockResolvedValue(mockResponse);
+
+      const result = await service.getLiveLocation('route-123', superAdminUser);
+
+      expect(result).toEqual(mockResponse);
+      expect(httpClient.get).toHaveBeenCalledWith(
+        'http://gps-service:3002/api/v1/routes/route-123/live-location',
+      );
+    });
+
     it('should allow parent to access their child route', async () => {
       mockHttpClient.get.mockResolvedValue(mockResponse);
 
@@ -158,6 +176,87 @@ describe('GpsGatewayService', () => {
       expect(httpClient.get).toHaveBeenCalledWith(
         expect.stringContaining('granularity=1min'),
       );
+    });
+  });
+
+  describe('getActiveRoutes', () => {
+    const mockReferenceRoutes = [
+      {
+        id: 'ROUTE-AM',
+        name: 'AM Route',
+        vehicleId: 'BUS-01',
+        driverId: 'd1',
+        schedule: '{"startTime":"07:30"}',
+        polyline: null,
+        schoolId: 'school-1',
+        schoolName: 'Greenfield Elementary',
+      },
+      {
+        id: 'ROUTE-PM',
+        name: 'PM Route',
+        vehicleId: 'BUS-01',
+        driverId: 'd1',
+        schedule: '{"startTime":"15:00"}',
+        polyline: null,
+        schoolId: 'school-1',
+        schoolName: 'Greenfield Elementary',
+      },
+    ];
+    const mockStops: any[] = [];
+
+    it('should return only routes with ROUTE_STARTED as latest lifecycle event', async () => {
+      mockDataSource.query
+        .mockResolvedValueOnce(mockReferenceRoutes) // routes query
+        .mockResolvedValueOnce([
+          // lifecycle events query
+          { routeId: 'ROUTE-AM', eventType: 'ROUTE_STARTED' },
+          { routeId: 'ROUTE-PM', eventType: 'ROUTE_COMPLETED' },
+        ])
+        .mockResolvedValueOnce(mockStops); // stops query
+
+      const result = await service.getActiveRoutes(superAdminUser);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe('ROUTE-AM');
+    });
+
+    it('should include schoolName in returned routes', async () => {
+      mockDataSource.query
+        .mockResolvedValueOnce(mockReferenceRoutes)
+        .mockResolvedValueOnce([
+          { routeId: 'ROUTE-AM', eventType: 'ROUTE_STARTED' },
+        ])
+        .mockResolvedValueOnce(mockStops);
+
+      const result = await service.getActiveRoutes(superAdminUser);
+
+      expect(result[0].schoolName).toBe('Greenfield Elementary');
+    });
+
+    it('should return empty array when no routes have been started', async () => {
+      mockDataSource.query
+        .mockResolvedValueOnce(mockReferenceRoutes)
+        .mockResolvedValueOnce([
+          // all completed
+          { routeId: 'ROUTE-AM', eventType: 'ROUTE_COMPLETED' },
+          { routeId: 'ROUTE-PM', eventType: 'ROUTE_COMPLETED' },
+        ])
+        .mockResolvedValueOnce(mockStops);
+
+      const result = await service.getActiveRoutes(superAdminUser);
+
+      expect(result).toHaveLength(0);
+    });
+
+    it('should return empty array when no lifecycle events exist', async () => {
+      mockDataSource.query
+        .mockResolvedValueOnce(mockReferenceRoutes)
+        .mockResolvedValueOnce([]) // no lifecycle events
+        .mockResolvedValueOnce(mockStops);
+
+      const result = await service.getActiveRoutes(superAdminUser);
+
+      expect(result).toHaveLength(0);
     });
   });
 });

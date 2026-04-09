@@ -114,6 +114,7 @@ export interface Route {
   id: string;
   name: string;
   schoolId: string;
+  schoolName?: string;
   direction: 'AM' | 'PM';
   vehicleId?: string;
   vehicle?: Vehicle;

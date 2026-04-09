@@ -163,6 +163,49 @@ export async function clearAuth(page: Page): Promise<void> {
 }
 
 /**
+ * Seed a ROUTE_STARTED lifecycle event for a route so it appears as active on the dashboard.
+ * Uses the driver user's credentials. If the event already exists, the POST may fail silently.
+ */
+export async function startRouteForE2E(
+  page: Page,
+  routeId: string,
+  vehicleId: string,
+): Promise<void> {
+  // Login as driver to get a valid token
+  const loginRes = await page.request.post('http://localhost:3001/api/v1/auth/login', {
+    data: { email: TEST_USERS.DRIVER.email, password: 'Admin123!' },
+  });
+  const cookies = loginRes.headers()['set-cookie'] || '';
+  const tokenMatch = cookies.match(/access_token=([^;]+)/);
+  // Also try response body for accessToken
+  let token = tokenMatch?.[1];
+  if (!token) {
+    try {
+      const body = await loginRes.json();
+      token = body.accessToken;
+    } catch {
+      /* ignore */
+    }
+  }
+
+  if (token) {
+    await page.request
+      .post('http://localhost:3001/api/v1/routes/lifecycle-events', {
+        data: {
+          routeId,
+          vehicleId,
+          eventType: 'ROUTE_STARTED',
+          timestamp: new Date().toISOString(),
+        },
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .catch(() => {
+        /* non-critical */
+      });
+  }
+}
+
+/**
  * Collect console errors on the page at or above the 'error' level.
  * Call at the start of a test; harvest errors at the end.
  */

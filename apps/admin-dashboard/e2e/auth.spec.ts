@@ -127,6 +127,8 @@ test.describe('AT: Authentication', () => {
       await loginAs(page, 'SUPER_ADMIN');
       await page.getByRole('button', { name: /Logout/i }).click();
       await expect(page).toHaveURL(/\/login/);
+      // Allow async logout handler to finish clearing localStorage
+      await page.waitForTimeout(500);
       const stored = await page.evaluate(() => localStorage.getItem('auth_user'));
       expect(stored).toBeNull();
     });

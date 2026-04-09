@@ -1,27 +1,37 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import {
-  Bus,
-  Users,
-  Bell,
-  Route as RouteIcon,
-  TrendingUp,
-  LayoutDashboard,
-  Activity,
-  ShieldAlert,
-} from 'lucide-react';
+import { Bus, Users, Bell, Route as RouteIcon, ShieldAlert, Info, Zap, MapPin } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { Header, LoadingSpinner, FloatingPanel } from '../components/common';
+import { Header, LoadingSpinner, FloatingPanel, PanelSearch } from '../components/common';
 import { LiveMap } from '../components/map';
 import { AlertList } from '../components/alerts';
 import { PresenceList } from '../components/presence';
+import { RouteListCompact } from '../components/routes';
 import { alertsApi, routesApi, presenceApi, useMock } from '../services/api';
 import { queryKeys } from '../services/query-keys';
-import type { Alert, LiveLocation, StudentPresence, DashboardStats, Route } from '../types';
+import { useAuth } from '../context/AuthContext';
+import type {
+  Alert,
+  AlertTier,
+  LiveLocation,
+  StudentPresence,
+  DashboardStats,
+  Route,
+} from '../types';
+
+/** Alert statuses that require admin action/input */
+const ACTIONABLE_STATUSES = new Set(['ACTIVE', 'PENDING_CONFIRMATION', 'AUTO_ESCALATED']);
+
+type DashboardMode = 'info' | 'action';
 
 const Dashboard: React.FC = () => {
   const [selectedRoute, setSelectedRoute] = useState<Route | null>(null);
+  const [mode, setMode] = useState<DashboardMode>('info');
+  const [routeSearch, setRouteSearch] = useState('');
+  const [passengerSearch, setPassengerSearch] = useState('');
+  const [alertTierFilter, setAlertTierFilter] = useState<AlertTier | ''>('');
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const { data: dashboardData, isLoading } = useQuery({
     queryKey: queryKeys.dashboard.all,
@@ -39,26 +49,81 @@ const Dashboard: React.FC = () => {
       return {
         alerts: alertsData,
         locations: locationsData,
+        routes: routesData,
         students: studentsData,
-        stats: {
-          activeRoutes: routesData.length,
-          totalStudents: studentsData.length,
-          activeAlerts: alertsData.length,
-          busesOnRoute: locationsData.length,
-        } as DashboardStats,
       };
     },
     refetchInterval: 2_000,
   });
 
-  const alerts = dashboardData?.alerts ?? [];
-  const locations = dashboardData?.locations ?? [];
-  const students = dashboardData?.students ?? [];
-  const stats = dashboardData?.stats ?? {
-    activeRoutes: 0,
-    totalStudents: 0,
-    activeAlerts: 0,
-    busesOnRoute: 0,
+  const allAlerts = dashboardData?.alerts ?? [];
+  const allLocations = (dashboardData?.locations ?? []).filter(
+    (l) => l.position?.lat != null && l.vehicleId,
+  );
+  const allRoutes = dashboardData?.routes ?? [];
+  const allStudents = dashboardData?.students ?? [];
+
+  // --- Mode-based filtering ---
+  const { alerts, locations, routes, students } = useMemo(() => {
+    if (mode === 'info') {
+      return {
+        alerts: allAlerts,
+        locations: allLocations,
+        routes: allRoutes,
+        students: allStudents,
+      };
+    }
+
+    // Action mode: only alerts that require action from the logged-in user's role
+    const actionAlerts = allAlerts.filter((a) => ACTIONABLE_STATUSES.has(a.status));
+
+    // Collect routeIds associated with actionable alerts
+    const actionRouteIds = new Set(actionAlerts.map((a) => a.routeId));
+
+    // Filter routes, buses, students to only those associated with actionable alerts
+    const actionRoutes = allRoutes.filter((r) => actionRouteIds.has(r.id));
+    const actionLocations = allLocations.filter((l) => actionRouteIds.has(l.routeId));
+    const actionStudents = allStudents.filter((s) => s.routeId && actionRouteIds.has(s.routeId));
+
+    return {
+      alerts: actionAlerts,
+      locations: actionLocations,
+      routes: actionRoutes,
+      students: actionStudents,
+    };
+  }, [mode, allAlerts, allLocations, allRoutes, allStudents]);
+
+  // --- Tier filter for alerts ---
+  const filteredAlerts = useMemo(() => {
+    if (!alertTierFilter) return alerts;
+    return alerts.filter((a) => a.tier === alertTierFilter);
+  }, [alerts, alertTierFilter]);
+
+  // --- Search filters ---
+  const filteredRoutes = useMemo(() => {
+    if (!routeSearch) return routes;
+    const q = routeSearch.toLowerCase();
+    return routes.filter(
+      (r) =>
+        r.name.toLowerCase().includes(q) ||
+        r.id.toLowerCase().includes(q) ||
+        (r.schoolName && r.schoolName.toLowerCase().includes(q)) ||
+        (r.vehicleId && r.vehicleId.toLowerCase().includes(q)),
+    );
+  }, [routes, routeSearch]);
+
+  const filteredStudents = useMemo(() => {
+    if (!passengerSearch) return students;
+    const q = passengerSearch.toLowerCase();
+    return students.filter((s) => s.name.toLowerCase().includes(q));
+  }, [students, passengerSearch]);
+
+  // --- Stats (based on mode-filtered data) ---
+  const stats: DashboardStats = {
+    activeRoutes: routes.length,
+    busesOnRoute: locations.length,
+    totalStudents: students.length,
+    activeAlerts: alerts.length,
   };
 
   const handleSelection = async (routeId?: string) => {
@@ -116,7 +181,7 @@ const Dashboard: React.FC = () => {
       {/* Background Map Layer */}
       <div className="absolute inset-0 z-0">
         <LiveMap
-          locations={locations}
+          locations={allLocations}
           selectedRoute={selectedRoute}
           onReset={() => setSelectedRoute(null)}
           className="w-full h-full"
@@ -130,18 +195,78 @@ const Dashboard: React.FC = () => {
           subtitle="Real-time fleet intelligence"
           className="pointer-events-auto"
           action={
-            useMock && (
-              <div className="flex items-center gap-2 px-3 py-1 bg-amber-500/10 border border-amber-500/20 rounded-lg">
-                <div className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse" />
-                <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest">
-                  Mock Data Active
-                </span>
+            <div className="flex items-center gap-2">
+              {/* Info/Action Mode Toggle */}
+              <div
+                className="flex items-center glass-card rounded-lg overflow-hidden"
+                data-testid="mode-toggle"
+              >
+                <button
+                  onClick={() => setMode('info')}
+                  data-testid="mode-info"
+                  className={`flex items-center gap-1 px-2.5 py-1.5 text-[9px] font-black uppercase tracking-widest transition-colors ${
+                    mode === 'info'
+                      ? 'bg-blue-500/20 text-blue-400 border-b-2 border-blue-400'
+                      : 'text-slate-500 hover:text-slate-300'
+                  }`}
+                >
+                  <Info size={10} />
+                  Info
+                </button>
+                <button
+                  onClick={() => setMode('action')}
+                  data-testid="mode-action"
+                  className={`flex items-center gap-1 px-2.5 py-1.5 text-[9px] font-black uppercase tracking-widest transition-colors ${
+                    mode === 'action'
+                      ? 'bg-amber-500/20 text-amber-400 border-b-2 border-amber-400'
+                      : 'text-slate-500 hover:text-slate-300'
+                  }`}
+                >
+                  <Zap size={10} />
+                  Action
+                </button>
               </div>
-            )
+
+              {useMock && (
+                <div className="flex items-center gap-2 px-3 py-1 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+                  <div className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse" />
+                  <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest">
+                    Mock Data Active
+                  </span>
+                </div>
+              )}
+            </div>
           }
         />
 
-        {/* Panel #3: Tactical Alerts */}
+        {/* Panel: Routes (left, top) */}
+        <FloatingPanel
+          id="routes"
+          title="Routes"
+          icon={<MapPin size={12} />}
+          anchor="left"
+          defaultPosition={{ x: 30, y: 80 }}
+          defaultSize={{ width: '260px', height: '350px' }}
+          className="pointer-events-auto"
+        >
+          <div className="flex flex-col h-full gap-1.5 overflow-hidden">
+            <PanelSearch
+              value={routeSearch}
+              onChange={setRouteSearch}
+              placeholder="Search routes, schools, buses..."
+            />
+            <div className="flex-1 overflow-y-auto custom-scrollbar pr-1">
+              <RouteListCompact
+                routes={filteredRoutes}
+                liveLocations={locations}
+                onRouteClick={(route) => handleSelection(route.id)}
+                emptyMessage="No active routes"
+              />
+            </div>
+          </div>
+        </FloatingPanel>
+
+        {/* Panel: Tactical Alerts (right) */}
         <FloatingPanel
           id="alerts"
           title="Tactical Alerts"
@@ -151,43 +276,68 @@ const Dashboard: React.FC = () => {
           defaultSize={{ width: '280px', height: '400px' }}
           className="pointer-events-auto"
         >
-          <div className="flex flex-col h-full gap-2 overflow-hidden">
+          <div className="flex flex-col h-full gap-1.5 overflow-hidden">
+            {/* Tier filter combo */}
+            <select
+              value={alertTierFilter}
+              onChange={(e) => setAlertTierFilter(e.target.value as AlertTier | '')}
+              data-testid="tier-filter"
+              className="w-full py-1 px-2 glass-item rounded text-[9px] font-black text-white uppercase tracking-widest bg-transparent border-0 outline-none focus:ring-1 focus:ring-blue-500/30 cursor-pointer appearance-none shrink-0"
+            >
+              <option value="" className="bg-slate-900">
+                All Tiers
+              </option>
+              <option value="TIER_1" className="bg-slate-900">
+                Tier 1 — Critical
+              </option>
+              <option value="TIER_2" className="bg-slate-900">
+                Tier 2 — Warning
+              </option>
+              <option value="TIER_3" className="bg-slate-900">
+                Tier 3 — Info
+              </option>
+            </select>
             <button
               onClick={() => navigate('/alerts')}
-              className="w-full py-1.5 glass-item rounded text-[9px] font-black text-blue-400 uppercase tracking-widest hover:bg-white/10 shrink-0 mb-1"
+              className="w-full py-1.5 glass-item rounded text-[9px] font-black text-blue-400 uppercase tracking-widest hover:bg-white/10 shrink-0"
             >
               Review All
             </button>
             <div className="flex-1 overflow-y-auto custom-scrollbar pr-1">
               <AlertList
-                alerts={alerts}
+                alerts={filteredAlerts}
                 onAlertClick={(alert) => handleSelection(alert.routeId)}
-                emptyMessage="No active alerts"
+                emptyMessage={mode === 'action' ? 'No actionable alerts' : 'No active alerts'}
               />
             </div>
           </div>
         </FloatingPanel>
 
-        {/* Panel #4: Live Passenger Feed */}
+        {/* Panel: Passenger Feed (right, below alerts) */}
         <FloatingPanel
           id="passengers"
           title="Passenger Feed"
           icon={<Users size={12} />}
-          anchor="left"
-          defaultPosition={{ x: 30, y: 80 }}
-          defaultSize={{ width: '280px', height: '400px' }}
+          anchor="right"
+          defaultPosition={{ x: 30, y: 510 }}
+          defaultSize={{ width: '280px', height: '300px' }}
           className="pointer-events-auto"
         >
-          <div className="flex flex-col h-full gap-2 overflow-hidden">
+          <div className="flex flex-col h-full gap-1.5 overflow-hidden">
+            <PanelSearch
+              value={passengerSearch}
+              onChange={setPassengerSearch}
+              placeholder="Search passengers..."
+            />
             <button
               onClick={() => navigate('/students')}
-              className="w-full py-1.5 glass-item rounded text-[9px] font-black text-blue-400 uppercase tracking-widest hover:bg-white/10 shrink-0 mb-1"
+              className="w-full py-1.5 glass-item rounded text-[9px] font-black text-blue-400 uppercase tracking-widest hover:bg-white/10 shrink-0"
             >
               Manifest
             </button>
             <div className="flex-1 overflow-y-auto custom-scrollbar">
               <PresenceList
-                students={students}
+                students={filteredStudents}
                 onStudentClick={(student) => handleSelection(student.routeId)}
                 emptyMessage="No occupancy"
               />
@@ -197,7 +347,7 @@ const Dashboard: React.FC = () => {
 
         {/* Fixed Bottom Tactical Bar */}
         <div className="absolute bottom-4 left-4 right-4 flex items-end gap-2 pointer-events-none">
-          {/* Legend Panel (Mock for reference if not in LiveMap) */}
+          {/* Legend Panel */}
           <div className="glass-card p-2 w-28 pointer-events-auto">
             <div className="text-[8px] font-black text-slate-500 uppercase mb-1 tracking-widest">
               Legend
@@ -215,7 +365,7 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Panel #5: Mission Health (Fixed) */}
+          {/* Mission Health Panel */}
           <div className="glass-card p-2 w-28 pointer-events-auto">
             <div className="flex flex-col gap-1">
               {[
@@ -241,13 +391,19 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Panel #2: Fleet Metrics (Fixed Row) */}
-          <div className="glass-card p-1 flex items-center gap-2 pointer-events-auto overflow-hidden">
+          {/* Fleet Metrics Bar */}
+          <div
+            className="glass-card p-1 flex items-center gap-2 pointer-events-auto overflow-hidden"
+            data-testid="fleet-metrics"
+          >
             {statCards.map((stat, i) => (
               <div key={i} className="flex items-center gap-2 px-2 py-1 glass-item rounded-lg">
                 <div className={`${stat.color} scale-75`}>{stat.icon}</div>
                 <div className="flex flex-col -space-y-1">
-                  <span className="text-[9px] font-black text-white leading-tight">
+                  <span
+                    className="text-[9px] font-black text-white leading-tight"
+                    data-testid={`stat-${stat.label.toLowerCase()}`}
+                  >
                     {stat.value}
                   </span>
                   <span className="text-[6.5px] font-black text-slate-500 uppercase tracking-tighter">
@@ -256,6 +412,16 @@ const Dashboard: React.FC = () => {
                 </div>
               </div>
             ))}
+
+            {/* Mode indicator in metrics bar */}
+            <div
+              className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[7px] font-black uppercase tracking-widest ${
+                mode === 'info' ? 'bg-blue-500/10 text-blue-400' : 'bg-amber-500/10 text-amber-400'
+              }`}
+            >
+              {mode === 'info' ? <Info size={8} /> : <Zap size={8} />}
+              {mode}
+            </div>
           </div>
         </div>
       </div>

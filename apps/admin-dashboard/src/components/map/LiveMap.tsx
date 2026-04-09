@@ -216,23 +216,25 @@ const LiveMap: React.FC<LiveMapProps> = ({
       }
     });
 
-    // Add or Update markers
-    deduplicatedLocations.forEach((location) => {
-      const statusClass = getStatusColorClass(location.status);
-      const colorMap: Record<string, string> = {
-        'bg-green-500': '#22c55e',
-        'bg-yellow-500': '#eab308',
-        'bg-red-500': '#ef4444',
-        'bg-gray-500': '#6b7280',
-      };
-      const color = colorMap[statusClass] || '#6b7280';
-      const isLive = LIVE_DRIVER_ROUTE_IDS.includes(location.routeId);
-      const isSelected = selectedRoute?.id === location.routeId;
-      const borderColor = isSelected ? '#3b82f6' : isLive ? '#f59e0b' : 'white';
-      const borderWidth = isSelected ? '4px' : isLive ? '3px' : '2px';
-      const scale = isSelected ? 1.2 : 1.0;
+    // Add or Update markers (skip locations without position data)
+    [...deduplicatedLocations.values()]
+      .filter((l) => l.position?.lat != null)
+      .forEach((location) => {
+        const statusClass = getStatusColorClass(location.status);
+        const colorMap: Record<string, string> = {
+          'bg-green-500': '#22c55e',
+          'bg-yellow-500': '#eab308',
+          'bg-red-500': '#ef4444',
+          'bg-gray-500': '#6b7280',
+        };
+        const color = colorMap[statusClass] || '#6b7280';
+        const isLive = LIVE_DRIVER_ROUTE_IDS.includes(location.routeId);
+        const isSelected = selectedRoute?.id === location.routeId;
+        const borderColor = isSelected ? '#3b82f6' : isLive ? '#f59e0b' : 'white';
+        const borderWidth = isSelected ? '4px' : isLive ? '3px' : '2px';
+        const scale = isSelected ? 1.2 : 1.0;
 
-      const iconHtml = `
+        const iconHtml = `
         <div style="
           width: ${32 * scale}px;
           height: ${32 * scale}px;
@@ -252,40 +254,40 @@ const LiveMap: React.FC<LiveMapProps> = ({
         </div>
       `;
 
-      const icon = L.divIcon({
-        className: 'custom-bus-marker',
-        html: iconHtml,
-        iconSize: [32 * scale, 32 * scale],
-        iconAnchor: [16 * scale, 16 * scale],
-      });
+        const icon = L.divIcon({
+          className: 'custom-bus-marker',
+          html: iconHtml,
+          iconSize: [32 * scale, 32 * scale],
+          iconAnchor: [16 * scale, 16 * scale],
+        });
 
-      let marker = markersMap.get(location.vehicleId);
-      const pos: [number, number] = [location.position.lat, location.position.lng];
+        let marker = markersMap.get(location.vehicleId);
+        const pos: [number, number] = [location.position.lat, location.position.lng];
 
-      if (marker) {
-        marker.setLatLng(pos);
-        marker.setIcon(icon);
-        marker.setZIndexOffset(isSelected ? 1000 : 0);
-      } else {
-        marker = L.marker(pos, {
-          icon,
-          zIndexOffset: isSelected ? 1000 : 0,
-        }).addTo(mapInstanceRef.current!);
+        if (marker) {
+          marker.setLatLng(pos);
+          marker.setIcon(icon);
+          marker.setZIndexOffset(isSelected ? 1000 : 0);
+        } else {
+          marker = L.marker(pos, {
+            icon,
+            zIndexOffset: isSelected ? 1000 : 0,
+          }).addTo(mapInstanceRef.current!);
 
-        if (onMarkerClick) {
-          marker.on('click', () => onMarkerClick(location));
+          if (onMarkerClick) {
+            marker.on('click', () => onMarkerClick(location));
+          }
+          markersMap.set(location.vehicleId, marker);
         }
-        markersMap.set(location.vehicleId, marker);
-      }
 
-      marker.bindPopup(`
+        marker.bindPopup(`
         <div style="min-width: 150px;">
           <strong>Vehicle: ${location.vehicleId}</strong>${isLive ? ' <span style="background:#f59e0b;color:white;padding:1px 6px;border-radius:4px;font-size:11px;">LIVE</span>' : ''}<br/>
           <span>Route: ${location.routeId}</span><br/>
           <span>ETA: ${location.etaToNextStopMinutes} min</span>
         </div>
       `);
-    });
+      });
 
     // Calculate bounds for potential fitting
     const bounds = L.latLngBounds([]);
@@ -297,10 +299,12 @@ const LiveMap: React.FC<LiveMapProps> = ({
       hasPoints = true;
     });
 
-    locations.forEach((l) => {
-      bounds.extend([l.position.lat, l.position.lng] as L.LatLngExpression);
-      hasPoints = true;
-    });
+    locations
+      .filter((l) => l.position?.lat != null)
+      .forEach((l) => {
+        bounds.extend([l.position.lat, l.position.lng] as L.LatLngExpression);
+        hasPoints = true;
+      });
 
     // Fit bounds only on initial load or when the selected route changes
     const routeChanged = lastSelectedRouteIdRef.current !== selectedRoute?.id;

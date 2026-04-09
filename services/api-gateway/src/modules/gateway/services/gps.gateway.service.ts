@@ -57,6 +57,8 @@ interface ReferenceRouteRow {
   driverId: string | null;
   schedule: any;
   polyline: string | null;
+  schoolId: string | null;
+  schoolName: string | null;
 }
 
 interface ReferenceRouteStopRow {
@@ -159,6 +161,7 @@ export class GpsGatewayService {
   ): Promise<{ status: string }> {
     if (
       !user.schoolId &&
+      user.role !== Role.SUPER_ADMIN &&
       user.role !== Role.ADMIN &&
       user.role !== Role.OSTA_ADMIN
     ) {
@@ -176,7 +179,11 @@ export class GpsGatewayService {
     dto: RouteLifecycleEventDto,
     user: RequestUser,
   ): Promise<{ status: string }> {
-    if (user.role !== Role.DRIVER && user.role !== Role.ADMIN) {
+    if (
+      user.role !== Role.DRIVER &&
+      user.role !== Role.ADMIN &&
+      user.role !== Role.SUPER_ADMIN
+    ) {
       throw new ForbiddenException(
         'Only drivers can record route lifecycle events',
       );
@@ -211,6 +218,7 @@ export class GpsGatewayService {
   checkRouteAccess(routeId: string, user: RequestUser): void {
     // System admins can access all routes
     if (
+      user.role === Role.SUPER_ADMIN ||
       user.role === Role.ADMIN ||
       user.role === Role.OSTA_ADMIN ||
       user.role === Role.BOARD_ADMIN ||
@@ -246,12 +254,36 @@ export class GpsGatewayService {
     const params: any[] = routeIds && routeIds.length ? [routeIds] : [];
 
     const routes = (await this.dataSource.query(
-      `SELECT r.id, r.name, r."vehicleId" as "vehicleId", r.schedule, r.polyline
+      `SELECT r.id, r.name, r."vehicleId" as "vehicleId", r.schedule, r.polyline,
+              r."schoolId" as "schoolId", s.name as "schoolName"
              FROM routes_reference r
+             LEFT JOIN schools s ON r."schoolId" = s.id
              ${whereClause}
              ORDER BY r.id ASC`,
       params,
     )) as ReferenceRouteRow[];
+
+    // Filter to only routes whose latest lifecycle event is ROUTE_STARTED
+    const allRouteIds = routes.map((r) => r.id);
+    let activeRouteIds: Set<string>;
+    if (allRouteIds.length > 0) {
+      const lifecycleRows = (await this.dataSource.query(
+        `SELECT DISTINCT ON (route_id) route_id as "routeId", event_type as "eventType"
+               FROM route_lifecycle_events
+               WHERE route_id = ANY($1)
+               ORDER BY route_id, timestamp DESC`,
+        [allRouteIds],
+      )) as Array<{ routeId: string; eventType: string }>;
+      activeRouteIds = new Set(
+        lifecycleRows
+          .filter((e) => e.eventType === 'ROUTE_STARTED')
+          .map((e) => e.routeId),
+      );
+    } else {
+      activeRouteIds = new Set();
+    }
+
+    const activeRoutes = routes.filter((r) => activeRouteIds.has(r.id));
 
     const stops = (await this.dataSource.query(
       `SELECT s.id, s."routeId" as "routeId", s."sequenceOrder" as "sequenceOrder", s."stopName" as "stopName", s.lat, s.lng, s."arrivalTime" as "arrivalTime"
@@ -268,7 +300,7 @@ export class GpsGatewayService {
     const demoSchoolId =
       user.schoolId || 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c';
 
-    return routes.map((r) => {
+    return activeRoutes.map((r) => {
       const schedule =
         typeof r.schedule === 'string' ? JSON.parse(r.schedule) : r.schedule;
       const startTime = schedule?.startTime || '07:30';
@@ -288,7 +320,8 @@ export class GpsGatewayService {
       return {
         id: r.id,
         name: r.name,
-        schoolId: demoSchoolId,
+        schoolId: r.schoolId || demoSchoolId,
+        schoolName: r.schoolName || 'Unknown School',
         direction,
         vehicleId: r.vehicleId || undefined,
         startTime,
@@ -310,8 +343,10 @@ export class GpsGatewayService {
       user.schoolId || 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c';
 
     const routes = (await this.dataSource.query(
-      `SELECT r.id, r.name, r."vehicleId" as "vehicleId", r.schedule, r.polyline
+      `SELECT r.id, r.name, r."vehicleId" as "vehicleId", r.schedule, r.polyline,
+              r."schoolId" as "schoolId", s.name as "schoolName"
              FROM routes_reference r
+             LEFT JOIN schools s ON r."schoolId" = s.id
              WHERE r.id = $1`,
       [routeId],
     )) as ReferenceRouteRow[];
@@ -349,7 +384,8 @@ export class GpsGatewayService {
     return {
       id: r.id,
       name: r.name,
-      schoolId: demoSchoolId,
+      schoolId: r.schoolId || demoSchoolId,
+      schoolName: r.schoolName || 'Unknown School',
       direction,
       vehicleId: r.vehicleId || undefined,
       startTime,
@@ -436,6 +472,7 @@ export class GpsGatewayService {
 
     // Admin roles: see all seeded reference routes
     if (
+      user.role === Role.SUPER_ADMIN ||
       user.role === Role.ADMIN ||
       user.role === Role.OSTA_ADMIN ||
       user.role === Role.BOARD_ADMIN ||
