@@ -18,3 +18,5 @@ infra/osrm-data/
 .idea/
 *.swp
 *.swo
+apps/admin-dashboard/test-results/
+apps/admin-dashboard/playwright-report/
