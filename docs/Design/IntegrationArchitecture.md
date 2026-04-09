@@ -6,7 +6,7 @@
 
 ## Purpose
 
-This document describes how SBTM_AntiGravity integrates across its internal service boundaries and planned external dependencies.
+This document describes how SBTM integrates across its internal service boundaries and planned external dependencies.
 
 ## Integration Modes
 

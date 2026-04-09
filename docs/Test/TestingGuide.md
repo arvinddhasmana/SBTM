@@ -30,7 +30,7 @@ This guide is the testing reference for the SBTM platform. It covers test layers
 ## 2. Repository Test Layout
 
 ```
-SBTM_AntiGravity/
+SBTM/
 ├── services/
 │   ├── api-gateway/
 │   │   ├── src/**/*.spec.ts          # Unit tests per module

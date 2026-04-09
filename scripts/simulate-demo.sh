@@ -116,7 +116,7 @@ node_query() {
 
 reset_demo_data() {
   echo -e "\033[33mResetting demo feed data...\033[0m"
-  local CONTAINER_NAME="sbtm_antigravity-postgres-1"
+  local CONTAINER_NAME="sbtm-postgres-1"
   docker exec "$CONTAINER_NAME" psql -U postgres -d sbms -c "
     TRUNCATE TABLE presence_event CASCADE;
     TRUNCATE TABLE location_points CASCADE;
@@ -250,7 +250,7 @@ for ((lap = 1; lap <= LAPS; lap++)); do
       # Sync Route Polyline
       POLYLINE=$(node -e "console.log(JSON.parse(Buffer.from('$ROUTE_METADATA_B64', 'base64').toString()).polyline || '')")
       if [ -n "$POLYLINE" ]; then
-         docker exec "sbtm_antigravity-postgres-1" psql -U postgres -d sbms -c "
+         docker exec "sbtm-postgres-1" psql -U postgres -d sbms -c "
             INSERT INTO routes_reference (id, name, \"vehicleId\", \"driverId\", schedule, polyline) 
             VALUES ('$ROUTE_ID', '$ROUTE_ID', '$VEHICLE_ID', '$DRIVER_ID', '{}', '$POLYLINE')
             ON CONFLICT (id) DO UPDATE SET polyline = EXCLUDED.polyline;

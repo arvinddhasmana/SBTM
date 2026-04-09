@@ -6,7 +6,7 @@
 
 ## Purpose
 
-This document defines the target retention posture for major data classes in SBTM_AntiGravity. It exists to support privacy-by-design planning and operational governance. It does not claim that automated retention enforcement is fully implemented today.
+This document defines the target retention posture for major data classes in SBTM. It exists to support privacy-by-design planning and operational governance. It does not claim that automated retention enforcement is fully implemented today.
 
 ## Lifecycle Principles
 

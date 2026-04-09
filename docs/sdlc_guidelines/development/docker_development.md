@@ -22,7 +22,7 @@ Guide for setting up and using the SBTM local development environment with Docke
 ```bash
 # Clone the repository
 git clone <repository-url>
-cd SBTM_AntiGravity
+cd SBTM
 
 # Start all services
 docker-compose up -d

@@ -6,7 +6,7 @@
 
 ## Purpose
 
-This document captures the security and privacy architecture for SBTM_AntiGravity with emphasis on child-safety data, tenant isolation, and operational accountability.
+This document captures the security and privacy architecture for SBTM with emphasis on child-safety data, tenant isolation, and operational accountability.
 
 ## Related Documents
 

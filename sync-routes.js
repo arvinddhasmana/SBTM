@@ -22,7 +22,7 @@ const path  = require('path');
 // Config (overridable via env / args)
 // ---------------------------------------------------------------------------
 let OSRM_BASE  = process.env.OSRM_URL  || 'http://localhost:5000';
-let CONTAINER  = process.env.PG_CONTAINER || 'sbtm_antigravity-postgres-1';
+let CONTAINER  = process.env.PG_CONTAINER || 'sbtm-postgres-1';
 let TRACK_FILE = path.join(__dirname, 'scripts', 'demo-gps-track.json');
 
 for (let i = 2; i < process.argv.length; i++) {

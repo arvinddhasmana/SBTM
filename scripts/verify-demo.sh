@@ -8,7 +8,7 @@ set -euo pipefail
 DATABASE_USER="${1:-postgres}"
 DATABASE_NAME="${2:-sbms}"
 API_BASE="${3:-http://localhost:3001/api/v1}"
-CONTAINER_NAME="sbtm_antigravity-postgres-1"
+CONTAINER_NAME="sbtm-postgres-1"
 
 ALL_PASSED=true
 

@@ -8,7 +8,7 @@ Write-Host "Initializing Database..." -ForegroundColor Cyan
 
 # 1. Copy SQL to container
 # Note: Using hardcoded container name from existing scripts. Adjust if needed.
-$ContainerName = "sbtm_antigravity-postgres-1"
+$ContainerName = "sbtm-postgres-1"
 
 Write-Host "Copying init-db.sql to $ContainerName..."
 docker cp ./scripts/init-db.sql "$($ContainerName):/tmp/init-db.sql"

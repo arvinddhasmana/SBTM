@@ -6,7 +6,7 @@
 
 ## Purpose
 
-This document describes the major data domains in SBTM_AntiGravity, who owns them, and how tenant boundaries and operational traceability are represented.
+This document describes the major data domains in SBTM, who owns them, and how tenant boundaries and operational traceability are represented.
 
 ## Related Documents
 

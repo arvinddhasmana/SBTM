@@ -7,7 +7,7 @@ set -euo pipefail
 echo -e "\033[36mInitializing Database...\033[0m"
 
 # 1. Copy SQL to container
-CONTAINER_NAME="sbtm_antigravity-postgres-1"
+CONTAINER_NAME="sbtm-postgres-1"
 
 echo "Copying init-db.sql to $CONTAINER_NAME..."
 docker cp ./scripts/init-db.sql "$CONTAINER_NAME:/tmp/init-db.sql"

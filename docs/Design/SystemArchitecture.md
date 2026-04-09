@@ -6,7 +6,7 @@
 
 ## Purpose
 
-This document describes the system-level architecture of SBTM_AntiGravity: actors, primary applications, backend services, and their responsibility boundaries.
+This document describes the system-level architecture of SBTM: actors, primary applications, backend services, and their responsibility boundaries.
 
 ## System Context
 

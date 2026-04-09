@@ -20,8 +20,8 @@ function Run-Q {
     Write-Host $Label -ForegroundColor Yellow
     $file = Join-Path $ScriptDir "verify.sql"
     $Sql | Out-File -FilePath $file -Encoding utf8
-    docker cp $file "sbtm_antigravity-postgres-1:/tmp/verify.sql" | Out-Null
-    docker exec sbtm_antigravity-postgres-1 psql -U $DatabaseUser -d $DatabaseName -t -f /tmp/verify.sql
+    docker cp $file "sbtm-postgres-1:/tmp/verify.sql" | Out-Null
+    docker exec sbtm-postgres-1 psql -U $DatabaseUser -d $DatabaseName -t -f /tmp/verify.sql
 }
 
 function Test-Login {

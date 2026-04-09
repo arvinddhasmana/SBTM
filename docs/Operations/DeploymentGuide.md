@@ -6,7 +6,7 @@
 
 ## Scope
 
-This guide covers how SBTM_AntiGravity is deployed locally today and what should be true before claiming readiness for a production-like deployment.
+This guide covers how SBTM is deployed locally today and what should be true before claiming readiness for a production-like deployment.
 
 ## Local Baseline
 

@@ -4,7 +4,7 @@
 - Last reviewed: 2026-03-30
 - Primary use: Documentation governance, structure, traceability, and maintenance rules
 
-This policy defines how documentation is written and maintained in SBTM_AntiGravity. It takes inspiration from the RTSA documentation discipline, but adapts it for a school transportation platform focused on privacy, safety operations, and multi-tenant SaaS delivery.
+This policy defines how documentation is written and maintained in SBTM. It takes inspiration from the RTSA documentation discipline, but adapts it for a school transportation platform focused on privacy, safety operations, and multi-tenant SaaS delivery.
 
 ## Objectives
 

@@ -390,7 +390,7 @@ Check the output for:
 SQL verification:
 
 ```bash
-docker exec -i sbtm_antigravity-postgres-1 psql -U postgres -d sbms < scripts/verify.sql
+docker exec -i sbtm-postgres-1 psql -U postgres -d sbms < scripts/verify.sql
 ```
 
 ## 8. v4 Demo Additions (When Available)

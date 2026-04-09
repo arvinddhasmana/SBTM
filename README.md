@@ -54,8 +54,8 @@ To start the entire backend infrastructure:
 1. **Clone the repository**:
 
    ```bash
-   git clone https://github.com/arvinddhasmana/SBTM_AntiGravity.git
-   cd SBTM_AntiGravity
+   git clone https://github.com/arvinddhasmana/SBTM.git
+   cd SBTM
    ```
 
 2. **Configure Environment Variables**:

@@ -4,7 +4,7 @@
 - Last reviewed: 2026-03-24
 - Primary use: Traceable business, privacy, operational, and non-functional requirements for the platform
 
-This document defines the requirements baseline for SBTM_AntiGravity using stable identifiers. It is the business source of truth for what the platform must do and what quality constraints it must satisfy. For code-verified current implementation status, use `docs/Implementation/*`. For prioritized delivery gaps, use `docs/prd/GapAnalysis.md` and `docs/prd/PhaseWiseImplementationPlan.md`.
+This document defines the requirements baseline for SBTM using stable identifiers. It is the business source of truth for what the platform must do and what quality constraints it must satisfy. For code-verified current implementation status, use `docs/Implementation/*`. For prioritized delivery gaps, use `docs/prd/GapAnalysis.md` and `docs/prd/PhaseWiseImplementationPlan.md`.
 
 ## Related Documents
 

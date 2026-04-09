@@ -184,16 +184,16 @@ docker ps
 curl http://localhost:3001/api/v1/health
 
 # Check GPS data in database
-docker exec sbtm_antigravity-postgres-1 psql -U postgres -d sbms -c "SELECT COUNT(*) FROM location_points;"
+docker exec sbtm-postgres-1 psql -U postgres -d sbms -c "SELECT COUNT(*) FROM location_points;"
 
 # Check parent user has routes assigned
-docker exec sbtm_antigravity-postgres-1 psql -U postgres -d sbms -c "SELECT email, \"childRouteIds\" FROM users WHERE role = 'PARENT';"
+docker exec sbtm-postgres-1 psql -U postgres -d sbms -c "SELECT email, \"childRouteIds\" FROM users WHERE role = 'PARENT';"
 
 # Check alert governance audit trail (Phase B)
-docker exec sbtm_antigravity-postgres-1 psql -U postgres -d sbms -c "SELECT \"eventType\", COUNT(*) FROM alert_audit_log GROUP BY \"eventType\" ORDER BY \"eventType\";"
+docker exec sbtm-postgres-1 psql -U postgres -d sbms -c "SELECT \"eventType\", COUNT(*) FROM alert_audit_log GROUP BY \"eventType\" ORDER BY \"eventType\";"
 
 # Check alert tier distribution
-docker exec sbtm_antigravity-postgres-1 psql -U postgres -d sbms -c "SELECT tier, status, COUNT(*) FROM emergency_alert GROUP BY tier, status ORDER BY tier, status;"
+docker exec sbtm-postgres-1 psql -U postgres -d sbms -c "SELECT tier, status, COUNT(*) FROM emergency_alert GROUP BY tier, status ORDER BY tier, status;"
 ```
 
 ## Alert Governance API Endpoints (Phase B)

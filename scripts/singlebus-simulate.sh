@@ -76,7 +76,7 @@ PM_ROUTE_ID=$(node_config "config.pm.routeId")
 PM_POLYLINE=$(node_config "config.pm.polyline")
 
 # Ensure Schema is ready
-docker exec "sbtm_antigravity-postgres-1" psql -U postgres -d sbms -c "ALTER TABLE routes_reference ADD COLUMN IF NOT EXISTS direction text; ALTER TABLE routes_reference ADD COLUMN IF NOT EXISTS \"schoolId\" uuid; ALTER TABLE students_reference ADD COLUMN IF NOT EXISTS \"amStopId\" varchar(255); ALTER TABLE students_reference ADD COLUMN IF NOT EXISTS \"pmStopId\" varchar(255);" > /dev/null 2>&1 || true
+docker exec "sbtm-postgres-1" psql -U postgres -d sbms -c "ALTER TABLE routes_reference ADD COLUMN IF NOT EXISTS direction text; ALTER TABLE routes_reference ADD COLUMN IF NOT EXISTS \"schoolId\" uuid; ALTER TABLE students_reference ADD COLUMN IF NOT EXISTS \"amStopId\" varchar(255); ALTER TABLE students_reference ADD COLUMN IF NOT EXISTS \"pmStopId\" varchar(255);" > /dev/null 2>&1 || true
 
 # Sync route geometry and attributes to database
 sync_route() {
@@ -85,7 +85,7 @@ sync_route() {
   local dir="$3"
   local poly="$4"
   echo "Syncing route $id to database..."
-  docker exec "sbtm_antigravity-postgres-1" psql -U postgres -d sbms -c "
+  docker exec "sbtm-postgres-1" psql -U postgres -d sbms -c "
     INSERT INTO routes_reference (id, name, \"schoolId\", direction, polyline) 
     VALUES ('$id', '$name', '$SCHOOL_ID', '$dir', '$poly') 
     ON CONFLICT (id) DO UPDATE SET polyline = EXCLUDED.polyline, direction = EXCLUDED.direction, name = EXCLUDED.name, \"schoolId\" = EXCLUDED.\"schoolId\";" > /dev/null
@@ -95,7 +95,7 @@ sync_stops() {
   local route_id="$1"
   local config_key="$2"
   echo "Syncing $config_key stops to database..."
-  docker exec "sbtm_antigravity-postgres-1" psql -U postgres -d sbms -c "DELETE FROM route_stops_reference WHERE \"routeId\" = '$route_id';" > /dev/null
+  docker exec "sbtm-postgres-1" psql -U postgres -d sbms -c "DELETE FROM route_stops_reference WHERE \"routeId\" = '$route_id';" > /dev/null
   
   # Use node to generate the SQL inserts for stops
   local sql
@@ -114,7 +114,7 @@ sync_stops() {
   
   # Execute the generated SQL
   if [ -n "$sql" ]; then
-    docker exec -i "sbtm_antigravity-postgres-1" psql -U postgres -d sbms -c "$sql" > /dev/null
+    docker exec -i "sbtm-postgres-1" psql -U postgres -d sbms -c "$sql" > /dev/null
   fi
 }
 
@@ -132,7 +132,7 @@ node -e "
   config.students.forEach(s => {
     process.stdout.write(\"INSERT INTO students (id, first_name, last_name, external_student_id, school_id, grade) VALUES ('\" + s.id + \"', '\" + s.firstName + \"', '\" + s.lastName + \"', '\" + s.id + \"', '\" + schoolId + \"', '1') ON CONFLICT (id) DO UPDATE SET first_name = EXCLUDED.first_name, last_name = EXCLUDED.last_name, grade = EXCLUDED.grade;\n\");
   });
-" | docker exec -i "sbtm_antigravity-postgres-1" psql -U postgres -d sbms > /dev/null
+" | docker exec -i "sbtm-postgres-1" psql -U postgres -d sbms > /dev/null
 
 # Link parents to students and sync reference data
 echo "Linking parents to students..."
@@ -162,15 +162,15 @@ node -e "
     // Append simulation routes to childRouteIds (preserve existing, avoid duplicates)
     process.stdout.write(\"UPDATE users SET \\\"childRouteIds\\\" = CASE WHEN \\\"childRouteIds\\\" IS NULL OR \\\"childRouteIds\\\" = '' THEN '\" + routesCsv + \"' WHEN \\\"childRouteIds\\\" LIKE '%\" + amRouteId + \"%' THEN \\\"childRouteIds\\\" ELSE \\\"childRouteIds\\\" || ',\" + routesCsv + \"' END, \\\"schoolId\\\" = '\" + schoolId + \"' WHERE id = '\" + parent.userId + \"';\n\");
   }
-" | docker exec -i "sbtm_antigravity-postgres-1" psql -U postgres -d sbms > /dev/null
+" | docker exec -i "sbtm-postgres-1" psql -U postgres -d sbms > /dev/null
 
 # Clear old location points to prevent duplicate bus on map
 echo "Cleaning up old location data for $VEHICLE_ID..."
-docker exec "sbtm_antigravity-postgres-1" psql -U postgres -d sbms -c "DELETE FROM location_points WHERE \"vehicle_id\" = '$VEHICLE_ID';" > /dev/null
+docker exec "sbtm-postgres-1" psql -U postgres -d sbms -c "DELETE FROM location_points WHERE \"vehicle_id\" = '$VEHICLE_ID';" > /dev/null
 
 # Clear old fleet assignments and absences for clean demo
 echo "Cleaning up old Phase C demo data..."
-docker exec "sbtm_antigravity-postgres-1" psql -U postgres -d sbms -c "
+docker exec "sbtm-postgres-1" psql -U postgres -d sbms -c "
   DELETE FROM fleet_assignments WHERE \"schoolId\" = '$SCHOOL_ID';
   DELETE FROM student_absences WHERE \"schoolId\" = '$SCHOOL_ID';
 " > /dev/null 2>&1 || true
