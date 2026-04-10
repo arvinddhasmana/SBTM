@@ -12,6 +12,7 @@ package-lock.json
 # Project Specific
 infra/osrm-data/
 *.log
+scripts/dynamic-config.json
 
 # Editor Specific
 .vscode/

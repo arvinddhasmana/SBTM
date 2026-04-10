@@ -14,12 +14,13 @@ OTTAWA_OSRM="$DATA_DIR/ottawa.osrm"
 
 echo -e "\033[36m--- SBTM OSRM Setup ---\033[0m"
 
-if [ ! -f "$OTTAWA_OSM" ]; then
+if [ ! -f "$OTTAWA_OSM" ] || [ "${FORCE_DOWNLOAD:-}" = "1" ]; then
     echo "Downloading Ottawa map data from Overpass..."
-    # Extremely small bbox to ensure success (covers both schools)
-    # Schools: (45.38, -75.69) and (45.39, -75.73)
-    # BBox: south=45.37, west=-75.74, north=45.41, east=-75.68
-    curl -L -o "$OTTAWA_OSM" "https://overpass-api.de/api/map?bbox=-75.74,45.37,-75.68,45.41"
+    # Wider bbox covering Ottawa south-west region for both demo areas:
+    # - Existing Greenfield demo:  (45.38, -75.69)
+    # - Dynamic simulation area:   ~(45.25-45.42, -75.91 to -75.67)
+    # BBox: south=45.24, west=-75.92, north=45.43, east=-75.66
+    curl -L -o "$OTTAWA_OSM" "https://overpass-api.de/api/map?bbox=-75.92,45.24,-75.66,45.43"
 fi
 
 echo "Processing OSRM data (this may take a few minutes)..."
