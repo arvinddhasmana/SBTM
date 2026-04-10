@@ -1,10 +1,10 @@
-import React, { useState, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Bus, Users, Bell, Route as RouteIcon, ShieldAlert, Info, Zap, MapPin } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Header, LoadingSpinner, FloatingPanel, PanelSearch } from '../components/common';
 import { LiveMap } from '../components/map';
-import { AlertList } from '../components/alerts';
+import { AlertList, AlertDetail } from '../components/alerts';
 import { PresenceList } from '../components/presence';
 import { RouteListCompact } from '../components/routes';
 import { alertsApi, routesApi, presenceApi, useMock } from '../services/api';
@@ -13,6 +13,7 @@ import { useAuth } from '../context/AuthContext';
 import type {
   Alert,
   AlertTier,
+  AlertAuditEntry,
   LiveLocation,
   StudentPresence,
   DashboardStats,
@@ -20,7 +21,15 @@ import type {
 } from '../types';
 
 /** Alert statuses that require admin action/input */
-const ACTIONABLE_STATUSES = new Set(['ACTIVE', 'PENDING_CONFIRMATION', 'AUTO_ESCALATED']);
+const ACTIONABLE_STATUSES = new Set([
+  'ACTIVE',
+  'PENDING_CONFIRMATION',
+  'AUTO_ESCALATED',
+  'CONFIRMED',
+]);
+
+/** Alert statuses that are terminal — should not appear on the Dashboard */
+const TERMINAL_STATUSES = new Set(['RESOLVED', 'FALSE_ALARM']);
 
 type DashboardMode = 'info' | 'action';
 
@@ -30,8 +39,19 @@ const Dashboard: React.FC = () => {
   const [routeSearch, setRouteSearch] = useState('');
   const [passengerSearch, setPassengerSearch] = useState('');
   const [alertTierFilter, setAlertTierFilter] = useState<AlertTier | ''>('');
+  const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null);
+  const [selectedAlertAudit, setSelectedAlertAudit] = useState<AlertAuditEntry[]>([]);
+  const [isResolving, setIsResolving] = useState(false);
+  const [isActing, setIsActing] = useState(false);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { user } = useAuth();
+
+  const canConfirm =
+    user?.role === 'SCHOOL_ADMIN' ||
+    user?.role === 'BOARD_ADMIN' ||
+    user?.role === 'OSTA_ADMIN' ||
+    user?.role === 'ADMIN';
 
   const { data: dashboardData, isLoading } = useQuery({
     queryKey: queryKeys.dashboard.all,
@@ -66,8 +86,10 @@ const Dashboard: React.FC = () => {
   // --- Mode-based filtering ---
   const { alerts, locations, routes, students } = useMemo(() => {
     if (mode === 'info') {
+      // Filter out terminal alerts — they should not clutter the operational view
+      const activeAlerts = allAlerts.filter((a) => !TERMINAL_STATUSES.has(a.status));
       return {
-        alerts: allAlerts,
+        alerts: activeAlerts,
         locations: allLocations,
         routes: allRoutes,
         students: allStudents,
@@ -124,6 +146,80 @@ const Dashboard: React.FC = () => {
     busesOnRoute: locations.length,
     totalStudents: students.length,
     activeAlerts: alerts.length,
+  };
+
+  // --- Alert detail overlay handlers ---
+  useEffect(() => {
+    if (selectedAlert) {
+      alertsApi
+        .getAlertAuditLog(selectedAlert.id)
+        .then(setSelectedAlertAudit)
+        .catch(() => setSelectedAlertAudit([]));
+    } else {
+      setSelectedAlertAudit([]);
+    }
+  }, [selectedAlert]);
+
+  const handleAlertAction = (alert: Alert) => {
+    setSelectedAlert(alert);
+  };
+
+  const handleResolve = async (id: string, notes?: string) => {
+    setIsResolving(true);
+    try {
+      await alertsApi.resolveAlert(id, notes, user?.id, user?.role);
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
+      setSelectedAlert(null);
+    } catch (error) {
+      console.error('Error resolving alert:', error);
+    } finally {
+      setIsResolving(false);
+    }
+  };
+
+  const handleConfirm = async (id: string) => {
+    setIsActing(true);
+    try {
+      await alertsApi.confirmAlert(id, user?.id, user?.role);
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
+      setSelectedAlert(null);
+    } catch (error) {
+      console.error('Error confirming alert:', error);
+    } finally {
+      setIsActing(false);
+    }
+  };
+
+  const handleFalseAlarm = async (id: string) => {
+    setIsActing(true);
+    try {
+      await alertsApi.falseAlarmAlert(id, undefined, user?.id, user?.role);
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
+      setSelectedAlert(null);
+    } catch (error) {
+      console.error('Error marking false alarm:', error);
+    } finally {
+      setIsActing(false);
+    }
+  };
+
+  const handleRequestInfo = async (id: string) => {
+    setIsActing(true);
+    try {
+      await alertsApi.requestInfoAlert(id, user?.id, user?.role);
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
+    } catch (error) {
+      console.error('Error requesting info:', error);
+    } finally {
+      setIsActing(false);
+    }
+  };
+
+  const handleAddStatusUpdate = async (id: string, notes: string) => {
+    await alertsApi.addStatusUpdate(id, notes, user?.id, user?.role);
+    queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
+    const updatedAudit = await alertsApi.getAlertAuditLog(id);
+    setSelectedAlertAudit(updatedAudit);
   };
 
   const handleSelection = async (routeId?: string) => {
@@ -307,6 +403,7 @@ const Dashboard: React.FC = () => {
               <AlertList
                 alerts={filteredAlerts}
                 onAlertClick={(alert) => handleSelection(alert.routeId)}
+                onAlertAction={handleAlertAction}
                 emptyMessage={mode === 'action' ? 'No actionable alerts' : 'No active alerts'}
               />
             </div>
@@ -425,6 +522,23 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Alert Detail Overlay (draggable, floating) */}
+      {selectedAlert && (
+        <AlertDetail
+          alert={selectedAlert}
+          variant="overlay"
+          onClose={() => setSelectedAlert(null)}
+          onResolve={handleResolve}
+          onConfirm={canConfirm ? handleConfirm : undefined}
+          onFalseAlarm={canConfirm ? handleFalseAlarm : undefined}
+          onRequestInfo={canConfirm ? handleRequestInfo : undefined}
+          onAddStatusUpdate={canConfirm ? handleAddStatusUpdate : undefined}
+          auditTrail={selectedAlertAudit}
+          isResolving={isResolving}
+          isActing={isActing}
+        />
+      )}
     </div>
   );
 };

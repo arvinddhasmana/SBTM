@@ -59,7 +59,7 @@ describe('AlertCard', () => {
     );
 
     const button = screen.getByRole('button');
-    expect(button.className).toContain('opacity-30');
+    expect(button.className).toContain('opacity-50');
   });
 
   it('calls onClick when clicked', () => {

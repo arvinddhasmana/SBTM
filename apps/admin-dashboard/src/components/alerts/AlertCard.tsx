@@ -8,12 +8,18 @@ import {
   Stethoscope,
   Clock,
   ShieldCheck,
+  Eye,
 } from 'lucide-react';
 import type { Alert } from '../../types';
 
 interface AlertCardProps {
   alert: Alert;
   onClick?: () => void;
+  onAction?: (alert: Alert) => void;
+  /** compact=true (default): mini card for dashboard panels. compact=false: full-width list row for Alerts page. */
+  compact?: boolean;
+  /** Human-readable route name to display in expanded mode. Falls back to routeId. */
+  routeName?: string;
 }
 
 const ALERT_DISPLAY: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
@@ -82,14 +88,14 @@ const DEFAULT_DESCRIPTIONS: Record<string, string> = {
   OTHER: 'Alert reported',
 };
 
-/** Tier badge: colour-coded with T1/T2/T3 label */
 const TIER_BADGE: Record<string, { label: string; className: string }> = {
   TIER_1: { label: 'T1', className: 'bg-red-500/20 text-red-400 border border-red-500/30' },
   TIER_2: { label: 'T2', className: 'bg-amber-500/20 text-amber-400 border border-amber-500/30' },
   TIER_3: { label: 'T3', className: 'bg-blue-500/20 text-blue-400 border border-blue-500/30' },
 };
 
-const STATUS_BADGE: Record<string, string> = {
+// Compact mode: only non-default statuses get a badge
+const COMPACT_STATUS_BADGE: Record<string, string> = {
   PENDING_CONFIRMATION:
     'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30 animate-pulse',
   AUTO_ESCALATED: 'bg-orange-500/20 text-orange-400 border border-orange-500/30',
@@ -97,7 +103,38 @@ const STATUS_BADGE: Record<string, string> = {
   FALSE_ALARM: 'bg-slate-500/20 text-slate-400 border border-slate-500/30',
 };
 
-const AlertCard: React.FC<AlertCardProps> = ({ alert, onClick }) => {
+// Expanded mode: every status has a badge
+const EXPANDED_STATUS_BADGE: Record<string, { label: string; className: string }> = {
+  ACTIVE: { label: 'Active', className: 'bg-red-500/20 text-red-400 border border-red-500/30' },
+  PENDING_CONFIRMATION: {
+    label: 'Awaiting Confirm',
+    className: 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30 animate-pulse',
+  },
+  CONFIRMED: {
+    label: 'Confirmed',
+    className: 'bg-green-500/20 text-green-400 border border-green-500/30',
+  },
+  AUTO_ESCALATED: {
+    label: 'Escalated',
+    className: 'bg-orange-500/20 text-orange-400 border border-orange-500/30',
+  },
+  RESOLVED: {
+    label: 'Resolved',
+    className: 'bg-green-500/20 text-green-400 border border-green-500/30',
+  },
+  FALSE_ALARM: {
+    label: 'False Alarm',
+    className: 'bg-slate-500/20 text-slate-400 border border-slate-500/30',
+  },
+};
+
+const AlertCard: React.FC<AlertCardProps> = ({
+  alert,
+  onClick,
+  onAction,
+  compact = true,
+  routeName,
+}) => {
   const display = ALERT_DISPLAY[alert.eventType] ?? ALERT_DISPLAY.OTHER;
   const isPanic = alert.eventType === 'PANIC_BUTTON' || alert.eventType === 'PANIC_ALERT';
   const isResolved = alert.status === 'RESOLVED' || alert.status === 'FALSE_ALARM';
@@ -117,13 +154,109 @@ const AlertCard: React.FC<AlertCardProps> = ({ alert, onClick }) => {
             : 'text-orange-400';
 
   const tierBadge = alert.tier ? TIER_BADGE[alert.tier] : null;
-  const statusBadge = STATUS_BADGE[alert.status];
+
+  if (!compact) {
+    // ── Expanded row (Alerts page) ──────────────────────────────────────────
+    const statusBadge = EXPANDED_STATUS_BADGE[alert.status];
+    const ts = new Date(alert.timestamp);
+    const dateStr = ts.toLocaleDateString([], { day: '2-digit', month: 'short', year: 'numeric' });
+    const timeStr = ts.toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
+    const displayRoute = routeName || alert.routeId;
+
+    return (
+      <button
+        onClick={onClick}
+        className={`w-full text-left p-3 rounded-xl border transition-all duration-200 group ${
+          isResolved
+            ? 'bg-dashboard-bg border-dashboard-border opacity-50 hover:opacity-70'
+            : 'bg-dashboard-bg border-dashboard-border hover:border-white/20 hover:bg-white/5'
+        } ${isPendingConfirmation ? 'ring-1 ring-yellow-500/40' : ''}`}
+      >
+        <div className="flex items-start gap-3">
+          {/* Icon */}
+          <div className={`p-2 rounded-xl border shrink-0 shadow-lg ${display.color}`}>
+            {display.icon}
+          </div>
+
+          {/* Main content */}
+          <div className="flex-1 min-w-0">
+            {/* Row 1: type label + badges */}
+            <div className="flex items-center gap-2 flex-wrap mb-1">
+              <span className={`text-xs font-black uppercase tracking-widest ${labelColor}`}>
+                {display.label}
+              </span>
+              {tierBadge && (
+                <span
+                  className={`px-1.5 py-0.5 rounded text-[10px] font-black uppercase ${tierBadge.className}`}
+                >
+                  {tierBadge.label}
+                </span>
+              )}
+              {statusBadge && (
+                <span
+                  className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${statusBadge.className}`}
+                >
+                  {statusBadge.label}
+                </span>
+              )}
+            </div>
+
+            {/* Row 2: description */}
+            <p className="text-sm text-white font-medium line-clamp-2 leading-snug mb-2">
+              {alert.description || DEFAULT_DESCRIPTIONS[alert.eventType] || 'Alert'}
+            </p>
+
+            {/* Row 3: route / vehicle / time */}
+            <div className="flex items-center gap-4 flex-wrap text-xs text-slate-400">
+              <span className="flex items-center gap-1.5">
+                <RouteIcon size={11} className="text-slate-500 shrink-0" />
+                <span className="font-medium text-slate-300 truncate max-w-[160px]">
+                  {displayRoute}
+                </span>
+              </span>
+              <span className="flex items-center gap-1.5">
+                <Bus size={11} className="text-slate-500 shrink-0" />
+                <span>{alert.vehicleId}</span>
+              </span>
+              <span className="flex items-center gap-1.5 ml-auto">
+                <Clock size={11} className="text-slate-500 shrink-0" />
+                <span className="tabular-nums text-slate-400">
+                  {dateStr} · {timeStr}
+                </span>
+              </span>
+            </div>
+          </div>
+
+          {/* Action button */}
+          {onAction && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onAction(alert);
+              }}
+              title="View details"
+              className="p-1.5 rounded-lg hover:bg-white/10 text-blue-400 hover:text-blue-300 transition-colors opacity-0 group-hover:opacity-100 shrink-0"
+            >
+              <Eye size={14} />
+            </button>
+          )}
+        </div>
+      </button>
+    );
+  }
+
+  // ── Compact row (Dashboard floating panel) ──────────────────────────────
+  const compactStatusBadge = COMPACT_STATUS_BADGE[alert.status];
 
   return (
     <button
       onClick={onClick}
       className={`w-full text-left glass-item p-2 rounded-lg group transition-all duration-300 ${
-        isResolved ? 'opacity-30' : 'hover:bg-white/5'
+        isResolved ? 'opacity-50' : 'hover:bg-white/5'
       } ${isPendingConfirmation ? 'ring-1 ring-yellow-500/40' : ''}`}
     >
       <div className="flex items-start gap-2.5">
@@ -137,7 +270,6 @@ const AlertCard: React.FC<AlertCardProps> = ({ alert, onClick }) => {
               {display.label}
             </span>
             <div className="flex items-center gap-1">
-              {/* Tier badge */}
               {tierBadge && (
                 <span
                   className={`px-1 py-0.5 rounded text-[7px] font-black uppercase ${tierBadge.className}`}
@@ -145,10 +277,9 @@ const AlertCard: React.FC<AlertCardProps> = ({ alert, onClick }) => {
                   {tierBadge.label}
                 </span>
               )}
-              {/* Status badge for non-standard statuses */}
-              {statusBadge && (
+              {compactStatusBadge && (
                 <span
-                  className={`px-1 py-0.5 rounded text-[7px] font-black uppercase ${statusBadge}`}
+                  className={`px-1 py-0.5 rounded text-[7px] font-black uppercase ${compactStatusBadge}`}
                 >
                   {alert.status.replace(/_/g, ' ')}
                 </span>
@@ -169,12 +300,26 @@ const AlertCard: React.FC<AlertCardProps> = ({ alert, onClick }) => {
               <Bus size={8} />
               <span className="text-slate-400">{alert.vehicleId}</span>
             </div>
-            <span className="text-slate-500 tabular-nums">
-              {new Date(alert.timestamp).toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
-            </span>
+            <div className="flex items-center gap-1.5">
+              {onAction && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onAction(alert);
+                  }}
+                  title="View details"
+                  className="p-0.5 rounded hover:bg-white/10 text-blue-400 hover:text-blue-300 transition-colors opacity-0 group-hover:opacity-100"
+                >
+                  <Eye size={10} />
+                </button>
+              )}
+              <span className="text-slate-500 tabular-nums">
+                {new Date(alert.timestamp).toLocaleTimeString([], {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </span>
+            </div>
           </div>
         </div>
       </div>

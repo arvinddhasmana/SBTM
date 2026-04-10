@@ -67,7 +67,31 @@ describe('alertsApi', () => {
       const result = await alertsApi.resolveAlert('alert-1');
 
       expect(result.status).toBe('RESOLVED');
-      expect(apiClient.patch).toHaveBeenCalledWith('/api/v1/alerts/alert-1/resolve');
+      expect(apiClient.patch).toHaveBeenCalledWith('/api/v1/alerts/alert-1/resolve', {
+        notes: undefined,
+        actorUserId: undefined,
+        actorRole: undefined,
+      });
+    });
+
+    it('should resolve an alert with notes and actor context', async () => {
+      const mockResolvedAlert = { id: 'alert-1', status: 'RESOLVED' };
+
+      vi.mocked(apiClient.patch).mockResolvedValueOnce({ data: mockResolvedAlert });
+
+      const result = await alertsApi.resolveAlert(
+        'alert-1',
+        'Incident resolved on scene',
+        'admin-001',
+        'SCHOOL_ADMIN',
+      );
+
+      expect(result.status).toBe('RESOLVED');
+      expect(apiClient.patch).toHaveBeenCalledWith('/api/v1/alerts/alert-1/resolve', {
+        notes: 'Incident resolved on scene',
+        actorUserId: 'admin-001',
+        actorRole: 'SCHOOL_ADMIN',
+      });
     });
   });
 
@@ -159,7 +183,34 @@ describe('alertsApi', () => {
       const result = await alertsApi.getAlertAuditLog('alert-1');
 
       expect(result).toHaveLength(2);
-      expect(apiClient.get).toHaveBeenCalledWith('/api/v1/alerts/audit/alert-1');
+      expect(apiClient.get).toHaveBeenCalledWith('/api/v1/alerts/alert-1/audit-trail');
+    });
+  });
+
+  describe('addStatusUpdate', () => {
+    it('should add a status update to an alert', async () => {
+      const mockEntry = {
+        id: 'entry-1',
+        alertId: 'alert-1',
+        eventType: 'STATUS_UPDATE',
+        notes: 'Police arrived',
+      };
+
+      vi.mocked(apiClient.patch).mockResolvedValueOnce({ data: mockEntry });
+
+      const result = await alertsApi.addStatusUpdate(
+        'alert-1',
+        'Police arrived',
+        'admin-001',
+        'SCHOOL_ADMIN',
+      );
+
+      expect(result).toEqual(mockEntry);
+      expect(apiClient.patch).toHaveBeenCalledWith('/api/v1/alerts/alert-1/status-update', {
+        notes: 'Police arrived',
+        actorUserId: 'admin-001',
+        actorRole: 'SCHOOL_ADMIN',
+      });
     });
   });
 });

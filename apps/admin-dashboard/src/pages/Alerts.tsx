@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Filter } from 'lucide-react';
 import { Header, Card, LoadingSpinner } from '../components/common';
 import { AlertList, AlertDetail, AlertConfirmationModal } from '../components/alerts';
-import { alertsApi } from '../services/api';
+import { alertsApi, routesApi } from '../services/api';
 import { queryKeys } from '../services/query-keys';
 import { useAuth } from '../context/AuthContext';
-import type { Alert } from '../types';
+import type { Alert, AlertAuditEntry } from '../types';
 
-type FilterOption = 'all' | 'active' | 'pending' | 'resolved';
+type FilterOption = 'all' | 'active' | 'pending' | 'confirmed' | 'resolved';
 type TierFilter = 'all' | 'TIER_1' | 'TIER_2' | 'TIER_3';
 
 const TIER_TABS: { value: TierFilter; label: string; color: string }[] = [
@@ -27,11 +27,24 @@ const Alerts: React.FC = () => {
   const [tierFilter, setTierFilter] = useState<TierFilter>('all');
   const [isResolving, setIsResolving] = useState(false);
   const [isActing, setIsActing] = useState(false);
+  const [selectedAlertAudit, setSelectedAlertAudit] = useState<AlertAuditEntry[]>([]);
 
   const { data: alerts = [], isLoading } = useQuery({
     queryKey: queryKeys.alerts.all,
     queryFn: () => alertsApi.getAllAlerts(),
   });
+
+  const { data: routes = [] } = useQuery({
+    queryKey: queryKeys.routes.all,
+    queryFn: () => routesApi.getAllRoutes(),
+    staleTime: 60_000,
+  });
+
+  const routeNames = useMemo<Record<string, string>>(() => {
+    const map: Record<string, string> = {};
+    for (const r of routes) map[r.id] = r.name;
+    return map;
+  }, [routes]);
 
   // Auto-surface the first PENDING_CONFIRMATION alert for admins who can act on it.
   const pendingAlerts = alerts.filter((a) => a.status === 'PENDING_CONFIRMATION');
@@ -41,10 +54,22 @@ const Alerts: React.FC = () => {
     user?.role === 'OSTA_ADMIN' ||
     user?.role === 'ADMIN';
 
-  const handleResolve = async (id: string) => {
+  // Fetch audit trail when an alert is selected
+  useEffect(() => {
+    if (selectedAlert) {
+      alertsApi
+        .getAlertAuditLog(selectedAlert.id)
+        .then(setSelectedAlertAudit)
+        .catch(() => setSelectedAlertAudit([]));
+    } else {
+      setSelectedAlertAudit([]);
+    }
+  }, [selectedAlert]);
+
+  const handleResolve = async (id: string, notes?: string) => {
     setIsResolving(true);
     try {
-      await alertsApi.resolveAlert(id);
+      await alertsApi.resolveAlert(id, notes, user?.id, user?.role);
       queryClient.invalidateQueries({ queryKey: queryKeys.alerts.all });
       setSelectedAlert(null);
     } catch (error) {
@@ -94,6 +119,14 @@ const Alerts: React.FC = () => {
     }
   };
 
+  const handleAddStatusUpdate = async (id: string, notes: string) => {
+    await alertsApi.addStatusUpdate(id, notes, user?.id, user?.role);
+    queryClient.invalidateQueries({ queryKey: queryKeys.alerts.all });
+    // Refresh audit trail
+    const updatedAudit = await alertsApi.getAlertAuditLog(id);
+    setSelectedAlertAudit(updatedAudit);
+  };
+
   const handleAlertClick = (alert: Alert) => {
     if (alert.status === 'PENDING_CONFIRMATION' && canConfirm) {
       setConfirmationAlert(alert);
@@ -109,6 +142,8 @@ const Alerts: React.FC = () => {
     if (filter === 'active') return alert.status === 'ACTIVE';
     if (filter === 'resolved') return alert.status === 'RESOLVED' || alert.status === 'FALSE_ALARM';
     if (filter === 'pending') return alert.status === 'PENDING_CONFIRMATION';
+    if (filter === 'confirmed')
+      return alert.status === 'CONFIRMED' || alert.status === 'AUTO_ESCALATED';
     return true;
   });
 
@@ -117,6 +152,9 @@ const Alerts: React.FC = () => {
     (a) => a.status === 'RESOLVED' || a.status === 'FALSE_ALARM',
   ).length;
   const pendingCount = pendingAlerts.length;
+  const confirmedCount = alerts.filter(
+    (a) => a.status === 'CONFIRMED' || a.status === 'AUTO_ESCALATED',
+  ).length;
 
   if (isLoading) {
     return (
@@ -133,7 +171,7 @@ const Alerts: React.FC = () => {
     <>
       <Header
         title="Alerts Management"
-        subtitle={`${activeCount} active alert${activeCount !== 1 ? 's' : ''}${pendingCount > 0 ? ` · ${pendingCount} awaiting confirmation` : ''}`}
+        subtitle={`${activeCount} active alert${activeCount !== 1 ? 's' : ''}${pendingCount > 0 ? ` · ${pendingCount} awaiting confirmation` : ''}${confirmedCount > 0 ? ` · ${confirmedCount} in progress` : ''}`}
       />
 
       <div className="p-6 space-y-6">
@@ -181,6 +219,16 @@ const Alerts: React.FC = () => {
                 </button>
               )}
               <button
+                onClick={() => setFilter('confirmed')}
+                className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+                  filter === 'confirmed'
+                    ? 'bg-emerald-500 text-white'
+                    : 'bg-dashboard-bg text-slate-400 hover:text-white'
+                }`}
+              >
+                In Progress ({confirmedCount})
+              </button>
+              <button
                 onClick={() => setFilter('resolved')}
                 className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
                   filter === 'resolved'
@@ -216,6 +264,8 @@ const Alerts: React.FC = () => {
           <AlertList
             alerts={filteredAlerts}
             onAlertClick={handleAlertClick}
+            compact={false}
+            routeNames={routeNames}
             emptyMessage={`No ${filter === 'all' ? '' : filter + ' '}alerts found`}
           />
         </Card>
@@ -241,6 +291,8 @@ const Alerts: React.FC = () => {
           onConfirm={canConfirm ? handleConfirm : undefined}
           onFalseAlarm={canConfirm ? handleFalseAlarm : undefined}
           onRequestInfo={canConfirm ? handleRequestInfo : undefined}
+          onAddStatusUpdate={canConfirm ? handleAddStatusUpdate : undefined}
+          auditTrail={selectedAlertAudit}
           isResolving={isResolving}
           isActing={isActing}
         />

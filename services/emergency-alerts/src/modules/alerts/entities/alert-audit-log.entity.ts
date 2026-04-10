@@ -16,6 +16,7 @@ export enum AlertAuditEventType {
   OSTA_ESCALATED = 'OSTA_ESCALATED',
   RESOLVED = 'RESOLVED',
   INFO_REQUESTED = 'INFO_REQUESTED',
+  STATUS_UPDATE = 'STATUS_UPDATE',
 }
 
 @Entity()

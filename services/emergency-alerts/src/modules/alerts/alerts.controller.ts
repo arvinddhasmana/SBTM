@@ -13,6 +13,8 @@ import { CreateEmergencyEventDto } from './dto/create-emergency-event.dto';
 import { ConfirmAlertDto } from './dto/confirm-alert.dto';
 import { FalseAlarmDto } from './dto/false-alarm.dto';
 import { RequestInfoDto } from './dto/request-info.dto';
+import { StatusUpdateDto } from './dto/status-update.dto';
+import { ResolveAlertDto } from './dto/resolve-alert.dto';
 import { InternalServiceAuthGuard } from '@sbtm/common';
 
 @Controller('api/v1')
@@ -47,8 +49,16 @@ export class AlertsController {
   }
 
   @Patch('alerts/:alertId/resolve')
-  async resolve(@Param('alertId') alertId: string) {
-    return this.alertsService.resolve(alertId);
+  async resolve(
+    @Param('alertId') alertId: string,
+    @Body() dto: ResolveAlertDto,
+  ) {
+    return this.alertsService.resolve(
+      alertId,
+      dto.actorUserId,
+      dto.actorRole,
+      dto.notes,
+    );
   }
 
   /**
@@ -92,6 +102,23 @@ export class AlertsController {
   ) {
     return this.alertsService.requestInfo(
       alertId,
+      dto.actorUserId,
+      dto.actorRole,
+    );
+  }
+
+  /**
+   * PATCH /api/v1/alerts/:alertId/status-update
+   * Add a status update (notes) to an active alert.
+   */
+  @Patch('alerts/:alertId/status-update')
+  async addStatusUpdate(
+    @Param('alertId') alertId: string,
+    @Body() dto: StatusUpdateDto,
+  ) {
+    return this.alertsService.addStatusUpdate(
+      alertId,
+      dto.notes,
       dto.actorUserId,
       dto.actorRole,
     );

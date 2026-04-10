@@ -51,9 +51,17 @@ export class AlertsController {
 
   @Patch('alerts/:id/resolve')
   @Roles(Role.OSTA_ADMIN, Role.ADMIN, Role.SCHOOL_ADMIN)
-  async resolveAlert(@Param('id') id: string, @Request() req: { user: any }) {
+  async resolveAlert(
+    @Param('id') id: string,
+    @Request() req: { user: any },
+    @Body() body: { notes?: string; actorUserId?: string; actorRole?: string },
+  ) {
     await this.assertAlertOwnership(id, req.user);
-    return this.alertsGatewayService.resolveAlert(id);
+    return this.alertsGatewayService.resolveAlert(id, {
+      notes: body.notes,
+      actorUserId: body.actorUserId || req.user.id,
+      actorRole: body.actorRole || req.user.role,
+    });
   }
 
   @Patch('alerts/:id/confirm')
@@ -94,6 +102,21 @@ export class AlertsController {
   ) {
     await this.assertAlertOwnership(id, req.user);
     return this.alertsGatewayService.requestInfoAlert(id, {
+      actorUserId: body.actorUserId || req.user.id,
+      actorRole: body.actorRole || req.user.role,
+    });
+  }
+
+  @Patch('alerts/:id/status-update')
+  @Roles(Role.OSTA_ADMIN, Role.ADMIN, Role.SCHOOL_ADMIN, Role.BOARD_ADMIN)
+  async addStatusUpdate(
+    @Param('id') id: string,
+    @Request() req: { user: any },
+    @Body() body: { notes: string; actorUserId?: string; actorRole?: string },
+  ) {
+    await this.assertAlertOwnership(id, req.user);
+    return this.alertsGatewayService.addStatusUpdate(id, {
+      notes: body.notes,
       actorUserId: body.actorUserId || req.user.id,
       actorRole: body.actorRole || req.user.role,
     });

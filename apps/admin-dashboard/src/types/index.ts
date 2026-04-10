@@ -21,10 +21,23 @@ export type AlertStatus =
 
 export type AlertTier = 'TIER_1' | 'TIER_2' | 'TIER_3';
 
+export type AlertAuditEventType =
+  | 'CREATED'
+  | 'PENDING_CONFIRMATION'
+  | 'CONFIRMED'
+  | 'AUTO_ESCALATED'
+  | 'FALSE_ALARM'
+  | 'PARENT_NOTIFIED'
+  | 'BOARD_ESCALATED'
+  | 'OSTA_ESCALATED'
+  | 'RESOLVED'
+  | 'INFO_REQUESTED'
+  | 'STATUS_UPDATE';
+
 export interface AlertAuditEntry {
   id: string;
   alertId: string;
-  eventType: string;
+  eventType: AlertAuditEventType;
   actorUserId: string | null;
   actorRole: string | null;
   notes: string | null;

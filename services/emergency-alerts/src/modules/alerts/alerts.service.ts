@@ -1,4 +1,9 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import {
@@ -253,11 +258,13 @@ export class AlertsService {
   }
 
   async findAllActive(schoolId?: string): Promise<EmergencyAlert[]> {
-    // Include PENDING_CONFIRMATION alerts — they are operationally "active"
-    // and must be visible to admins for confirmation action.
+    // Include PENDING_CONFIRMATION, CONFIRMED, and AUTO_ESCALATED alerts —
+    // they are operationally "active" and must be visible to admins.
     const statuses = [
       EmergencyAlertStatus.ACTIVE,
       EmergencyAlertStatus.PENDING_CONFIRMATION,
+      EmergencyAlertStatus.CONFIRMED,
+      EmergencyAlertStatus.AUTO_ESCALATED,
     ];
     if (schoolId) {
       return this.alertsRepo
@@ -274,7 +281,12 @@ export class AlertsService {
       .getMany();
   }
 
-  async resolve(id: string): Promise<EmergencyAlert> {
+  async resolve(
+    id: string,
+    actorUserId?: string,
+    actorRole?: string,
+    notes?: string,
+  ): Promise<EmergencyAlert> {
     const alert = await this.alertsRepo.findOneBy({ id });
     if (!alert) {
       throw new NotFoundException(`Alert ${id} not found`);
@@ -282,7 +294,11 @@ export class AlertsService {
     alert.status = EmergencyAlertStatus.RESOLVED;
     const resolved = await this.alertsRepo.save(alert);
 
-    await this.writeAuditLog(id, AlertAuditEventType.RESOLVED);
+    await this.writeAuditLog(id, AlertAuditEventType.RESOLVED, {
+      actorUserId,
+      actorRole,
+      notes,
+    });
 
     // Broadcast resolution via SSE/WebSocket so clients get real-time updates.
     this.wsGateway.broadcastAlert(resolved);
@@ -337,6 +353,42 @@ export class AlertsService {
     });
   }
 
+  /**
+   * Add a status update to an active alert (CONFIRMED, ACTIVE, or AUTO_ESCALATED).
+   * Records a STATUS_UPDATE audit entry with the provided notes.
+   */
+  async addStatusUpdate(
+    alertId: string,
+    notes: string,
+    actorUserId?: string,
+    actorRole?: string,
+  ): Promise<AlertAuditLog> {
+    const alert = await this.alertsRepo.findOneBy({ id: alertId });
+    if (!alert) {
+      throw new NotFoundException(`Alert ${alertId} not found`);
+    }
+
+    const updatableStatuses = [
+      EmergencyAlertStatus.ACTIVE,
+      EmergencyAlertStatus.CONFIRMED,
+      EmergencyAlertStatus.AUTO_ESCALATED,
+    ];
+    if (!updatableStatuses.includes(alert.status)) {
+      throw new BadRequestException(
+        `Cannot add status update to alert in ${alert.status} state`,
+      );
+    }
+
+    const entry = await this.writeAuditLog(
+      alertId,
+      AlertAuditEventType.STATUS_UPDATE,
+      { actorUserId, actorRole, notes },
+    );
+
+    this.wsGateway.broadcastAlert(alert);
+    return entry;
+  }
+
   // ---------------------------------------------------------------------------
   // Private helpers
   // ---------------------------------------------------------------------------
@@ -350,7 +402,7 @@ export class AlertsService {
       notes?: string;
       escalationLevel?: string;
     } = {},
-  ): Promise<void> {
+  ): Promise<AlertAuditLog> {
     const entry = this.auditLogRepo.create({
       alertId,
       eventType,
@@ -359,6 +411,6 @@ export class AlertsService {
       notes: opts.notes ?? null,
       escalationLevel: opts.escalationLevel ?? null,
     });
-    await this.auditLogRepo.save(entry);
+    return this.auditLogRepo.save(entry);
   }
 }

@@ -39,13 +39,37 @@ vi.mock('../services/api', () => ({
         vehicleId: 'bus-3',
         description: 'Late arrival',
       },
+      {
+        id: 'alert-4',
+        eventType: 'INCIDENT',
+        status: 'CONFIRMED',
+        tier: 'TIER_1',
+        timestamp: new Date().toISOString(),
+        routeId: 'route-4',
+        vehicleId: 'bus-4',
+        description: 'Confirmed incident',
+        confirmedAt: new Date().toISOString(),
+      },
     ]),
-    resolveAlert: vi.fn().mockImplementation((id) => Promise.resolve({ id, status: 'RESOLVED' })),
+    resolveAlert: vi
+      .fn()
+      .mockImplementation((id, _notes, _actor, _role) =>
+        Promise.resolve({ id, status: 'RESOLVED' }),
+      ),
     confirmAlert: vi.fn().mockImplementation((id) => Promise.resolve({ id, status: 'CONFIRMED' })),
     falseAlarmAlert: vi
       .fn()
       .mockImplementation((id) => Promise.resolve({ id, status: 'FALSE_ALARM' })),
     requestInfoAlert: vi.fn().mockImplementation((id) => Promise.resolve({ id, status: 'ACTIVE' })),
+    addStatusUpdate: vi.fn().mockImplementation((id, notes) =>
+      Promise.resolve({
+        id: 'audit-new',
+        alertId: id,
+        eventType: 'STATUS_UPDATE',
+        notes,
+        eventTimestamp: new Date().toISOString(),
+      }),
+    ),
     getAlertAuditLog: vi.fn().mockResolvedValue([]),
   },
 }));
@@ -108,6 +132,17 @@ describe('Alerts Page', () => {
         expect(
           screen.getByRole('button', { name: /Informational \(Tier 3\)/i }),
         ).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
+  }, 10000);
+
+  it('renders In Progress filter button with confirmed count', async () => {
+    renderAlerts();
+
+    await waitFor(
+      () => {
+        expect(screen.getByRole('button', { name: /In Progress/i })).toBeInTheDocument();
       },
       { timeout: 5000 },
     );

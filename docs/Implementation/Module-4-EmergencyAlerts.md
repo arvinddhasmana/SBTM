@@ -1,6 +1,6 @@
 # Module 4 - Emergency Alerts Service
 
-- Last reviewed: 2026-03-30
+- Last reviewed: 2026-04-09
 
 ## Status
 
@@ -30,24 +30,44 @@ Implemented and running in Docker Compose.
 
 ## APIs
 
-- `POST /api/v1/emergency-events`
-- `GET /api/v1/alerts/active`
-- `GET /api/v1/alerts/:alertId`
-- `GET /api/v1/alerts/parent-view/:routeId`
+- `POST /api/v1/emergency-events` — create a new emergency event
+- `GET /api/v1/alerts` — list all alerts (with optional `schoolId` filter)
+- `GET /api/v1/alerts/active` — list operationally active alerts (ACTIVE, PENDING_CONFIRMATION, CONFIRMED, AUTO_ESCALATED)
+- `GET /api/v1/alerts/:alertId` — get a single alert
+- `GET /api/v1/alerts/parent-view/:routeId` — parent-facing alert view for a route
+- `GET /api/v1/alerts/by-routes?routeIds=...` — batch lookup by route IDs
+- `GET /api/v1/alerts/audit/:alertId` — full lifecycle audit trail for an alert
+- `PATCH /api/v1/alerts/:alertId/confirm` — confirm a Tier 1 alert (triggers parent notification)
+- `PATCH /api/v1/alerts/:alertId/false-alarm` — mark as false alarm (suppresses parent notification)
+- `PATCH /api/v1/alerts/:alertId/request-info` — request more information (escalation timers continue)
+- `PATCH /api/v1/alerts/:alertId/status-update` — add a status update with notes to an active alert
+- `PATCH /api/v1/alerts/:alertId/resolve` — resolve an alert (accepts optional notes, actorUserId, actorRole)
 
 ## Data Model
 
-- `emergency_alerts`: route/vehicle/driver, location, status
-- `alert_notification_logs`
+- `emergency_alerts`: route/vehicle/driver, location, status, tier, escalation level, confirmation details
+- `alert_audit_logs`: full lifecycle audit trail (events: CREATED, PENDING_CONFIRMATION, CONFIRMED, AUTO_ESCALATED, FALSE_ALARM, PARENT_NOTIFIED, BOARD_ESCALATED, OSTA_ESCALATED, RESOLVED, INFO_REQUESTED, STATUS_UPDATE)
+- `alert_notification_logs`: notification delivery records per channel
+
+## Alert Lifecycle
+
+```
+PENDING_CONFIRMATION → CONFIRMED → RESOLVED
+PENDING_CONFIRMATION → FALSE_ALARM
+PENDING_CONFIRMATION → AUTO_ESCALATED → RESOLVED
+ACTIVE → RESOLVED
+```
+
+- **CONFIRMED**: Active working state. Admins can add status updates (notes) and eventually resolve with resolution notes.
+- **RESOLVED / FALSE_ALARM**: Terminal states. Removed from Dashboard, still accessible on the full Alerts page.
 
 ## Integration Notes
 
-- API gateway proxies alert endpoints.
+- API gateway proxies alert endpoints with RBAC enforcement.
 - Admin dashboard consumes alerts via gateway APIs.
+- Dashboard (Info and Action mode) filters out terminal alerts (RESOLVED, FALSE_ALARM) and their associated routes, buses, and students.
 
 ## Gaps / Next Steps
 
-- Parent/driver notification integration
-- Service-to-service authentication
-- Tenant-aware filtering is enforced by `school_id`
-- Queue consumers and provider-backed delivery are still incomplete.
+- Parent/driver notification delivery via push/SMS providers
+- Queue consumers and provider-backed delivery are still incomplete

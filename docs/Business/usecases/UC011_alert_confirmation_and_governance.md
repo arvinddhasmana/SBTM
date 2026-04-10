@@ -83,25 +83,40 @@ If alert remains unacknowledged by any admin:
 
 After the emergency is handled:
 
-12. School Admin selects "Resolve Alert" and enters resolution notes.
-13. System updates alert status to RESOLVED.
-14. System sends notification to parents: "Alert resolved. [Summary of resolution]."
-15. System prompts School Admin to generate an incident report (optional).
-16. If incident report is generated, Board Admin is notified for review and sign-off.
+12. School Admin can add status updates (notes) to the confirmed alert at any time during active incident management. Each update is timestamped and recorded in the audit trail.
+13. School Admin selects "Resolve Incident" and enters resolution notes.
+14. System updates alert status to RESOLVED.
+15. System sends notification to parents: "Alert resolved. [Summary of resolution]."
+16. System prompts School Admin to generate an incident report (optional).
+17. If incident report is generated, Board Admin is notified for review and sign-off.
+18. RESOLVED and FALSE_ALARM alerts are removed from the Dashboard view (both Info and Action modes), along with their associated routes, buses, and boarded students.
+
+## Alternative Flows
+
+### Status Update (During Active Incident)
+
+After step 8 (CONFIRMED):
+9b. School Admin selects "Add Status Update" and enters operational notes (e.g., "Police on scene", "Replacement bus dispatched").
+10b. System records the status update in the audit trail with timestamp, actor, and notes.
+11b. System broadcasts the update to connected admin dashboard clients via WebSocket.
+12b. Return to active incident view — admin can continue adding updates or resolve.
 
 ## Post-Conditions
 
 - Alert is in CONFIRMED, FALSE_ALARM, or RESOLVED state
 - All notification deliveries are logged with status
-- Audit trail contains the complete alert lifecycle
+- Audit trail contains the complete alert lifecycle including any status updates
 - Parents received (or did not receive, for false alarms) appropriate notifications
+- Resolved/false alarm alerts are no longer visible on the operational Dashboard
 
 ## Current-State Notes
 
-- Emergency alerts currently broadcast immediately to all connected WebSocket/SSE clients without confirmation
-- No distinction between Tier 1/2/3 alerts
-- No confirmation modal in admin UI
-- No auto-escalation or timeout mechanism
+- Tier 1/2/3 alert classification implemented with auto-escalation chain
+- Confirmation modal with countdown timer in admin dashboard
+- Status update capability for CONFIRMED/ACTIVE/AUTO_ESCALATED alerts
+- Resolve-with-notes endpoint for recording resolution details
+- Dashboard filters out terminal alerts (RESOLVED, FALSE_ALARM) in both modes
+- Audit trail records full lifecycle including STATUS_UPDATE events
 - Parent notification delivery (push/SMS) is not yet implemented
 
 ## v4 References

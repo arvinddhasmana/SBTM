@@ -17,8 +17,17 @@ export const alertsApi = {
     return response.data;
   },
 
-  async resolveAlert(id: string): Promise<Alert> {
-    const response = await apiClient.patch<Alert>(`/api/v1/alerts/${id}/resolve`);
+  async resolveAlert(
+    id: string,
+    notes?: string,
+    actorUserId?: string,
+    actorRole?: string,
+  ): Promise<Alert> {
+    const response = await apiClient.patch<Alert>(`/api/v1/alerts/${id}/resolve`, {
+      notes,
+      actorUserId,
+      actorRole,
+    });
     return response.data;
   },
 
@@ -63,11 +72,28 @@ export const alertsApi = {
   },
 
   /**
+   * Add a status update (notes) to an active alert.
+   */
+  async addStatusUpdate(
+    id: string,
+    notes: string,
+    actorUserId?: string,
+    actorRole?: string,
+  ): Promise<AlertAuditEntry> {
+    const response = await apiClient.patch<AlertAuditEntry>(`/api/v1/alerts/${id}/status-update`, {
+      notes,
+      actorUserId,
+      actorRole,
+    });
+    return response.data;
+  },
+
+  /**
    * Retrieve the full audit trail for a given alert.
    * Returns IDs and event metadata only — no T4 PII.
    */
   async getAlertAuditLog(id: string): Promise<AlertAuditEntry[]> {
-    const response = await apiClient.get<AlertAuditEntry[]>(`/api/v1/alerts/audit/${id}`);
+    const response = await apiClient.get<AlertAuditEntry[]>(`/api/v1/alerts/${id}/audit-trail`);
     return response.data;
   },
 };

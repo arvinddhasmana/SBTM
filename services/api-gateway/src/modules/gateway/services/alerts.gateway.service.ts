@@ -61,9 +61,16 @@ export class AlertsGatewayService {
     return this.httpClient.get<AlertDto[]>(url, { params });
   }
 
-  async resolveAlert(id: string): Promise<AlertDto> {
+  async resolveAlert(
+    id: string,
+    body: {
+      notes?: string;
+      actorUserId?: string;
+      actorRole?: string;
+    } = {},
+  ): Promise<AlertDto> {
     const url = `${this.alertsServiceUrl}/api/v1/alerts/${id}/resolve`;
-    return this.httpClient.patch<AlertDto>(url, {});
+    return this.httpClient.patch<AlertDto>(url, body);
   }
 
   async getAlertsForRoute(routeId: string): Promise<any> {
@@ -112,6 +119,14 @@ export class AlertsGatewayService {
   ): Promise<AlertDto> {
     const url = `${this.alertsServiceUrl}/api/v1/alerts/${id}/request-info`;
     return this.httpClient.patch<AlertDto>(url, body);
+  }
+
+  async addStatusUpdate(
+    id: string,
+    body: { notes: string; actorUserId?: string; actorRole?: string },
+  ): Promise<any> {
+    const url = `${this.alertsServiceUrl}/api/v1/alerts/${id}/status-update`;
+    return this.httpClient.patch<any>(url, body);
   }
 
   async getAuditTrail(alertId: string): Promise<any[]> {

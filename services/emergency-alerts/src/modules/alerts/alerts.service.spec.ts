@@ -296,11 +296,134 @@ describe('AlertsService', () => {
       expect(mockAuditLogRepository.save).toHaveBeenCalled();
     });
 
+    it('should forward notes, actorUserId, actorRole to audit log', async () => {
+      const existingAlert = {
+        id: 'alert-005',
+        status: EmergencyAlertStatus.CONFIRMED,
+      };
+      mockAlertRepository.findOneBy.mockResolvedValueOnce(existingAlert);
+      mockAlertRepository.save.mockResolvedValueOnce({
+        ...existingAlert,
+        status: EmergencyAlertStatus.RESOLVED,
+      });
+
+      await service.resolve(
+        'alert-005',
+        'admin-001',
+        'SCHOOL_ADMIN',
+        'Incident resolved on scene',
+      );
+
+      expect(mockAuditLogRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          alertId: 'alert-005',
+          actorUserId: 'admin-001',
+          actorRole: 'SCHOOL_ADMIN',
+          notes: 'Incident resolved on scene',
+        }),
+      );
+    });
+
     it('should throw NotFoundException when alert is not found', async () => {
       mockAlertRepository.findOneBy.mockResolvedValueOnce(null);
 
       await expect(service.resolve('nonexistent-id')).rejects.toThrow(
         'Alert nonexistent-id not found',
+      );
+    });
+  });
+
+  describe('addStatusUpdate()', () => {
+    it('should add a status update to a CONFIRMED alert', async () => {
+      const existingAlert = {
+        id: 'alert-006',
+        status: EmergencyAlertStatus.CONFIRMED,
+        routeId: 'r-001',
+      };
+      mockAlertRepository.findOneBy.mockResolvedValueOnce(existingAlert);
+
+      const result = await service.addStatusUpdate(
+        'alert-006',
+        'Police on scene',
+        'admin-001',
+        'SCHOOL_ADMIN',
+      );
+
+      expect(result).toBeDefined();
+      expect(mockAuditLogRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          alertId: 'alert-006',
+          notes: 'Police on scene',
+          actorUserId: 'admin-001',
+          actorRole: 'SCHOOL_ADMIN',
+        }),
+      );
+      expect(mockGateway.broadcastAlert).toHaveBeenCalledWith(existingAlert);
+    });
+
+    it('should add a status update to an ACTIVE alert', async () => {
+      const existingAlert = {
+        id: 'alert-007',
+        status: EmergencyAlertStatus.ACTIVE,
+      };
+      mockAlertRepository.findOneBy.mockResolvedValueOnce(existingAlert);
+
+      const result = await service.addStatusUpdate(
+        'alert-007',
+        'Investigating situation',
+      );
+
+      expect(result).toBeDefined();
+      expect(mockAuditLogRepository.save).toHaveBeenCalled();
+    });
+
+    it('should add a status update to an AUTO_ESCALATED alert', async () => {
+      const existingAlert = {
+        id: 'alert-008',
+        status: EmergencyAlertStatus.AUTO_ESCALATED,
+      };
+      mockAlertRepository.findOneBy.mockResolvedValueOnce(existingAlert);
+
+      const result = await service.addStatusUpdate(
+        'alert-008',
+        'Board admin reviewing',
+      );
+
+      expect(result).toBeDefined();
+      expect(mockAuditLogRepository.save).toHaveBeenCalled();
+    });
+
+    it('should throw NotFoundException when alert is not found', async () => {
+      mockAlertRepository.findOneBy.mockResolvedValueOnce(null);
+
+      await expect(
+        service.addStatusUpdate('nonexistent-id', 'notes'),
+      ).rejects.toThrow('Alert nonexistent-id not found');
+    });
+
+    it('should throw BadRequestException for RESOLVED alerts', async () => {
+      const existingAlert = {
+        id: 'alert-009',
+        status: EmergencyAlertStatus.RESOLVED,
+      };
+      mockAlertRepository.findOneBy.mockResolvedValueOnce(existingAlert);
+
+      await expect(
+        service.addStatusUpdate('alert-009', 'notes'),
+      ).rejects.toThrow('Cannot add status update to alert in RESOLVED state');
+    });
+
+    it('should throw BadRequestException for FALSE_ALARM alerts', async () => {
+      const existingAlert = {
+        id: 'alert-010',
+        status: EmergencyAlertStatus.FALSE_ALARM,
+      };
+      mockAlertRepository.findOneBy.mockResolvedValueOnce(existingAlert);
+
+      await expect(
+        service.addStatusUpdate('alert-010', 'notes'),
+      ).rejects.toThrow(
+        'Cannot add status update to alert in FALSE_ALARM state',
       );
     });
   });
