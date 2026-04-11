@@ -25,6 +25,12 @@ export class School {
   @Column({ default: 'ACTIVE' })
   status: string;
 
+  @Column({ type: 'double precision', nullable: true })
+  lat: number;
+
+  @Column({ type: 'double precision', nullable: true })
+  lng: number;
+
   @ManyToOne(() => SchoolBoard, (board) => board.schools)
   @JoinColumn({ name: 'boardId' })
   board: SchoolBoard;

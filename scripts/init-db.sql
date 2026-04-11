@@ -80,6 +80,8 @@ CREATE TABLE schools (
   name TEXT NOT NULL,
   "boardId" UUID NOT NULL,
   status TEXT DEFAULT 'ACTIVE',
+  lat DOUBLE PRECISION NULL,
+  lng DOUBLE PRECISION NULL,
   "createdAt" TIMESTAMP DEFAULT NOW(),
   "updatedAt" TIMESTAMP DEFAULT NOW(),
   CONSTRAINT "FK_schools_board" FOREIGN KEY ("boardId") REFERENCES school_boards(id) ON DELETE RESTRICT
@@ -119,7 +121,7 @@ CREATE TABLE vehicles (
 );
 
 CREATE TABLE routes (
-  id UUID PRIMARY KEY,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   "schoolId" UUID NOT NULL,
   name TEXT NOT NULL,
   direction TEXT NOT NULL,
@@ -133,7 +135,7 @@ CREATE TABLE routes (
 );
 
 CREATE TABLE route_stops (
-  id UUID PRIMARY KEY,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   "routeId" UUID NOT NULL,
   "sequence" INT NOT NULL,
   "address" TEXT NOT NULL,
@@ -550,8 +552,8 @@ BEGIN;
 INSERT INTO school_boards (id, name) VALUES
     ('b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'Ottawa-Carleton District School Board');
 
-INSERT INTO schools (id, name, "boardId") VALUES
-    ('c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'Greenfield Elementary', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c');
+INSERT INTO schools (id, name, "boardId", lat, lng) VALUES
+    ('c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'Greenfield Elementary', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 45.270534, -75.884905);
 
 -- ===================== Users =====================
 

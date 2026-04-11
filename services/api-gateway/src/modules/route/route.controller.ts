@@ -80,4 +80,10 @@ export class RouteController {
   optimize(@Body() stops: CreateRouteStopDto[]) {
     return this.optimizationService.optimizeStops(stops);
   }
+
+  @Post('snap-to-road')
+  @Roles(Role.SCHOOL_ADMIN, Role.OSTA_ADMIN)
+  snapToRoad(@Body() waypoints: { lat: number; lng: number }[]) {
+    return this.optimizationService.snapToRoad(waypoints);
+  }
 }

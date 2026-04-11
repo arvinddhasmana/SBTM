@@ -120,7 +120,7 @@ export interface RouteStop {
   routeId: string;
   sequence: number;
   address: string;
-  location: string; // WKT POINT format
+  location: string | { type: string; coordinates: number[] }; // WKT POINT or GeoJSON Point
 }
 
 export interface Route {

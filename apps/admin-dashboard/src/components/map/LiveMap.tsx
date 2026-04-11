@@ -3,17 +3,10 @@ import L from 'leaflet';
 import { Maximize2, Minimize2, RotateCcw, Users } from 'lucide-react';
 import type { LiveLocation, Route } from '../../types';
 import { getStatusColorClass } from '../../utils/formatters';
+import { parseWktPoint } from '../../utils/geo';
 
 /** Route IDs assigned to live drivers using the phone app (highlighted on map) */
 const LIVE_DRIVER_ROUTE_IDS = ['ROUTE-SingleBus-AM', 'ROUTE-SingleBus-PM'];
-
-const parseWktPoint = (wkt: string): [number, number] => {
-  const coords = wkt.match(/POINT\(([-\d.]+) ([-\d.]+)\)/);
-  if (coords) {
-    return [parseFloat(coords[2]), parseFloat(coords[1])]; // [lat, lng]
-  }
-  return [0, 0];
-};
 
 interface LiveMapProps {
   locations: LiveLocation[];
