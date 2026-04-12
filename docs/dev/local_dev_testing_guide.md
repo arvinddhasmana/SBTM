@@ -74,7 +74,7 @@ Run infrastructure (Postgres, Redis, OSRM) in Docker while running application s
 
 ```bash
 ./scripts/dev-hybrid.sh --infra-only
-cd services/api-gateway && npm run start:dev
+cd services/api-gateway && pnpm run start:dev
 ```
 
 ### Environment Setup
@@ -138,13 +138,13 @@ All accounts use password **`Admin123!`**.
 ### Frontend Tests (Vitest)
 
 ```bash
-cd apps/admin-dashboard && npm run test
+cd apps/admin-dashboard && pnpm run test
 ```
 
 ### Backend E2E Tests (Jest + Supertest)
 
 ```bash
-cd services/<service-name> && npm run test:e2e
+cd services/<service-name> && pnpm run test:e2e
 ```
 
 ### E2E Browser UI Tests (Playwright)

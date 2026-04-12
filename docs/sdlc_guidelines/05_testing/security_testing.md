@@ -30,24 +30,24 @@ describe('Tenant Isolation', () => {
 
 ## Authentication Tests
 
-| Scenario | Expected Outcome |
-|---|---|
-| Request without Authorization header | 401 Unauthorized |
-| Request with expired JWT | 401 Unauthorized |
-| Request with malformed JWT | 401 Unauthorized |
-| Request with valid JWT but wrong role | 403 Forbidden |
-| Request with valid JWT and correct role | 200 OK |
+| Scenario                                | Expected Outcome |
+| --------------------------------------- | ---------------- |
+| Request without Authorization header    | 401 Unauthorized |
+| Request with expired JWT                | 401 Unauthorized |
+| Request with malformed JWT              | 401 Unauthorized |
+| Request with valid JWT but wrong role   | 403 Forbidden    |
+| Request with valid JWT and correct role | 200 OK           |
 
 ## Authorization (RBAC) Tests
 
 Test that each role can only access its permitted endpoints:
 
-| Role | Can Access | Cannot Access |
-|---|---|---|
-| `parent` | Own child's location, presence events | Other parents' data, admin endpoints, compliance |
-| `driver` | Own route, presence management | Student management, compliance, admin |
-| `school_admin` | All data within own school | Other schools' data, OSTA admin endpoints |
-| `osta_admin` | Cross-school data, compliance | N/A (highest role) |
+| Role           | Can Access                            | Cannot Access                                    |
+| -------------- | ------------------------------------- | ------------------------------------------------ |
+| `parent`       | Own child's location, presence events | Other parents' data, admin endpoints, compliance |
+| `driver`       | Own route, presence management        | Student management, compliance, admin            |
+| `school_admin` | All data within own school            | Other schools' data, OSTA admin endpoints        |
+| `osta_admin`   | Cross-school data, compliance         | N/A (highest role)                               |
 
 ## PII Leak Detection
 
@@ -72,17 +72,17 @@ describe('PII Leak Prevention', () => {
 
 Test that malicious or malformed inputs are rejected:
 
-| Input | Test |
-|---|---|
-| SQL injection in query params | `?search=' OR 1=1 --` returns 400, not data |
-| XSS in text fields | `<script>alert(1)</script>` is sanitized or rejected |
-| Oversized payloads | Request body > 1MB returns 413 |
-| Invalid GPS coordinates | `lat: 999, lng: -999` returns 400 |
-| Negative pagination values | `?page=-1&limit=0` returns 400 |
+| Input                         | Test                                                 |
+| ----------------------------- | ---------------------------------------------------- |
+| SQL injection in query params | `?search=' OR 1=1 --` returns 400, not data          |
+| XSS in text fields            | `<script>alert(1)</script>` is sanitized or rejected |
+| Oversized payloads            | Request body > 1MB returns 413                       |
+| Invalid GPS coordinates       | `lat: 999, lng: -999` returns 400                    |
+| Negative pagination values    | `?page=-1&limit=0` returns 400                       |
 
 ## Dependency Vulnerability Scanning
 
-- Run `npm audit` as a CI step.
+- Run `pnpm audit` as a CI step.
 - Fail the build on `critical` or `high` severity findings.
 - Review `moderate` findings monthly.
 - Document accepted risks for `low` findings that cannot be resolved.

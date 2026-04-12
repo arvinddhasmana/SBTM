@@ -3,6 +3,7 @@
 **/.turbo
 **/coverage
 **/dist
+**/*.tsbuildinfo
 **/*.log
 **/.env
 **/.env.*

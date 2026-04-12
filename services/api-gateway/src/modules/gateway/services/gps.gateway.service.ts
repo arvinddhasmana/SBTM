@@ -59,6 +59,9 @@ interface ReferenceRouteRow {
   polyline: string | null;
   schoolId: string | null;
   schoolName: string | null;
+  schoolLat: number | null;
+  schoolLng: number | null;
+  direction: string | null;
 }
 
 interface ReferenceRouteStopRow {
@@ -255,7 +258,8 @@ export class GpsGatewayService {
 
     const routes = (await this.dataSource.query(
       `SELECT r.id, r.name, r."vehicleId" as "vehicleId", r.schedule, r.polyline,
-              r."schoolId" as "schoolId", s.name as "schoolName"
+              r."schoolId" as "schoolId", r.direction, s.name as "schoolName",
+              s.lat as "schoolLat", s.lng as "schoolLng"
              FROM routes_reference r
              LEFT JOIN schools s ON r."schoolId" = s.id
              ${whereClause}
@@ -315,13 +319,16 @@ export class GpsGatewayService {
           location: `POINT(${s.lng} ${s.lat})`,
         }));
 
-      const direction = r.id.toUpperCase().includes('PM') ? 'PM' : 'AM';
+      const direction =
+        r.direction || (r.id.toUpperCase().includes('PM') ? 'PM' : 'AM');
 
       return {
         id: r.id,
         name: r.name,
         schoolId: r.schoolId || demoSchoolId,
         schoolName: r.schoolName || 'Unknown School',
+        schoolLat: r.schoolLat || undefined,
+        schoolLng: r.schoolLng || undefined,
         direction,
         vehicleId: r.vehicleId || undefined,
         startTime,
@@ -344,7 +351,8 @@ export class GpsGatewayService {
 
     const routes = (await this.dataSource.query(
       `SELECT r.id, r.name, r."vehicleId" as "vehicleId", r.schedule, r.polyline,
-              r."schoolId" as "schoolId", s.name as "schoolName"
+              r."schoolId" as "schoolId", r.direction, s.name as "schoolName",
+              s.lat as "schoolLat", s.lng as "schoolLng"
              FROM routes_reference r
              LEFT JOIN schools s ON r."schoolId" = s.id
              WHERE r.id = $1`,
@@ -379,13 +387,16 @@ export class GpsGatewayService {
         location: `POINT(${s.lng} ${s.lat})`,
       }));
 
-    const direction = r.id.toUpperCase().includes('PM') ? 'PM' : 'AM';
+    const direction =
+      r.direction || (r.id.toUpperCase().includes('PM') ? 'PM' : 'AM');
 
     return {
       id: r.id,
       name: r.name,
       schoolId: r.schoolId || demoSchoolId,
       schoolName: r.schoolName || 'Unknown School',
+      schoolLat: r.schoolLat || undefined,
+      schoolLng: r.schoolLng || undefined,
       direction,
       vehicleId: r.vehicleId || undefined,
       startTime,

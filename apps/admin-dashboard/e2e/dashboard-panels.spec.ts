@@ -6,8 +6,8 @@ test.describe('Dashboard: Floating Panels, Mode Toggle, Search & Filters', () =>
   test.beforeAll(async ({ browser }) => {
     const page = await browser.newPage();
     await page.goto('http://localhost:5173/login', { waitUntil: 'domcontentloaded' });
-    await startRouteForE2E(page, 'ROUTE-SingleBus-AM', 'BUS-01');
-    await startRouteForE2E(page, 'ROUTE-SingleBus-PM', 'BUS-01');
+    await startRouteForE2E(page, 'ROUTE-STBERN-R01-AM', 'BUS-STBERN-01');
+    await startRouteForE2E(page, 'ROUTE-STBERN-R01-PM', 'BUS-STBERN-01');
     await page.close();
   });
 
@@ -113,7 +113,7 @@ test.describe('Dashboard: Floating Panels, Mode Toggle, Search & Filters', () =>
 
   test('DP14: Route search matches school name', async ({ page }) => {
     const routeSearch = page.getByTestId('panel-search').first();
-    await routeSearch.fill('Greenfield');
+    await routeSearch.fill('Bernadette');
     // If routes exist with this school, they remain visible; otherwise "No active routes" appears
     // Either outcome is valid depending on lifecycle state — just confirm no crash and search works
     await page.waitForTimeout(500);
@@ -168,7 +168,7 @@ test.describe('Dashboard: Floating Panels, Mode Toggle, Search & Filters', () =>
 
   test('DP21: Route search matches vehicle/bus name', async ({ page }) => {
     const routeSearch = page.getByTestId('panel-search').first();
-    await routeSearch.fill('BUS-01');
+    await routeSearch.fill('BUS-STBERN');
     await page.waitForTimeout(500);
     const noRoutes = page.locator('text=No active routes');
     const routeCards = page.locator('[data-testid^="route-card-"]');

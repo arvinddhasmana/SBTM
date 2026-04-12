@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# SBTM Demo Verification (Single-Bus Demo)
+# SBTM Demo Verification (6-School Demo)
 # Verifies seeded users/roles, tenant entities, and login credentials.
 # =============================================================================
 set -euo pipefail
@@ -12,7 +12,7 @@ CONTAINER_NAME="sbtm-postgres-1"
 
 ALL_PASSED=true
 
-echo -e "\033[36m--- SBTM Demo Verification ---\033[0m"
+echo -e "\033[36m--- SBTM Demo Verification (6-School) ---\033[0m"
 
 run_query() {
   local label="$1"
@@ -93,14 +93,20 @@ SELECT 'schools', COUNT(*) FROM schools;"
 run_query "Users by role:" \
   "SELECT role, COUNT(*) FROM users WHERE email LIKE '%@sbtm.demo' GROUP BY role ORDER BY role;"
 
-run_query "Seeded demo users:" \
-  "SELECT email, role, \"schoolId\" FROM users WHERE email LIKE '%@sbtm.demo' ORDER BY email;"
+run_query "Seeded demo users (sample):" \
+  "SELECT email, role, \"schoolId\" FROM users WHERE email LIKE '%@sbtm.demo' ORDER BY email LIMIT 30;"
 
-run_query "Students with AM/PM route assignments:" \
-  "SELECT id, \"firstName\", \"lastName\", \"amRouteId\", \"pmRouteId\" FROM students_reference ORDER BY id;"
+run_query "Route references (60 expected):" \
+  "SELECT COUNT(*) AS route_count FROM routes_reference;"
 
-run_query "Route references:" \
-  "SELECT id, name, \"vehicleId\", \"driverId\" FROM routes_reference ORDER BY id;"
+run_query "Route reference sample:" \
+  "SELECT id, name, \"vehicleId\", \"schoolId\", direction FROM routes_reference ORDER BY id LIMIT 12;"
+
+run_query "Students (90 expected):" \
+  "SELECT COUNT(*) AS student_count FROM students_reference;"
+
+run_query "Route stops (expected ~300-400):" \
+  "SELECT COUNT(*) AS stop_count FROM route_stops_reference;"
 
 # --- Login Checks ---
 
@@ -110,7 +116,18 @@ if ! wait_api_health "$API_BASE/health"; then
   exit 1
 fi
 
-EMAILS=("osta.admin@sbtm.demo" "school.admin@sbtm.demo" "driver1@sbtm.demo" "parent1@sbtm.demo")
+# Test representative logins across roles
+EMAILS=(
+  "osta.admin@sbtm.demo"
+  "ocdsb.admin@sbtm.demo"
+  "ocsb.admin@sbtm.demo"
+  "admin.stbern@sbtm.demo"
+  "admin.jyoung@sbtm.demo"
+  "driver.stbern@sbtm.demo"
+  "driver.allsnt@sbtm.demo"
+  "parent1.stbern@sbtm.demo"
+  "parent1.jyoung@sbtm.demo"
+)
 
 for email in "${EMAILS[@]}"; do
   if ! test_login "$email"; then
@@ -135,12 +152,22 @@ fi
 # --- Parent API Checks ---
 
 echo -e "\033[33mParent API checks:\033[0m"
-PARENT_TOKEN=$(get_token "parent1@sbtm.demo")
+PARENT_TOKEN=$(get_token "parent1.stbern@sbtm.demo")
 if [ -n "$PARENT_TOKEN" ]; then
-  if ! test_api_get "Parent1: /parent/children" "$API_BASE/parent/children" "$PARENT_TOKEN"; then
+  if ! test_api_get "Parent (stbern): /parent/children" "$API_BASE/parent/children" "$PARENT_TOKEN"; then
     ALL_PASSED=false
   fi
-  if ! test_api_get "Parent1: /routes/ROUTE-SingleBus-AM/live-location" "$API_BASE/routes/ROUTE-SingleBus-AM/live-location" "$PARENT_TOKEN"; then
+  if ! test_api_get "Parent (stbern): /routes/ROUTE-STBERN-R01-AM/live-location" "$API_BASE/routes/ROUTE-STBERN-R01-AM/live-location" "$PARENT_TOKEN"; then
+    ALL_PASSED=false
+  fi
+fi
+
+# --- Driver API Checks ---
+
+echo -e "\033[33mDriver API checks:\033[0m"
+DRIVER_TOKEN=$(get_token "driver.stbern@sbtm.demo")
+if [ -n "$DRIVER_TOKEN" ]; then
+  if ! test_api_get "Driver (stbern): /driver/me/schedule" "$API_BASE/driver/me/schedule" "$DRIVER_TOKEN"; then
     ALL_PASSED=false
   fi
 fi

@@ -1,13 +1,14 @@
 # Stage 1: Base
 FROM node:20-alpine AS base
 WORKDIR /app
-COPY package*.json ./
-RUN npm install
+RUN corepack enable && corepack prepare pnpm@latest --activate
+COPY package.json ./
+RUN pnpm install
 
 # Stage 2: Build
 FROM base AS builder
 COPY . .
-RUN npm run build
+RUN pnpm run build
 
 # Stage 3: Production
 FROM nginx:alpine AS production

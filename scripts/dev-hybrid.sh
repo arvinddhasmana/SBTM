@@ -36,14 +36,14 @@ ALL_SERVICES=(
 )
 
 SERVICE_COMMANDS=(
-    "api-gateway:npm run start:dev"
-    "gps-tracking:npm run dev"
-    "emergency-alerts:npm run start:dev"
-    "student-presence:npm run start:dev"
-    "video-service:npm run start:dev"
-    "student-management:npm run start:dev"
-    "compliance-management:npm run start:dev"
-    "notification-service:npm run start:dev"
+    "api-gateway:pnpm run start:dev"
+    "gps-tracking:pnpm run dev"
+    "emergency-alerts:pnpm run start:dev"
+    "student-presence:pnpm run start:dev"
+    "video-service:pnpm run start:dev"
+    "student-management:pnpm run start:dev"
+    "compliance-management:pnpm run start:dev"
+    "notification-service:pnpm run start:dev"
 )
 
 INFRA_ONLY=false
@@ -89,7 +89,7 @@ get_service_cmd() {
             return
         fi
     done
-    echo "npm run start:dev"
+    echo "pnpm run start:dev"
 }
 
 echo ""
@@ -146,7 +146,7 @@ if [[ "$INFRA_ONLY" == "true" ]]; then
     echo "  Redis:      localhost:6379"
     echo "  OSRM:       localhost:5000"
     echo ""
-    echo -e "${DIM}Run services manually with: cd services/<name> && npm run start:dev${NC}"
+    echo -e "${DIM}Run services manually with: cd services/<name> && pnpm run start:dev${NC}"
     exit 0
 fi
 
@@ -195,7 +195,7 @@ if [[ "$NO_DASHBOARD" != "true" ]]; then
         rm -f "$dash_pid"
     fi
 
-    (cd "$PROJECT_ROOT/apps/admin-dashboard" && npx vite > "$dash_log" 2>&1 &
+    (cd "$PROJECT_ROOT/apps/admin-dashboard" && pnpm exec vite > "$dash_log" 2>&1 &
      echo $! > "$dash_pid")
 
     echo -e "  ${GREEN}✓${NC} admin-dashboard ${DIM}(PID: $(cat "$dash_pid"), log: .dev-logs/admin-dashboard.log)${NC}"

@@ -35,15 +35,15 @@ For a driving test away from home WiFi, use **ngrok** (free tier is sufficient).
 
 ## Prerequisites
 
-|                                      | Notes                                                                                       |
-| ------------------------------------ | ------------------------------------------------------------------------------------------- |
-| Docker Desktop                       | Runs the full backend stack                                                                 |
-| Node.js 20+ and pnpm 9+              | Use `pnpm`, not `npm` — this is a pnpm workspace                                            |
-| ngrok                                | [ngrok.com/download](https://ngrok.com/download) — required for WSL2, recommended elsewhere |
-| Expo Go on Android                   | For development testing without building an APK                                             |
-| `eas-cli` (`npm install -g eas-cli`) | Only needed if building an APK via EAS cloud                                                |
-| Expo account                         | Only needed for EAS APK builds                                                              |
-| Android phone with USB debugging     | Only needed for direct `adb install` of APK                                                 |
+|                                   | Notes                                                                                       |
+| --------------------------------- | ------------------------------------------------------------------------------------------- |
+| Docker Desktop                    | Runs the full backend stack                                                                 |
+| Node.js 20+ and pnpm 9+           | Use `pnpm`, not `npm` — this is a pnpm workspace                                            |
+| ngrok                             | [ngrok.com/download](https://ngrok.com/download) — required for WSL2, recommended elsewhere |
+| Expo Go on Android                | For development testing without building an APK                                             |
+| `eas-cli` (`pnpm add -g eas-cli`) | Only needed if building an APK via EAS cloud                                                |
+| Expo account                      | Only needed for EAS APK builds                                                              |
+| Android phone with USB debugging  | Only needed for direct `adb install` of APK                                                 |
 
 ## Quick Start (all-in-one script)
 

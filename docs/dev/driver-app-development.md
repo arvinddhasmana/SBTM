@@ -107,7 +107,7 @@ apps/driver-app/
 pnpm install
 
 # Wrong — triggers yarn build scripts that fail, misses workspace linking
-cd apps/driver-app && npm install
+cd apps/driver-app && pnpm install
 ```
 
 Why: this is a pnpm workspace. `pnpm install` at the root resolves all packages together and avoids post-install script failures from packages that expect `yarn`.
@@ -337,7 +337,7 @@ If you want a permanent static URL, ngrok's paid plan ($10/mo) supports custom d
 
 ```bash
 # Install EAS CLI globally (one time)
-npm install -g eas-cli
+pnpm add -g eas-cli
 
 # Log in to your Expo account
 eas login
@@ -431,7 +431,7 @@ All variables are prefixed `EXPO_PUBLIC_` so Expo injects them into the JS bundl
 
 ## Known Issues and Fixes
 
-### 1. `npm install` fails with `yarn build` error
+### 1. `pnpm install` fails with `yarn build` error
 
 **Symptom:**
 
@@ -440,7 +440,7 @@ npm error command failed: sh -c yarn build
 npm error sh: yarn: not found
 ```
 
-**Cause:** Running `npm install` inside `apps/driver-app/` hits a post-install script in `@react-native-async-storage/async-storage` that requires yarn. This package is managed by pnpm at the workspace level.
+**Cause:** Running `pnpm install` inside `apps/driver-app/` hits a post-install script in `@react-native-async-storage/async-storage` that requires yarn. This package is managed by pnpm at the workspace level.
 
 **Fix:** Always install from the workspace root:
 

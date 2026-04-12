@@ -1,6 +1,6 @@
 ---
-name: "Greatest Ever Developer"
-description: "Greatest Ever Developer - End-to-end implementation for SBTM following SBTM business docs, SDLC guidelines, privacy rules, tenant isolation, and test gates."
+name: 'Greatest Ever Developer'
+description: 'Greatest Ever Developer - End-to-end implementation for SBTM following SBTM business docs, SDLC guidelines, privacy rules, tenant isolation, and test gates.'
 tools: [read, edit, search, execute, web, todo]
 ---
 
@@ -39,20 +39,20 @@ Before writing code, load and internalize these documents in order:
 
 Then load task-specific guidance based on the area you are touching:
 
-| Work Type | Additional Files to Load |
-| --- | --- |
-| NestJS service work | `docs/sdlc_guidelines/04_coding_standards/typescript_standards.md`, `docs/sdlc_guidelines/04_coding_standards/nestjs_standards.md` |
-| Express GPS service work | `docs/sdlc_guidelines/04_coding_standards/typescript_standards.md`, `docs/sdlc_guidelines/08_tech_specific/postgresql_postgis.md` |
-| React web apps | `docs/sdlc_guidelines/04_coding_standards/typescript_standards.md`, `docs/sdlc_guidelines/08_tech_specific/react_vite.md` |
-| React Native / Expo work | `docs/sdlc_guidelines/04_coding_standards/typescript_standards.md`, `docs/sdlc_guidelines/08_tech_specific/react_native_expo.md` |
-| Queue or Redis work | `docs/sdlc_guidelines/08_tech_specific/redis_bullmq.md` |
-| Real-time transport | `docs/sdlc_guidelines/08_tech_specific/socketio_sse.md` |
-| Docker or compose changes | `docs/sdlc_guidelines/development/docker_development.md`, `docs/sdlc_guidelines/08_tech_specific/docker_guidelines.md` |
-| Database schema or migrations | `docs/sdlc_guidelines/08_tech_specific/postgresql_postgis.md` |
-| Testing | `docs/sdlc_guidelines/05_testing/testing_strategy.md`, `docs/sdlc_guidelines/05_testing/security_testing.md` |
-| Performance-sensitive tracking or alert flows | `docs/sdlc_guidelines/05_testing/performance_testing.md` |
-| CI/CD changes | `docs/sdlc_guidelines/06_integration_cicd/branching_strategy.md`, `docs/sdlc_guidelines/06_integration_cicd/ci_cd_pipeline.md`, `docs/sdlc_guidelines/06_integration_cicd/artifact_management.md` |
-| Documentation changes | `docs/Governance/DocumentationPolicy.md` |
+| Work Type                                     | Additional Files to Load                                                                                                                                                                          |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| NestJS service work                           | `docs/sdlc_guidelines/04_coding_standards/typescript_standards.md`, `docs/sdlc_guidelines/04_coding_standards/nestjs_standards.md`                                                                |
+| Express GPS service work                      | `docs/sdlc_guidelines/04_coding_standards/typescript_standards.md`, `docs/sdlc_guidelines/08_tech_specific/postgresql_postgis.md`                                                                 |
+| React web apps                                | `docs/sdlc_guidelines/04_coding_standards/typescript_standards.md`, `docs/sdlc_guidelines/08_tech_specific/react_vite.md`                                                                         |
+| React Native / Expo work                      | `docs/sdlc_guidelines/04_coding_standards/typescript_standards.md`, `docs/sdlc_guidelines/08_tech_specific/react_native_expo.md`                                                                  |
+| Queue or Redis work                           | `docs/sdlc_guidelines/08_tech_specific/redis_bullmq.md`                                                                                                                                           |
+| Real-time transport                           | `docs/sdlc_guidelines/08_tech_specific/socketio_sse.md`                                                                                                                                           |
+| Docker or compose changes                     | `docs/sdlc_guidelines/development/docker_development.md`, `docs/sdlc_guidelines/08_tech_specific/docker_guidelines.md`                                                                            |
+| Database schema or migrations                 | `docs/sdlc_guidelines/08_tech_specific/postgresql_postgis.md`                                                                                                                                     |
+| Testing                                       | `docs/sdlc_guidelines/05_testing/testing_strategy.md`, `docs/sdlc_guidelines/05_testing/security_testing.md`                                                                                      |
+| Performance-sensitive tracking or alert flows | `docs/sdlc_guidelines/05_testing/performance_testing.md`                                                                                                                                          |
+| CI/CD changes                                 | `docs/sdlc_guidelines/06_integration_cicd/branching_strategy.md`, `docs/sdlc_guidelines/06_integration_cicd/ci_cd_pipeline.md`, `docs/sdlc_guidelines/06_integration_cicd/artifact_management.md` |
+| Documentation changes                         | `docs/Governance/DocumentationPolicy.md`                                                                                                                                                          |
 
 ---
 
@@ -202,11 +202,11 @@ Use an iterative cycle and fix the root cause of failures one at a time.
 **For NestJS or Express services:**
 
 ```bash
-npm run lint
-npm run build
-npm run test
-npm run test:cov
-npm run test:e2e
+pnpm run lint
+pnpm run build
+pnpm run test
+pnpm run test:cov
+pnpm run test:e2e
 ```
 
 Run `test:e2e` when the package defines it and when the change affects endpoint behavior.
@@ -214,15 +214,15 @@ Run `test:e2e` when the package defines it and when the change affects endpoint 
 **For React/Vite apps:**
 
 ```bash
-npm run lint
-npm run build
-npm run test -- --run
+pnpm run lint
+pnpm run build
+pnpm run test -- --run
 ```
 
 **For the Expo driver app:**
 
 ```bash
-npm test
+pnpm test
 npx tsc --noEmit
 ```
 
@@ -302,14 +302,14 @@ Assign the PR to the **Meanest Ever Reviewer** agent or a human reviewer.
 
 ## Core Stack Reminder
 
-| Layer | Technology |
-| --- | --- |
-| Admin dashboard | React 19 + Vite + TailwindCSS |
-| Driver app | React Native + Expo |
-| Parent app | React 19 + Vite |
-| API Gateway | NestJS + JWT + RBAC |
-| GPS Tracking | Express + Prisma |
-| Alerts and Presence | NestJS + BullMQ + Redis + Socket.IO |
-| Student and Compliance domains | NestJS + TypeORM |
-| Storage | PostgreSQL 15 + PostGIS, Redis 7, MinIO |
-| Deployment | Docker Compose locally, Kubernetes target |
+| Layer                          | Technology                                |
+| ------------------------------ | ----------------------------------------- |
+| Admin dashboard                | React 19 + Vite + TailwindCSS             |
+| Driver app                     | React Native + Expo                       |
+| Parent app                     | React 19 + Vite                           |
+| API Gateway                    | NestJS + JWT + RBAC                       |
+| GPS Tracking                   | Express + Prisma                          |
+| Alerts and Presence            | NestJS + BullMQ + Redis + Socket.IO       |
+| Student and Compliance domains | NestJS + TypeORM                          |
+| Storage                        | PostgreSQL 15 + PostGIS, Redis 7, MinIO   |
+| Deployment                     | Docker Compose locally, Kubernetes target |

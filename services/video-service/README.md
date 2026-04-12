@@ -17,6 +17,7 @@ The Video Capture Integration Service is a standalone microservice for the Schoo
 ## 🏗️ Architecture
 
 ### Tech Stack
+
 - **Framework**: NestJS (TypeScript)
 - **Database**: PostgreSQL with TypeORM
 - **Object Storage**: MinIO (S3-compatible) or local storage
@@ -24,6 +25,7 @@ The Video Capture Integration Service is a standalone microservice for the Schoo
 - **Testing**: Jest (Unit, Integration, E2E)
 
 ### Module Structure
+
 ```
 src/
 ├── modules/
@@ -38,6 +40,7 @@ src/
 ## 🚀 Getting Started
 
 ### Prerequisites
+
 - Node.js 20+
 - PostgreSQL 14+
 - MinIO (optional, for S3-compatible storage)
@@ -46,35 +49,41 @@ src/
 ### Installation
 
 1. **Install dependencies**:
+
 ```bash
-npm install
+pnpm install
 ```
 
 2. **Configure environment**:
+
 ```bash
 cp .env.example .env
 # Edit .env with your configuration
 ```
 
 3. **Run database migrations** (auto-sync enabled in development):
+
 ```bash
-npm run start:dev
+pnpm run start:dev
 ```
 
 ### Running the Service
 
 **Development mode**:
+
 ```bash
-npm run start:dev
+pnpm run start:dev
 ```
 
 **Production mode**:
+
 ```bash
-npm run build
-npm run start:prod
+pnpm run build
+pnpm run start:prod
 ```
 
 **Docker Compose** (recommended):
+
 ```bash
 docker-compose up -d
 ```
@@ -84,6 +93,7 @@ docker-compose up -d
 ### Video Events
 
 #### Create Video Event
+
 ```http
 POST /api/v1/video-events
 Content-Type: application/json
@@ -99,6 +109,7 @@ Content-Type: application/json
 ```
 
 **Response**:
+
 ```json
 {
   "videoEventId": "uuid",
@@ -108,6 +119,7 @@ Content-Type: application/json
 ```
 
 #### Complete Video Upload
+
 ```http
 POST /api/v1/video-events/{id}/complete
 Content-Type: application/json
@@ -119,17 +131,20 @@ Content-Type: application/json
 ```
 
 #### List Video Events
+
 ```http
 GET /api/v1/video-events?vehicleId=bus-123&page=1&limit=10
 ```
 
 #### Get Video Event
+
 ```http
 GET /api/v1/video-events/{id}
 X-User-Id: user-123
 ```
 
 **Response includes secure playback URL**:
+
 ```json
 {
   "id": "uuid",
@@ -141,6 +156,7 @@ X-User-Id: user-123
 ```
 
 #### Delete Video Event
+
 ```http
 DELETE /api/v1/video-events/{id}
 ```
@@ -169,33 +185,39 @@ socket.on('video-event-status-change', (event) => {
 ## 🧪 Testing
 
 ### Unit Tests
+
 ```bash
-npm run test
+pnpm run test
 ```
 
 ### Integration Tests
+
 ```bash
-npm run test:integration
+pnpm run test:integration
 ```
 
 ### E2E Tests
+
 ```bash
-npm run test:e2e
+pnpm run test:e2e
 ```
 
 ### Test Coverage
+
 ```bash
-npm run test:cov
+pnpm run test:cov
 ```
 
 ## 🐳 Docker Deployment
 
 ### Build Image
+
 ```bash
 docker build -t video-service:latest .
 ```
 
 ### Run Container
+
 ```bash
 docker run -p 3005:3005 \
   -e DB_HOST=postgres \
@@ -204,11 +226,13 @@ docker run -p 3005:3005 \
 ```
 
 ### Docker Compose
+
 ```bash
 docker-compose up -d
 ```
 
 This starts:
+
 - Video Service (port 3005)
 - PostgreSQL (port 5432)
 - MinIO (port 9000, console: 9001)
@@ -217,25 +241,26 @@ This starts:
 
 ### Environment Variables
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `PORT` | Service port | `3005` |
-| `DB_HOST` | PostgreSQL host | `localhost` |
-| `DB_PORT` | PostgreSQL port | `5432` |
-| `DB_USERNAME` | Database username | `postgres` |
-| `DB_PASSWORD` | Database password | `postgres` |
-| `DB_DATABASE` | Database name | `video_service` |
-| `STORAGE_TYPE` | Storage backend (`minio` or `local`) | `minio` |
-| `MINIO_ENDPOINT` | MinIO endpoint | `localhost` |
-| `MINIO_PORT` | MinIO port | `9000` |
-| `MINIO_ACCESS_KEY` | MinIO access key | `minioadmin` |
-| `MINIO_SECRET_KEY` | MinIO secret key | `minioadmin` |
-| `MINIO_BUCKET_NAME` | S3 bucket name | `videos` |
-| `PRESIGNED_URL_EXPIRY` | URL expiry (seconds) | `3600` |
+| Variable               | Description                          | Default         |
+| ---------------------- | ------------------------------------ | --------------- |
+| `PORT`                 | Service port                         | `3005`          |
+| `DB_HOST`              | PostgreSQL host                      | `localhost`     |
+| `DB_PORT`              | PostgreSQL port                      | `5432`          |
+| `DB_USERNAME`          | Database username                    | `postgres`      |
+| `DB_PASSWORD`          | Database password                    | `postgres`      |
+| `DB_DATABASE`          | Database name                        | `video_service` |
+| `STORAGE_TYPE`         | Storage backend (`minio` or `local`) | `minio`         |
+| `MINIO_ENDPOINT`       | MinIO endpoint                       | `localhost`     |
+| `MINIO_PORT`           | MinIO port                           | `9000`          |
+| `MINIO_ACCESS_KEY`     | MinIO access key                     | `minioadmin`    |
+| `MINIO_SECRET_KEY`     | MinIO secret key                     | `minioadmin`    |
+| `MINIO_BUCKET_NAME`    | S3 bucket name                       | `videos`        |
+| `PRESIGNED_URL_EXPIRY` | URL expiry (seconds)                 | `3600`          |
 
 ## 📊 Database Schema
 
 ### VideoEvent
+
 - `id`: UUID (PK)
 - `vehicleId`: string
 - `routeId`: string
@@ -250,6 +275,7 @@ This starts:
 - `updatedAt`: timestamp
 
 ### VideoAccessLog
+
 - `id`: UUID (PK)
 - `videoEventId`: UUID (FK)
 - `userId`: string
@@ -267,6 +293,7 @@ This starts:
 ## 📈 Monitoring
 
 ### Health Check
+
 ```http
 GET /api/v1/health
 ```
@@ -274,7 +301,9 @@ GET /api/v1/health
 Returns service status and timestamp.
 
 ### Logging
+
 Structured JSON logging with different levels:
+
 - Application events
 - Database queries (configurable)
 - Access logs
@@ -283,21 +312,25 @@ Structured JSON logging with different levels:
 ## 🛠️ Development
 
 ### Code Quality
+
 ```bash
-npm run lint          # Run ESLint
-npm run format        # Format with Prettier
+pnpm run lint          # Run ESLint
+pnpm run format        # Format with Prettier
 ```
 
 ### Database Migrations
+
 In production, disable `DB_SYNCHRONIZE` and use TypeORM migrations:
+
 ```bash
-npm run migration:generate -- -n MigrationName
-npm run migration:run
+pnpm run migration:generate -- -n MigrationName
+pnpm run migration:run
 ```
 
 ## 🚦 Roadmap
 
 ### Current (MVP)
+
 - ✅ Video event creation and management
 - ✅ Secure upload/download with presigned URLs
 - ✅ MinIO and local storage support
@@ -305,6 +338,7 @@ npm run migration:run
 - ✅ Access logging and audit trail
 
 ### Future Enhancements
+
 - [ ] Automatic thumbnail generation
 - [ ] Video transcoding for multiple formats
 - [ ] AI-based video analysis (incident detection)

@@ -10,8 +10,8 @@ SBTM depends on open-source packages via npm and Docker images. This document de
 
 ## npm Dependency Rules
 
-- Run `npm audit` in CI for every PR. Block merges on critical or high severity vulnerabilities.
-- Pin major versions in `package.json`. Use exact versions in lockfiles (`package-lock.json`).
+- Run `pnpm audit` in CI for every PR. Block merges on critical or high severity vulnerabilities.
+- Pin major versions in `package.json`. Use exact versions in lockfiles (`pnpm-lock.yaml`).
 - Review new dependencies before adding. Prefer packages with: active maintenance, known maintainers, >1000 weekly downloads, no known CVEs.
 - Do not use packages that are deprecated, unmaintained (>1 year without update), or from unknown publishers.
 - Audit `postinstall` scripts. Disable automatic script execution in CI (`--ignore-scripts`) and run scripts explicitly for trusted packages only.

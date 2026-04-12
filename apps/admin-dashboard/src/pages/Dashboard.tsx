@@ -83,6 +83,13 @@ const Dashboard: React.FC = () => {
   const allRoutes = dashboardData?.routes ?? [];
   const allStudents = dashboardData?.students ?? [];
 
+  // Only show bus markers for routes that are currently active
+  const activeRouteIds = useMemo(() => new Set(allRoutes.map((r) => r.id)), [allRoutes]);
+  const activeLocations = useMemo(
+    () => allLocations.filter((l) => activeRouteIds.has(l.routeId)),
+    [allLocations, activeRouteIds],
+  );
+
   // --- Mode-based filtering ---
   const { alerts, locations, routes, students } = useMemo(() => {
     if (mode === 'info') {
@@ -90,7 +97,7 @@ const Dashboard: React.FC = () => {
       const activeAlerts = allAlerts.filter((a) => !TERMINAL_STATUSES.has(a.status));
       return {
         alerts: activeAlerts,
-        locations: allLocations,
+        locations: activeLocations,
         routes: allRoutes,
         students: allStudents,
       };
@@ -104,7 +111,7 @@ const Dashboard: React.FC = () => {
 
     // Filter routes, buses, students to only those associated with actionable alerts
     const actionRoutes = allRoutes.filter((r) => actionRouteIds.has(r.id));
-    const actionLocations = allLocations.filter((l) => actionRouteIds.has(l.routeId));
+    const actionLocations = activeLocations.filter((l) => actionRouteIds.has(l.routeId));
     const actionStudents = allStudents.filter((s) => s.routeId && actionRouteIds.has(s.routeId));
 
     return {
@@ -113,7 +120,7 @@ const Dashboard: React.FC = () => {
       routes: actionRoutes,
       students: actionStudents,
     };
-  }, [mode, allAlerts, allLocations, allRoutes, allStudents]);
+  }, [mode, allAlerts, activeLocations, allRoutes, allStudents]);
 
   // --- Tier filter for alerts ---
   const filteredAlerts = useMemo(() => {
@@ -277,7 +284,7 @@ const Dashboard: React.FC = () => {
       {/* Background Map Layer */}
       <div className="absolute inset-0 z-0">
         <LiveMap
-          locations={allLocations}
+          locations={activeLocations}
           selectedRoute={selectedRoute}
           onReset={() => setSelectedRoute(null)}
           className="w-full h-full"

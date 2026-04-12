@@ -124,7 +124,7 @@ Implement alert tier classification (Tier 1/2/3), admin confirmation workflow wi
 
 ### **Verification**
 
-1. `cd services/emergency-alerts && npm test` — all new + existing tests pass
+1. `cd services/emergency-alerts && pnpm test` — all new + existing tests pass
 2. Create PANIC_BUTTON → verify tier=TIER_1, status=PENDING_CONFIRMATION, confirmationDeadlineAt set
 3. POST `/alerts/:id/confirm` → verify status=CONFIRMED, parent push+SMS sent
 4. POST `/alerts/:id/false-alarm` → verify status=FALSE_ALARM, no parent notification

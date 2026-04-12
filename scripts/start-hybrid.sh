@@ -17,7 +17,7 @@ echo -e "\033[36mStarting local services in the background...\033[0m"
 start_service() {
     local dir=$1
     local name=$2
-    local command=${3:-"npm run start:dev"}
+    local command=${3:-"pnpm run start:dev"}
     echo "Starting $name..."
     (cd "$dir" && nohup $command > "${name}.log" 2>&1 &)
 }
@@ -26,7 +26,7 @@ start_service "services/api-gateway" "api-gateway"
 start_service "services/student-management" "student-management"
 start_service "services/student-presence" "student-presence"
 start_service "services/emergency-alerts" "emergency-alerts"
-start_service "services/gps-tracking" "gps-tracking" "npm run dev"
+start_service "services/gps-tracking" "gps-tracking" "pnpm run dev"
 start_service "services/compliance-management" "compliance-management"
 start_service "services/video-service" "video-service"
 

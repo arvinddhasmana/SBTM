@@ -5,9 +5,6 @@ import type { LiveLocation, Route } from '../../types';
 import { getStatusColorClass } from '../../utils/formatters';
 import { parseWktPoint } from '../../utils/geo';
 
-/** Route IDs assigned to live drivers using the phone app (highlighted on map) */
-const LIVE_DRIVER_ROUTE_IDS = ['ROUTE-SingleBus-AM', 'ROUTE-SingleBus-PM'];
-
 interface LiveMapProps {
   locations: LiveLocation[];
   selectedRoute?: Route | null;
@@ -188,6 +185,38 @@ const LiveMap: React.FC<LiveMapProps> = ({
       });
     }
 
+    // 2c. Render School Marker for Selected Route
+    if (selectedRoute?.schoolLat && selectedRoute?.schoolLng) {
+      const schoolIcon = L.divIcon({
+        className: '',
+        html: `<div style="
+                    width:32px;height:32px;
+                    background:#8b5cf6;
+                    border:3px solid #fff;
+                    border-radius:6px;
+                    display:flex;align-items:center;justify-content:center;
+                    box-shadow:0 0 15px #8b5cf644, 0 2px 8px rgba(0,0,0,0.4);
+                ">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
+                      <path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82zM12 3L1 9l11 6 9-4.91V17h2V9L12 3z"/>
+                    </svg>
+                </div>`,
+        iconSize: [32, 32],
+        iconAnchor: [16, 16],
+      });
+
+      const schoolMarker = L.marker([selectedRoute.schoolLat, selectedRoute.schoolLng], {
+        icon: schoolIcon,
+        zIndexOffset: 600,
+      }).addTo(mapInstanceRef.current!).bindPopup(`
+          <div style="min-width: 140px; font-family: sans-serif;">
+            <strong style="color:#1e293b;">${selectedRoute.schoolName || 'School'}</strong>
+          </div>
+        `);
+
+      stopMarkersRef.current.push(schoolMarker);
+    }
+
     // 3. Render Vehicle Markers (with synchronization to prevent "jumping")
     const deduplicatedLocations = new Map<string, LiveLocation>();
     locations.forEach((l) => {
@@ -221,10 +250,9 @@ const LiveMap: React.FC<LiveMapProps> = ({
           'bg-gray-500': '#6b7280',
         };
         const color = colorMap[statusClass] || '#6b7280';
-        const isLive = LIVE_DRIVER_ROUTE_IDS.includes(location.routeId);
         const isSelected = selectedRoute?.id === location.routeId;
-        const borderColor = isSelected ? '#3b82f6' : isLive ? '#f59e0b' : 'white';
-        const borderWidth = isSelected ? '4px' : isLive ? '3px' : '2px';
+        const borderColor = isSelected ? '#3b82f6' : 'white';
+        const borderWidth = isSelected ? '4px' : '2px';
         const scale = isSelected ? 1.2 : 1.0;
 
         const iconHtml = `
@@ -275,7 +303,7 @@ const LiveMap: React.FC<LiveMapProps> = ({
 
         marker.bindPopup(`
         <div style="min-width: 150px;">
-          <strong>Vehicle: ${location.vehicleId}</strong>${isLive ? ' <span style="background:#f59e0b;color:white;padding:1px 6px;border-radius:4px;font-size:11px;">LIVE</span>' : ''}<br/>
+          <strong>Vehicle: ${location.vehicleId}</strong><br/>
           <span>Route: ${location.routeId}</span><br/>
           <span>ETA: ${location.etaToNextStopMinutes} min</span>
         </div>

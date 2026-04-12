@@ -113,7 +113,7 @@ Run tests for specific services or apps:
 
 ```bash
 cd services/api-gateway
-npm run test
+pnpm run test
 ```
 
 ## 🔒 Security

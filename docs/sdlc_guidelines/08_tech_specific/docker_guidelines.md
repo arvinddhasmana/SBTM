@@ -16,10 +16,10 @@ Define Docker conventions for the SBTM monorepo. All backend services and the ad
 # Stage 1: Build
 FROM node:20-alpine AS build
 WORKDIR /app
-COPY package.json package-lock.json ./
-RUN npm ci --ignore-scripts
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install -g pnpm && pnpm install --frozen-lockfile --ignore-scripts
 COPY . .
-RUN npm run build
+RUN pnpm run build
 
 # Stage 2: Production
 FROM node:20-alpine AS production
@@ -40,10 +40,10 @@ CMD ["node", "dist/main.js"]
 # Stage 1: Build
 FROM node:20-alpine AS build
 WORKDIR /app
-COPY package.json package-lock.json ./
-RUN npm ci
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install -g pnpm && pnpm install --frozen-lockfile
 COPY . .
-RUN npm run build
+RUN pnpm run build
 
 # Stage 2: Serve
 FROM nginx:1.25-alpine AS production
@@ -54,15 +54,15 @@ EXPOSE 80
 
 ### Dockerfile Rules
 
-| Rule | Detail |
-|---|---|
-| Base images | Use specific version tags (`node:20-alpine`, not `node:latest`) |
-| Non-root user | Run production containers as a non-root user |
-| Health checks | Include `HEALTHCHECK` instructions |
-| `.dockerignore` | Exclude `node_modules`, `.env`, test files, docs |
-| Layer caching | Copy `package.json` and install dependencies before copying source |
-| No secrets | Never use `ENV` or `ARG` for secrets in Dockerfiles |
-| Image size | Multi-stage builds to minimize final image size |
+| Rule            | Detail                                                             |
+| --------------- | ------------------------------------------------------------------ |
+| Base images     | Use specific version tags (`node:20-alpine`, not `node:latest`)    |
+| Non-root user   | Run production containers as a non-root user                       |
+| Health checks   | Include `HEALTHCHECK` instructions                                 |
+| `.dockerignore` | Exclude `node_modules`, `.env`, test files, docs                   |
+| Layer caching   | Copy `package.json` and install dependencies before copying source |
+| No secrets      | Never use `ENV` or `ARG` for secrets in Dockerfiles                |
+| Image size      | Multi-stage builds to minimize final image size                    |
 
 ## Docker Compose Conventions
 
@@ -70,32 +70,32 @@ EXPOSE 80
 
 ```yaml
 services:
-  api-gateway:      # Matches directory name in services/
+  api-gateway: # Matches directory name in services/
   gps-tracking:
   emergency-alerts:
   student-presence:
   video-service:
   student-management:
   compliance-management:
-  postgres:          # Infrastructure services use technology name
+  postgres: # Infrastructure services use technology name
   redis:
   minio:
 ```
 
 ### Network and Port Conventions
 
-| Service | Internal Port | External Port (dev) |
-|---|---|---|
-| API Gateway | 3000 | 3000 |
-| GPS Tracking | 3001 | 3001 |
-| Emergency Alerts | 3002 | 3002 |
-| Student Presence | 3003 | 3003 |
-| Video Service | 3004 | 3004 |
-| Student Management | 3005 | 3005 |
-| Compliance Management | 3006 | 3006 |
-| PostgreSQL | 5432 | 5432 |
-| Redis | 6379 | 6379 |
-| MinIO | 9000 | 9000 |
+| Service               | Internal Port | External Port (dev) |
+| --------------------- | ------------- | ------------------- |
+| API Gateway           | 3000          | 3000                |
+| GPS Tracking          | 3001          | 3001                |
+| Emergency Alerts      | 3002          | 3002                |
+| Student Presence      | 3003          | 3003                |
+| Video Service         | 3004          | 3004                |
+| Student Management    | 3005          | 3005                |
+| Compliance Management | 3006          | 3006                |
+| PostgreSQL            | 5432          | 5432                |
+| Redis                 | 6379          | 6379                |
+| MinIO                 | 9000          | 9000                |
 
 ### Dependency Management
 

@@ -15,6 +15,7 @@ The Emergency Alerts Service is a critical microservice in the School Bus Transp
 ## 🏗️ Architecture
 
 ### Tech Stack
+
 - **Framework**: NestJS (TypeScript)
 - **Database**: PostgreSQL with TypeORM
 - **Queue**: BullMQ (Redis-backed)
@@ -22,6 +23,7 @@ The Emergency Alerts Service is a critical microservice in the School Bus Transp
 - **Testing**: Jest (Unit & E2E)
 
 ### Module Structure
+
 ```
 src/
 ├── modules/
@@ -36,6 +38,7 @@ src/
 ## 🚀 Getting Started
 
 ### Prerequisites
+
 - Node.js 20+
 - PostgreSQL
 - Redis (for Queue & Pub/Sub)
@@ -43,19 +46,22 @@ src/
 ### Installation
 
 1. **Install dependencies**:
+
 ```bash
-npm install
+pnpm install
 ```
 
 2. **Configure environment**:
+
 ```bash
 cp .env.example .env
 # Set Redis and DB credentials
 ```
 
 3. **Start development server**:
+
 ```bash
-npm run start:dev
+pnpm run start:dev
 ```
 
 ### Running with Docker
@@ -67,36 +73,40 @@ docker compose up --build emergency-alerts
 ## 📡 API Endpoints
 
 ### Alerts
+
 - `GET /api/v1/alerts/active` - Get active alerts
 - `POST /api/v1/emergency-events` - Trigger new emergency
 - `PATCH /api/v1/alerts/:id/resolve` - Resolve an alert
 
 ### Websockets
+
 - namespace: `/alerts`
 - events: `new-alert`, `alert-resolved`
 
 ## 🧪 Testing
 
 ### Unit Tests
+
 ```bash
-npm run test
+pnpm run test
 ```
 
 ### E2E Tests
+
 ```bash
-npm run test:e2e
+pnpm run test:e2e
 ```
 
 ## 🔧 Configuration
 
 ### Environment Variables
 
-| Variable | Description |
-|----------|-------------|
-| `PORT` | Service Port (Default: 3003) |
-| `DB_HOST` | PostgreSQL Host |
+| Variable     | Description                     |
+| ------------ | ------------------------------- |
+| `PORT`       | Service Port (Default: 3003)    |
+| `DB_HOST`    | PostgreSQL Host                 |
 | `REDIS_HOST` | Redis Host (Default: localhost) |
-| `REDIS_PORT` | Redis Port (Default: 6379) |
+| `REDIS_PORT` | Redis Port (Default: 6379)      |
 
 ## 🔒 Security
 

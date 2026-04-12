@@ -1,7 +1,7 @@
 # Demo Quick Reference
 
 - Document owner: QA and Engineering
-- Last reviewed: 2026-03-24
+- Last reviewed: 2026-04-12
 - Primary use: Fast operational checklist for demo setup and troubleshooting
 
 This is the fast operational companion to `DEMO_SETUP_GUIDE.md`. For feature gaps or upgrade status, use `docs/prd/GapAnalysis.md`.
@@ -21,36 +21,61 @@ This is the fast operational companion to `DEMO_SETUP_GUIDE.md`. For feature gap
 ./scripts/reset-demo-db.sh
 ```
 
-### Run Simulation
-
-```bash
-cd scripts && bash singlebus-simulate.sh   # Single-Bus demo with governance
-```
-
 ### Verify Setup
 
 ```bash
-./scripts/verify-demo.sh     # Includes alert governance checks
+./scripts/verify-demo.sh
+```
+
+### Regenerate Route Data (Optional)
+
+```bash
+npx tsx scripts/generate-demo-routes.ts --from-cache   # SQL from cached JSON (no OSRM)
+npx tsx scripts/generate-demo-routes.ts                 # Full generation (needs OSRM)
 ```
 
 ## Demo Credentials
 
-| Role                    | Email                   | Password  | Notes                  |
-| ----------------------- | ----------------------- | --------- | ---------------------- |
-| OSTA Admin              | osta.admin@sbtm.demo    | Admin123! | Cross-board oversight  |
-| School Admin (School 1) | school.admin@sbtm.demo  | Admin123! | Greenfield Elementary  |
-| School Admin (School 2) | school2.admin@sbtm.demo | Admin123! | Riverside Academy      |
-| Live Driver 1           | driver1@sbtm.demo       | Admin123! | ROUTE-R01 (School 1) ☆ |
-| Live Driver 2           | driver2@sbtm.demo       | Admin123! | ROUTE-R02 (School 1) ☆ |
-| Live Driver 11          | driver11@sbtm.demo      | Admin123! | ROUTE-R11 (School 2) ☆ |
-| Live Driver 12          | driver12@sbtm.demo      | Admin123! | ROUTE-R12 (School 2) ☆ |
-| Parent 1                | parent1@sbtm.demo       | Admin123! | Kids on R01, R02       |
-| Parent 2                | parent2@sbtm.demo       | Admin123! | Kids on R01, R03       |
-| Parent 3                | parent3@sbtm.demo       | Admin123! | Kids on R11, R12       |
+All passwords: **Admin123!**
 
-☆ = Live driver (install Driver app on phone, use real GPS)
+### System Admins
 
-All 20 drivers (driver1–driver20@sbtm.demo) and 10 parents (parent1–parent10@sbtm.demo) exist.
+| Role              | Email                   | Notes                 |
+| ----------------- | ----------------------- | --------------------- |
+| Super Admin       | `super.admin@sbtm.demo` | System-wide access    |
+| OSTA Admin        | `osta.admin@sbtm.demo`  | Cross-board oversight |
+| OCDSB Board Admin | `ocdsb.admin@sbtm.demo` | OCDSB board scope     |
+| OCSB Board Admin  | `ocsb.admin@sbtm.demo`  | OCSB board scope      |
+
+### Per-School Users
+
+| School (Abbrev)         | Board | School Admin              | Driver                     | Bus            |
+| ----------------------- | ----- | ------------------------- | -------------------------- | -------------- |
+| St. Bernadette (STBERN) | OCSB  | `admin.stbern@sbtm.demo`  | `driver.stbern@sbtm.demo`  | BUS-STBERN-01  |
+| All Saints (ALLSNT)     | OCSB  | `admin.allsnt@sbtm.demo`  | `driver.allsnt@sbtm.demo`  | BUS-ALLSNT-01  |
+| Sacred Heart (SACRHRT)  | OCSB  | `admin.sacrhrt@sbtm.demo` | `driver.sacrhrt@sbtm.demo` | BUS-SACRHRT-01 |
+| John Young (JYOUNG)     | OCDSB | `admin.jyoung@sbtm.demo`  | `driver.jyoung@sbtm.demo`  | BUS-JYOUNG-01  |
+| Maplewood (MPLWD)       | OCDSB | `admin.mplwd@sbtm.demo`   | `driver.mplwd@sbtm.demo`   | BUS-MPLWD-01   |
+| A.Y. Jackson (AYJACK)   | OCDSB | `admin.ayjack@sbtm.demo`  | `driver.ayjack@sbtm.demo`  | BUS-AYJACK-01  |
+
+**Parents:** `parent1.{abbrev}@sbtm.demo` -- `parent10.{abbrev}@sbtm.demo` (60 total)
+
+### Quick Start (Single School Demo)
+
+- Admin: `admin.stbern@sbtm.demo`
+- Driver: `driver.stbern@sbtm.demo`
+- Parent: `parent1.stbern@sbtm.demo`
+
+## Route IDs
+
+Pattern: `ROUTE-{ABBREV}-R{01-05}-{AM|PM}`
+
+Example routes for St. Bernadette:
+
+- `ROUTE-STBERN-R01-AM` through `ROUTE-STBERN-R05-AM` (morning)
+- `ROUTE-STBERN-R01-PM` through `ROUTE-STBERN-R05-PM` (afternoon)
+
+**Total: 60 routes** (10 per school x 6 schools)
 
 ## Portal URLs (Docker)
 
@@ -58,155 +83,88 @@ All 20 drivers (driver1–driver20@sbtm.demo) and 10 parents (parent1–parent10
 - Parent Portal: http://localhost:5174
 - API Gateway: http://localhost:3001
 
+## Seeded Demo Data
+
+### Schools (6)
+
+| School                             | Board | Location          |
+| ---------------------------------- | ----- | ----------------- |
+| St. Bernadette Catholic Elementary | OCSB  | 45.2705, -75.8849 |
+| All Saints High School             | OCSB  | 45.3219, -75.9251 |
+| Sacred Heart Catholic High School  | OCSB  | 45.2642, -75.9103 |
+| John Young Elementary School       | OCDSB | 45.2900, -75.8841 |
+| Maplewood Secondary School         | OCDSB | 45.2674, -75.8914 |
+| A.Y. Jackson S.S.                  | OCDSB | 45.2953, -75.8795 |
+
+### Per School
+
+- 1 school admin, 1 driver, 1 bus
+- 5 AM routes + 5 PM routes (10 total), ~5-8 stops per route
+- 15 students, 10 parents
+
+### Totals
+
+- 2 boards, 6 schools, 6 drivers, 6 buses
+- 60 routes, ~300-400 stops
+- 90 students, 60 parents
+
 ## Common Issues
 
 ### API Gateway Not Reachable During Reset
 
-**Cause:** Services need time to start and become healthy after reset
-**Fix:** The reset script now waits up to 90 seconds for services. If it still fails:
+**Cause:** Services need time to start after reset
+**Fix:** The reset script waits up to 90 seconds. If it still fails:
 
 ```bash
-# Check service status
 docker compose ps
-
-# Check specific service logs
 docker compose logs api-gateway
-docker compose logs student-presence
-docker compose logs postgres
-
-# If student-presence is failing with ENUM errors, ensure you ran the latest reset
-# If services are crashing, try a full rebuild
-docker compose down -v
-docker compose up -d --build
+docker compose down -v && docker compose up -d --build
 ```
 
 ### 403 Forbidden on Maps
 
-**Cause:** Missing childRouteIds for parent users or admin role check issue
+**Cause:** Missing childRouteIds for parent users
 **Fix:** Re-run `./scripts/reset-demo-db.sh`
 
-### Maps Empty Despite Simulation Running
+### Maps Empty Despite Driver Running
 
-**Cause:** GPS data may not be persisted or authorization issue
-**Check:** Run `./scripts/verify-demo.sh`
+**Cause:** Route not started via lifecycle event
+**Check:** Ensure driver tapped "Start Route" in the Driver App
 
 ### Docker Containers Not Starting
 
 **Cause:** Port conflicts or stale volumes
 **Fix:** `docker compose down -v` then `docker compose up -d --build`
 
-### Simulation Script Shows "GPS failed"
-
-**Cause:** API Gateway not running or authentication issue
-**Check:** `docker ps` to verify containers, check network connectivity
-
-### Browser Console Shows 403 Errors
-
-**Cause:** Authorization issues (missing childRouteIds or incomplete admin role checks)
-**Fix:** Run `./scripts/reset-demo-db.sh` to apply authorization fixes
-
-## Seeded Demo Data
-
-### Schools
-
-- Greenfield Elementary (Glebe area, 45.3876, -75.6960) — 10 routes, 10 buses
-- Riverside Academy (Westboro area, 45.3960, -75.7300) — 10 routes, 10 buses
-
-### Routes (20 total, 5 stops each, 100 stops total)
-
-| Routes                | Vehicles        | School                |
-| --------------------- | --------------- | --------------------- |
-| ROUTE-R01 – ROUTE-R10 | BUS-01 – BUS-10 | Greenfield Elementary |
-| ROUTE-R11 – ROUTE-R20 | BUS-11 – BUS-20 | Riverside Academy     |
-
-### Live Driver Routes (highlighted on map with gold pulsing border)
-
-- ROUTE-R01 (BUS-01, driver1@sbtm.demo) — Bank Street South
-- ROUTE-R02 (BUS-02, driver2@sbtm.demo) — Bronson Avenue
-- ROUTE-R11 (BUS-11, driver11@sbtm.demo) — Richmond Road
-- ROUTE-R12 (BUS-12, driver12@sbtm.demo) — Scott Street
-
-### Students
-
-- 500 students (STUDENT-001 – STUDENT-500), 25 per route
-- First 15 students (STUDENT-001 – STUDENT-015) are tracked by parent logins
-
-### Parents (10, tracking 15 kids)
-
-- parent1: kids on ROUTE-R01, ROUTE-R02
-- parent2: kids on ROUTE-R01, ROUTE-R03
-- parent3: kids on ROUTE-R11, ROUTE-R12
-- parent4–parent10: various routes (see init-db.sql)
-
-### Parent-Route Mapping
-
-- parent1@sbtm.demo → ROUTE-R01, ROUTE-R02
-- parent2@sbtm.demo → ROUTE-R01, ROUTE-R03
-- parent3@sbtm.demo → ROUTE-R11, ROUTE-R12
-- parent4@sbtm.demo → ROUTE-R04
-- parent5@sbtm.demo → ROUTE-R05, ROUTE-R06
-- parent6@sbtm.demo → ROUTE-R11
-- parent7@sbtm.demo → ROUTE-R13
-- parent8@sbtm.demo → ROUTE-R07
-- parent9@sbtm.demo → ROUTE-R14, ROUTE-R15
-- parent10@sbtm.demo → ROUTE-R08
-
-## Troubleshooting Steps
-
-### If Maps Don't Show Bus Movement
-
-1. **Check browser console (F12)** for 403 errors
-2. **Verify simulator is running** and shows green success messages
-3. **Run verification:** `./scripts/verify-demo.sh`
-4. **Check authorization tests** in verification output
-5. **If all else fails:** `./scripts/reset-demo-db.sh`
-
-### If No Alerts Appear
-
-1. **Check simulator lap number** - Emergency alerts only appear every 3rd lap by default
-2. **Refresh Admin Dashboard** manually
-3. **Check API Gateway logs** for error messages
-4. **Verify authentication** by logging out and back in
-
-### If Data Looks Wrong
-
-1. **Reset database:** `./scripts/reset-demo-db.sh`
-2. **Verify seed data:** Check verification script output
-3. **Check Docker logs:** `docker compose logs api-gateway`
-
 ## Quick Health Checks
 
 ```bash
-# Check if all containers are running
+# All containers running
 docker ps
 
-# Check API Gateway health
+# API Gateway health
 curl http://localhost:3001/api/v1/health
 
-# Check GPS data in database
-docker exec sbtm-postgres-1 psql -U postgres -d sbms -c "SELECT COUNT(*) FROM location_points;"
+# Route reference count (expect 60)
+docker exec sbtm-postgres-1 psql -U postgres -d sbms -c "SELECT COUNT(*) FROM routes_reference;"
 
-# Check parent user has routes assigned
-docker exec sbtm-postgres-1 psql -U postgres -d sbms -c "SELECT email, \"childRouteIds\" FROM users WHERE role = 'PARENT';"
+# Student count (expect 90)
+docker exec sbtm-postgres-1 psql -U postgres -d sbms -c "SELECT COUNT(*) FROM students_reference;"
 
-# Check alert governance audit trail (Phase B)
-docker exec sbtm-postgres-1 psql -U postgres -d sbms -c "SELECT \"eventType\", COUNT(*) FROM alert_audit_log GROUP BY \"eventType\" ORDER BY \"eventType\";"
-
-# Check alert tier distribution
-docker exec sbtm-postgres-1 psql -U postgres -d sbms -c "SELECT tier, status, COUNT(*) FROM emergency_alert GROUP BY tier, status ORDER BY tier, status;"
+# Parent route assignments
+docker exec sbtm-postgres-1 psql -U postgres -d sbms -c "SELECT email, \"childRouteIds\" FROM users WHERE role = 'PARENT' LIMIT 10;"
 ```
 
 ## Alert Governance API Endpoints (Phase B)
 
-| Method | Endpoint                          | Role                    | Purpose                                      |
-| ------ | --------------------------------- | ----------------------- | -------------------------------------------- |
-| GET    | `/api/v1/alerts`                  | Any admin               | List all alerts                              |
-| GET    | `/api/v1/alerts/active`           | Any admin               | List active/pending alerts                   |
-| PATCH  | `/api/v1/alerts/:id/confirm`      | School/Board/OSTA Admin | Confirm Tier 1 alert → notify parents        |
-| PATCH  | `/api/v1/alerts/:id/false-alarm`  | School/Board/OSTA Admin | Mark as false alarm → no parent notification |
-| PATCH  | `/api/v1/alerts/:id/request-info` | School/Board/OSTA Admin | Request more info (timer continues)          |
-| GET    | `/api/v1/alerts/:id/audit-trail`  | School/Board/OSTA Admin | Full lifecycle audit trail                   |
-| PATCH  | `/api/v1/alerts/:id/resolve`      | School/Board/OSTA Admin | Resolve an alert                             |
+| Method | Endpoint                         | Role                    | Purpose                    |
+| ------ | -------------------------------- | ----------------------- | -------------------------- |
+| GET    | `/api/v1/alerts`                 | Any admin               | List all alerts            |
+| GET    | `/api/v1/alerts/active`          | Any admin               | List active/pending alerts |
+| PATCH  | `/api/v1/alerts/:id/confirm`     | School/Board/OSTA Admin | Confirm Tier 1 alert       |
+| PATCH  | `/api/v1/alerts/:id/false-alarm` | School/Board/OSTA Admin | Mark as false alarm        |
+| PATCH  | `/api/v1/alerts/:id/resolve`     | School/Board/OSTA Admin | Resolve an alert           |
+| GET    | `/api/v1/alerts/:id/audit-trail` | School/Board/OSTA Admin | Full lifecycle audit trail |
 
 ## For More Details
 

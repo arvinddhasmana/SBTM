@@ -15,6 +15,7 @@ The Admin Dashboard is the command center for the School Bus Transport Managemen
 ## 🏗️ Architecture
 
 ### Tech Stack
+
 - **Framework**: React 19 (Vite)
 - **Styling**: TailwindCSS
 - **Maps**: React Leaflet
@@ -24,6 +25,7 @@ The Admin Dashboard is the command center for the School Bus Transport Managemen
 - **Testing**: Vitest + React Testing Library
 
 ### Module Structure
+
 ```
 src/
 ├── components/       # Reusable UI components
@@ -36,38 +38,43 @@ src/
 ## 🚀 Getting Started
 
 ### Prerequisites
+
 - Node.js 20+
 
 ### Installation
 
 1. **Install dependencies**:
+
 ```bash
-npm install
+pnpm install
 ```
 
 2. **Start development server**:
+
 ```bash
-npm run dev
+pnpm run dev
 ```
 
 3. **Build for production**:
+
 ```bash
-npm run build
+pnpm run build
 ```
 
 ## 🧪 Testing
 
 ### Unit Tests
+
 ```bash
-npm run test
+pnpm run test
 ```
 
 ## 🔧 Configuration
 
 ### Environment Variables
 
-| Variable | Description |
-|----------|-------------|
+| Variable       | Description                                             |
+| -------------- | ------------------------------------------------------- |
 | `VITE_API_URL` | API Gateway base URL (default: `http://localhost:3001`) |
 
 ## 🔒 Security

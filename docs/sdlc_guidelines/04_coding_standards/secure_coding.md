@@ -35,7 +35,7 @@ Define secure coding practices for SBTM. These rules supplement the general and 
 
 - Follow threat modeling for new features (see threat_modeling.md).
 - Implement rate limiting at the API Gateway for all public-facing endpoints.
-- Define and enforce security requirements (SR-*) for every feature.
+- Define and enforce security requirements (SR-\*) for every feature.
 
 ### A05 — Security Misconfiguration
 
@@ -54,7 +54,7 @@ Define secure coding practices for SBTM. These rules supplement the general and 
 ### A08 — Software and Data Integrity Failures
 
 - Pin dependency versions in `package.json` (exact versions, not ranges).
-- Run `npm audit` in CI pipeline and fail on critical/high vulnerabilities.
+- Run `pnpm audit` in CI pipeline and fail on critical/high vulnerabilities.
 - Validate webhook payloads with signatures when integrating external services.
 
 ### A09 — Security Logging and Monitoring Failures
@@ -87,10 +87,10 @@ return { ...student, parent: { id: parent.id, hasConsent: parent.consentGranted 
 
 ## Dependency Security
 
-- Audit dependencies weekly using `npm audit`.
+- Audit dependencies weekly using `pnpm audit`.
 - Do not install packages with fewer than 100 weekly downloads unless justified.
 - Prefer well-maintained packages with active security response teams.
-- Lock file (`package-lock.json`) must be committed and used for deterministic installs.
+- Lock file (`pnpm-lock.yaml`) must be committed and used for deterministic installs.
 
 ## Related Documents
 

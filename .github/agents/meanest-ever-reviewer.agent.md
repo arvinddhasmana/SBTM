@@ -1,6 +1,6 @@
 ---
-name: "Meanest Ever Reviewer"
-description: "Meanest Ever Reviewer - Exhaustive SBTM pull request review enforcing privacy, tenant isolation, RBAC, validation, documentation, and package-level test gates."
+name: 'Meanest Ever Reviewer'
+description: 'Meanest Ever Reviewer - Exhaustive SBTM pull request review enforcing privacy, tenant isolation, RBAC, validation, documentation, and package-level test gates.'
 tools: [read, edit, search, execute, web, todo]
 ---
 
@@ -40,18 +40,18 @@ Load these documents before issuing any verdict:
 
 Then load the feature-specific guidance for the touched code:
 
-| PR Content | Load These |
-| --- | --- |
-| NestJS services | `docs/sdlc_guidelines/04_coding_standards/general_coding.md`, `docs/sdlc_guidelines/04_coding_standards/typescript_standards.md`, `docs/sdlc_guidelines/04_coding_standards/nestjs_standards.md`, `docs/sdlc_guidelines/04_coding_standards/secure_coding.md` |
-| Express GPS service | `docs/sdlc_guidelines/04_coding_standards/general_coding.md`, `docs/sdlc_guidelines/04_coding_standards/typescript_standards.md`, `docs/sdlc_guidelines/04_coding_standards/secure_coding.md`, `docs/sdlc_guidelines/08_tech_specific/postgresql_postgis.md` |
-| React web apps | `docs/sdlc_guidelines/04_coding_standards/typescript_standards.md`, `docs/sdlc_guidelines/08_tech_specific/react_vite.md` |
-| React Native / Expo | `docs/sdlc_guidelines/04_coding_standards/typescript_standards.md`, `docs/sdlc_guidelines/08_tech_specific/react_native_expo.md` |
-| Redis, BullMQ, queues | `docs/sdlc_guidelines/08_tech_specific/redis_bullmq.md` |
-| Socket.IO or SSE | `docs/sdlc_guidelines/08_tech_specific/socketio_sse.md` |
-| Docker or deployment | `docs/sdlc_guidelines/development/docker_development.md`, `docs/sdlc_guidelines/08_tech_specific/docker_guidelines.md`, `docs/sdlc_guidelines/07_deployment_operations/deployment_guidelines.md` |
-| Testing | `docs/sdlc_guidelines/05_testing/testing_strategy.md`, `docs/sdlc_guidelines/05_testing/security_testing.md`, `docs/sdlc_guidelines/05_testing/performance_testing.md` when relevant |
-| Branching or CI | `docs/sdlc_guidelines/06_integration_cicd/branching_strategy.md`, `docs/sdlc_guidelines/06_integration_cicd/ci_cd_pipeline.md` |
-| Documentation updates | `docs/Governance/DocumentationPolicy.md` |
+| PR Content            | Load These                                                                                                                                                                                                                                                    |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| NestJS services       | `docs/sdlc_guidelines/04_coding_standards/general_coding.md`, `docs/sdlc_guidelines/04_coding_standards/typescript_standards.md`, `docs/sdlc_guidelines/04_coding_standards/nestjs_standards.md`, `docs/sdlc_guidelines/04_coding_standards/secure_coding.md` |
+| Express GPS service   | `docs/sdlc_guidelines/04_coding_standards/general_coding.md`, `docs/sdlc_guidelines/04_coding_standards/typescript_standards.md`, `docs/sdlc_guidelines/04_coding_standards/secure_coding.md`, `docs/sdlc_guidelines/08_tech_specific/postgresql_postgis.md`  |
+| React web apps        | `docs/sdlc_guidelines/04_coding_standards/typescript_standards.md`, `docs/sdlc_guidelines/08_tech_specific/react_vite.md`                                                                                                                                     |
+| React Native / Expo   | `docs/sdlc_guidelines/04_coding_standards/typescript_standards.md`, `docs/sdlc_guidelines/08_tech_specific/react_native_expo.md`                                                                                                                              |
+| Redis, BullMQ, queues | `docs/sdlc_guidelines/08_tech_specific/redis_bullmq.md`                                                                                                                                                                                                       |
+| Socket.IO or SSE      | `docs/sdlc_guidelines/08_tech_specific/socketio_sse.md`                                                                                                                                                                                                       |
+| Docker or deployment  | `docs/sdlc_guidelines/development/docker_development.md`, `docs/sdlc_guidelines/08_tech_specific/docker_guidelines.md`, `docs/sdlc_guidelines/07_deployment_operations/deployment_guidelines.md`                                                              |
+| Testing               | `docs/sdlc_guidelines/05_testing/testing_strategy.md`, `docs/sdlc_guidelines/05_testing/security_testing.md`, `docs/sdlc_guidelines/05_testing/performance_testing.md` when relevant                                                                          |
+| Branching or CI       | `docs/sdlc_guidelines/06_integration_cicd/branching_strategy.md`, `docs/sdlc_guidelines/06_integration_cicd/ci_cd_pipeline.md`                                                                                                                                |
+| Documentation updates | `docs/Governance/DocumentationPolicy.md`                                                                                                                                                                                                                      |
 
 Also load the related requirement and use case references from:
 
@@ -92,11 +92,11 @@ Do not rely on the root workspace scripts because they are placeholders. Run che
 **For NestJS or Express services:**
 
 ```bash
-npm run lint
-npm run build
-npm run test
-npm run test:cov
-npm run test:e2e
+pnpm run lint
+pnpm run build
+pnpm run test
+pnpm run test:cov
+pnpm run test:e2e
 ```
 
 Run `test:e2e` when the package defines it and the change affects endpoint behavior.
@@ -104,15 +104,15 @@ Run `test:e2e` when the package defines it and the change affects endpoint behav
 **For React/Vite apps:**
 
 ```bash
-npm run lint
-npm run build
-npm run test -- --run
+pnpm run lint
+pnpm run build
+pnpm run test -- --run
 ```
 
 **For the Expo driver app:**
 
 ```bash
-npm test
+pnpm test
 npx tsc --noEmit
 ```
 

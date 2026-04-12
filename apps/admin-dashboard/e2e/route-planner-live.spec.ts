@@ -8,7 +8,7 @@
 import { test, expect, type Page } from '@playwright/test';
 
 const LIVE_CREDS = {
-  email: 'school.admin@sbtm.demo',
+  email: 'admin.stbern@sbtm.demo',
   password: 'Admin123!',
 };
 

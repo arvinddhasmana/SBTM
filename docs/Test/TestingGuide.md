@@ -372,14 +372,14 @@ curl -X POST http://localhost:3001/api/v1/emergency-events \
 
 ```bash
 cd services/api-gateway
-npm test
+pnpm test
 ```
 
 ### Run unit tests with coverage
 
 ```bash
 cd services/api-gateway
-npm run test:cov
+pnpm run test:cov
 ```
 
 ### Run integration tests
@@ -392,7 +392,7 @@ docker compose -f docker-compose.yml -f docker-compose.infra.yml up -d
 
 # Run integration tests for a service
 cd services/api-gateway
-npm run test:e2e
+pnpm run test:e2e
 
 # Tear down
 docker compose -f docker-compose.yml -f docker-compose.infra.yml down -v

@@ -14,11 +14,13 @@ The Parent App enables guardians to track their children's school bus journey in
 ## 🏗️ Architecture
 
 ### Tech Stack
+
 - **Framework**: React 19 (Vite)
 - **Styling**: TailwindCSS
 - **HTTP**: Axios
 
 ### Module Structure
+
 ```
 web/src/
 ├── components/       # UI Components
@@ -31,39 +33,44 @@ web/src/
 ## 🚀 Getting Started
 
 ### Prerequisites
+
 - Node.js 20+
 
 ### Installation
 
 1. **Install dependencies**:
+
 ```bash
 cd web
-npm install
+pnpm install
 ```
 
 2. **Start development server**:
+
 ```bash
-npm run dev
+pnpm run dev
 ```
 
 3. **Build for production**:
+
 ```bash
-npm run build
+pnpm run build
 ```
 
 ## 🧪 Testing
 
 ### Unit Tests
+
 ```bash
-npm run test
+pnpm run test
 ```
 
 ## 🔧 Configuration
 
 ### Environment Variables
 
-| Variable | Description |
-|----------|-------------|
+| Variable       | Description                                             |
+| -------------- | ------------------------------------------------------- |
 | `VITE_API_URL` | API Gateway base URL (default: `http://localhost:3001`) |
 
 ## 🔒 Security

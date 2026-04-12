@@ -15,12 +15,14 @@ The GPS Tracking Service is the core location handler for the School Bus Transpo
 ## 🏗️ Architecture
 
 ### Tech Stack
+
 - **Framework**: Express (TypeScript)
 - **Database**: PostgreSQL with Prisma ORM
 - **Validation**: Zod
 - **Testing**: Jest + Supertest
 
 ### Module Structure
+
 ```
 src/
 ├── controllers/      # Route handlers
@@ -33,29 +35,34 @@ src/
 ## 🚀 Getting Started
 
 ### Prerequisites
+
 - Node.js 20+
 - PostgreSQL
 
 ### Installation
 
 1. **Install dependencies**:
+
 ```bash
-npm install
+pnpm install
 ```
 
 2. **Configure environment**:
+
 ```bash
 cp .env.example .env
 ```
 
 3. **Run Migrations**:
+
 ```bash
-npm run migrate:dev
+pnpm run migrate:dev
 ```
 
 4. **Start development server**:
+
 ```bash
-npm run dev
+pnpm run dev
 ```
 
 ### Running with Docker
@@ -67,6 +74,7 @@ docker compose up --build gps-tracking
 ## 📡 API Endpoints
 
 ### Routes
+
 - `POST /api/v1/location` - Ingest GPS point
 - `GET /api/v1/routes/:id/live-location` - Get current location
 - `GET /api/v1/routes/:id/history` - Get path history (supports timebox)
@@ -74,18 +82,19 @@ docker compose up --build gps-tracking
 ## 🧪 Testing
 
 ### Unit & Integration Tests
+
 ```bash
-npm run test
+pnpm run test
 ```
 
 ## 🔧 Configuration
 
 ### Environment Variables
 
-| Variable | Description |
-|----------|-------------|
-| `PORT` | Service Port (Default: 3002) |
-| `DATABASE_URL` | Prisma Connection String |
+| Variable       | Description                  |
+| -------------- | ---------------------------- |
+| `PORT`         | Service Port (Default: 3002) |
+| `DATABASE_URL` | Prisma Connection String     |
 
 ## 🔒 Security
 

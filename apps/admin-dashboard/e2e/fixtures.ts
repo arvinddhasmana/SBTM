@@ -13,11 +13,11 @@ const ADMIN_PASSWORDS: Partial<Record<string, string>> = {
 
 /**
  * Seed user data matching the `auth_user` localStorage format expected by AuthContext.
- * IDs and school/boardIds match the single-bus demo seed (scripts/init-db.sql).
+ * IDs and school/boardIds match the 6-school demo seed (scripts/seed-standard.sql + scripts/seed-demo.sql).
  */
 export const TEST_USERS = {
   SUPER_ADMIN: {
-    id: '10000000-0000-0000-0000-000000000001',
+    id: '10000000-0000-0000-0000-000000000000',
     email: 'super.admin@sbtm.demo',
     role: 'SUPER_ADMIN',
     name: 'Super Admin',
@@ -25,7 +25,7 @@ export const TEST_USERS = {
     boardId: null,
   },
   OSTA_ADMIN: {
-    id: '10000000-0000-0000-0000-000000000002',
+    id: '10000000-0000-0000-0000-000000000001',
     email: 'osta.admin@sbtm.demo',
     role: 'OSTA_ADMIN',
     name: 'Osta Admin',
@@ -34,33 +34,33 @@ export const TEST_USERS = {
   },
   BOARD_ADMIN: {
     id: '10000000-0000-0000-0000-000000000003',
-    email: 'board.admin@sbtm.demo',
+    email: 'ocdsb.admin@sbtm.demo',
     role: 'BOARD_ADMIN',
-    name: 'Board Admin',
+    name: 'OCDSB Admin',
     schoolId: null,
     boardId: 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c',
   },
   SCHOOL_ADMIN: {
-    id: '10000000-0000-0000-0000-000000000004',
-    email: 'school.admin@sbtm.demo',
+    id: '30000000-0000-0000-0001-00000000000a',
+    email: 'admin.stbern@sbtm.demo',
     role: 'SCHOOL_ADMIN',
-    name: 'School Admin',
-    schoolId: 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c',
-    boardId: 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c',
+    name: 'Admin St.',
+    schoolId: '30000000-0000-0000-0001-000000000001',
+    boardId: 'b1a2b3c4-d5e6-4f7a-8b9c-1d2e3f4a5b6c',
   },
   DRIVER: {
-    id: '10000000-0000-0000-0000-000000000101',
-    email: 'driver1@sbtm.demo',
+    id: '30000000-0000-0000-0001-00000000000d',
+    email: 'driver.stbern@sbtm.demo',
     role: 'DRIVER',
-    name: 'Driver One',
-    schoolId: null,
+    name: 'Driver St.',
+    schoolId: '30000000-0000-0000-0001-000000000001',
     boardId: null,
   },
   PARENT: {
-    id: '10000000-0000-0000-0000-000000000201',
-    email: 'parent1@sbtm.demo',
+    id: '30000000-0000-0001-0000-000000000001',
+    email: 'parent1.stbern@sbtm.demo',
     role: 'PARENT',
-    name: 'Parent One',
+    name: 'Michael Anderson',
     schoolId: null,
     boardId: null,
   },

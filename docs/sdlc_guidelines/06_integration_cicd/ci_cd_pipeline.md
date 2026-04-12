@@ -14,7 +14,7 @@ Define the continuous integration and delivery pipeline for the SBTM monorepo. T
 graph LR
     LINT[Lint<br/>ESLint + Prettier] --> BUILD[Build<br/>TypeScript compile]
     BUILD --> TEST[Test<br/>Unit + Integration]
-    TEST --> SEC[Security Scan<br/>npm audit + SAST]
+    TEST --> SEC[Security Scan<br/>pnpm audit + SAST]
     SEC --> DOCKER[Docker Build<br/>Image creation]
     DOCKER --> PUSH[Push<br/>Registry]
     PUSH --> DEPLOY[Deploy<br/>Docker Compose]
@@ -43,9 +43,9 @@ graph LR
 
 ### 4. Security Scan
 
-- Tool: `npm audit`, optionally a SAST scanner
+- Tool: `pnpm audit`, optionally a SAST scanner
 - Scope: All dependencies and source code
-- Fail condition: Any `critical` or `high` vulnerability in `npm audit`
+- Fail condition: Any `critical` or `high` vulnerability in `pnpm audit`
 - Monitoring: `moderate` findings are logged as warnings
 
 ### 5. Docker Build
@@ -69,14 +69,14 @@ graph LR
 
 ## Quality Gates
 
-| Gate | When | Blocks Merge/Deploy? |
-|---|---|---|
-| Lint pass | Every PR | Yes |
-| Build pass | Every PR | Yes |
-| Tests pass + coverage met | Every PR | Yes |
-| No critical/high vulnerabilities | Every PR | Yes |
-| Docker image builds | Pre-deploy | Yes |
-| Health checks pass | Post-deploy | Triggers rollback |
+| Gate                             | When        | Blocks Merge/Deploy? |
+| -------------------------------- | ----------- | -------------------- |
+| Lint pass                        | Every PR    | Yes                  |
+| Build pass                       | Every PR    | Yes                  |
+| Tests pass + coverage met        | Every PR    | Yes                  |
+| No critical/high vulnerabilities | Every PR    | Yes                  |
+| Docker image builds              | Pre-deploy  | Yes                  |
+| Health checks pass               | Post-deploy | Triggers rollback    |
 
 ## Monorepo Considerations
 
@@ -86,13 +86,13 @@ graph LR
 
 ## Configuration Files
 
-| File | Purpose |
-|---|---|
-| `docker-compose.yml` | Local development and staging |
-| `docker-compose.ci.yml` | CI pipeline overrides |
-| `eslint.config.js` (per package) | Lint configuration |
-| `jest.config.js` (per package) | Test configuration |
-| `Dockerfile` (per service/app) | Build configuration |
+| File                             | Purpose                       |
+| -------------------------------- | ----------------------------- |
+| `docker-compose.yml`             | Local development and staging |
+| `docker-compose.ci.yml`          | CI pipeline overrides         |
+| `eslint.config.js` (per package) | Lint configuration            |
+| `jest.config.js` (per package)   | Test configuration            |
+| `Dockerfile` (per service/app)   | Build configuration           |
 
 ## Related Documents
 

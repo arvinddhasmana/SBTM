@@ -128,6 +128,8 @@ export interface Route {
   name: string;
   schoolId: string;
   schoolName?: string;
+  schoolLat?: number;
+  schoolLng?: number;
   direction: 'AM' | 'PM';
   vehicleId?: string;
   vehicle?: Vehicle;

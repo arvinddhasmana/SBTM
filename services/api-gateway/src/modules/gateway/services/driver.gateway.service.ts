@@ -1,6 +1,6 @@
 import { Injectable, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
+import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { Route } from '../../auth/entities/route.entity';
 import { HttpClientService } from '../../../common/utils/http-client.service';
@@ -53,15 +53,29 @@ export class DriverGatewayService {
       return [];
     }
 
-    const routes = await this.routeRepository.findBy({ id: In(routeIds) });
-    return routes.map((route) => ({
-      routeId: route.id,
-      name: route.name,
-      direction: route.direction,
-      startTime: route.startTime,
-      vehicleId: route.vehicleId,
-      schoolId: route.schoolId,
-    }));
+    // Query routes_reference since assignedRouteIds contains reference IDs (e.g., ROUTE-STBERN-R01-AM)
+    const routes = await this.dataSource.query(
+      `SELECT r.id, r.name, r.direction, r.schedule, r."vehicleId", r."schoolId"
+       FROM routes_reference r
+       WHERE r.id = ANY($1)
+       ORDER BY r.id ASC`,
+      [routeIds],
+    );
+
+    return routes.map((r: any) => {
+      const schedule =
+        typeof r.schedule === 'string' ? JSON.parse(r.schedule) : r.schedule;
+      const direction =
+        r.direction || (r.id.toUpperCase().includes('PM') ? 'PM' : 'AM');
+      return {
+        routeId: r.id,
+        name: r.name,
+        direction,
+        startTime: schedule?.startTime || '07:30',
+        vehicleId: r.vehicleId || undefined,
+        schoolId: r.schoolId,
+      };
+    });
   }
 
   /**
