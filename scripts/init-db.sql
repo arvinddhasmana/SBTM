@@ -572,7 +572,7 @@ INSERT INTO users (id, email, "passwordHash", role, "firstName", "lastName", "bo
 
 -- Driver (matches singlebus-config.json: driverId=driver-001, email=driver1@sbtm.demo)
 INSERT INTO users (id, email, "passwordHash", role, "firstName", "lastName", "driverId", "assignedRouteIds", "schoolId", "boardId") VALUES
-    ('10000000-0000-0000-0000-000000000101', 'driver1@sbtm.demo', crypt('Admin123!', gen_salt('bf')), 'DRIVER', 'James', 'Wilson', 'driver-001', 'ROUTE-SingleBus-AM,ROUTE-SingleBus-PM', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c');
+    ('10000000-0000-0000-0000-000000000101', 'driver1@sbtm.demo', crypt('Admin123!', gen_salt('bf')), 'DRIVER', 'James', 'Wilson', 'driver-001', 'a0000001-0000-0000-0000-000000000001,a0000001-0000-0000-0000-000000000002', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'b0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c');
 
 -- Parents (matches singlebus-config.json parents array)
 INSERT INTO users (id, email, "passwordHash", role, "firstName", "lastName", "childRouteIds", "schoolId", "boardId") VALUES
@@ -594,6 +594,11 @@ INSERT INTO vehicles_reference (id, "plateNumber", capacity, status) VALUES
 INSERT INTO routes_reference (id, name, "vehicleId", "driverId", schedule) VALUES
     ('ROUTE-SingleBus-AM', 'Single Bus AM', 'BUS-01', 'driver-001', '{"startTime":"07:15","days":["Mon","Tue","Wed","Thu","Fri"]}'),
     ('ROUTE-SingleBus-PM', 'Single Bus PM', 'BUS-01', 'driver-001', '{"startTime":"15:00","days":["Mon","Tue","Wed","Thu","Fri"]}');
+
+-- Operational routes with UUID PKs — these are what assignedRouteIds references
+INSERT INTO routes (id, "schoolId", name, direction, "vehicleId", "startTime") VALUES
+    ('a0000001-0000-0000-0000-000000000001', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'Single Bus AM', 'AM', 'BUS-01', '07:15'),
+    ('a0000001-0000-0000-0000-000000000002', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'Single Bus PM', 'PM', 'BUS-01', '15:00');
 
 -- ===================== Students (7, matching singlebus-config.json) =====================
 -- All students assigned to BOTH AM and PM routes
