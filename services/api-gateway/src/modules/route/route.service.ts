@@ -82,14 +82,14 @@ export class RouteService {
   async findAll(schoolId: string): Promise<Route[]> {
     return this.routeRepository.find({
       where: { schoolId },
-      relations: ['vehicle', 'stops'],
+      relations: ['vehicle', 'stops', 'school'],
     });
   }
 
   async findOne(id: string, schoolId: string): Promise<Route> {
     const route = await this.routeRepository.findOne({
       where: { id, schoolId },
-      relations: ['vehicle', 'stops'],
+      relations: ['vehicle', 'stops', 'school'],
     });
 
     if (!route) {

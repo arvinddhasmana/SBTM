@@ -104,6 +104,9 @@ export interface RouteDetails {
   vehicleId?: string;
   polyline?: string;
   stops: RouteStop[];
+  schoolLat?: number;
+  schoolLng?: number;
+  schoolName?: string;
 }
 
 export const parentApi = {

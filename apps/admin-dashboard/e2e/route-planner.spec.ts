@@ -52,8 +52,8 @@ test.describe('RP: Route Planner', () => {
   test('RP01 – displays route list with all mock routes', async ({ page }) => {
     await expect(page.getByRole('heading', { name: 'Routes' })).toBeVisible();
     // Should display 6 mock routes
-    const routeButtons = page.locator('.custom-scrollbar button');
-    await expect(routeButtons).toHaveCount(6, { timeout: 5000 });
+    const routeCards = page.locator('.custom-scrollbar [data-testid^="route-card"]');
+    await expect(routeCards).toHaveCount(6, { timeout: 5000 });
   });
 
   test('RP02 – school filter dropdown shows all schools', async ({ page }) => {
@@ -72,8 +72,8 @@ test.describe('RP: Route Planner', () => {
     await page.waitForTimeout(300);
 
     // Only PM routes should show: "Single Bus PM" and "Riverside North PM"
-    const routeButtons = page.locator('.custom-scrollbar button');
-    await expect(routeButtons).toHaveCount(2, { timeout: 3000 });
+    const routeCards = page.locator('.custom-scrollbar [data-testid^="route-card"]');
+    await expect(routeCards).toHaveCount(2, { timeout: 3000 });
   });
 
   test('RP04 – text search filters routes', async ({ page }) => {
@@ -81,19 +81,26 @@ test.describe('RP: Route Planner', () => {
     await searchInput.fill('Kanata');
     await page.waitForTimeout(300);
 
-    const routeButtons = page.locator('.custom-scrollbar button');
-    await expect(routeButtons).toHaveCount(1, { timeout: 3000 });
+    const routeCards = page.locator('.custom-scrollbar [data-testid^="route-card"]');
+    await expect(routeCards).toHaveCount(1, { timeout: 3000 });
   });
 
   // ─── Route Selection ────────────────────────────
   test('RP05 – clicking a route shows it on the map with stops', async ({ page }) => {
     // Click "Single Bus AM"
-    await page.locator('button:has-text("Single Bus AM")').first().click();
+    await page.locator('[data-testid^="route-card"]:has-text("Single Bus AM")').first().click();
     await page.waitForTimeout(800);
 
-    // Should show edit button with route details
+    // Route card should show school name, start time, and edit button
+    await expect(page.locator('[data-testid="route-school-name"]').first()).toContainText(
+      'Riverside Public School',
+    );
+    await expect(page.locator('[data-testid="route-start-time"]').first()).toContainText('07:15');
+    await expect(page.locator('[data-testid^="edit-route-btn"]').first()).toBeVisible();
+
+    // Selected route panel below list still shows direction + stop count
     await expect(page.locator('text=AM • 5 stops')).toBeVisible({ timeout: 3000 });
-    await expect(page.getByRole('button', { name: 'Edit' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Edit' }).first()).toBeVisible();
 
     // Map should have stop markers (Leaflet divIcons)
     const stopMarkers = page.locator('.leaflet-marker-icon');
@@ -259,11 +266,11 @@ test.describe('RP: Route Planner', () => {
   // ─── Edit Route ─────────────────────────────────
   test('RP14 – edit button opens route in edit mode', async ({ page }) => {
     // Select a route first
-    await page.locator('button:has-text("Single Bus AM")').first().click();
+    await page.locator('[data-testid^="route-card"]:has-text("Single Bus AM")').first().click();
     await page.waitForTimeout(800);
 
-    // Click edit
-    await page.getByRole('button', { name: 'Edit' }).click();
+    // Click the Edit button on the route card
+    await page.locator('[data-testid^="edit-route-btn"]').first().click();
     await page.waitForTimeout(500);
 
     // Should show edit form
@@ -459,5 +466,37 @@ test.describe('RP: Route Planner', () => {
     const headerText = await stopsHeader.textContent();
     const stopCount = parseInt(headerText?.match(/\d+/)?.[0] || '0');
     expect(stopCount).toBeGreaterThanOrEqual(2);
+  });
+
+  // ─── School Icon on Highlighted Route ──────────
+  test('RP21 – school icon appears on map when route is selected', async ({ page }) => {
+    // Click "Single Bus AM" — a route with schoolLat/schoolLng in mock data
+    await page.locator('[data-testid^="route-card"]:has-text("Single Bus AM")').first().click();
+    await page.waitForTimeout(800);
+
+    // Map should show stop markers + school marker
+    const allMarkers = page.locator('.leaflet-marker-icon');
+    const count = await allMarkers.count();
+    // 5 stops + 1 school = 6 markers
+    expect(count).toBeGreaterThanOrEqual(6);
+
+    // The school marker contains the graduation cap SVG path
+    const schoolMarker = page.locator('.leaflet-marker-icon').filter({
+      has: page.locator('svg path[d*="M12 3L1 9l11 6"]'),
+    });
+    await expect(schoolMarker).toHaveCount(1);
+
+    // School marker should be purple (#8b5cf6)
+    const hasSchoolColor = await page.evaluate(() => {
+      const icons = document.querySelectorAll('.leaflet-marker-icon div');
+      for (const icon of icons) {
+        const el = icon as HTMLElement;
+        if (el.style.background === 'rgb(139, 92, 246)' || el.style.background === '#8b5cf6') {
+          return true;
+        }
+      }
+      return false;
+    });
+    expect(hasSchoolColor).toBe(true);
   });
 });

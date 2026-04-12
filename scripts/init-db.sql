@@ -506,6 +506,8 @@ CREATE TABLE routes_reference (
     "driverId" TEXT,
     "schedule" JSONB,
     "polyline" TEXT,
+    "schoolId" UUID,
+    direction TEXT,
     "createdAt" TIMESTAMP DEFAULT NOW()
 );
 
@@ -591,9 +593,9 @@ INSERT INTO vehicles_reference (id, "plateNumber", capacity, status) VALUES
 
 -- ===================== Routes (AM + PM, same bus) =====================
 
-INSERT INTO routes_reference (id, name, "vehicleId", "driverId", schedule) VALUES
-    ('ROUTE-SingleBus-AM', 'Single Bus AM', 'BUS-01', 'driver-001', '{"startTime":"07:15","days":["Mon","Tue","Wed","Thu","Fri"]}'),
-    ('ROUTE-SingleBus-PM', 'Single Bus PM', 'BUS-01', 'driver-001', '{"startTime":"15:00","days":["Mon","Tue","Wed","Thu","Fri"]}');
+INSERT INTO routes_reference (id, name, "vehicleId", "driverId", schedule, "schoolId", direction) VALUES
+    ('ROUTE-SingleBus-AM', 'Single Bus AM', 'BUS-01', 'driver-001', '{"startTime":"07:15","days":["Mon","Tue","Wed","Thu","Fri"]}', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'AM'),
+    ('ROUTE-SingleBus-PM', 'Single Bus PM', 'BUS-01', 'driver-001', '{"startTime":"15:00","days":["Mon","Tue","Wed","Thu","Fri"]}', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'PM');
 
 -- Operational routes with UUID PKs — these are what assignedRouteIds references
 INSERT INTO routes (id, "schoolId", name, direction, "vehicleId", "startTime") VALUES

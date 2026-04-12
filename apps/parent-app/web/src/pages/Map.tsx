@@ -117,6 +117,25 @@ function createStopIcon(sequence: number, isChildStop: boolean) {
   });
 }
 
+const SCHOOL_ICON = L.divIcon({
+  className: '',
+  html: `<div style="
+    width:36px;height:36px;
+    background:#8b5cf6;
+    border:3px solid #fff;
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 0 20px rgba(139,92,246,0.4), 0 4px 12px rgba(0,0,0,0.4);
+  ">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
+      <path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82zM12 3L1 9l11 6 9-4.91V17h2V9L12 3z"/>
+    </svg>
+  </div>`,
+  iconSize: [36, 36],
+  iconAnchor: [18, 18],
+  popupAnchor: [0, -18],
+});
+
 /** Parse WKT POINT(lng lat) to [lat, lng] */
 function parseWktPoint(wkt: string): [number, number] | null {
   const m = wkt.match(/POINT\(([-\d.]+)\s+([-\d.]+)\)/);
@@ -263,6 +282,14 @@ const MapPage: React.FC = () => {
       .filter((s): s is NonNullable<typeof s> => s !== null);
   }, [routeDetails]);
 
+  // Derive school position from route details
+  const schoolPosition = useMemo<[number, number] | null>(() => {
+    if (routeDetails?.schoolLat && routeDetails?.schoolLng) {
+      return [routeDetails.schoolLat, routeDetails.schoolLng];
+    }
+    return null;
+  }, [routeDetails]);
+
   // Determine student's assigned stop for the active route
   const childStopId = useMemo(() => {
     if (!child) return undefined;
@@ -313,14 +340,15 @@ const MapPage: React.FC = () => {
     return isLive ? 'Live' : 'Completed';
   })();
 
-  // Compute map bounds from route path + bus position
+  // Compute map bounds from route path + bus position + school
   const mapBounds = useMemo(() => {
     const pts: [number, number][] = [];
     if (routePath) pts.push(...routePath);
     if (busLocation && isLive) pts.push([busLocation.lat, busLocation.lng]);
+    if (schoolPosition) pts.push(schoolPosition);
     if (pts.length < 2) return null;
     return L.latLngBounds(pts);
-  }, [routePath, busLocation, isLive]);
+  }, [routePath, busLocation, isLive, schoolPosition]);
 
   // Track when Leaflet map instance is captured — state change triggers fitBounds effect
   const [mapReady, setMapReady] = useState(false);
@@ -439,7 +467,7 @@ const MapPage: React.FC = () => {
             <span className="inline-block w-2.5 h-2.5 rounded-full bg-blue-500" />
             <span className="text-gray-600">Your child's stop</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 mb-0.5">
             <span
               className="inline-block w-2.5 h-2.5 rounded-full"
               style={{
@@ -448,6 +476,13 @@ const MapPage: React.FC = () => {
               }}
             />
             <span className="text-gray-600">Other stops</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span
+              className="inline-block w-2.5 h-2.5 rounded"
+              style={{ backgroundColor: '#8b5cf6' }}
+            />
+            <span className="text-gray-600">School</span>
           </div>
         </div>
       </div>
@@ -538,6 +573,20 @@ const MapPage: React.FC = () => {
                 <p className="text-xs mt-1" style={{ color: BUS_STATUS_COLORS[busStatus] }}>
                   Status: {statusLabel}
                 </p>
+              </div>
+            </Popup>
+          </Marker>
+        )}
+
+        {/* School marker */}
+        {schoolPosition && (
+          <Marker position={schoolPosition} icon={SCHOOL_ICON} zIndexOffset={600}>
+            <Popup>
+              <div className="text-center">
+                <p className="font-bold" style={{ color: '#8b5cf6' }}>
+                  {routeDetails?.schoolName || child.schoolName}
+                </p>
+                <p className="text-xs text-gray-500">School</p>
               </div>
             </Popup>
           </Marker>

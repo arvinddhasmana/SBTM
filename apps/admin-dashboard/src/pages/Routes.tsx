@@ -71,8 +71,15 @@ const Routes: React.FC = () => {
             <div className="h-[500px]">
               <LiveMap
                 locations={selectedLocation ? [selectedLocation] : locations}
-                plannedRoute={
-                  selectedRoute?.polyline ? decodePolyline(selectedRoute.polyline) : undefined
+                selectedRoute={
+                  selectedRoute
+                    ? {
+                        ...selectedRoute,
+                        path: selectedRoute.polyline
+                          ? decodePolyline(selectedRoute.polyline)
+                          : undefined,
+                      }
+                    : undefined
                 }
                 onReset={() => setSelectedRoute(null)}
                 onMarkerClick={(loc) => {

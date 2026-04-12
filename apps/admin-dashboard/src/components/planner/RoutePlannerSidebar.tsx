@@ -166,6 +166,7 @@ const RoutePlannerSidebar: React.FC<RoutePlannerSidebarProps> = (props) => {
                 <RouteListCompact
                   routes={filteredRoutes}
                   onRouteClick={(route) => selectRoute(route)}
+                  onEdit={(route) => startEdit(route)}
                   emptyMessage="No routes match your search"
                 />
                 {/* Edit button for selected route */}

@@ -6,6 +6,7 @@ interface RouteListCompactProps {
   routes: Route[];
   liveLocations?: LiveLocation[];
   onRouteClick?: (route: Route) => void;
+  onEdit?: (route: Route) => void;
   emptyMessage?: string;
 }
 
@@ -13,6 +14,7 @@ const RouteListCompact: React.FC<RouteListCompactProps> = ({
   routes,
   liveLocations = [],
   onRouteClick,
+  onEdit,
   emptyMessage = 'No active routes',
 }) => {
   if (routes.length === 0) {
@@ -33,6 +35,7 @@ const RouteListCompact: React.FC<RouteListCompactProps> = ({
           route={route}
           liveLocation={getLocationForRoute(route.id)}
           onClick={() => onRouteClick?.(route)}
+          onEdit={onEdit}
         />
       ))}
     </div>

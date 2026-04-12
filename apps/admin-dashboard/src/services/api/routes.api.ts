@@ -22,14 +22,18 @@ export interface SnapToRoadResult {
   totalDuration: number;
 }
 
-const transformRoute = (route: Route): Route => {
-  if (route.polyline && !route.path) {
-    return {
-      ...route,
-      path: decodePolyline(route.polyline),
-    };
+const transformRoute = (route: any): Route => {
+  const result: any = { ...route };
+  // Flatten school relation into top-level fields for map rendering
+  if (result.school) {
+    result.schoolName = result.schoolName ?? result.school.name;
+    result.schoolLat = result.schoolLat ?? result.school.lat;
+    result.schoolLng = result.schoolLng ?? result.school.lng;
   }
-  return route;
+  if (result.polyline && !result.path) {
+    result.path = decodePolyline(result.polyline);
+  }
+  return result as Route;
 };
 
 export const routesApi = {

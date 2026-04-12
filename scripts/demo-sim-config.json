@@ -1,0 +1,203 @@
+{
+  "gpsDelay": 3,
+  "schools": [
+    {
+      "code": "stbern",
+      "schoolId": "30000000-0000-0000-0001-000000000001",
+      "schoolName": "St. Bernadette Catholic Elementary School",
+      "schoolLat": 45.270533724914415,
+      "schoolLng": -75.88490468637625,
+      "schoolAdminEmail": "admin.stbern@sbtm.demo",
+      "schoolAdminId": "30000000-0000-0000-0001-00000000000a",
+      "driverEmail": "driver.stbern@sbtm.demo",
+      "driverId": "driver-stbern-01",
+      "parents": [
+        {
+          "id": "30000000-0000-0001-0000-000000000001",
+          "email": "parent1.stbern@sbtm.demo",
+          "firstName": "Michael",
+          "lastName": "Anderson"
+        },
+        {
+          "id": "30000000-0000-0001-0000-000000000010",
+          "email": "parent10.stbern@sbtm.demo",
+          "firstName": "Stephanie",
+          "lastName": "Robinson"
+        },
+        {
+          "id": "30000000-0000-0001-0000-000000000002",
+          "email": "parent2.stbern@sbtm.demo",
+          "firstName": "Jessica",
+          "lastName": "Thomas"
+        },
+        {
+          "id": "30000000-0000-0001-0000-000000000003",
+          "email": "parent3.stbern@sbtm.demo",
+          "firstName": "Robert",
+          "lastName": "Jackson"
+        },
+        {
+          "id": "30000000-0000-0001-0000-000000000004",
+          "email": "parent4.stbern@sbtm.demo",
+          "firstName": "Amanda",
+          "lastName": "White"
+        },
+        {
+          "id": "30000000-0000-0001-0000-000000000005",
+          "email": "parent5.stbern@sbtm.demo",
+          "firstName": "Daniel",
+          "lastName": "Harris"
+        },
+        {
+          "id": "30000000-0000-0001-0000-000000000006",
+          "email": "parent6.stbern@sbtm.demo",
+          "firstName": "Laura",
+          "lastName": "Martin"
+        },
+        {
+          "id": "30000000-0000-0001-0000-000000000007",
+          "email": "parent7.stbern@sbtm.demo",
+          "firstName": "Christopher",
+          "lastName": "Thompson"
+        },
+        {
+          "id": "30000000-0000-0001-0000-000000000008",
+          "email": "parent8.stbern@sbtm.demo",
+          "firstName": "Emily",
+          "lastName": "Garcia"
+        },
+        {
+          "id": "30000000-0000-0001-0000-000000000009",
+          "email": "parent9.stbern@sbtm.demo",
+          "firstName": "Matthew",
+          "lastName": "Martinez"
+        }
+      ],
+      "routes": [
+        {
+          "routeNumber": 1,
+          "busId": "BUS-STBERN-01",
+          "am": {
+            "routeRefId": "ROUTE-STBERN-R01-AM",
+            "polyline": "qfmsGt}dnMjEsFTOXMJEr@lC@FFR_GfHOb@Qx@CJEPzCrAvCrAtAj@NNbAlBJPNZJQjDgEHKhA{AtC{DbEyF`@o@jA_Bl@u@lA{ARWPKHGFG~AkBRUPU\\g@^g@BGFMzAsB~IoL`D}DRUnBeCtBoCT[LTjA|BlBrD~AzCtAjC@BBDHRNSBCzDkF~@oARUPQDENK@APMFELGFELGVIxBk@HCdAYRGNGNId@Wh@_@n@_@dB_Al@]DC^UH?JAR?DBD@LPDFHJr@`DpAvGDRBLBTN`AF^H\\`@lBPr@R|@r@dDZpA@JH^NIDC|@e@HM",
+            "stops": [
+              {
+                "id": "STOP-STBERN-R01-AM-S01",
+                "sequence": 1,
+                "name": "AM Stop 1 - Elm St & Maple Ave",
+                "lat": 45.29063,
+                "lng": -75.89104
+              },
+              {
+                "id": "STOP-STBERN-R01-AM-S02",
+                "sequence": 2,
+                "name": "AM Stop 2 - Maple Ave & Oak Dr",
+                "lat": 45.28573,
+                "lng": -75.88653
+              },
+              {
+                "id": "STOP-STBERN-R01-AM-S03",
+                "sequence": 3,
+                "name": "AM Stop 3 - Oak Dr & Pine Rd",
+                "lat": 45.28082,
+                "lng": -75.88065
+              },
+              {
+                "id": "STOP-STBERN-R01-AM-S04",
+                "sequence": 4,
+                "name": "AM Stop 4 - Pine Rd & Cedar Ln",
+                "lat": 45.27667,
+                "lng": -75.88125
+              },
+              {
+                "id": "STOP-STBERN-R01-AM-S05",
+                "sequence": 5,
+                "name": "AM Stop 5 - Cedar Ln & Birch Blvd",
+                "lat": 45.27484,
+                "lng": -75.88035
+              },
+              {
+                "id": "STOP-STBERN-R01-AM-S06",
+                "sequence": 6,
+                "name": "AM Stop 6 - Birch Blvd & Willow Way",
+                "lat": 45.27282,
+                "lng": -75.87941
+              }
+            ]
+          },
+          "pm": {
+            "routeRefId": "ROUTE-STBERN-R01-PM",
+            "polyline": "a|hsGhgdnMIL}@d@EBOHI_@AK[qAs@eDS}@Qs@a@mBI]G_@OaACUCMESqAwGs@aDAO?K?[@G@G?G?GAGCEAECCCCEAGAG@GDEHCDAFKVGJGH_@TEBm@\\eB~@o@^i@^e@VOHOFSFeAXIByBj@WHMFGDMFGDQLA@OJEDQPST_AnA{DjFCBORISCEACuAkC_B{CmBsDkA}BMUUZuBnCoBdCSTaD|D_JnL{ArBIDCBcAjASTST}AlBMRMTSVmAzAm@t@kA~Ak@f@_@f@gFxGgDlEY\\WZyBhCONKQcAmBOOuAk@wCsA{CsADQBKPy@Nc@~FgHGSAGs@mCKDYLUNkErF",
+            "stops": [
+              {
+                "id": "STOP-STBERN-R01-PM-S01",
+                "sequence": 1,
+                "name": "PM Stop 1 - Elm St & Maple Ave",
+                "lat": 45.2721,
+                "lng": -75.88168
+              },
+              {
+                "id": "STOP-STBERN-R01-PM-S02",
+                "sequence": 2,
+                "name": "PM Stop 2 - Maple Ave & Oak Dr",
+                "lat": 45.27295,
+                "lng": -75.87888
+              },
+              {
+                "id": "STOP-STBERN-R01-PM-S03",
+                "sequence": 3,
+                "name": "PM Stop 3 - Oak Dr & Pine Rd",
+                "lat": 45.27502,
+                "lng": -75.88043
+              },
+              {
+                "id": "STOP-STBERN-R01-PM-S04",
+                "sequence": 4,
+                "name": "PM Stop 4 - Pine Rd & Cedar Ln",
+                "lat": 45.27805,
+                "lng": -75.88296
+              },
+              {
+                "id": "STOP-STBERN-R01-PM-S05",
+                "sequence": 5,
+                "name": "PM Stop 5 - Cedar Ln & Birch Blvd",
+                "lat": 45.28456,
+                "lng": -75.88515
+              },
+              {
+                "id": "STOP-STBERN-R01-PM-S06",
+                "sequence": 6,
+                "name": "PM Stop 6 - Birch Blvd & Willow Way",
+                "lat": 45.28946,
+                "lng": -75.89099
+              }
+            ]
+          },
+          "students": [
+            {
+              "id": "30000000-0000-0001-0000-000000000001",
+              "firstName": "Liam",
+              "lastName": "Anderson",
+              "amStopId": "STOP-STBERN-R01-AM-S01",
+              "pmStopId": "STOP-STBERN-R01-PM-S01"
+            },
+            {
+              "id": "30000000-0000-0001-0000-000000000002",
+              "firstName": "Olivia",
+              "lastName": "Thomas",
+              "amStopId": "STOP-STBERN-R01-AM-S02",
+              "pmStopId": "STOP-STBERN-R01-PM-S02"
+            },
+            {
+              "id": "30000000-0000-0001-0000-000000000003",
+              "firstName": "Noah",
+              "lastName": "Jackson",
+              "amStopId": "STOP-STBERN-R01-AM-S03",
+              "pmStopId": "STOP-STBERN-R01-PM-S03"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

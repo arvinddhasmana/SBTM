@@ -362,6 +362,27 @@ const PlannerMap: React.FC<PlannerMapProps> = ({
       });
     }
 
+    // School marker for selected route
+    if (selectedRoute.schoolLat && selectedRoute.schoolLng) {
+      const schoolMarker = L.marker([selectedRoute.schoolLat, selectedRoute.schoolLng], {
+        icon: SCHOOL_ICON,
+        zIndexOffset: 600,
+      }).addTo(map);
+      schoolMarker.bindPopup(`
+        <div style="min-width:120px;font-family:sans-serif;">
+          <strong style="color:#8b5cf6;display:block;border-bottom:1px solid #e2e8f0;padding-bottom:4px;margin-bottom:4px;">
+            ${selectedRoute.schoolName || 'School'}
+          </strong>
+          <div style="font-size:11px;color:#64748b;">School Location</div>
+        </div>
+      `);
+      schoolMarker.bindTooltip(selectedRoute.schoolName || 'School', {
+        direction: 'top',
+        offset: [0, -18],
+      });
+      readOnlyMarkersRef.current.push(schoolMarker);
+    }
+
     // Fit bounds
     const bounds = L.latLngBounds([]);
     let hasBounds = false;
@@ -378,6 +399,10 @@ const PlannerMap: React.FC<PlannerMapProps> = ({
         }
       }
     });
+    if (selectedRoute.schoolLat && selectedRoute.schoolLng) {
+      bounds.extend([selectedRoute.schoolLat, selectedRoute.schoolLng]);
+      hasBounds = true;
+    }
     if (hasBounds) {
       map.fitBounds(bounds, { padding: [60, 60], maxZoom: 15 });
     }
@@ -580,6 +605,10 @@ const PlannerMap: React.FC<PlannerMapProps> = ({
           }
         }
       });
+      if (selectedRoute.schoolLat && selectedRoute.schoolLng) {
+        bounds.extend([selectedRoute.schoolLat, selectedRoute.schoolLng]);
+        hasBounds = true;
+      }
     } else if (isEditing) {
       // Editing/creating – fit to stops + school
       const validStops = stops.filter((s) => s.lat !== 0 && s.lng !== 0);
