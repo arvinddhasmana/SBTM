@@ -267,7 +267,7 @@ export class GpsGatewayService {
       params,
     )) as ReferenceRouteRow[];
 
-    // Filter to only routes whose latest lifecycle event is ROUTE_STARTED
+    // Filter to only routes that are currently in-progress (not completed)
     const allRouteIds = routes.map((r) => r.id);
     let activeRouteIds: Set<string>;
     if (allRouteIds.length > 0) {
@@ -280,7 +280,7 @@ export class GpsGatewayService {
       )) as Array<{ routeId: string; eventType: string }>;
       activeRouteIds = new Set(
         lifecycleRows
-          .filter((e) => e.eventType === 'ROUTE_STARTED')
+          .filter((e) => e.eventType !== 'ROUTE_COMPLETED')
           .map((e) => e.routeId),
       );
     } else {

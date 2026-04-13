@@ -53,11 +53,18 @@ const Dashboard: React.FC = () => {
     user?.role === 'OSTA_ADMIN' ||
     user?.role === 'ADMIN';
 
-  const { data: dashboardData, isLoading } = useQuery({
-    queryKey: queryKeys.dashboard.all,
+  // --- Separate queries so alert actions don't nuke bus/student data ---
+
+  const { data: alertsData, isLoading: alertsLoading } = useQuery({
+    queryKey: queryKeys.alerts.active(),
+    queryFn: () => alertsApi.getActiveAlerts(),
+    refetchInterval: 2_000,
+  });
+
+  const { data: fleetData, isLoading: fleetLoading } = useQuery({
+    queryKey: [...queryKeys.routes.active(), 'fleet'] as const,
     queryFn: async () => {
-      const [alertsData, locationsData, routesData] = await Promise.all([
-        alertsApi.getActiveAlerts(),
+      const [locationsData, routesData] = await Promise.all([
         routesApi.getAllLiveLocations(),
         routesApi.getActiveRoutes(),
       ]);
@@ -66,22 +73,19 @@ const Dashboard: React.FC = () => {
         routesData.map((route) => route.id),
       );
 
-      return {
-        alerts: alertsData,
-        locations: locationsData,
-        routes: routesData,
-        students: studentsData,
-      };
+      return { locations: locationsData, routes: routesData, students: studentsData };
     },
     refetchInterval: 2_000,
   });
 
-  const allAlerts = dashboardData?.alerts ?? [];
-  const allLocations = (dashboardData?.locations ?? []).filter(
+  const isLoading = alertsLoading || fleetLoading;
+
+  const allAlerts = alertsData ?? [];
+  const allLocations = (fleetData?.locations ?? []).filter(
     (l) => l.position?.lat != null && l.vehicleId,
   );
-  const allRoutes = dashboardData?.routes ?? [];
-  const allStudents = dashboardData?.students ?? [];
+  const allRoutes = fleetData?.routes ?? [];
+  const allStudents = fleetData?.students ?? [];
 
   // Only show bus markers for routes that are currently active
   const activeRouteIds = useMemo(() => new Set(allRoutes.map((r) => r.id)), [allRoutes]);
@@ -175,7 +179,7 @@ const Dashboard: React.FC = () => {
     setIsResolving(true);
     try {
       await alertsApi.resolveAlert(id, notes, user?.id, user?.role);
-      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.alerts.all });
       setSelectedAlert(null);
     } catch (error) {
       console.error('Error resolving alert:', error);
@@ -188,7 +192,7 @@ const Dashboard: React.FC = () => {
     setIsActing(true);
     try {
       await alertsApi.confirmAlert(id, user?.id, user?.role);
-      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.alerts.all });
       setSelectedAlert(null);
     } catch (error) {
       console.error('Error confirming alert:', error);
@@ -201,7 +205,7 @@ const Dashboard: React.FC = () => {
     setIsActing(true);
     try {
       await alertsApi.falseAlarmAlert(id, undefined, user?.id, user?.role);
-      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.alerts.all });
       setSelectedAlert(null);
     } catch (error) {
       console.error('Error marking false alarm:', error);
@@ -214,7 +218,7 @@ const Dashboard: React.FC = () => {
     setIsActing(true);
     try {
       await alertsApi.requestInfoAlert(id, user?.id, user?.role);
-      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.alerts.all });
     } catch (error) {
       console.error('Error requesting info:', error);
     } finally {
@@ -224,7 +228,7 @@ const Dashboard: React.FC = () => {
 
   const handleAddStatusUpdate = async (id: string, notes: string) => {
     await alertsApi.addStatusUpdate(id, notes, user?.id, user?.role);
-    queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
+    queryClient.invalidateQueries({ queryKey: queryKeys.alerts.all });
     const updatedAudit = await alertsApi.getAlertAuditLog(id);
     setSelectedAlertAudit(updatedAudit);
   };
@@ -284,7 +288,7 @@ const Dashboard: React.FC = () => {
       {/* Background Map Layer */}
       <div className="absolute inset-0 z-0">
         <LiveMap
-          locations={activeLocations}
+          locations={locations}
           selectedRoute={selectedRoute}
           onReset={() => setSelectedRoute(null)}
           className="w-full h-full"

@@ -204,12 +204,12 @@ describe('GpsGatewayService', () => {
     ];
     const mockStops: any[] = [];
 
-    it('should return only routes with ROUTE_STARTED as latest lifecycle event', async () => {
+    it('should return routes whose latest lifecycle event is not ROUTE_COMPLETED', async () => {
       mockDataSource.query
         .mockResolvedValueOnce(mockReferenceRoutes) // routes query
         .mockResolvedValueOnce([
           // lifecycle events query
-          { routeId: 'ROUTE-AM', eventType: 'ROUTE_STARTED' },
+          { routeId: 'ROUTE-AM', eventType: 'STOP_REACHED' },
           { routeId: 'ROUTE-PM', eventType: 'ROUTE_COMPLETED' },
         ])
         .mockResolvedValueOnce(mockStops); // stops query
