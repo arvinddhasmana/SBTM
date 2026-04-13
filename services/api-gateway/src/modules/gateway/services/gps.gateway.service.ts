@@ -174,7 +174,7 @@ export class GpsGatewayService {
     const url = `${this.gpsServiceUrl}/api/v1/locations`;
     return this.httpClient.post<{ status: string }>(url, {
       ...dto,
-      schoolId: dto.schoolId || user.schoolId,
+      schoolId: user.schoolId,
     });
   }
 

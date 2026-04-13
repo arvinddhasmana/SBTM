@@ -155,8 +155,20 @@ export class AlertsController {
   ) {
     const user = req.user;
     const schoolId = user.schoolId;
+    // Support both flat lat/lng and nested location object from older clients
+    const location = (dto as any).location as
+      | { lat: number; lng: number }
+      | undefined;
+    const lat = dto.lat ?? location?.lat;
+    const lng = dto.lng ?? location?.lng;
     return this.alertsGatewayService.createEmergencyEvent({
-      ...dto,
+      vehicleId: dto.vehicleId,
+      routeId: dto.routeId,
+      eventType: dto.eventType,
+      timestamp: dto.timestamp,
+      description: dto.description,
+      lat,
+      lng,
       schoolId,
       driverId: dto.driverId || user.driverId || user.id,
     });
