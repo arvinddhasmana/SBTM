@@ -1,0 +1,233 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import { FleetAssignmentGatewayService } from './fleet-assignment.gateway.service';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { FleetAssignment } from '../entities/fleet-assignment.entity';
+import { NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Role } from '@sbtm/common';
+
+describe('FleetAssignmentGatewayService', () => {
+  let service: FleetAssignmentGatewayService;
+
+  const mockAssignmentRepository = {
+    create: jest.fn(),
+    save: jest.fn(),
+    find: jest.fn(),
+    findOne: jest.fn(),
+    remove: jest.fn(),
+  };
+
+  const ostaAdminCaller = {
+    id: 'osta-admin-1',
+    role: Role.OSTA_ADMIN,
+    schoolId: undefined,
+    boardId: undefined,
+  };
+
+  const schoolAdminCaller = {
+    id: 'school-admin-1',
+    role: Role.SCHOOL_ADMIN,
+    schoolId: 'school-1',
+    boardId: undefined,
+  };
+
+  const schoolAdminNoSchool = {
+    id: 'school-admin-2',
+    role: Role.SCHOOL_ADMIN,
+    schoolId: undefined,
+    boardId: undefined,
+  };
+
+  const mockAssignment: Partial<FleetAssignment> = {
+    id: 'assignment-1',
+    schoolId: 'school-1',
+    routeId: 'route-1',
+    vehicleId: 'BUS-01',
+    driverId: 'driver-1',
+    status: 'PROPOSED',
+    proposedByUserId: 'osta-admin-1',
+    createdAt: new Date('2025-01-01'),
+    updatedAt: new Date('2025-01-01'),
+  };
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        FleetAssignmentGatewayService,
+        {
+          provide: getRepositoryToken(FleetAssignment),
+          useValue: mockAssignmentRepository,
+        },
+      ],
+    }).compile();
+
+    service = module.get<FleetAssignmentGatewayService>(
+      FleetAssignmentGatewayService,
+    );
+
+    jest.clearAllMocks();
+  });
+
+  it('should be defined', () => {
+    expect(service).toBeDefined();
+  });
+
+  describe('propose', () => {
+    it('should create and save a proposed fleet assignment', async () => {
+      const dto = {
+        schoolId: 'school-1',
+        routeId: 'route-1',
+        vehicleId: 'BUS-01',
+        driverId: 'driver-1',
+        effectiveDate: '2025-06-01',
+        notes: 'New assignment',
+      };
+
+      mockAssignmentRepository.create.mockReturnValue(mockAssignment);
+      mockAssignmentRepository.save.mockResolvedValue(mockAssignment);
+
+      const result = await service.propose(dto, ostaAdminCaller);
+
+      expect(result).toEqual(mockAssignment);
+      expect(mockAssignmentRepository.create).toHaveBeenCalledWith({
+        schoolId: 'school-1',
+        routeId: 'route-1',
+        vehicleId: 'BUS-01',
+        driverId: 'driver-1',
+        effectiveDate: '2025-06-01',
+        status: 'PROPOSED',
+        proposedByUserId: 'osta-admin-1',
+        reviewNotes: 'New assignment',
+      });
+      expect(mockAssignmentRepository.save).toHaveBeenCalledWith(
+        mockAssignment,
+      );
+    });
+  });
+
+  describe('list', () => {
+    it('should return all assignments for OSTA_ADMIN', async () => {
+      mockAssignmentRepository.find.mockResolvedValue([mockAssignment]);
+
+      const result = await service.list(ostaAdminCaller);
+
+      expect(result).toEqual([mockAssignment]);
+      expect(mockAssignmentRepository.find).toHaveBeenCalledWith({
+        order: { createdAt: 'DESC' },
+      });
+    });
+
+    it('should return school-scoped assignments for SCHOOL_ADMIN', async () => {
+      mockAssignmentRepository.find.mockResolvedValue([mockAssignment]);
+
+      const result = await service.list(schoolAdminCaller);
+
+      expect(result).toEqual([mockAssignment]);
+      expect(mockAssignmentRepository.find).toHaveBeenCalledWith({
+        where: { schoolId: 'school-1' },
+        order: { createdAt: 'DESC' },
+      });
+    });
+
+    it('should throw ForbiddenException for SCHOOL_ADMIN without schoolId', async () => {
+      await expect(service.list(schoolAdminNoSchool)).rejects.toThrow(
+        ForbiddenException,
+      );
+    });
+  });
+
+  describe('getById', () => {
+    it('should return an assignment when found', async () => {
+      mockAssignmentRepository.findOne.mockResolvedValue(mockAssignment);
+
+      const result = await service.getById('assignment-1');
+
+      expect(result).toEqual(mockAssignment);
+    });
+
+    it('should throw NotFoundException when assignment not found', async () => {
+      mockAssignmentRepository.findOne.mockResolvedValue(null);
+
+      await expect(service.getById('nonexistent')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+  });
+
+  describe('accept', () => {
+    it('should accept assignment and update status', async () => {
+      const assignment = { ...mockAssignment };
+      mockAssignmentRepository.findOne.mockResolvedValue(assignment);
+      mockAssignmentRepository.save.mockResolvedValue({
+        ...assignment,
+        status: 'ACCEPTED',
+        reviewedByUserId: 'school-admin-1',
+      });
+
+      const result = await service.accept('assignment-1', schoolAdminCaller);
+
+      expect(result.status).toBe('ACCEPTED');
+      expect(mockAssignmentRepository.save).toHaveBeenCalled();
+    });
+
+    it('should throw NotFoundException if assignment does not exist', async () => {
+      mockAssignmentRepository.findOne.mockResolvedValue(null);
+
+      await expect(
+        service.accept('nonexistent', schoolAdminCaller),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw ForbiddenException if SCHOOL_ADMIN school does not match', async () => {
+      const otherSchoolAssignment = {
+        ...mockAssignment,
+        schoolId: 'school-other',
+      };
+      mockAssignmentRepository.findOne.mockResolvedValue(otherSchoolAssignment);
+
+      await expect(
+        service.accept('assignment-1', schoolAdminCaller),
+      ).rejects.toThrow(ForbiddenException);
+    });
+  });
+
+  describe('reject', () => {
+    it('should reject assignment and update status with notes', async () => {
+      const assignment = { ...mockAssignment };
+      mockAssignmentRepository.findOne.mockResolvedValue(assignment);
+      mockAssignmentRepository.save.mockResolvedValue({
+        ...assignment,
+        status: 'REJECTED',
+        reviewedByUserId: 'school-admin-1',
+        reviewNotes: 'Not suitable',
+      });
+
+      const result = await service.reject(
+        'assignment-1',
+        schoolAdminCaller,
+        'Not suitable',
+      );
+
+      expect(result.status).toBe('REJECTED');
+    });
+
+    it('should throw NotFoundException if assignment does not exist', async () => {
+      mockAssignmentRepository.findOne.mockResolvedValue(null);
+
+      await expect(
+        service.reject('nonexistent', schoolAdminCaller),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw ForbiddenException if SCHOOL_ADMIN school does not match', async () => {
+      const otherSchoolAssignment = {
+        ...mockAssignment,
+        schoolId: 'school-other',
+      };
+      mockAssignmentRepository.findOne.mockResolvedValue(otherSchoolAssignment);
+
+      await expect(
+        service.reject('assignment-1', schoolAdminCaller),
+      ).rejects.toThrow(ForbiddenException);
+    });
+  });
+});

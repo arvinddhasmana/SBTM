@@ -34,7 +34,7 @@ vi.mock('react-router-dom', async () => {
 });
 
 describe('Login Page', () => {
-  it('renders login form', () => {
+  it('renders login form', async () => {
     render(
       <BrowserRouter>
         <AuthProvider>
@@ -42,7 +42,7 @@ describe('Login Page', () => {
         </AuthProvider>
       </BrowserRouter>,
     );
-    expect(screen.getByLabelText(/email address/i)).toBeInTheDocument();
+    expect(await screen.findByLabelText(/email address/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument();
   });

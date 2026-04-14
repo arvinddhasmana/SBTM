@@ -60,7 +60,7 @@ describe('RouteCardCompact', () => {
   it('calls onClick when clicked', () => {
     const onClick = vi.fn();
     render(<RouteCardCompact route={mockRoute} onClick={onClick} />);
-    fireEvent.click(screen.getByTestId('route-card-ROUTE-PM'));
+    fireEvent.click(screen.getByRole('button'));
     expect(onClick).toHaveBeenCalledTimes(1);
   });
 
@@ -110,7 +110,7 @@ describe('RouteListCompact', () => {
         onRouteClick={onRouteClick}
       />,
     );
-    fireEvent.click(screen.getByTestId('route-card-ROUTE-PM'));
+    fireEvent.click(screen.getByRole('button'));
     expect(onRouteClick).toHaveBeenCalledWith(mockRoute);
   });
 });

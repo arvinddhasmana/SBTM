@@ -1,0 +1,298 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import { StudentGatewayService } from './student.gateway.service';
+import { HttpClientService } from '../../../common/utils/http-client.service';
+import { ConfigService } from '@nestjs/config';
+import { ForbiddenException } from '@nestjs/common';
+import { DataSource } from 'typeorm';
+import { Role } from '@sbtm/common';
+
+describe('StudentGatewayService', () => {
+  let service: StudentGatewayService;
+  let httpClient: HttpClientService;
+
+  const mockHttpClient = {
+    get: jest.fn(),
+    post: jest.fn(),
+    patch: jest.fn(),
+  };
+
+  const mockConfigService = {
+    get: jest.fn().mockImplementation((key: string, defaultValue: string) => {
+      if (key === 'STUDENT_SERVICE_URL') return 'http://student-service:3006';
+      return defaultValue;
+    }),
+  };
+
+  const mockDataSource = {
+    query: jest.fn(),
+  };
+
+  const adminUser = {
+    id: 'admin-1',
+    role: Role.ADMIN,
+    schoolId: 'school-1',
+  };
+
+  const superAdminUser = {
+    id: 'super-admin-1',
+    role: Role.SUPER_ADMIN,
+  };
+
+  const parentUser = {
+    id: 'parent-1',
+    role: Role.PARENT,
+    schoolId: 'school-1',
+  };
+
+  const schoolAdminUser = {
+    id: 'school-admin-1',
+    role: Role.SCHOOL_ADMIN,
+    schoolId: 'school-1',
+  };
+
+  const driverUser = {
+    id: 'driver-1',
+    role: Role.DRIVER,
+    schoolId: 'school-1',
+  };
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        StudentGatewayService,
+        {
+          provide: HttpClientService,
+          useValue: mockHttpClient,
+        },
+        {
+          provide: ConfigService,
+          useValue: mockConfigService,
+        },
+        {
+          provide: DataSource,
+          useValue: mockDataSource,
+        },
+      ],
+    }).compile();
+
+    service = module.get<StudentGatewayService>(StudentGatewayService);
+    httpClient = module.get<HttpClientService>(HttpClientService);
+
+    jest.clearAllMocks();
+  });
+
+  it('should be defined', () => {
+    expect(service).toBeDefined();
+  });
+
+  describe('getStudents', () => {
+    it('should force parent_id for PARENT role', async () => {
+      mockHttpClient.get.mockResolvedValue([
+        {
+          id: 's1',
+          first_name: 'Alice',
+          last_name: 'Smith',
+          am_route_id: 'ROUTE-A',
+          pm_route_id: null,
+        },
+      ]);
+
+      const query: any = {};
+      await service.getStudents(query, parentUser);
+
+      expect(query.parent_id).toBe('parent-1');
+      expect(httpClient.get).toHaveBeenCalledWith(
+        'http://student-service:3006/students',
+        { params: expect.objectContaining({ parent_id: 'parent-1' }) },
+      );
+    });
+
+    it('should not restrict query for ADMIN role', async () => {
+      mockHttpClient.get.mockResolvedValue([]);
+      // Fall through to demo fallback
+      mockDataSource.query.mockResolvedValue([]);
+
+      const query: any = {};
+      await service.getStudents(query, adminUser);
+
+      expect(query.parent_id).toBeUndefined();
+    });
+
+    it('should throw ForbiddenException for DRIVER without schoolId', async () => {
+      const driverNoSchool = { id: 'driver-1', role: Role.DRIVER };
+
+      await expect(service.getStudents({}, driverNoSchool)).rejects.toThrow(
+        ForbiddenException,
+      );
+    });
+
+    it('should scope by schoolId for DRIVER role', async () => {
+      mockHttpClient.get.mockResolvedValue([]);
+      mockDataSource.query.mockResolvedValue([]);
+
+      const query: any = {};
+      await service.getStudents(query, driverUser);
+
+      expect(query.school_id).toBe('school-1');
+    });
+
+    it('should fall back to demo reference data when service returns empty', async () => {
+      mockHttpClient.get.mockResolvedValue([]);
+      mockDataSource.query.mockResolvedValue([
+        {
+          id: 's1',
+          firstName: 'Alice',
+          lastName: 'Smith',
+          grade: 5,
+          assignedRouteId: 'ROUTE-A',
+          amRouteId: 'ROUTE-A',
+          pmRouteId: null,
+        },
+      ]);
+
+      const result = await service.getStudents({}, adminUser);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].first_name).toBe('Alice');
+      expect(result[0].status).toBe('ENROLLED');
+      expect(result[0].am_route_id).toBe('ROUTE-A');
+    });
+
+    it('should enrich student data from reference when routes are missing', async () => {
+      // Service returns students without route data
+      mockHttpClient.get.mockResolvedValue([
+        {
+          id: 's1',
+          first_name: 'Bob',
+          last_name: 'Jones',
+          am_route_id: null,
+          pm_route_id: null,
+        },
+      ]);
+
+      // Reference data has routes
+      mockDataSource.query.mockResolvedValue([
+        {
+          id: 's1',
+          amRouteId: 'ROUTE-B-AM',
+          pmRouteId: 'ROUTE-B-PM',
+          assignedRouteId: null,
+        },
+      ]);
+
+      const result = await service.getStudents({}, adminUser);
+
+      expect(result[0].am_route_id).toBe('ROUTE-B-AM');
+      expect(result[0].pm_route_id).toBe('ROUTE-B-PM');
+    });
+  });
+
+  describe('getStudentById', () => {
+    it('should return student from service for admin', async () => {
+      const mockStudent = {
+        id: 's1',
+        first_name: 'Alice',
+        last_name: 'Smith',
+        school_id: 'school-1',
+      };
+      mockHttpClient.get.mockResolvedValue(mockStudent);
+
+      const result = await service.getStudentById('s1', superAdminUser);
+
+      expect(result).toEqual(mockStudent);
+    });
+
+    it('should throw ForbiddenException when parent accesses other parents child', async () => {
+      const mockStudent = {
+        id: 's1',
+        parent_user_id: 'other-parent',
+        school_id: 'school-1',
+      };
+      mockHttpClient.get.mockResolvedValue(mockStudent);
+
+      await expect(service.getStudentById('s1', parentUser)).rejects.toThrow(
+        ForbiddenException,
+      );
+    });
+
+    it('should fall back to demo data when service fails', async () => {
+      mockHttpClient.get.mockRejectedValue(new Error('Service unavailable'));
+      mockDataSource.query.mockResolvedValue([
+        {
+          id: 's1',
+          firstName: 'Alice',
+          lastName: 'Smith',
+          grade: 3,
+          assignedRouteId: 'ROUTE-A',
+          amRouteId: null,
+          pmRouteId: null,
+          schoolId: 'school-1',
+          parentId: 'parent-1',
+        },
+      ]);
+
+      const result = await service.getStudentById('s1', parentUser);
+
+      expect(result.first_name).toBe('Alice');
+      expect(result.am_route_id).toBe('ROUTE-A');
+    });
+  });
+
+  describe('enrollStudent', () => {
+    it('should enroll student for ADMIN', async () => {
+      const dto = {
+        first_name: 'New',
+        last_name: 'Student',
+        school_id: 'school-1',
+      };
+      const mockResponse = { id: 's-new', ...dto };
+      mockHttpClient.post.mockResolvedValue(mockResponse);
+
+      const result = await service.enrollStudent(dto, adminUser);
+
+      expect(result).toEqual(mockResponse);
+      expect(httpClient.post).toHaveBeenCalledWith(
+        'http://student-service:3006/students',
+        dto,
+      );
+    });
+
+    it('should force schoolId for SCHOOL_ADMIN', async () => {
+      const dto: any = { first_name: 'New', last_name: 'Student' };
+      mockHttpClient.post.mockResolvedValue({ id: 's-new' });
+
+      await service.enrollStudent(dto, schoolAdminUser);
+
+      expect(dto.school_id).toBe('school-1');
+    });
+
+    it('should throw ForbiddenException for unauthorized role', async () => {
+      await expect(service.enrollStudent({}, parentUser)).rejects.toThrow(
+        ForbiddenException,
+      );
+    });
+  });
+
+  describe('bulkImport', () => {
+    it('should throw ForbiddenException for non-admin roles', async () => {
+      await expect(
+        service.bulkImport({}, 'school-1', parentUser),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('should use user schoolId for SCHOOL_ADMIN', async () => {
+      mockHttpClient.post.mockResolvedValue({ imported: 5 });
+
+      await service.bulkImport(
+        { data: 'csv' },
+        'school-other',
+        schoolAdminUser,
+      );
+
+      expect(httpClient.post).toHaveBeenCalledWith(
+        'http://student-service:3006/students/bulk-import',
+        { file: { data: 'csv' }, school_id: 'school-1' },
+      );
+    });
+  });
+});

@@ -70,13 +70,13 @@ export const GPSService = {
   },
 
   startTracking: async (routeId: string, vehicleId: string, driverId: string) => {
-    // Store context for background task
+    // Stop any existing tracking before setting new context
+    await GPSService.stopTracking();
+
+    // Store context for background task (after stop, which clears old context)
     _routeId = routeId;
     _vehicleId = vehicleId;
     _driverId = driverId;
-
-    // Stop any existing tracking
-    await GPSService.stopTracking();
 
     // Flush any previously buffered GPS events
     await OfflineQueueService.flush(postLocation);
