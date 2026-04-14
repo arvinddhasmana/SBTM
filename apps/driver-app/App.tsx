@@ -12,6 +12,7 @@ import LoginScreen from './src/screens/LoginScreen';
 import RouteSelectScreen from './src/screens/RouteSelectScreen';
 import ActiveRouteScreen from './src/screens/ActiveRouteScreen';
 import RosterScreen from './src/screens/RosterScreen';
+import AlertMessagesScreen from './src/screens/AlertMessagesScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -84,6 +85,11 @@ export default function App() {
                 name="Roster"
                 component={RosterScreen}
                 options={{ title: 'Roster', presentation: 'modal' }}
+              />
+              <Stack.Screen
+                name="AlertMessages"
+                component={AlertMessagesScreen}
+                options={{ title: 'Messages', presentation: 'modal' }}
               />
             </>
           )}

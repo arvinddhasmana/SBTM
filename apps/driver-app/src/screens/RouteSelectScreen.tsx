@@ -3,6 +3,25 @@ import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert } from 'react
 import { useDriverStore } from '../store/useDriverStore';
 import { Route } from '../types';
 
+function formatStartTime(startTime?: string): string {
+  if (!startTime) return '—';
+  // Backend returns startTime as 'HH:mm' (e.g. '07:30')
+  // We can just return it directly if it already contains a colon
+  if (startTime.includes(':')) {
+    // Optional: could turn '07:30' into '7:30 AM'
+    const [h, m] = startTime.split(':');
+    const hour = parseInt(h, 10);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const numHour = hour % 12 || 12;
+    return `${numHour}:${m} ${ampm}`;
+  }
+
+  // Fallback in case it's actually an ISO string
+  const date = new Date(startTime);
+  if (isNaN(date.getTime())) return startTime;
+  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
 export default function RouteSelectScreen({ navigation }: any) {
   const driver = useDriverStore((state) => state.driver);
   const setActiveRoute = useDriverStore((state) => state.setActiveRoute);
@@ -23,8 +42,8 @@ export default function RouteSelectScreen({ navigation }: any) {
   const renderItem = ({ item }: { item: Route }) => (
     <TouchableOpacity style={styles.card} onPress={() => handleSelectRoute(item)}>
       <Text style={styles.routeName}>{item.name}</Text>
-      <Text style={styles.details}>School: {item.schoolId}</Text>
-      <Text style={styles.details}>Start: {new Date(item.startTime).toLocaleTimeString()}</Text>
+      <Text style={styles.details}>School: {item.schoolName || item.schoolId}</Text>
+      <Text style={styles.details}>Start: {formatStartTime(item.startTime)}</Text>
       <Text style={styles.direction}>{item.direction}</Text>
     </TouchableOpacity>
   );

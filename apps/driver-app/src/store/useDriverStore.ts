@@ -78,9 +78,20 @@ export const useDriverStore = create<DriverState>((set, get) => ({
     // Fetch server-confirmed roster with stop data
     try {
       const { students, stops, direction } = await RosterService.getRouteRoster(route.id);
-      set({ students, stops, routeDirection: direction, rosterLoadState: 'loaded' });
 
-      // PM route: auto-board all students when starting from school
+      // Reset students to the default state for this route direction:
+      //   AM Route → all students NOT_BOARDED (driver picks them up)
+      //   PM Route → first set all to NOT_BOARDED, then boardAll() transitions to BOARDED with server sync
+      const resetStudents = students.map((s) => ({
+        ...s,
+        status: 'NOT_BOARDED' as const,
+        serverConfirmed: false,
+        pendingSync: false,
+      }));
+
+      set({ students: resetStudents, stops, routeDirection: direction, rosterLoadState: 'loaded' });
+
+      // PM route: board all students (they board at school before departure)
       if (direction === 'PM') {
         await get().boardAll();
       }
@@ -106,14 +117,15 @@ export const useDriverStore = create<DriverState>((set, get) => ({
   },
 
   endRoute: async () => {
-    const { activeRoute, driver, routeDirection, students } = get();
+    const { activeRoute, driver, students } = get();
     if (activeRoute && driver) {
-      // AM route: auto-alight all remaining boarded students at school
-      if (routeDirection === 'AM' && students.some((s) => s.status === 'BOARDED')) {
+      // Auto-alight all remaining boarded students (both AM and PM)
+      if (students.some((s) => s.status === 'BOARDED')) {
         await get().alightAll();
       }
       await RouteLifecycleService.completeRoute(activeRoute.id, activeRoute.vehicleId, driver.id);
     }
+    // Reset all route state back to defaults
     set({
       activeRoute: null,
       students: [],

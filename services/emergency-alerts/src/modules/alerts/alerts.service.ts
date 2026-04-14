@@ -372,6 +372,7 @@ export class AlertsService {
       EmergencyAlertStatus.ACTIVE,
       EmergencyAlertStatus.CONFIRMED,
       EmergencyAlertStatus.AUTO_ESCALATED,
+      EmergencyAlertStatus.PENDING_CONFIRMATION,
     ];
     if (!updatableStatuses.includes(alert.status)) {
       throw new BadRequestException(

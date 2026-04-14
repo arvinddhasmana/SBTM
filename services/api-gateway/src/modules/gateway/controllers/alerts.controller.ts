@@ -108,7 +108,13 @@ export class AlertsController {
   }
 
   @Patch('alerts/:id/status-update')
-  @Roles(Role.OSTA_ADMIN, Role.ADMIN, Role.SCHOOL_ADMIN, Role.BOARD_ADMIN)
+  @Roles(
+    Role.OSTA_ADMIN,
+    Role.ADMIN,
+    Role.SCHOOL_ADMIN,
+    Role.BOARD_ADMIN,
+    Role.DRIVER,
+  )
   async addStatusUpdate(
     @Param('id') id: string,
     @Request() req: { user: any },
@@ -137,7 +143,13 @@ export class AlertsController {
   }
 
   @Get('alerts/:id/audit-trail')
-  @Roles(Role.OSTA_ADMIN, Role.ADMIN, Role.SCHOOL_ADMIN, Role.BOARD_ADMIN)
+  @Roles(
+    Role.OSTA_ADMIN,
+    Role.ADMIN,
+    Role.SCHOOL_ADMIN,
+    Role.BOARD_ADMIN,
+    Role.DRIVER,
+  )
   async getAuditTrail(@Param('id') id: string) {
     return this.alertsGatewayService.getAuditTrail(id);
   }

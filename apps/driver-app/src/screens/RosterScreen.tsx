@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useDriverStore } from '../store/useDriverStore';
 import type { Student, Stop } from '../types';
+import { SvgXml } from 'react-native-svg';
 
 interface Section {
   title: string;
@@ -20,6 +21,14 @@ interface Section {
 
 function StudentAvatar({ name, avatarUrl }: { name: string; avatarUrl?: string }) {
   if (avatarUrl) {
+    if (avatarUrl.startsWith('data:image/svg+xml')) {
+      const xml = decodeURIComponent(avatarUrl.replace(/^data:image\/svg\+xml;utf8,/, ''));
+      return (
+        <View style={[styles.avatar, { overflow: 'hidden' }]}>
+          <SvgXml xml={xml} width="44" height="44" />
+        </View>
+      );
+    }
     return <Image source={{ uri: avatarUrl }} style={styles.avatar} />;
   }
   const initials = name
@@ -101,7 +110,9 @@ export default function RosterScreen() {
 
   const renderSectionHeader = ({ section }: { section: Section }) => (
     <View style={styles.sectionHeader}>
-      <Text style={styles.sectionTitle}>{section.title}</Text>
+      <Text style={styles.sectionTitle} numberOfLines={1}>
+        {section.title}
+      </Text>
       {section.arrivalTime ? <Text style={styles.arrivalTime}>{section.arrivalTime}</Text> : null}
     </View>
   );
@@ -245,6 +256,8 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
     color: '#2c3e50',
+    flex: 1,
+    marginRight: 8,
   },
   arrivalTime: {
     fontSize: 13,
