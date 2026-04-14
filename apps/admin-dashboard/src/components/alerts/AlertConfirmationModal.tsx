@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { X, AlertTriangle, CheckCircle, XCircle, HelpCircle, Clock } from 'lucide-react';
+import { X, AlertTriangle, CheckCircle, XCircle, HelpCircle, Clock, Check } from 'lucide-react';
 import type { Alert } from '../../types';
 import { formatEventType } from '../../utils/formatters';
 
@@ -39,6 +39,7 @@ const AlertConfirmationModal: React.FC<AlertConfirmationModalProps> = ({
   });
 
   const [isActing, setIsActing] = useState(false);
+  const [infoRequested, setInfoRequested] = useState(false);
   const [activeAction, setActiveAction] = useState<
     'confirm' | 'false-alarm' | 'request-info' | null
   >(null);
@@ -93,6 +94,7 @@ const AlertConfirmationModal: React.FC<AlertConfirmationModalProps> = ({
     setActiveAction('request-info');
     try {
       await onRequestInfo(alert.id);
+      setInfoRequested(true);
       // Do not close — admin is gathering info, timer continues on backend
     } finally {
       setIsActing(false);
@@ -227,13 +229,29 @@ const AlertConfirmationModal: React.FC<AlertConfirmationModalProps> = ({
 
           <button
             onClick={handleRequestInfo}
-            disabled={isActing}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-blue-500/20 border border-blue-500/30 text-blue-400 font-semibold hover:bg-blue-500/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={isActing || infoRequested}
+            className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+              infoRequested
+                ? 'bg-green-500/20 border border-green-500/30 text-green-400'
+                : 'bg-blue-500/20 border border-blue-500/30 text-blue-400 hover:bg-blue-500/30'
+            }`}
             data-testid="btn-request-info"
           >
-            <HelpCircle size={18} />
-            {activeAction === 'request-info' ? 'Requesting...' : 'Request More Information'}
+            {infoRequested ? <Check size={18} /> : <HelpCircle size={18} />}
+            {infoRequested
+              ? 'Info Requested'
+              : activeAction === 'request-info'
+                ? 'Requesting...'
+                : 'Request More Information'}
           </button>
+          {infoRequested && (
+            <p
+              className="text-xs text-slate-500 text-center mt-1"
+              data-testid="info-requested-note"
+            >
+              Request logged. Escalation timer continues.
+            </p>
+          )}
         </div>
       </div>
     </div>

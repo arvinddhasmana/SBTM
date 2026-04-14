@@ -13,6 +13,10 @@ export interface Route {
   startTime: string; // ISO
   endTime: string; // ISO
   direction: 'AM' | 'PM';
+  polyline?: string;
+  schoolLat?: number;
+  schoolLng?: number;
+  schoolName?: string;
 }
 
 export const RouteLifecycleEventType = {
@@ -54,6 +58,8 @@ export interface Stop {
   stopName: string;
   sequence: number;
   arrivalTime: string;
+  lat?: number;
+  lng?: number;
 }
 
 export interface LoginResponse {

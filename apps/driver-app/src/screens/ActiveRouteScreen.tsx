@@ -1,15 +1,20 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
-import MapView, { Marker, Polyline } from 'react-native-maps';
+import MapView, { Marker, Polyline, LatLng } from 'react-native-maps';
 import { useDriverStore } from '../store/useDriverStore';
 import { GPSService } from '../services/gps.service';
 import { EmergencyService } from '../services/emergency.service';
 import { useBleScanning } from '../hooks/useBleScanning';
+import { decodePolyline } from '../utils/polyline';
 
 export default function ActiveRouteScreen({ navigation }: any) {
   const activeRoute = useDriverStore((state) => state.activeRoute);
   const driver = useDriverStore((state) => state.driver);
   const endRoute = useDriverStore((state) => state.endRoute);
+  const stops = useDriverStore((state) => state.stops);
+  const routeDirection = useDriverStore((state) => state.routeDirection);
+
+  const mapRef = useRef<MapView>(null);
 
   // vehicleId is sourced from the authenticated route assignment – never hardcoded
   const vehicleId = activeRoute?.vehicleId ?? '';
@@ -22,6 +27,15 @@ export default function ActiveRouteScreen({ navigation }: any) {
     latitudeDelta: 0.05,
     longitudeDelta: 0.05,
   });
+
+  // Decode route polyline into coordinates for the map
+  const routePath: LatLng[] = useMemo(() => {
+    if (!activeRoute?.polyline) return [];
+    return decodePolyline(activeRoute.polyline).map(([lat, lng]) => ({
+      latitude: lat,
+      longitude: lng,
+    }));
+  }, [activeRoute?.polyline]);
 
   // BLE scanning – enabled only while an active route is running (NFR-BATT-001)
   const { scanState } = useBleScanning(
@@ -37,6 +51,26 @@ export default function ActiveRouteScreen({ navigation }: any) {
       void GPSService.stopTracking();
     };
   }, []);
+
+  // Fit map to route bounds when polyline or stops are available
+  useEffect(() => {
+    if (!mapRef.current) return;
+    const coords: LatLng[] = [...routePath];
+    for (const stop of stops) {
+      if (stop.lat != null && stop.lng != null) {
+        coords.push({ latitude: stop.lat, longitude: stop.lng });
+      }
+    }
+    if (activeRoute?.schoolLat != null && activeRoute?.schoolLng != null) {
+      coords.push({ latitude: activeRoute.schoolLat, longitude: activeRoute.schoolLng });
+    }
+    if (coords.length > 1) {
+      mapRef.current.fitToCoordinates(coords, {
+        edgePadding: { top: 60, right: 60, bottom: 60, left: 60 },
+        animated: true,
+      });
+    }
+  }, [routePath, stops, activeRoute?.schoolLat, activeRoute?.schoolLng]);
 
   const startGps = async () => {
     try {
@@ -78,8 +112,17 @@ export default function ActiveRouteScreen({ navigation }: any) {
   };
 
   const handleEndRoute = () => {
-    void endRoute();
-    navigation.popToTop();
+    Alert.alert('End Route', 'Are you sure you want to end this route? All tracking will stop.', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'End Route',
+        style: 'destructive',
+        onPress: async () => {
+          await endRoute();
+          navigation.popToTop();
+        },
+      },
+    ]);
   };
 
   if (!activeRoute)
@@ -92,16 +135,61 @@ export default function ActiveRouteScreen({ navigation }: any) {
   return (
     <View style={styles.container}>
       <MapView
+        ref={mapRef}
         style={styles.map}
         region={region}
         showsUserLocation={true}
-        followsUserLocation={true}
-      />
+        followsUserLocation={false}
+      >
+        {/* Route polyline */}
+        {routePath.length > 0 && (
+          <Polyline
+            coordinates={routePath}
+            strokeColor={routeDirection === 'AM' ? '#3b82f6' : '#f59e0b'}
+            strokeWidth={5}
+          />
+        )}
+
+        {/* Stop markers */}
+        {stops
+          .filter((s) => s.lat != null && s.lng != null)
+          .map((stop) => (
+            <Marker
+              key={stop.id}
+              coordinate={{ latitude: stop.lat!, longitude: stop.lng! }}
+              title={`Stop ${stop.sequence}: ${stop.stopName}`}
+              description={stop.arrivalTime ? `Arrival: ${stop.arrivalTime}` : undefined}
+              pinColor="#007AFF"
+            >
+              <View style={styles.stopMarker}>
+                <Text style={styles.stopMarkerText}>{stop.sequence}</Text>
+              </View>
+            </Marker>
+          ))}
+
+        {/* School marker */}
+        {activeRoute.schoolLat != null && activeRoute.schoolLng != null && (
+          <Marker
+            coordinate={{
+              latitude: activeRoute.schoolLat,
+              longitude: activeRoute.schoolLng,
+            }}
+            title={activeRoute.schoolName ?? 'School'}
+            pinColor="#8b5cf6"
+          >
+            <View style={styles.schoolMarker}>
+              <Text style={styles.schoolMarkerText}>S</Text>
+            </View>
+          </Marker>
+        )}
+      </MapView>
 
       <View style={styles.controls}>
         <View style={styles.infoPanel}>
           <Text style={styles.routeTitle}>{activeRoute.name}</Text>
-          <Text style={styles.nextStop}>Next: Central Station (ETA 5m)</Text>
+          <Text style={styles.directionBadge}>
+            {routeDirection === 'AM' ? 'AM Route' : 'PM Route'}
+          </Text>
           {scanState === 'scanning' && <Text style={styles.bleStatus}>BLE Scanning Active</Text>}
           {scanState === 'permission_denied' && (
             <Text style={styles.bleWarning}>Bluetooth permission denied – manual roster only</Text>
@@ -151,9 +239,10 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
   },
-  nextStop: {
-    fontSize: 16,
+  directionBadge: {
+    fontSize: 14,
     color: '#666',
+    marginTop: 2,
   },
   bleStatus: {
     fontSize: 13,
@@ -188,4 +277,34 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   panicText: { color: 'white', fontWeight: 'bold', fontSize: 18 },
+  stopMarker: {
+    backgroundColor: '#007AFF',
+    borderRadius: 12,
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  stopMarkerText: {
+    color: '#fff',
+    fontSize: 11,
+    fontWeight: 'bold',
+  },
+  schoolMarker: {
+    backgroundColor: '#8b5cf6',
+    borderRadius: 14,
+    width: 28,
+    height: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  schoolMarkerText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
 });

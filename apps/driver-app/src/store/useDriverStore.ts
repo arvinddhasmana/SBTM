@@ -22,6 +22,8 @@ interface DriverState {
   setActiveRoute: (route: Route) => Promise<void>;
   endRoute: () => Promise<void>;
   toggleStudentStatus: (studentId: string) => Promise<void>;
+  boardAll: () => Promise<void>;
+  alightAll: () => Promise<void>;
   setStudents: (students: Student[]) => void;
   refreshRoster: () => Promise<void>;
   setOffline: (offline: boolean) => void;
@@ -77,6 +79,11 @@ export const useDriverStore = create<DriverState>((set, get) => ({
     try {
       const { students, stops, direction } = await RosterService.getRouteRoster(route.id);
       set({ students, stops, routeDirection: direction, rosterLoadState: 'loaded' });
+
+      // PM route: auto-board all students when starting from school
+      if (direction === 'PM') {
+        await get().boardAll();
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to load roster';
       console.warn('Roster load failed, running offline', { routeId: route.id });
@@ -99,8 +106,12 @@ export const useDriverStore = create<DriverState>((set, get) => ({
   },
 
   endRoute: async () => {
-    const { activeRoute, driver } = get();
+    const { activeRoute, driver, routeDirection, students } = get();
     if (activeRoute && driver) {
+      // AM route: auto-alight all remaining boarded students at school
+      if (routeDirection === 'AM' && students.some((s) => s.status === 'BOARDED')) {
+        await get().alightAll();
+      }
       await RouteLifecycleService.completeRoute(activeRoute.id, activeRoute.vehicleId, driver.id);
     }
     set({
@@ -109,6 +120,7 @@ export const useDriverStore = create<DriverState>((set, get) => ({
       stops: [],
       routeDirection: 'AM',
       rosterLoadState: 'idle',
+      rosterError: null,
     });
   },
 
@@ -161,6 +173,78 @@ export const useDriverStore = create<DriverState>((set, get) => ({
     set({
       students: get().students.map((s) =>
         s.id === studentId ? { ...s, serverConfirmed, pendingSync: !serverConfirmed } : s,
+      ),
+    });
+  },
+
+  boardAll: async () => {
+    const { students, activeRoute, driver } = get();
+    if (!activeRoute || !driver) return;
+    const notBoarded = students.filter((s) => s.status === 'NOT_BOARDED');
+    if (notBoarded.length === 0) return;
+
+    // Optimistic update
+    set({
+      students: students.map((s) =>
+        s.status === 'NOT_BOARDED'
+          ? { ...s, status: 'BOARDED' as const, serverConfirmed: false, pendingSync: true }
+          : s,
+      ),
+    });
+
+    const ids = notBoarded.map((s) => s.id);
+    const timestamp = new Date().toISOString();
+    for (const student of notBoarded) {
+      await PresenceService.sendPresenceEvent({
+        studentId: student.id,
+        vehicleId: activeRoute.vehicleId,
+        routeId: activeRoute.id,
+        schoolId: activeRoute.schoolId,
+        eventType: 'BOARD',
+        source: 'MANUAL',
+        timestamp,
+      });
+    }
+
+    set({
+      students: get().students.map((s) =>
+        ids.includes(s.id) ? { ...s, serverConfirmed: true, pendingSync: false } : s,
+      ),
+    });
+  },
+
+  alightAll: async () => {
+    const { students, activeRoute, driver } = get();
+    if (!activeRoute || !driver) return;
+    const boarded = students.filter((s) => s.status === 'BOARDED');
+    if (boarded.length === 0) return;
+
+    // Optimistic update
+    set({
+      students: students.map((s) =>
+        s.status === 'BOARDED'
+          ? { ...s, status: 'ALIGHTED' as const, serverConfirmed: false, pendingSync: true }
+          : s,
+      ),
+    });
+
+    const ids = boarded.map((s) => s.id);
+    const timestamp = new Date().toISOString();
+    for (const student of boarded) {
+      await PresenceService.sendPresenceEvent({
+        studentId: student.id,
+        vehicleId: activeRoute.vehicleId,
+        routeId: activeRoute.id,
+        schoolId: activeRoute.schoolId,
+        eventType: 'ALIGHT',
+        source: 'MANUAL',
+        timestamp,
+      });
+    }
+
+    set({
+      students: get().students.map((s) =>
+        ids.includes(s.id) ? { ...s, serverConfirmed: true, pendingSync: false } : s,
       ),
     });
   },

@@ -18,6 +18,8 @@ export interface RosterStopDto {
   stopName: string;
   sequence: number;
   arrivalTime: string;
+  lat?: number;
+  lng?: number;
 }
 
 export interface RosterResponse {

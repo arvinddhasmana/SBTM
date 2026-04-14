@@ -11,6 +11,10 @@ function mapScheduleToDriver(
     startTime: string;
     vehicleId?: string;
     schoolId: string;
+    polyline?: string;
+    schoolLat?: number;
+    schoolLng?: number;
+    schoolName?: string;
   }>,
 ): Driver {
   const nameParts = [user.firstName, user.lastName].filter(Boolean);
@@ -28,6 +32,10 @@ function mapScheduleToDriver(
       startTime: route.startTime,
       endTime: route.startTime,
       direction: route.direction,
+      polyline: route.polyline,
+      schoolLat: route.schoolLat,
+      schoolLng: route.schoolLng,
+      schoolName: route.schoolName,
     })),
   };
 }
@@ -37,17 +45,20 @@ export const AuthService = {
     const response = await api.post<LoginResponse>('/auth/login', { email, password });
     await SecureStore.setItemAsync('auth_token', response.data.accessToken);
 
-    const schedule =
-      await api.get<
-        Array<{
-          routeId: string;
-          name: string;
-          direction: 'AM' | 'PM';
-          startTime: string;
-          vehicleId?: string;
-          schoolId: string;
-        }>
-      >('/driver/me/schedule');
+    const schedule = await api.get<
+      Array<{
+        routeId: string;
+        name: string;
+        direction: 'AM' | 'PM';
+        startTime: string;
+        vehicleId?: string;
+        schoolId: string;
+        polyline?: string;
+        schoolLat?: number;
+        schoolLng?: number;
+        schoolName?: string;
+      }>
+    >('/driver/me/schedule');
 
     return mapScheduleToDriver(response.data.user, schedule.data);
   },
@@ -56,17 +67,20 @@ export const AuthService = {
   restoreSession: async (): Promise<Driver> => {
     // Use the /auth/me endpoint to get user info, then fetch schedule
     const meResponse = await api.get<LoginResponse['user']>('/auth/me');
-    const schedule =
-      await api.get<
-        Array<{
-          routeId: string;
-          name: string;
-          direction: 'AM' | 'PM';
-          startTime: string;
-          vehicleId?: string;
-          schoolId: string;
-        }>
-      >('/driver/me/schedule');
+    const schedule = await api.get<
+      Array<{
+        routeId: string;
+        name: string;
+        direction: 'AM' | 'PM';
+        startTime: string;
+        vehicleId?: string;
+        schoolId: string;
+        polyline?: string;
+        schoolLat?: number;
+        schoolLng?: number;
+        schoolName?: string;
+      }>
+    >('/driver/me/schedule');
 
     return mapScheduleToDriver(meResponse.data, schedule.data);
   },

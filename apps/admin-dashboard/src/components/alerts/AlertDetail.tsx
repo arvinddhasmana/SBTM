@@ -11,6 +11,7 @@ import {
   HelpCircle,
   MessageSquare,
   GripVertical,
+  Check,
 } from 'lucide-react';
 import type { Alert, AlertAuditEntry } from '../../types';
 import { formatTimestamp, formatEventType } from '../../utils/formatters';
@@ -102,6 +103,7 @@ const AlertDetail: React.FC<AlertDetailProps> = ({
   const [showResolveInput, setShowResolveInput] = useState(false);
   const [resolveNotes, setResolveNotes] = useState('');
   const [isSubmittingUpdate, setIsSubmittingUpdate] = useState(false);
+  const [infoRequested, setInfoRequested] = useState(false);
 
   // Dragging state for overlay variant
   const [position, setPosition] = useState({ x: 100, y: 80 });
@@ -355,12 +357,19 @@ const AlertDetail: React.FC<AlertDetailProps> = ({
               )}
               {onRequestInfo && (
                 <button
-                  onClick={() => onRequestInfo(alert.id)}
-                  disabled={isActing}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-blue-500/20 border border-blue-500/30 text-blue-400 text-xs font-medium hover:bg-blue-500/30 transition-colors disabled:opacity-50"
+                  onClick={async () => {
+                    await onRequestInfo(alert.id);
+                    setInfoRequested(true);
+                  }}
+                  disabled={isActing || infoRequested}
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-medium transition-colors disabled:opacity-50 ${
+                    infoRequested
+                      ? 'bg-green-500/20 border border-green-500/30 text-green-400'
+                      : 'bg-blue-500/20 border border-blue-500/30 text-blue-400 hover:bg-blue-500/30'
+                  }`}
                 >
-                  <HelpCircle size={13} />
-                  Request Info
+                  {infoRequested ? <Check size={13} /> : <HelpCircle size={13} />}
+                  {infoRequested ? 'Info Requested' : 'Request Info'}
                 </button>
               )}
             </div>

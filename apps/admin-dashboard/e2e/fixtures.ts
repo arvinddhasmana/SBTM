@@ -217,3 +217,48 @@ export function collectConsoleErrors(page: Page): () => string[] {
   page.on('pageerror', (err) => errors.push(err.message));
   return () => errors;
 }
+
+/**
+ * Create a test alert by POSTing an emergency event as the DRIVER user.
+ * Returns the alertId from the response. Requires the backend to be running.
+ */
+export async function createTestAlert(
+  page: Page,
+  options: { eventType?: string; routeId?: string; vehicleId?: string } = {},
+): Promise<string | undefined> {
+  const loginRes = await page.request.post('http://localhost:3001/api/v1/auth/login', {
+    data: { email: TEST_USERS.DRIVER.email, password: 'Admin123!' },
+  });
+  const cookies = loginRes.headers()['set-cookie'] || '';
+  const tokenMatch = cookies.match(/access_token=([^;]+)/);
+  let token = tokenMatch?.[1];
+  if (!token) {
+    try {
+      const body = await loginRes.json();
+      token = body.accessToken;
+    } catch {
+      /* ignore */
+    }
+  }
+
+  if (!token) return undefined;
+
+  const res = await page.request.post('http://localhost:3001/api/v1/emergency-events', {
+    data: {
+      vehicleId: options.vehicleId || 'BUS-STBERN-01',
+      routeId: options.routeId || 'ROUTE-STBERN-R01-AM',
+      eventType: options.eventType || 'PANIC_BUTTON',
+      timestamp: new Date().toISOString(),
+      lat: 45.3506,
+      lng: -75.7934,
+    },
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  try {
+    const body = await res.json();
+    return body.alertId;
+  } catch {
+    return undefined;
+  }
+}

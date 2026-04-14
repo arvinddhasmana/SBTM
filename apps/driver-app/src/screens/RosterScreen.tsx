@@ -7,6 +7,7 @@ import {
   StyleSheet,
   ActivityIndicator,
   Image,
+  Alert,
 } from 'react-native';
 import { useDriverStore } from '../store/useDriverStore';
 import type { Student, Stop } from '../types';
@@ -75,8 +76,28 @@ export default function RosterScreen() {
   const isOffline = useDriverStore((state) => state.isOffline);
   const toggleStudentStatus = useDriverStore((state) => state.toggleStudentStatus);
   const refreshRoster = useDriverStore((state) => state.refreshRoster);
+  const routeDirection = useDriverStore((state) => state.routeDirection);
+  const boardAll = useDriverStore((state) => state.boardAll);
+  const alightAll = useDriverStore((state) => state.alightAll);
 
   const sections = useMemo(() => buildSections(students, stops), [students, stops]);
+
+  const hasNotBoarded = students.some((s) => s.status === 'NOT_BOARDED');
+  const hasBoarded = students.some((s) => s.status === 'BOARDED');
+
+  const handleBoardAll = () => {
+    Alert.alert('Board All', 'Mark all students as boarded?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Board All', onPress: () => void boardAll() },
+    ]);
+  };
+
+  const handleAlightAll = () => {
+    Alert.alert('Alight All', 'Mark all boarded students as alighted?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Alight All', onPress: () => void alightAll() },
+    ]);
+  };
 
   const renderSectionHeader = ({ section }: { section: Section }) => (
     <View style={styles.sectionHeader}>
@@ -130,6 +151,20 @@ export default function RosterScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Student Roster</Text>
+
+      {routeDirection === 'PM' && hasNotBoarded && (
+        <TouchableOpacity style={styles.bulkActionButton} onPress={handleBoardAll}>
+          <Text style={styles.bulkActionText}>Board All Students</Text>
+        </TouchableOpacity>
+      )}
+      {routeDirection === 'AM' && hasBoarded && (
+        <TouchableOpacity
+          style={[styles.bulkActionButton, styles.bulkAlightButton]}
+          onPress={handleAlightAll}
+        >
+          <Text style={styles.bulkActionText}>Alight All Students</Text>
+        </TouchableOpacity>
+      )}
 
       {isOffline && (
         <View style={styles.offlineBanner}>
@@ -320,5 +355,21 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 13,
     fontWeight: '600',
+  },
+  bulkActionButton: {
+    backgroundColor: '#34C759',
+    borderRadius: 10,
+    padding: 14,
+    marginHorizontal: 16,
+    marginTop: 8,
+    alignItems: 'center',
+  },
+  bulkAlightButton: {
+    backgroundColor: '#FF9500',
+  },
+  bulkActionText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });

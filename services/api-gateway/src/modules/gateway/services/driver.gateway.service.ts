@@ -21,6 +21,10 @@ interface DriverRouteDto {
   startTime: string;
   vehicleId?: string;
   schoolId: string;
+  polyline?: string;
+  schoolLat?: number;
+  schoolLng?: number;
+  schoolName?: string;
 }
 
 export interface RouteRosterStudentDto {
@@ -39,6 +43,8 @@ export interface RouteStopDto {
   stopName: string;
   sequence: number;
   arrivalTime: string;
+  lat?: number;
+  lng?: number;
 }
 
 export interface RouteRosterResponse {
@@ -75,8 +81,11 @@ export class DriverGatewayService {
 
     // Query routes_reference since assignedRouteIds contains reference IDs (e.g., ROUTE-STBERN-R01-AM)
     const routes = await this.dataSource.query(
-      `SELECT r.id, r.name, r.direction, r.schedule, r."vehicleId", r."schoolId"
+      `SELECT r.id, r.name, r.direction, r.schedule, r."vehicleId", r."schoolId",
+              r.polyline,
+              s.lat AS "schoolLat", s.lng AS "schoolLng", s.name AS "schoolName"
        FROM routes_reference r
+       LEFT JOIN schools s ON r."schoolId" = s.id
        WHERE r.id = ANY($1)
        ORDER BY r.id ASC`,
       [routeIds],
@@ -94,6 +103,10 @@ export class DriverGatewayService {
         startTime: schedule?.startTime || '07:30',
         vehicleId: r.vehicleId || undefined,
         schoolId: r.schoolId,
+        polyline: r.polyline || undefined,
+        schoolLat: r.schoolLat != null ? Number(r.schoolLat) : undefined,
+        schoolLng: r.schoolLng != null ? Number(r.schoolLng) : undefined,
+        schoolName: r.schoolName || undefined,
       };
     });
   }
@@ -179,6 +192,8 @@ export class DriverGatewayService {
           stopName: s.stopName,
           sequence: s.sequenceOrder,
           arrivalTime: s.arrivalTime,
+          lat: s.lat != null ? Number(s.lat) : undefined,
+          lng: s.lng != null ? Number(s.lng) : undefined,
         })),
         students: [],
         direction,
@@ -221,6 +236,8 @@ export class DriverGatewayService {
         stopName: s.stopName,
         sequence: s.sequenceOrder,
         arrivalTime: s.arrivalTime,
+        lat: s.lat != null ? Number(s.lat) : undefined,
+        lng: s.lng != null ? Number(s.lng) : undefined,
       })),
       students: enrolled.map((student) => {
         const presence = presenceByStudentId.get(student.id);
