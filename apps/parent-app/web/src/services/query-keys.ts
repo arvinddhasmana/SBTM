@@ -2,6 +2,7 @@ export const queryKeys = {
   alerts: {
     active: (routeId?: string) => ['alerts', 'active', routeId] as const,
     history: ['alerts', 'history'] as const,
+    auditTrail: (alertId: string) => ['alerts', 'audit-trail', alertId] as const,
   },
   location: {
     live: (routeId: string) => ['location', 'live', routeId] as const,

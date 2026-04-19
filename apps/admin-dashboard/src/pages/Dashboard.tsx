@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Bus, Users, Bell, Route as RouteIcon, ShieldAlert, Info, Zap, MapPin } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -10,10 +10,10 @@ import { RouteListCompact } from '../components/routes';
 import { alertsApi, routesApi, presenceApi, useMock } from '../services/api';
 import { queryKeys } from '../services/query-keys';
 import { useAuth } from '../context/AuthContext';
+import { alertsWs } from '../services/websocket/alerts.ws';
 import type {
   Alert,
   AlertTier,
-  AlertAuditEntry,
   LiveLocation,
   StudentPresence,
   DashboardStats,
@@ -40,7 +40,6 @@ const Dashboard: React.FC = () => {
   const [passengerSearch, setPassengerSearch] = useState('');
   const [alertTierFilter, setAlertTierFilter] = useState<AlertTier | ''>('');
   const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null);
-  const [selectedAlertAudit, setSelectedAlertAudit] = useState<AlertAuditEntry[]>([]);
   const [isResolving, setIsResolving] = useState(false);
   const [isActing, setIsActing] = useState(false);
   const navigate = useNavigate();
@@ -160,16 +159,32 @@ const Dashboard: React.FC = () => {
   };
 
   // --- Alert detail overlay handlers ---
+  const selectedAlertIdRef = useRef<string | null>(null);
+  selectedAlertIdRef.current = selectedAlert?.id ?? null;
+
+  // Audit trail via React Query with auto-refresh
+  const { data: selectedAlertAudit = [] } = useQuery({
+    queryKey: queryKeys.alerts.auditTrail(selectedAlert?.id ?? ''),
+    queryFn: () => alertsApi.getAlertAuditLog(selectedAlert!.id),
+    enabled: !!selectedAlert,
+    refetchInterval: selectedAlert ? 10_000 : false,
+  });
+
+  // WebSocket: auto-refresh alerts + audit trail on status updates
   useEffect(() => {
-    if (selectedAlert) {
-      alertsApi
-        .getAlertAuditLog(selectedAlert.id)
-        .then(setSelectedAlertAudit)
-        .catch(() => setSelectedAlertAudit([]));
-    } else {
-      setSelectedAlertAudit([]);
-    }
-  }, [selectedAlert]);
+    alertsWs.connect();
+    const unsubscribe = alertsWs.subscribe(() => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.alerts.all });
+      const currentId = selectedAlertIdRef.current;
+      if (currentId) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.alerts.auditTrail(currentId) });
+      }
+    });
+    return () => {
+      unsubscribe();
+      alertsWs.disconnect();
+    };
+  }, [queryClient]);
 
   const handleAlertAction = (alert: Alert) => {
     setSelectedAlert(alert);
@@ -229,8 +244,7 @@ const Dashboard: React.FC = () => {
   const handleAddStatusUpdate = async (id: string, notes: string) => {
     await alertsApi.addStatusUpdate(id, notes, user?.id, user?.role);
     queryClient.invalidateQueries({ queryKey: queryKeys.alerts.all });
-    const updatedAudit = await alertsApi.getAlertAuditLog(id);
-    setSelectedAlertAudit(updatedAudit);
+    queryClient.invalidateQueries({ queryKey: queryKeys.alerts.auditTrail(id) });
   };
 
   const handleSelection = async (routeId?: string) => {

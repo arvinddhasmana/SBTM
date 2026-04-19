@@ -1,81 +1,62 @@
+import { io, Socket } from 'socket.io-client';
 import type { Alert } from '../../types';
 
 type AlertCallback = (alert: Alert) => void;
 
 class AlertsWebSocket {
-    private ws: WebSocket | null = null;
-    private callbacks: AlertCallback[] = [];
-    private reconnectAttempts = 0;
-    private maxReconnectAttempts = 5;
-    private reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
+  private socket: Socket | null = null;
+  private callbacks: AlertCallback[] = [];
 
-    connect(url?: string): void {
-        const wsUrl = url || import.meta.env.VITE_WS_URL || 'ws://localhost:3000/ws/alerts';
+  connect(url?: string): void {
+    const wsUrl =
+      url ||
+      import.meta.env.VITE_ALERTS_WS_URL ||
+      import.meta.env.VITE_WS_URL ||
+      'http://localhost:3003';
 
-        try {
-            this.ws = new WebSocket(wsUrl);
+    if (this.socket?.connected) return;
 
-            this.ws.onopen = () => {
-                console.log('Alerts WebSocket connected');
-                this.reconnectAttempts = 0;
-            };
+    this.socket = io(`${wsUrl}/alerts`, {
+      transports: ['websocket'],
+      reconnection: true,
+      reconnectionAttempts: 5,
+    });
 
-            this.ws.onmessage = (event) => {
-                try {
-                    const alert: Alert = JSON.parse(event.data);
-                    this.callbacks.forEach(cb => cb(alert));
-                } catch (error) {
-                    console.error('Error parsing alert message:', error);
-                }
-            };
+    this.socket.on('connect', () => {
+      console.log('Alerts WebSocket connected');
+    });
 
-            this.ws.onclose = () => {
-                console.log('Alerts WebSocket closed');
-                this.attemptReconnect();
-            };
+    this.socket.on('emergency-alert', (alert: Alert) => {
+      this.callbacks.forEach((cb) => cb(alert));
+    });
 
-            this.ws.onerror = (error) => {
-                console.error('Alerts WebSocket error:', error);
-            };
-        } catch (error) {
-            console.error('Failed to connect to alerts WebSocket:', error);
-            this.attemptReconnect();
-        }
+    this.socket.on('disconnect', () => {
+      console.log('Alerts WebSocket disconnected');
+    });
+
+    this.socket.on('connect_error', (error) => {
+      console.error('Alerts WebSocket connection error:', error);
+    });
+  }
+
+  subscribe(callback: AlertCallback): () => void {
+    this.callbacks.push(callback);
+    return () => {
+      this.callbacks = this.callbacks.filter((cb) => cb !== callback);
+    };
+  }
+
+  disconnect(): void {
+    if (this.socket) {
+      this.socket.disconnect();
+      this.socket = null;
     }
+    this.callbacks = [];
+  }
 
-    private attemptReconnect(): void {
-        if (this.reconnectAttempts < this.maxReconnectAttempts) {
-            this.reconnectAttempts++;
-            const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000);
-
-            this.reconnectTimeout = setTimeout(() => {
-                console.log(`Attempting to reconnect alerts WebSocket (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
-                this.connect();
-            }, delay);
-        }
-    }
-
-    subscribe(callback: AlertCallback): () => void {
-        this.callbacks.push(callback);
-        return () => {
-            this.callbacks = this.callbacks.filter(cb => cb !== callback);
-        };
-    }
-
-    disconnect(): void {
-        if (this.reconnectTimeout) {
-            clearTimeout(this.reconnectTimeout);
-        }
-        if (this.ws) {
-            this.ws.close();
-            this.ws = null;
-        }
-        this.callbacks = [];
-    }
-
-    isConnected(): boolean {
-        return this.ws?.readyState === WebSocket.OPEN;
-    }
+  isConnected(): boolean {
+    return this.socket?.connected || false;
+  }
 }
 
 export const alertsWs = new AlertsWebSocket();

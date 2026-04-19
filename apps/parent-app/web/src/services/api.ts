@@ -69,6 +69,17 @@ export interface NotificationRecord {
   timestamp: string;
 }
 
+export interface AlertAuditEntry {
+  id: string;
+  alertId: string;
+  eventType: string;
+  actorUserId: string | null;
+  actorRole: string | null;
+  notes: string | null;
+  escalationLevel: string | null;
+  eventTimestamp: string;
+}
+
 export interface AbsenceReportPayload {
   studentId: string;
   tripDate: string;
@@ -144,6 +155,13 @@ export const parentApi = {
 
   async getAlertHistory(): Promise<AlertHistoryRecord[]> {
     const response = await apiClient.get<AlertHistoryRecord[]>('/api/v1/alerts/parent-history');
+    return response.data;
+  },
+
+  async getAlertAuditTrail(alertId: string): Promise<AlertAuditEntry[]> {
+    const response = await apiClient.get<AlertAuditEntry[]>(
+      `/api/v1/alerts/${alertId}/audit-trail`,
+    );
     return response.data;
   },
 

@@ -149,6 +149,7 @@ export class AlertsController {
     Role.SCHOOL_ADMIN,
     Role.BOARD_ADMIN,
     Role.DRIVER,
+    Role.PARENT,
   )
   async getAuditTrail(@Param('id') id: string) {
     return this.alertsGatewayService.getAuditTrail(id);

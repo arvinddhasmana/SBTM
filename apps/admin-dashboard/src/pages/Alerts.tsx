@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Filter } from 'lucide-react';
 import { Header, Card, LoadingSpinner } from '../components/common';
@@ -6,6 +6,7 @@ import { AlertList, AlertDetail, AlertConfirmationModal } from '../components/al
 import { alertsApi, routesApi } from '../services/api';
 import { queryKeys } from '../services/query-keys';
 import { useAuth } from '../context/AuthContext';
+import { alertsWs } from '../services/websocket/alerts.ws';
 import type { Alert, AlertAuditEntry } from '../types';
 
 type FilterOption = 'all' | 'active' | 'pending' | 'confirmed' | 'resolved';
@@ -27,7 +28,11 @@ const Alerts: React.FC = () => {
   const [tierFilter, setTierFilter] = useState<TierFilter>('all');
   const [isResolving, setIsResolving] = useState(false);
   const [isActing, setIsActing] = useState(false);
-  const [selectedAlertAudit, setSelectedAlertAudit] = useState<AlertAuditEntry[]>([]);
+  const [expandedTimelineAlertId, setExpandedTimelineAlertId] = useState<string | null>(null);
+
+  // Keep a ref to selectedAlert.id for WebSocket callback
+  const selectedAlertIdRef = useRef<string | null>(null);
+  selectedAlertIdRef.current = selectedAlert?.id ?? null;
 
   const { data: alerts = [], isLoading } = useQuery({
     queryKey: queryKeys.alerts.all,
@@ -39,6 +44,38 @@ const Alerts: React.FC = () => {
     queryFn: () => routesApi.getAllRoutes(),
     staleTime: 60_000,
   });
+
+  // Audit trail for selected alert detail panel (with auto-refresh polling)
+  const { data: selectedAlertAudit = [] } = useQuery({
+    queryKey: queryKeys.alerts.auditTrail(selectedAlert?.id ?? ''),
+    queryFn: () => alertsApi.getAlertAuditLog(selectedAlert!.id),
+    enabled: !!selectedAlert,
+    refetchInterval: selectedAlert ? 10_000 : false,
+  });
+
+  // Audit trail for expanded inline timeline in alert list
+  const { data: expandedTimelineAudit = [] } = useQuery({
+    queryKey: queryKeys.alerts.auditTrail(expandedTimelineAlertId ?? ''),
+    queryFn: () => alertsApi.getAlertAuditLog(expandedTimelineAlertId!),
+    enabled: !!expandedTimelineAlertId,
+  });
+
+  // WebSocket: connect on mount, invalidate queries on alert updates
+  useEffect(() => {
+    alertsWs.connect();
+    const unsubscribe = alertsWs.subscribe(() => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.alerts.all });
+      // Also refresh the audit trail for the currently selected alert
+      const currentId = selectedAlertIdRef.current;
+      if (currentId) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.alerts.auditTrail(currentId) });
+      }
+    });
+    return () => {
+      unsubscribe();
+      alertsWs.disconnect();
+    };
+  }, [queryClient]);
 
   const routeNames = useMemo<Record<string, string>>(() => {
     const map: Record<string, string> = {};
@@ -53,18 +90,6 @@ const Alerts: React.FC = () => {
     user?.role === 'BOARD_ADMIN' ||
     user?.role === 'OSTA_ADMIN' ||
     user?.role === 'ADMIN';
-
-  // Fetch audit trail when an alert is selected
-  useEffect(() => {
-    if (selectedAlert) {
-      alertsApi
-        .getAlertAuditLog(selectedAlert.id)
-        .then(setSelectedAlertAudit)
-        .catch(() => setSelectedAlertAudit([]));
-    } else {
-      setSelectedAlertAudit([]);
-    }
-  }, [selectedAlert]);
 
   const handleResolve = async (id: string, notes?: string) => {
     setIsResolving(true);
@@ -122,17 +147,16 @@ const Alerts: React.FC = () => {
   const handleAddStatusUpdate = async (id: string, notes: string) => {
     await alertsApi.addStatusUpdate(id, notes, user?.id, user?.role);
     queryClient.invalidateQueries({ queryKey: queryKeys.alerts.all });
-    // Refresh audit trail
-    const updatedAudit = await alertsApi.getAlertAuditLog(id);
-    setSelectedAlertAudit(updatedAudit);
+    queryClient.invalidateQueries({ queryKey: queryKeys.alerts.auditTrail(id) });
   };
 
   const handleAlertClick = (alert: Alert) => {
-    if (alert.status === 'PENDING_CONFIRMATION' && canConfirm) {
-      setConfirmationAlert(alert);
-    } else {
-      setSelectedAlert(alert);
-    }
+    // All alerts open in the floating AlertDetail panel (including PENDING_CONFIRMATION)
+    setSelectedAlert(alert);
+  };
+
+  const handleToggleTimeline = (alertId: string) => {
+    setExpandedTimelineAlertId((prev) => (prev === alertId ? null : alertId));
   };
 
   const filteredAlerts = alerts.filter((alert) => {
@@ -267,6 +291,9 @@ const Alerts: React.FC = () => {
             compact={false}
             routeNames={routeNames}
             emptyMessage={`No ${filter === 'all' ? '' : filter + ' '}alerts found`}
+            expandedTimelineAlertId={expandedTimelineAlertId}
+            expandedTimelineAudit={expandedTimelineAudit}
+            onToggleTimeline={handleToggleTimeline}
           />
         </Card>
       </div>
@@ -282,9 +309,10 @@ const Alerts: React.FC = () => {
         />
       )}
 
-      {/* Alert Detail Modal */}
+      {/* Alert Detail — floating overlay panel */}
       {selectedAlert && (
         <AlertDetail
+          variant="overlay"
           alert={selectedAlert}
           onClose={() => setSelectedAlert(null)}
           onResolve={handleResolve}

@@ -64,9 +64,9 @@ describe('AlertDetail', () => {
       expect(screen.getByTestId('btn-resolve-confirmed')).toBeInTheDocument();
     });
 
-    it('shows confirmation timestamp', () => {
+    it('shows confirmed status badge', () => {
       render(<AlertDetail {...defaultProps} alert={confirmedAlert} />);
-      expect(screen.getByText(/Confirmed at/)).toBeInTheDocument();
+      expect(screen.getByText('Confirmed')).toBeInTheDocument();
     });
 
     it('opens status update textarea on button click', () => {

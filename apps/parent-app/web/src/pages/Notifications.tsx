@@ -1,7 +1,15 @@
-import React from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { AlertTriangle, CheckCircle, RefreshCw, ShieldAlert } from 'lucide-react';
-import { parentApi, type AlertHistoryRecord } from '../services/api';
+import React, { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  AlertTriangle,
+  CheckCircle,
+  RefreshCw,
+  ShieldAlert,
+  ChevronDown,
+  ChevronUp,
+  Clock,
+} from 'lucide-react';
+import { parentApi, type AlertHistoryRecord, type AlertAuditEntry } from '../services/api';
 import { queryKeys } from '../services/query-keys';
 
 const EVENT_TYPE_LABELS: Record<string, string> = {
@@ -20,7 +28,123 @@ const EVENT_TYPE_COLORS: Record<string, string> = {
   INCIDENT: 'bg-pink-500/20 text-pink-400 border-pink-500/30',
 };
 
+const AUDIT_EVENT_LABELS: Record<string, string> = {
+  CREATED: 'Created',
+  PENDING_CONFIRMATION: 'Pending confirmation',
+  CONFIRMED: 'Confirmed by school',
+  AUTO_ESCALATED: 'Auto-escalated',
+  FALSE_ALARM: 'False alarm',
+  PARENT_NOTIFIED: 'Parents notified',
+  BOARD_ESCALATED: 'Escalated to board',
+  OSTA_ESCALATED: 'Escalated to OSTA',
+  RESOLVED: 'Resolved',
+  INFO_REQUESTED: 'Info requested',
+  STATUS_UPDATE: 'Update',
+};
+
+function getAuditDotColor(eventType: string): string {
+  switch (eventType) {
+    case 'CONFIRMED':
+      return 'bg-blue-400';
+    case 'STATUS_UPDATE':
+      return 'bg-blue-400';
+    case 'RESOLVED':
+      return 'bg-green-400';
+    case 'AUTO_ESCALATED':
+    case 'BOARD_ESCALATED':
+    case 'OSTA_ESCALATED':
+      return 'bg-orange-400';
+    case 'FALSE_ALARM':
+      return 'bg-slate-400';
+    case 'PARENT_NOTIFIED':
+      return 'bg-purple-400';
+    default:
+      return 'bg-slate-500';
+  }
+}
+
+function getAuditLabelColor(eventType: string): string {
+  switch (eventType) {
+    case 'CONFIRMED':
+      return 'text-blue-400';
+    case 'STATUS_UPDATE':
+      return 'text-blue-400';
+    case 'RESOLVED':
+      return 'text-green-400';
+    case 'AUTO_ESCALATED':
+    case 'BOARD_ESCALATED':
+    case 'OSTA_ESCALATED':
+      return 'text-orange-400';
+    case 'FALSE_ALARM':
+      return 'text-slate-400';
+    case 'PARENT_NOTIFIED':
+      return 'text-purple-400';
+    default:
+      return 'text-slate-400';
+  }
+}
+
+const AlertTimeline: React.FC<{ alertId: string }> = ({ alertId }) => {
+  const { data: auditTrail = [], isLoading } = useQuery({
+    queryKey: queryKeys.alerts.auditTrail(alertId),
+    queryFn: () => parentApi.getAlertAuditTrail(alertId),
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center gap-2 py-3 text-slate-500 text-sm">
+        <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+        Loading timeline...
+      </div>
+    );
+  }
+
+  if (auditTrail.length === 0) {
+    return <p className="text-slate-500 text-sm py-2">No timeline entries.</p>;
+  }
+
+  const sortedTrail = [...auditTrail].sort(
+    (a, b) => new Date(b.eventTimestamp).getTime() - new Date(a.eventTimestamp).getTime(),
+  );
+
+  return (
+    <div className="pt-2">
+      <p className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider mb-3">
+        Timeline
+      </p>
+      <div className="space-y-0">
+        {sortedTrail.map((entry: AlertAuditEntry) => (
+          <div key={entry.id} className="flex gap-3 pb-3">
+            <div className="flex flex-col items-center">
+              <div
+                className={`w-2.5 h-2.5 rounded-full mt-1.5 shrink-0 ${getAuditDotColor(entry.eventType)}`}
+              />
+              <div className="w-px flex-1 bg-slate-700/50 mt-1" />
+            </div>
+            <div className="flex-1 min-w-0 pb-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className={`text-sm font-semibold ${getAuditLabelColor(entry.eventType)}`}>
+                  {AUDIT_EVENT_LABELS[entry.eventType] || entry.eventType.replace(/_/g, ' ')}
+                </span>
+                <span className="flex items-center gap-1 text-xs text-slate-500">
+                  <Clock className="h-3 w-3" />
+                  {new Date(entry.eventTimestamp).toLocaleString()}
+                </span>
+              </div>
+              {entry.notes && (
+                <p className="text-slate-400 text-sm mt-1 leading-relaxed">{entry.notes}</p>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 const Notifications: React.FC = () => {
+  const [expandedAlertId, setExpandedAlertId] = useState<string | null>(null);
+
   const {
     data: alerts = [],
     isLoading: loading,
@@ -40,6 +164,10 @@ const Notifications: React.FC = () => {
     } catch {
       return ts;
     }
+  };
+
+  const toggleTimeline = (alertId: string) => {
+    setExpandedAlertId((prev) => (prev === alertId ? null : alertId));
   };
 
   return (
@@ -88,6 +216,7 @@ const Notifications: React.FC = () => {
               EVENT_TYPE_COLORS[alert.eventType] ||
               'bg-slate-500/20 text-slate-400 border-slate-500/30';
             const isActive = alert.status === 'ACTIVE';
+            const isExpanded = expandedAlertId === alert.id;
 
             return (
               <div
@@ -134,6 +263,27 @@ const Notifications: React.FC = () => {
                         </span>
                         <span>{formatTimestamp(alert.createdAt)}</span>
                       </div>
+
+                      {/* View/Hide timeline toggle */}
+                      <button
+                        onClick={() => toggleTimeline(alert.id)}
+                        className="flex items-center gap-1 mt-2 text-sm text-indigo-400 hover:text-indigo-300 transition-colors"
+                      >
+                        {isExpanded ? (
+                          <>
+                            <ChevronUp className="h-4 w-4" />
+                            Hide timeline
+                          </>
+                        ) : (
+                          <>
+                            <ChevronDown className="h-4 w-4" />
+                            View timeline
+                          </>
+                        )}
+                      </button>
+
+                      {/* Expandable timeline */}
+                      {isExpanded && <AlertTimeline alertId={alert.id} />}
                     </div>
                   </div>
                 </div>

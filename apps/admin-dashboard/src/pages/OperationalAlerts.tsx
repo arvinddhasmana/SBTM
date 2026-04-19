@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Filter } from 'lucide-react';
 import { Header, Card, LoadingSpinner } from '../components/common';
 import { AlertList, AlertDetail } from '../components/alerts';
 import { alertsApi } from '../services/api';
 import { queryKeys } from '../services/query-keys';
+import { alertsWs } from '../services/websocket/alerts.ws';
 import type { Alert, AlertEventType } from '../types';
 
 type EventFilter = 'all' | AlertEventType;
@@ -25,10 +26,37 @@ const OperationalAlerts: React.FC = () => {
   const [eventFilter, setEventFilter] = useState<EventFilter>('all');
   const [isResolving, setIsResolving] = useState(false);
 
+  const selectedAlertIdRef = useRef<string | null>(null);
+  selectedAlertIdRef.current = selectedAlert?.id ?? null;
+
   const { data: allAlerts = [], isLoading } = useQuery({
     queryKey: queryKeys.alerts.all,
     queryFn: () => alertsApi.getAllAlerts(),
   });
+
+  // Audit trail with auto-refresh
+  const { data: selectedAlertAudit = [] } = useQuery({
+    queryKey: queryKeys.alerts.auditTrail(selectedAlert?.id ?? ''),
+    queryFn: () => alertsApi.getAlertAuditLog(selectedAlert!.id),
+    enabled: !!selectedAlert,
+    refetchInterval: selectedAlert ? 10_000 : false,
+  });
+
+  // WebSocket auto-refresh
+  useEffect(() => {
+    alertsWs.connect();
+    const unsubscribe = alertsWs.subscribe(() => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.alerts.all });
+      const currentId = selectedAlertIdRef.current;
+      if (currentId) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.alerts.auditTrail(currentId) });
+      }
+    });
+    return () => {
+      unsubscribe();
+      alertsWs.disconnect();
+    };
+  }, [queryClient]);
 
   // Filter to Tier 2 only
   const tier2Alerts = allAlerts.filter((a) => a.tier === 'TIER_2');
@@ -113,6 +141,7 @@ const OperationalAlerts: React.FC = () => {
           alert={selectedAlert}
           onClose={() => setSelectedAlert(null)}
           onResolve={handleResolve}
+          auditTrail={selectedAlertAudit}
           isResolving={isResolving}
         />
       )}

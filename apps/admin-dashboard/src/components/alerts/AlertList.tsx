@@ -1,5 +1,5 @@
 import React from 'react';
-import type { Alert } from '../../types';
+import type { Alert, AlertAuditEntry } from '../../types';
 import AlertCard from './AlertCard';
 
 interface AlertListProps {
@@ -9,6 +9,12 @@ interface AlertListProps {
   emptyMessage?: string;
   compact?: boolean;
   routeNames?: Record<string, string>;
+  /** ID of the alert whose timeline is currently expanded (expanded mode only). */
+  expandedTimelineAlertId?: string | null;
+  /** Audit trail entries for the currently expanded timeline. */
+  expandedTimelineAudit?: AlertAuditEntry[];
+  /** Callback to toggle timeline visibility for a given alert ID. */
+  onToggleTimeline?: (alertId: string) => void;
 }
 
 const AlertList: React.FC<AlertListProps> = ({
@@ -18,6 +24,9 @@ const AlertList: React.FC<AlertListProps> = ({
   emptyMessage = 'No alerts',
   compact = true,
   routeNames,
+  expandedTimelineAlertId,
+  expandedTimelineAudit,
+  onToggleTimeline,
 }) => {
   if (alerts.length === 0) {
     return (
@@ -37,6 +46,11 @@ const AlertList: React.FC<AlertListProps> = ({
           onAction={onAlertAction}
           compact={compact}
           routeName={routeNames?.[alert.routeId]}
+          auditTrail={expandedTimelineAlertId === alert.id ? expandedTimelineAudit : undefined}
+          showTimeline={expandedTimelineAlertId === alert.id}
+          onToggleTimeline={
+            !compact && onToggleTimeline ? () => onToggleTimeline(alert.id) : undefined
+          }
         />
       ))}
     </div>

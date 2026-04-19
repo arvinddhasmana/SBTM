@@ -2,6 +2,7 @@ export const queryKeys = {
   alerts: {
     all: ['alerts'] as const,
     active: () => [...queryKeys.alerts.all, 'active'] as const,
+    auditTrail: (alertId: string) => [...queryKeys.alerts.all, 'audit-trail', alertId] as const,
   },
   routes: {
     all: ['routes'] as const,

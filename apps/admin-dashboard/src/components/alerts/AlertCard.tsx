@@ -9,8 +9,11 @@ import {
   Clock,
   ShieldCheck,
   Eye,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
-import type { Alert } from '../../types';
+import type { Alert, AlertAuditEntry } from '../../types';
+import { formatTimestamp } from '../../utils/formatters';
 
 interface AlertCardProps {
   alert: Alert;
@@ -20,6 +23,12 @@ interface AlertCardProps {
   compact?: boolean;
   /** Human-readable route name to display in expanded mode. Falls back to routeId. */
   routeName?: string;
+  /** Audit trail entries for inline timeline (expanded mode only). */
+  auditTrail?: AlertAuditEntry[];
+  /** Whether to show the inline timeline (expanded mode only). */
+  showTimeline?: boolean;
+  /** Callback to toggle timeline visibility. */
+  onToggleTimeline?: () => void;
 }
 
 const ALERT_DISPLAY: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
@@ -128,12 +137,79 @@ const EXPANDED_STATUS_BADGE: Record<string, { label: string; className: string }
   },
 };
 
+const CARD_AUDIT_LABELS: Record<string, string> = {
+  CREATED: 'Created',
+  PENDING_CONFIRMATION: 'Pending confirmation',
+  CONFIRMED: 'Confirmed by school',
+  AUTO_ESCALATED: 'Auto-escalated',
+  FALSE_ALARM: 'False alarm',
+  PARENT_NOTIFIED: 'Parents notified',
+  BOARD_ESCALATED: 'Escalated to board',
+  OSTA_ESCALATED: 'Escalated to OSTA',
+  RESOLVED: 'Resolved',
+  INFO_REQUESTED: 'Info requested',
+  STATUS_UPDATE: 'Update',
+};
+
+function getCardAuditDotColor(eventType: string): string {
+  switch (eventType) {
+    case 'CONFIRMED':
+      return 'bg-blue-400';
+    case 'STATUS_UPDATE':
+      return 'bg-blue-400';
+    case 'RESOLVED':
+      return 'bg-green-400';
+    case 'AUTO_ESCALATED':
+    case 'BOARD_ESCALATED':
+    case 'OSTA_ESCALATED':
+      return 'bg-orange-400';
+    case 'FALSE_ALARM':
+      return 'bg-slate-400';
+    case 'PARENT_NOTIFIED':
+      return 'bg-purple-400';
+    case 'CREATED':
+      return 'bg-indigo-400';
+    case 'INFO_REQUESTED':
+      return 'bg-yellow-400';
+    default:
+      return 'bg-slate-500';
+  }
+}
+
+function getCardAuditLabelColor(eventType: string): string {
+  switch (eventType) {
+    case 'CONFIRMED':
+      return 'text-blue-400';
+    case 'STATUS_UPDATE':
+      return 'text-blue-400';
+    case 'RESOLVED':
+      return 'text-green-400';
+    case 'AUTO_ESCALATED':
+    case 'BOARD_ESCALATED':
+    case 'OSTA_ESCALATED':
+      return 'text-orange-400';
+    case 'FALSE_ALARM':
+      return 'text-slate-400';
+    case 'PARENT_NOTIFIED':
+      return 'text-purple-400';
+    case 'CREATED':
+      return 'text-indigo-400';
+    case 'INFO_REQUESTED':
+      return 'text-yellow-400';
+    default:
+      return 'text-slate-400';
+  }
+}
+
 const AlertCard: React.FC<AlertCardProps> = ({
   alert,
   onClick,
   onAction,
   compact = true,
   routeName,
+  auditTrail,
+  showTimeline,
+  onToggleTimeline,
 }) => {
   const display = ALERT_DISPLAY[alert.eventType] ?? ALERT_DISPLAY.OTHER;
   const isPanic = alert.eventType === 'PANIC_BUTTON' || alert.eventType === 'PANIC_ALERT';
@@ -229,6 +305,82 @@ const AlertCard: React.FC<AlertCardProps> = ({
                 </span>
               </span>
             </div>
+
+            {/* View/Hide timeline toggle */}
+            {onToggleTimeline && (
+              <div
+                role="button"
+                tabIndex={0}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleTimeline();
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.stopPropagation();
+                    onToggleTimeline();
+                  }
+                }}
+                className="flex items-center gap-1 mt-2 text-xs text-blue-400 hover:text-blue-300 transition-colors cursor-pointer"
+              >
+                {showTimeline ? (
+                  <>
+                    <ChevronUp size={14} />
+                    Hide timeline
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown size={14} />
+                    View timeline
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* Inline timeline */}
+            {showTimeline && auditTrail && auditTrail.length > 0 && (
+              <div className="mt-3 pt-2 border-t border-dashboard-border">
+                <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider mb-2">
+                  Timeline
+                </p>
+                <div className="space-y-0">
+                  {[...auditTrail]
+                    .sort(
+                      (a, b) =>
+                        new Date(b.eventTimestamp).getTime() - new Date(a.eventTimestamp).getTime(),
+                    )
+                    .map((entry) => (
+                      <div key={entry.id} className="flex gap-2.5 pb-2">
+                        <div className="flex flex-col items-center">
+                          <div
+                            className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${getCardAuditDotColor(entry.eventType)}`}
+                          />
+                          <div className="w-px flex-1 bg-slate-700/50 mt-0.5" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span
+                              className={`text-xs font-semibold ${getCardAuditLabelColor(entry.eventType)}`}
+                            >
+                              {CARD_AUDIT_LABELS[entry.eventType] ||
+                                entry.eventType.replace(/_/g, ' ')}
+                            </span>
+                            <span className="flex items-center gap-1 text-[10px] text-slate-500">
+                              <Clock size={9} />
+                              {formatTimestamp(entry.eventTimestamp)}
+                            </span>
+                          </div>
+                          {entry.notes && (
+                            <p className="text-slate-400 text-[11px] mt-0.5 leading-snug">
+                              {entry.notes}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Action button */}

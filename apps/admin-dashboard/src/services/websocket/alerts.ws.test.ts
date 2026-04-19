@@ -1,115 +1,85 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-let mockWsInstance: any;
+// Mock socket.io-client
+let mockSocketInstance: any;
+const mockIo = vi.fn();
 
-function createMockWs(url: string) {
-  mockWsInstance = {
-    url,
-    onopen: null as any,
-    onmessage: null as any,
-    onclose: null as any,
-    onerror: null as any,
-    close: vi.fn(),
-    readyState: 1,
-  };
-  return mockWsInstance;
-}
-
-const MockWebSocket = vi.fn().mockImplementation(createMockWs);
-
-(MockWebSocket as any).OPEN = 1;
-(MockWebSocket as any).CLOSED = 3;
-
-vi.stubGlobal('WebSocket', MockWebSocket);
+vi.mock('socket.io-client', () => ({
+  io: (...args: any[]) => {
+    mockSocketInstance = {
+      connected: false,
+      on: vi.fn((event: string, handler: (...args: any[]) => void) => {
+        if (!mockSocketInstance._handlers[event]) {
+          mockSocketInstance._handlers[event] = [];
+        }
+        mockSocketInstance._handlers[event].push(handler);
+      }),
+      disconnect: vi.fn(() => {
+        mockSocketInstance.connected = false;
+      }),
+      _handlers: {} as Record<string, ((...args: any[]) => void)[]>,
+      _emit(event: string, ...args: any[]) {
+        const handlers = mockSocketInstance._handlers[event] || [];
+        handlers.forEach((h: (...args: any[]) => void) => h(...args));
+      },
+    };
+    mockIo(...args);
+    return mockSocketInstance;
+  },
+}));
 
 import { alertsWs } from './alerts.ws';
 
 describe('AlertsWebSocket', () => {
   beforeEach(() => {
-    vi.useFakeTimers();
-    mockWsInstance = null;
-    // Re-attach implementation after any clearAllMocks
-    MockWebSocket.mockImplementation(createMockWs);
-    // Ensure clean state
+    mockSocketInstance = null;
+    mockIo.mockClear();
     alertsWs.disconnect();
   });
 
   afterEach(() => {
-    vi.useRealTimers();
+    alertsWs.disconnect();
   });
 
   describe('connect', () => {
-    it('should create a WebSocket with the provided URL', () => {
-      alertsWs.connect('ws://test:3000/ws/alerts');
-      expect(MockWebSocket).toHaveBeenCalledWith('ws://test:3000/ws/alerts');
+    it('should create a socket.io connection with the /alerts namespace', () => {
+      alertsWs.connect('http://test:3003');
+      expect(mockIo).toHaveBeenCalledWith(
+        'http://test:3003/alerts',
+        expect.objectContaining({
+          transports: ['websocket'],
+          reconnection: true,
+        }),
+      );
     });
 
-    it('should reset reconnect attempts on successful open', () => {
-      alertsWs.connect('ws://test:3000/ws/alerts');
-      const callCountBefore = MockWebSocket.mock.calls.length;
-      mockWsInstance.onopen();
-      // After open, no more reconnects should happen
-      expect(MockWebSocket.mock.calls.length).toBe(callCountBefore);
+    it('should not create duplicate connections if already connected', () => {
+      alertsWs.connect('http://test:3003');
+      mockSocketInstance.connected = true;
+      alertsWs.connect('http://test:3003');
+      expect(mockIo).toHaveBeenCalledTimes(1);
+    });
+
+    it('should register emergency-alert event handler', () => {
+      alertsWs.connect('http://test:3003');
+      expect(mockSocketInstance.on).toHaveBeenCalledWith('emergency-alert', expect.any(Function));
     });
   });
 
-  describe('onmessage', () => {
-    it('should parse JSON and call all subscribers', () => {
+  describe('emergency-alert event', () => {
+    it('should call all subscribers when emergency-alert received', () => {
       const callback1 = vi.fn();
       const callback2 = vi.fn();
       alertsWs.subscribe(callback1);
       alertsWs.subscribe(callback2);
 
-      alertsWs.connect('ws://test:3000/ws/alerts');
+      alertsWs.connect('http://test:3003');
 
-      const alertData = { id: 'alert-1', type: 'PANIC_BUTTON', severity: 'critical' };
-      mockWsInstance.onmessage({ data: JSON.stringify(alertData) });
+      const alertData = { id: 'alert-1', eventType: 'PANIC_BUTTON', status: 'ACTIVE' };
+      mockSocketInstance._emit('emergency-alert', alertData);
 
       expect(callback1).toHaveBeenCalledWith(alertData);
       expect(callback2).toHaveBeenCalledWith(alertData);
-    });
-
-    it('should handle invalid JSON gracefully', () => {
-      const callback = vi.fn();
-      alertsWs.subscribe(callback);
-
-      alertsWs.connect('ws://test:3000/ws/alerts');
-
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-      mockWsInstance.onmessage({ data: 'not-json' });
-
-      expect(callback).not.toHaveBeenCalled();
-      expect(consoleSpy).toHaveBeenCalled();
-      consoleSpy.mockRestore();
-    });
-  });
-
-  describe('onclose', () => {
-    it('should attempt reconnect with exponential backoff', () => {
-      alertsWs.connect('ws://test:3000/ws/alerts');
-      const firstCallCount = MockWebSocket.mock.calls.length;
-
-      mockWsInstance.onclose();
-
-      expect(MockWebSocket.mock.calls.length).toBe(firstCallCount);
-      vi.advanceTimersByTime(2000);
-      expect(MockWebSocket.mock.calls.length).toBe(firstCallCount + 1);
-    });
-
-    it('should stop reconnecting after max attempts', () => {
-      alertsWs.connect('ws://test:3000/ws/alerts');
-
-      for (let i = 0; i < 5; i++) {
-        mockWsInstance.onclose();
-        vi.advanceTimersByTime(30000);
-      }
-
-      const callCount = MockWebSocket.mock.calls.length;
-
-      mockWsInstance.onclose();
-      vi.advanceTimersByTime(60000);
-
-      expect(MockWebSocket.mock.calls.length).toBe(callCount);
     });
   });
 
@@ -118,59 +88,46 @@ describe('AlertsWebSocket', () => {
       const callback = vi.fn();
       const unsubscribe = alertsWs.subscribe(callback);
 
-      alertsWs.connect('ws://test:3000/ws/alerts');
-      const alertData = { id: 'alert-1', type: 'INCIDENT' };
+      alertsWs.connect('http://test:3003');
+      const alertData = { id: 'alert-1', eventType: 'INCIDENT' };
 
-      mockWsInstance.onmessage({ data: JSON.stringify(alertData) });
+      mockSocketInstance._emit('emergency-alert', alertData);
       expect(callback).toHaveBeenCalledTimes(1);
 
       unsubscribe();
 
-      mockWsInstance.onmessage({ data: JSON.stringify(alertData) });
+      mockSocketInstance._emit('emergency-alert', alertData);
       expect(callback).toHaveBeenCalledTimes(1);
     });
   });
 
   describe('disconnect', () => {
-    it('should close the WebSocket and clear callbacks', () => {
+    it('should disconnect the socket and clear callbacks', () => {
       const callback = vi.fn();
       alertsWs.subscribe(callback);
-      alertsWs.connect('ws://test:3000/ws/alerts');
-      const ws = mockWsInstance;
+      alertsWs.connect('http://test:3003');
+      const socket = mockSocketInstance;
 
       alertsWs.disconnect();
 
-      expect(ws.close).toHaveBeenCalled();
-    });
-
-    it('should clear pending reconnect timeout', () => {
-      alertsWs.connect('ws://test:3000/ws/alerts');
-      mockWsInstance.onclose();
-
-      alertsWs.disconnect();
-
-      const callCount = MockWebSocket.mock.calls.length;
-      vi.advanceTimersByTime(60000);
-      expect(MockWebSocket.mock.calls.length).toBe(callCount);
+      expect(socket.disconnect).toHaveBeenCalled();
     });
   });
 
   describe('isConnected', () => {
-    it('should return true when readyState is OPEN', () => {
-      alertsWs.connect('ws://test:3000/ws/alerts');
-      mockWsInstance.readyState = WebSocket.OPEN;
-
+    it('should return true when socket is connected', () => {
+      alertsWs.connect('http://test:3003');
+      mockSocketInstance.connected = true;
       expect(alertsWs.isConnected()).toBe(true);
     });
 
-    it('should return false when readyState is not OPEN', () => {
-      alertsWs.connect('ws://test:3000/ws/alerts');
-      mockWsInstance.readyState = 3;
-
+    it('should return false when socket is not connected', () => {
+      alertsWs.connect('http://test:3003');
+      mockSocketInstance.connected = false;
       expect(alertsWs.isConnected()).toBe(false);
     });
 
-    it('should return false when no WebSocket exists', () => {
+    it('should return false when no socket exists', () => {
       expect(alertsWs.isConnected()).toBe(false);
     });
   });

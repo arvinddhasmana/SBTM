@@ -6,7 +6,6 @@ import {
   Truck,
   CheckCircle,
   AlertTriangle,
-  ShieldCheck,
   XCircle,
   HelpCircle,
   MessageSquare,
@@ -27,7 +26,7 @@ interface AlertDetailProps {
   auditTrail?: AlertAuditEntry[];
   isResolving?: boolean;
   isActing?: boolean;
-  /** 'modal' = centered backdrop overlay (default); 'overlay' = draggable floating panel */
+  /** kept for API compat — panel is always floating overlay now */
   variant?: 'modal' | 'overlay';
 }
 
@@ -72,8 +71,36 @@ const AUDIT_EVENT_LABELS: Record<string, string> = {
   STATUS_UPDATE: 'Status Update',
 };
 
+function getAuditDotColor(eventType: string): string {
+  switch (eventType) {
+    case 'STATUS_UPDATE':
+      return 'bg-blue-400';
+    case 'CONFIRMED':
+      return 'bg-emerald-400';
+    case 'RESOLVED':
+      return 'bg-green-400';
+    case 'AUTO_ESCALATED':
+    case 'BOARD_ESCALATED':
+    case 'OSTA_ESCALATED':
+      return 'bg-orange-400';
+    case 'FALSE_ALARM':
+      return 'bg-slate-400';
+    case 'PARENT_NOTIFIED':
+      return 'bg-purple-400';
+    case 'CREATED':
+      return 'bg-indigo-400';
+    case 'INFO_REQUESTED':
+      return 'bg-yellow-400';
+    default:
+      return 'bg-slate-500';
+  }
+}
+
+/** Backend confirmation window — 2 minutes */
+const CONFIRMATION_WINDOW_MS = 120_000;
+
 const OVERLAY_SIZE_KEY = 'alert_detail_overlay_size';
-const DEFAULT_OVERLAY_SIZE = { width: 380, height: 520 };
+const DEFAULT_OVERLAY_SIZE = { width: 440, height: 600 };
 
 function readOverlaySize(): { width: number; height: number } {
   try {
@@ -96,7 +123,6 @@ const AlertDetail: React.FC<AlertDetailProps> = ({
   auditTrail,
   isResolving,
   isActing,
-  variant = 'modal',
 }) => {
   const [showUpdateInput, setShowUpdateInput] = useState(false);
   const [updateNotes, setUpdateNotes] = useState('');
@@ -105,18 +131,32 @@ const AlertDetail: React.FC<AlertDetailProps> = ({
   const [isSubmittingUpdate, setIsSubmittingUpdate] = useState(false);
   const [infoRequested, setInfoRequested] = useState(false);
 
-  // Dragging state for overlay variant
+  // Dragging state
   const [position, setPosition] = useState({ x: 100, y: 80 });
   const [isDragging, setIsDragging] = useState(false);
   const dragOffset = useRef({ x: 0, y: 0 });
   const panelRef = useRef<HTMLDivElement>(null);
 
-  // Persisted size for overlay variant — read once on mount from localStorage
-  const [overlaySize] = useState<{ width: number; height: number }>(
-    variant === 'overlay' ? readOverlaySize : () => DEFAULT_OVERLAY_SIZE,
-  );
+  // Persisted size
+  const [overlaySize] = useState<{ width: number; height: number }>(readOverlaySize);
 
+  // Auto-escalation countdown for PENDING_CONFIRMATION
   const isPendingConfirmation = alert.status === 'PENDING_CONFIRMATION';
+  const [secondsRemaining, setSecondsRemaining] = useState<number>(() => {
+    if (!isPendingConfirmation) return 0;
+    const createdAt = new Date(alert.createdAt ?? alert.timestamp).getTime();
+    const elapsed = Math.floor((Date.now() - createdAt) / 1000);
+    return Math.max(0, Math.floor(CONFIRMATION_WINDOW_MS / 1000) - elapsed);
+  });
+
+  useEffect(() => {
+    if (!isPendingConfirmation || secondsRemaining <= 0) return;
+    const interval = setInterval(() => {
+      setSecondsRemaining((prev) => (prev <= 1 ? 0 : prev - 1));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [isPendingConfirmation, secondsRemaining]);
+
   const isActive = alert.status === 'ACTIVE';
   const isConfirmed = alert.status === 'CONFIRMED';
   const isAutoEscalated = alert.status === 'AUTO_ESCALATED';
@@ -124,9 +164,9 @@ const AlertDetail: React.FC<AlertDetailProps> = ({
   const tierInfo = alert.tier ? TIER_LABELS[alert.tier] : null;
   const statusInfo = STATUS_LABELS[alert.status] ?? STATUS_LABELS.ACTIVE;
 
-  // Persist size via ResizeObserver whenever user resizes the overlay
+  // Persist size via ResizeObserver
   useEffect(() => {
-    if (variant !== 'overlay' || !panelRef.current) return;
+    if (!panelRef.current) return;
     const observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
         const { width, height } = entry.contentRect;
@@ -138,7 +178,7 @@ const AlertDetail: React.FC<AlertDetailProps> = ({
     });
     observer.observe(panelRef.current);
     return () => observer.disconnect();
-  }, [variant]);
+  }, []);
 
   // Esc key to close
   const handleKeyDown = useCallback(
@@ -153,9 +193,8 @@ const AlertDetail: React.FC<AlertDetailProps> = ({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
 
-  // Drag handlers for overlay variant — only from the drag handle, not the resize corner
+  // Drag handlers
   const handleMouseDown = (e: React.MouseEvent) => {
-    if (variant !== 'overlay') return;
     if (!(e.target as HTMLElement).closest('.overlay-drag-handle')) return;
     setIsDragging(true);
     dragOffset.current = {
@@ -165,7 +204,7 @@ const AlertDetail: React.FC<AlertDetailProps> = ({
   };
 
   useEffect(() => {
-    if (variant !== 'overlay' || !isDragging) return;
+    if (!isDragging) return;
     const handleMouseMove = (e: MouseEvent) => {
       setPosition({
         x: e.clientX - dragOffset.current.x,
@@ -179,7 +218,7 @@ const AlertDetail: React.FC<AlertDetailProps> = ({
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [variant, isDragging]);
+  }, [isDragging]);
 
   const handleSubmitUpdate = async () => {
     if (!updateNotes.trim() || !onAddStatusUpdate) return;
@@ -197,17 +236,47 @@ const AlertDetail: React.FC<AlertDetailProps> = ({
     onResolve(alert.id, resolveNotes.trim() || undefined);
   };
 
-  // Shared content block
-  const content = (
-    <>
+  // Timer display
+  const timerMinutes = Math.floor(secondsRemaining / 60);
+  const timerSeconds = secondsRemaining % 60;
+  const formattedTime = `${timerMinutes}:${String(timerSeconds).padStart(2, '0')}`;
+  const timerPct = (secondsRemaining / (CONFIRMATION_WINDOW_MS / 1000)) * 100;
+  const timerColor =
+    secondsRemaining > 60
+      ? 'text-green-400'
+      : secondsRemaining > 30
+        ? 'text-amber-400'
+        : 'text-red-400';
+  const barColor =
+    secondsRemaining > 60 ? 'bg-green-400' : secondsRemaining > 30 ? 'bg-amber-400' : 'bg-red-400';
+
+  // Sort audit trail descending (latest first)
+  const sortedAudit = auditTrail
+    ? [...auditTrail].sort(
+        (a, b) => new Date(b.eventTimestamp).getTime() - new Date(a.eventTimestamp).getTime(),
+      )
+    : [];
+
+  return (
+    <div
+      ref={panelRef}
+      className={`fixed z-[2000] flex flex-col bg-dashboard-card/95 backdrop-blur-md rounded-2xl border border-dashboard-border shadow-2xl ${isDragging ? 'ring-2 ring-blue-500/30' : ''}`}
+      style={{
+        left: `${position.x}px`,
+        top: `${position.y}px`,
+        width: `${overlaySize.width}px`,
+        height: `${overlaySize.height}px`,
+        minWidth: '320px',
+        minHeight: '380px',
+        resize: 'both',
+        overflow: 'hidden',
+      }}
+      onMouseDown={handleMouseDown}
+    >
       {/* Header / drag handle */}
-      <div
-        className={`flex items-center justify-between p-4 border-b border-dashboard-border shrink-0 ${variant === 'overlay' ? 'overlay-drag-handle cursor-grab active:cursor-grabbing' : ''}`}
-      >
+      <div className="flex items-center justify-between px-5 py-3 border-b border-dashboard-border shrink-0 overlay-drag-handle cursor-grab active:cursor-grabbing">
         <div className="flex items-center gap-2">
-          {variant === 'overlay' && (
-            <GripVertical size={14} className="text-slate-500 pointer-events-none" />
-          )}
+          <GripVertical size={14} className="text-slate-500 pointer-events-none" />
           <h3 className="text-base font-bold text-white">Alert Details</h3>
         </div>
         <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-800 transition-colors">
@@ -217,10 +286,39 @@ const AlertDetail: React.FC<AlertDetailProps> = ({
 
       {/* Scrollable Content */}
       <div className="flex-1 overflow-y-auto min-h-0">
-        <div className="p-4 space-y-3">
-          <div className="flex items-center justify-between flex-wrap gap-2">
-            <span className="text-lg font-bold text-white">{formatEventType(alert.eventType)}</span>
-            <div className="flex items-center gap-2">
+        <div className="px-5 py-4 space-y-4">
+          {/* Auto-escalation countdown (PENDING_CONFIRMATION only) */}
+          {isPendingConfirmation && secondsRemaining > 0 && (
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <div className="flex items-center gap-2 text-slate-400">
+                  <Clock size={13} />
+                  <span className="text-[11px] font-semibold uppercase tracking-wide">
+                    Auto-escalates in
+                  </span>
+                </div>
+                <span className={`text-xl font-black tabular-nums ${timerColor}`}>
+                  {formattedTime}
+                </span>
+              </div>
+              <div className="w-full bg-slate-700 rounded-full h-1 overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all duration-1000 ${barColor}`}
+                  style={{ width: `${timerPct}%` }}
+                />
+              </div>
+              <p className="mt-1 text-[11px] text-slate-500">
+                If no action is taken, alert will be auto-escalated.
+              </p>
+            </div>
+          )}
+
+          {/* Event type + tier + status badges */}
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-lg font-bold text-white">
+                {formatEventType(alert.eventType)}
+              </span>
               {tierInfo && (
                 <span
                   className={`px-2 py-0.5 rounded-lg text-[10px] font-semibold border ${tierInfo.className}`}
@@ -236,10 +334,14 @@ const AlertDetail: React.FC<AlertDetailProps> = ({
             </div>
           </div>
 
-          {alert.description && <p className="text-slate-400 text-sm">{alert.description}</p>}
+          {/* Description */}
+          {alert.description && (
+            <p className="text-slate-300 text-sm leading-relaxed">{alert.description}</p>
+          )}
 
+          {/* Escalation notice */}
           {alert.escalationLevel && alert.escalationLevel !== 'SCHOOL' && (
-            <div className="flex items-center gap-2 p-2 bg-orange-500/10 border border-orange-500/20 rounded-xl">
+            <div className="flex items-center gap-2 p-2.5 bg-orange-500/10 border border-orange-500/20 rounded-xl">
               <AlertTriangle size={14} className="text-orange-400 shrink-0" />
               <p className="text-xs text-orange-300">
                 Escalated to: <strong>{alert.escalationLevel}</strong> Admin
@@ -247,76 +349,64 @@ const AlertDetail: React.FC<AlertDetailProps> = ({
             </div>
           )}
 
-          {alert.status === 'CONFIRMED' && alert.confirmedAt && (
-            <div className="flex items-center gap-2 p-2 bg-green-500/10 border border-green-500/20 rounded-xl">
-              <ShieldCheck size={14} className="text-green-400 shrink-0" />
-              <p className="text-xs text-green-300">
-                Confirmed at {formatTimestamp(alert.confirmedAt)}
-              </p>
-            </div>
-          )}
-
-          <div className="grid grid-cols-2 gap-3 pt-1">
-            <div className="flex items-center gap-2 p-2 bg-dashboard-bg rounded-xl">
+          {/* Vehicle / Route / Timestamp info cards */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex items-center gap-2 p-3 bg-dashboard-bg rounded-xl">
               <Truck size={14} className="text-primary-500" />
               <div>
                 <p className="text-[10px] text-slate-500">Vehicle</p>
-                <p className="text-xs font-medium text-white">{alert.vehicleId}</p>
+                <p className="text-xs font-semibold text-white">{alert.vehicleId}</p>
               </div>
             </div>
-            <div className="flex items-center gap-2 p-2 bg-dashboard-bg rounded-xl">
+            <div className="flex items-center gap-2 p-3 bg-dashboard-bg rounded-xl">
               <MapPin size={14} className="text-primary-500" />
               <div>
                 <p className="text-[10px] text-slate-500">Route</p>
-                <p className="text-xs font-medium text-white">{alert.routeId}</p>
+                <p className="text-xs font-semibold text-white">{alert.routeId}</p>
               </div>
             </div>
-            <div className="col-span-2 flex items-center gap-2 p-2 bg-dashboard-bg rounded-xl">
+            <div className="col-span-2 flex items-center gap-2 p-3 bg-dashboard-bg rounded-xl">
               <Clock size={14} className="text-primary-500" />
               <div>
                 <p className="text-[10px] text-slate-500">Timestamp</p>
-                <p className="text-xs font-medium text-white">{formatTimestamp(alert.timestamp)}</p>
+                <p className="text-xs font-semibold text-white">
+                  {formatTimestamp(alert.timestamp)}
+                </p>
               </div>
             </div>
           </div>
 
-          {/* Audit Timeline */}
-          {auditTrail && auditTrail.length > 0 && (
-            <div className="pt-1">
-              <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wide mb-1.5">
+          {/* Activity Timeline */}
+          {sortedAudit.length > 0 && (
+            <div>
+              <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wide mb-2">
                 Activity Timeline
               </p>
-              <div className="max-h-32 overflow-y-auto custom-scrollbar space-y-1.5">
-                {auditTrail.map((entry) => (
-                  <div
-                    key={entry.id}
-                    className="flex gap-2 p-1.5 bg-dashboard-bg rounded-lg text-[10px]"
-                  >
-                    <div className="shrink-0 mt-0.5">
+              <div className="space-y-0">
+                {sortedAudit.map((entry, idx) => (
+                  <div key={entry.id} className="flex gap-2.5 pb-2.5">
+                    <div className="flex flex-col items-center">
                       <div
-                        className={`w-2 h-2 rounded-full ${
-                          entry.eventType === 'STATUS_UPDATE'
-                            ? 'bg-blue-400'
-                            : entry.eventType === 'RESOLVED'
-                              ? 'bg-green-400'
-                              : entry.eventType === 'CONFIRMED'
-                                ? 'bg-emerald-400'
-                                : 'bg-slate-500'
-                        }`}
+                        className={`w-2.5 h-2.5 rounded-full mt-1 shrink-0 ${getAuditDotColor(entry.eventType)}`}
                       />
+                      {idx < sortedAudit.length - 1 && (
+                        <div className="w-px flex-1 bg-slate-700/50 mt-0.5" />
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="font-medium text-slate-300">
+                        <span className="font-semibold text-slate-300 text-[11px]">
                           {AUDIT_EVENT_LABELS[entry.eventType] ||
                             entry.eventType.replace(/_/g, ' ')}
                         </span>
-                        <span className="text-slate-500 tabular-nums shrink-0">
+                        <span className="text-slate-500 tabular-nums shrink-0 text-[10px]">
                           {formatTimestamp(entry.eventTimestamp)}
                         </span>
                       </div>
                       {entry.notes && (
-                        <p className="text-slate-400 mt-0.5 leading-snug">{entry.notes}</p>
+                        <p className="text-slate-400 mt-0.5 leading-snug text-[11px]">
+                          {entry.notes}
+                        </p>
                       )}
                     </div>
                   </div>
@@ -327,19 +417,19 @@ const AlertDetail: React.FC<AlertDetailProps> = ({
         </div>
       </div>
 
-      {/* Actions */}
-      <div className="p-4 border-t border-dashboard-border shrink-0">
+      {/* Actions footer */}
+      <div className="px-5 py-3 border-t border-dashboard-border shrink-0">
         {isPendingConfirmation ? (
           <div className="flex flex-col gap-2">
-            <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wide mb-1">
-              Action required
+            <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wide mb-0.5">
+              Action Required
             </p>
             <div className="flex gap-2 flex-wrap">
               {onConfirm && (
                 <button
                   onClick={() => onConfirm(alert.id)}
                   disabled={isActing}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-green-500/20 border border-green-500/30 text-green-400 text-xs font-medium hover:bg-green-500/30 transition-colors disabled:opacity-50"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-500/20 border border-green-500/30 text-green-400 text-xs font-semibold hover:bg-green-500/30 transition-colors disabled:opacity-50"
                 >
                   <CheckCircle size={13} />
                   Confirm
@@ -349,7 +439,7 @@ const AlertDetail: React.FC<AlertDetailProps> = ({
                 <button
                   onClick={() => onFalseAlarm(alert.id)}
                   disabled={isActing}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-amber-500/20 border border-amber-500/30 text-amber-400 text-xs font-medium hover:bg-amber-500/30 transition-colors disabled:opacity-50"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-400 text-xs font-semibold hover:bg-amber-500/30 transition-colors disabled:opacity-50"
                 >
                   <XCircle size={13} />
                   False Alarm
@@ -362,7 +452,7 @@ const AlertDetail: React.FC<AlertDetailProps> = ({
                     setInfoRequested(true);
                   }}
                   disabled={isActing || infoRequested}
-                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-medium transition-colors disabled:opacity-50 ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors disabled:opacity-50 ${
                     infoRequested
                       ? 'bg-green-500/20 border border-green-500/30 text-green-400'
                       : 'bg-blue-500/20 border border-blue-500/30 text-blue-400 hover:bg-blue-500/30'
@@ -474,36 +564,6 @@ const AlertDetail: React.FC<AlertDetailProps> = ({
             </button>
           </div>
         )}
-      </div>
-    </>
-  );
-
-  if (variant === 'overlay') {
-    return (
-      <div
-        ref={panelRef}
-        className={`fixed z-[2000] flex flex-col bg-dashboard-card/95 backdrop-blur-md rounded-2xl border border-dashboard-border shadow-2xl ${isDragging ? 'ring-2 ring-blue-500/30' : ''}`}
-        style={{
-          left: `${position.x}px`,
-          top: `${position.y}px`,
-          width: `${overlaySize.width}px`,
-          height: `${overlaySize.height}px`,
-          minWidth: '280px',
-          minHeight: '320px',
-          resize: 'both',
-          overflow: 'hidden',
-        }}
-        onMouseDown={handleMouseDown}
-      >
-        {content}
-      </div>
-    );
-  }
-
-  return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-dashboard-card rounded-2xl border border-dashboard-border max-w-lg w-full shadow-2xl max-h-[90vh] flex flex-col">
-        {content}
       </div>
     </div>
   );
