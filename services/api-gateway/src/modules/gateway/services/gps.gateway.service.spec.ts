@@ -155,6 +155,33 @@ describe('GpsGatewayService', () => {
       expect(result.active).toBe(false);
       expect(result.routeId).toBe('route-123');
     });
+
+    it('enriches status as emergency for PENDING_CONFIRMATION PANIC_BUTTON alert', async () => {
+      mockHttpClient.get.mockResolvedValue({ ...mockResponse });
+      mockDataSource.query.mockResolvedValue([{ eventType: 'PANIC_BUTTON' }]);
+
+      const result = await service.getLiveLocation('route-123', adminUser);
+
+      expect(result.status).toBe('emergency');
+    });
+
+    it('enriches status as delay for PENDING_CONFIRMATION non-emergency alert', async () => {
+      mockHttpClient.get.mockResolvedValue({ ...mockResponse });
+      mockDataSource.query.mockResolvedValue([{ eventType: 'LATE_ARRIVAL' }]);
+
+      const result = await service.getLiveLocation('route-123', adminUser);
+
+      expect(result.status).toBe('delay');
+    });
+
+    it('enriches status as normal when no operational alerts exist', async () => {
+      mockHttpClient.get.mockResolvedValue({ ...mockResponse });
+      mockDataSource.query.mockResolvedValue([]);
+
+      const result = await service.getLiveLocation('route-123', adminUser);
+
+      expect(result.status).toBe('normal');
+    });
   });
 
   describe('getLocationHistory', () => {

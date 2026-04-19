@@ -44,8 +44,10 @@ const BUS_STATUS_COLORS: Record<BusStatus, string> = {
 const EMERGENCY_EVENT_TYPES = new Set(['PANIC_BUTTON', 'PANIC_ALERT', 'INCIDENT']);
 const DELAY_EVENT_TYPES = new Set(['LATE_ARRIVAL', 'ROUTE_DEVIATION', 'ROUTE_DIVERSION']);
 
-/** Stale threshold: if last GPS update is older than 30 seconds, bus is not actively running */
-const STALE_THRESHOLD_MS = 30 * 1000;
+/** Stale threshold: if last GPS update is older than 120 seconds, bus signal is lost.
+ *  Real devices may experience brief network gaps, app switching, or signal loss —
+ *  120 s tolerates real-world jitter while still hiding truly inactive buses. */
+const STALE_THRESHOLD_MS = 120 * 1000;
 
 function createBusIcon(status: BusStatus) {
   const bgColor = BUS_STATUS_COLORS[status];
@@ -331,13 +333,17 @@ const MapPage: React.FC = () => {
     return nowMs - lastUpdate < STALE_THRESHOLD_MS;
   }, [busLocation, nowMs]);
 
-  // Route status label — mirrors Admin Dashboard: cross-check child presence status
+  // Route status label — cross-check child presence status and GPS freshness
   const routeStatusLabel = (() => {
     const isPM = child ? activeRouteId === child.pmRouteId : false;
     const isCurrentAM = child ? activeRouteId === child.amRouteId : false;
+    // Presence-confirmed completion takes priority
     if (isPM && child?.status === 'at_home') return 'Completed';
     if (isCurrentAM && child?.status === 'at_school') return 'Completed';
-    return isLive ? 'Live' : 'Completed';
+    if (isLive) return 'Live';
+    // GPS stale but route not confirmed complete — signal lost
+    if (busLocation) return 'No Signal';
+    return 'Completed';
   })();
 
   // Compute map bounds from route path + bus position + school
@@ -398,7 +404,7 @@ const MapPage: React.FC = () => {
         <div className="flex items-center justify-between mb-1">
           <h3 className="font-bold text-gray-900">{child.name}</h3>
           <span
-            className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${isLive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}
+            className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${isLive ? 'bg-green-100 text-green-800' : routeStatusLabel === 'No Signal' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-600'}`}
           >
             {routeStatusLabel}
           </span>
@@ -435,7 +441,14 @@ const MapPage: React.FC = () => {
             </span>
           </div>
         )}
-        {!isLive && <p className="text-xs text-gray-400 mt-1">Route is not currently active.</p>}
+        {!isLive && routeStatusLabel === 'No Signal' && (
+          <p className="text-xs text-yellow-600 mt-1">
+            Bus signal lost. Route may still be in progress.
+          </p>
+        )}
+        {!isLive && routeStatusLabel !== 'No Signal' && (
+          <p className="text-xs text-gray-400 mt-1">Route is not currently active.</p>
+        )}
       </div>
 
       {/* Map Reset Button */}

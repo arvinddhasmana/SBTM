@@ -262,3 +262,84 @@ export async function createTestAlert(
     return undefined;
   }
 }
+
+/**
+ * Send a GPS location update for a vehicle on a route.
+ * Uses the DRIVER user's credentials to authenticate.
+ * Returns true if the request succeeded.
+ */
+export async function sendGpsLocation(
+  page: Page,
+  options: {
+    routeId?: string;
+    vehicleId?: string;
+    lat?: number;
+    lng?: number;
+    speedKph?: number;
+  } = {},
+): Promise<boolean> {
+  const token = await getDriverToken(page);
+  if (!token) return false;
+
+  const res = await page.request
+    .post('http://localhost:3001/api/v1/routes/locations', {
+      data: {
+        vehicleId: options.vehicleId || 'BUS-STBERN-01',
+        routeId: options.routeId || 'ROUTE-STBERN-R01-AM',
+        timestamp: new Date().toISOString(),
+        lat: options.lat ?? 45.3506,
+        lng: options.lng ?? -75.7934,
+        speedKph: options.speedKph ?? 30,
+      },
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    .catch(() => null);
+
+  return res?.ok() ?? false;
+}
+
+/**
+ * Complete a route by posting a ROUTE_COMPLETED lifecycle event.
+ * Uses the DRIVER user's credentials.
+ */
+export async function completeRouteForE2E(
+  page: Page,
+  routeId: string,
+  vehicleId: string,
+): Promise<void> {
+  const token = await getDriverToken(page);
+  if (token) {
+    await page.request
+      .post('http://localhost:3001/api/v1/routes/lifecycle-events', {
+        data: {
+          routeId,
+          vehicleId,
+          eventType: 'ROUTE_COMPLETED',
+          timestamp: new Date().toISOString(),
+        },
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .catch(() => {
+        /* non-critical */
+      });
+  }
+}
+
+/** Internal helper: obtain a driver JWT token. */
+async function getDriverToken(page: Page): Promise<string | undefined> {
+  const loginRes = await page.request.post('http://localhost:3001/api/v1/auth/login', {
+    data: { email: TEST_USERS.DRIVER.email, password: 'Admin123!' },
+  });
+  const cookies = loginRes.headers()['set-cookie'] || '';
+  const tokenMatch = cookies.match(/access_token=([^;]+)/);
+  let token = tokenMatch?.[1];
+  if (!token) {
+    try {
+      const body = await loginRes.json();
+      token = body.accessToken;
+    } catch {
+      /* ignore */
+    }
+  }
+  return token;
+}

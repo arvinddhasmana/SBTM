@@ -117,10 +117,12 @@ export class GpsGatewayService {
       throw e;
     }
 
-    // Enrich with alert-based status
+    // Enrich with alert-based status — include all operationally active statuses,
+    // not just 'ACTIVE'. TIER_1 events (PANIC_BUTTON, INCIDENT) start as
+    // PENDING_CONFIRMATION and must still change bus color for parents.
     try {
       const alertRows = (await this.dataSource.query(
-        `SELECT "eventType" FROM emergency_alert WHERE "routeId" = $1 AND status = 'ACTIVE'`,
+        `SELECT "eventType" FROM emergency_alert WHERE "routeId" = $1 AND status IN ('ACTIVE', 'PENDING_CONFIRMATION', 'CONFIRMED', 'AUTO_ESCALATED')`,
         [routeId],
       )) as Array<{ eventType: string }>;
       const EMERGENCY_TYPES = new Set([
@@ -434,7 +436,7 @@ export class GpsGatewayService {
       try {
         const activeRouteIds = results.map((r) => r.routeId);
         const alertRows = (await this.dataSource.query(
-          `SELECT "routeId", "eventType" FROM emergency_alert WHERE "routeId" = ANY($1) AND status = 'ACTIVE'`,
+          `SELECT "routeId", "eventType" FROM emergency_alert WHERE "routeId" = ANY($1) AND status IN ('ACTIVE', 'PENDING_CONFIRMATION', 'CONFIRMED', 'AUTO_ESCALATED')`,
           [activeRouteIds],
         )) as Array<{ routeId: string; eventType: string }>;
 

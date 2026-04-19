@@ -469,4 +469,56 @@ describe('AlertsService', () => {
       expect(mockAlertRepository.createQueryBuilder).toHaveBeenCalled();
     });
   });
+
+  describe('findForRoute()', () => {
+    it('should return a PENDING_CONFIRMATION alert (Tier 1 not yet confirmed)', async () => {
+      const pendingAlert = {
+        id: 'alert-pending',
+        routeId: 'route-1',
+        vehicleId: 'BUS-01',
+        eventType: 'PANIC_BUTTON',
+        description: 'Driver pressed panic button',
+        status: EmergencyAlertStatus.PENDING_CONFIRMATION,
+        lat: 45.35,
+        lng: -75.79,
+        createdAt: new Date('2026-04-18T10:00:00Z'),
+      };
+      mockAlertRepository.findOne.mockResolvedValueOnce(pendingAlert);
+
+      const result = await service.findForRoute('route-1');
+
+      expect(result.alertActive).toBe(true);
+      expect(result.id).toBe('alert-pending');
+      expect(result.eventType).toBe('PANIC_BUTTON');
+    });
+
+    it('should return an ACTIVE alert (Tier 2)', async () => {
+      const activeAlert = {
+        id: 'alert-active',
+        routeId: 'route-1',
+        vehicleId: 'BUS-01',
+        eventType: 'ROUTE_DEVIATION',
+        description: null,
+        status: EmergencyAlertStatus.ACTIVE,
+        lat: 45.35,
+        lng: -75.79,
+        createdAt: new Date('2026-04-18T10:00:00Z'),
+      };
+      mockAlertRepository.findOne.mockResolvedValueOnce(activeAlert);
+
+      const result = await service.findForRoute('route-1');
+
+      expect(result.alertActive).toBe(true);
+      expect(result.eventType).toBe('ROUTE_DEVIATION');
+    });
+
+    it('should return alertActive: false when no operational alerts exist', async () => {
+      mockAlertRepository.findOne.mockResolvedValueOnce(null);
+
+      const result = await service.findForRoute('route-1');
+
+      expect(result.alertActive).toBe(false);
+      expect(result.message).toBe('No active alerts.');
+    });
+  });
 });

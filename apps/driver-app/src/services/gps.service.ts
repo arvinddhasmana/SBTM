@@ -87,7 +87,7 @@ export const GPSService = {
       await Location.startLocationUpdatesAsync(BACKGROUND_LOCATION_TASK, {
         accuracy: Location.Accuracy.High,
         timeInterval: 5000,
-        distanceInterval: 10,
+        distanceInterval: 0,
         showsBackgroundLocationIndicator: true,
         foregroundService: {
           notificationTitle: 'SBTM Driver',
@@ -104,7 +104,7 @@ export const GPSService = {
       {
         accuracy: Location.Accuracy.High,
         timeInterval: 5000,
-        distanceInterval: 10,
+        distanceInterval: 0,
       },
       async (location) => {
         const body = buildPayload(location.coords, location.timestamp);

@@ -311,8 +311,19 @@ export class AlertsService {
   }
 
   async findForRoute(routeId: string): Promise<RouteAlertView> {
+    // Include all operationally active statuses — not just ACTIVE.
+    // TIER_1 events (PANIC_BUTTON, INCIDENT) start as PENDING_CONFIRMATION
+    // and must be visible to parents immediately.
     const activeAlert = await this.alertsRepo.findOne({
-      where: { routeId, status: EmergencyAlertStatus.ACTIVE },
+      where: {
+        routeId,
+        status: In([
+          EmergencyAlertStatus.ACTIVE,
+          EmergencyAlertStatus.PENDING_CONFIRMATION,
+          EmergencyAlertStatus.CONFIRMED,
+          EmergencyAlertStatus.AUTO_ESCALATED,
+        ]),
+      },
       order: { createdAt: 'DESC' },
     });
 
