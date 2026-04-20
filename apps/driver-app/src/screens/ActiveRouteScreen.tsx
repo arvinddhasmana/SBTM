@@ -18,6 +18,7 @@ import { EmergencyService } from '../services/emergency.service';
 import { useBleScanning } from '../hooks/useBleScanning';
 import { useRouteStatus } from '../hooks/useRouteStatus';
 import { usePanicDetection } from '../hooks/usePanicDetection';
+import { useDynamicReroute } from '../hooks/useDynamicReroute';
 import { decodePolyline } from '../utils/polyline';
 import { DARK_MAP_STYLE } from '../constants/mapStyles';
 import BusNavigationMarker from '../components/map/BusNavigationMarker';
@@ -97,6 +98,9 @@ export default function ActiveRouteScreen({ navigation }: any) {
     const hour = parseInt(activeRoute.startTime.split(':')[0] ?? '12', 10);
     return hour < 7 || hour >= 19;
   }, [activeRoute?.startTime]);
+
+  // Dynamic Rerouting
+  const { isDiverted, divertedPolyline } = useDynamicReroute(currentLocation, routePath, stops);
 
   // ── Panic detection (multi-tap + drop) ─────────────────────────
   const firePanic = useCallback(async () => {
@@ -346,12 +350,33 @@ export default function ActiveRouteScreen({ navigation }: any) {
           </Marker>
         )}
 
+        {/* Reroute polyline (shows if diverted) */}
+        {isDiverted && divertedPolyline.length > 0 && (
+          <Polyline
+            coordinates={divertedPolyline}
+            strokeColor="#10b981" // Green to indicate Google-like re-route
+            strokeWidth={4}
+            lineDashPattern={[10, 10]}
+            lineJoin="round"
+            lineCap="round"
+            zIndex={3}
+          />
+        )}
+
         {/* Route polyline */}
         {routePath.length > 0 && (
           <Polyline
             coordinates={routePath}
-            strokeColor={routeDirection === 'AM' ? '#3b82f6' : '#f59e0b'}
-            strokeWidth={3}
+            strokeColor={
+              routeDirection === 'AM'
+                ? isDiverted
+                  ? 'rgba(59, 130, 246, 0.4)'
+                  : '#3b82f6'
+                : isDiverted
+                  ? 'rgba(245, 158, 11, 0.4)'
+                  : '#f59e0b'
+            }
+            strokeWidth={isDiverted ? 2 : 3}
             lineJoin="round"
             lineCap="round"
             zIndex={1}
