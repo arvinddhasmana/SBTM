@@ -1,5 +1,16 @@
 import React from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert, StatusBar } from 'react-native';
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+  StatusBar,
+  Image,
+} from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDriverStore } from '../store/useDriverStore';
 import { Route } from '../types';
@@ -45,23 +56,47 @@ export default function RouteSelectScreen({ navigation }: any) {
       onPress={() => handleSelectRoute(item)}
       activeOpacity={0.7}
     >
-      <View style={styles.cardHeader}>
-        <Text style={styles.routeName}>{item.name}</Text>
-        <View style={[styles.dirBadge, item.direction === 'AM' ? styles.dirAM : styles.dirPM]}>
-          <Text style={styles.dirText}>{item.direction}</Text>
+      <View style={styles.cardContent}>
+        <View style={styles.cardLeft}>
+          <View style={styles.cardHeader}>
+            <Text style={styles.routeName}>{item.name}</Text>
+          </View>
+          <Text style={styles.details}>School: {item.schoolName || item.schoolId}</Text>
+          <Text style={styles.details}>Start: {formatStartTime(item.startTime)}</Text>
+        </View>
+        <View style={styles.cardRight}>
+          <MaterialCommunityIcons
+            name="map-marker-path"
+            size={48}
+            color={item.direction === 'AM' ? '#3b82f6' : '#f59e0b'}
+            style={{ opacity: 0.6 }}
+          />
+          <View style={[styles.dirBadge, item.direction === 'AM' ? styles.dirAM : styles.dirPM]}>
+            <Text style={styles.dirText}>{item.direction}</Text>
+          </View>
         </View>
       </View>
-      <Text style={styles.details}>School: {item.schoolName || item.schoolId}</Text>
-      <Text style={styles.details}>Start: {formatStartTime(item.startTime)}</Text>
     </TouchableOpacity>
   );
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+    <LinearGradient
+      colors={['#0f172a', '#1e1b4b', '#172554']}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}
+    >
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
-      <Text style={styles.header}>Welcome, {driver?.name}</Text>
-      <Text style={styles.subHeader}>Select a route to start:</Text>
+      <View style={styles.headerProfile}>
+        <View style={styles.avatarPlaceholder}>
+          <MaterialCommunityIcons name="account" size={32} color="#fff" />
+        </View>
+        <View>
+          <Text style={styles.header}>Welcome, {driver?.name}</Text>
+          <Text style={styles.subHeader}>Select your route</Text>
+        </View>
+      </View>
 
       <FlatList
         data={driver?.assignedRoutes || []}
@@ -76,78 +111,123 @@ export default function RouteSelectScreen({ navigation }: any) {
       >
         <Text style={styles.logoutText}>Log Out</Text>
       </TouchableOpacity>
-    </View>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
-    backgroundColor: '#0f172a',
+    padding: 20,
   },
-  header: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: '#fff',
-    marginBottom: 4,
+  headerProfile: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 24,
     marginTop: 12,
   },
+  avatarPlaceholder: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+    borderWidth: 2,
+    borderColor: 'rgba(59,130,246,0.6)',
+  },
+  header: {
+    fontSize: 24,
+    fontFamily: 'Inter_800ExtraBold',
+    fontWeight: '800',
+    color: '#fff',
+    letterSpacing: -0.5,
+  },
   subHeader: {
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.5)',
-    marginBottom: 20,
+    fontSize: 14,
+    fontFamily: 'Inter_400Regular',
+    color: 'rgba(255,255,255,0.6)',
+    marginTop: 2,
   },
   list: {
     paddingBottom: 16,
   },
   card: {
-    backgroundColor: GLASS_BG,
+    backgroundColor: 'rgba(30, 41, 59, 0.5)',
     borderWidth: 1,
-    borderColor: GLASS_BORDER,
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 12,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    padding: 18,
+    borderRadius: 16,
+    marginBottom: 14,
   },
-  cardHeader: {
+  cardContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+  },
+  cardLeft: {
+    flex: 1,
+    paddingRight: 12,
+  },
+  cardRight: {
+    width: 80,
+    justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.2)',
+    borderRadius: 12,
+    paddingVertical: 12,
+  },
+  cardHeader: {
     marginBottom: 8,
   },
   routeName: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#fff',
-    flex: 1,
-  },
-  dirBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 4,
-  },
-  dirAM: { backgroundColor: 'rgba(59,130,246,0.4)' },
-  dirPM: { backgroundColor: 'rgba(245,158,11,0.4)' },
-  dirText: {
-    fontSize: 11,
+    fontSize: 19,
+    fontFamily: 'Inter_800ExtraBold',
     fontWeight: '800',
     color: '#fff',
-    letterSpacing: 0.5,
+    letterSpacing: -0.2,
+  },
+  dirBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    marginTop: 8,
+  },
+  dirAM: {
+    backgroundColor: 'rgba(59,130,246,0.25)',
+    borderWidth: 1,
+    borderColor: 'rgba(59,130,246,0.3)',
+  },
+  dirPM: {
+    backgroundColor: 'rgba(245,158,11,0.25)',
+    borderWidth: 1,
+    borderColor: 'rgba(245,158,11,0.3)',
+  },
+  dirText: {
+    fontSize: 12,
+    fontFamily: 'Inter_800ExtraBold',
+    fontWeight: '800',
+    color: '#fff',
   },
   details: {
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.55)',
-    marginBottom: 2,
+    fontSize: 14,
+    fontFamily: 'Inter_400Regular',
+    color: 'rgba(255,255,255,0.6)',
+    marginBottom: 4,
   },
   logoutButton: {
     alignSelf: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    marginTop: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    marginTop: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 59, 48, 0.2)',
   },
   logoutText: {
     color: '#FF3B30',
-    fontSize: 14,
+    fontSize: 15,
+    fontFamily: 'Inter_600SemiBold',
     fontWeight: '600',
   },
 });

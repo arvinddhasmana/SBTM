@@ -1,5 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
+import {
+  useFonts,
+  Inter_400Regular,
+  Inter_600SemiBold,
+  Inter_700Bold,
+  Inter_800ExtraBold,
+} from '@expo-google-fonts/inter';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -22,6 +29,13 @@ export default function App() {
   const logout = useDriverStore((state) => state.logout);
   const setOffline = useDriverStore((state) => state.setOffline);
   const [isRestoring, setIsRestoring] = useState(true);
+
+  const [fontsLoaded] = useFonts({
+    Inter_400Regular,
+    Inter_600SemiBold,
+    Inter_700Bold,
+    Inter_800ExtraBold,
+  });
 
   // Rehydrate persisted token on app launch
   useEffect(() => {
@@ -63,7 +77,7 @@ export default function App() {
     contentStyle: { backgroundColor: '#0f172a' },
   };
 
-  if (isRestoring) {
+  if (isRestoring || !fontsLoaded) {
     return (
       <View
         style={{

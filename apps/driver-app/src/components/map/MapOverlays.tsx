@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Stop } from '../../types';
 import { haversineMeters, formatDistance } from '../../utils/geo';
 
@@ -36,13 +37,15 @@ const speedStyles = StyleSheet.create({
     alignItems: 'center',
   },
   value: {
-    fontSize: 17,
+    fontSize: 20,
+    fontFamily: 'Inter_800ExtraBold',
     fontWeight: '800',
     color: '#fff',
-    lineHeight: 20,
+    lineHeight: 22,
   },
   unit: {
-    fontSize: 8,
+    fontSize: 9,
+    fontFamily: 'Inter_600SemiBold',
     color: 'rgba(255,255,255,0.6)',
     fontWeight: '600',
     marginTop: -1,
@@ -75,16 +78,25 @@ export function NextStopBanner({ stops, currentLat, currentLng, direction }: Nex
   if (!nextStop) return null;
 
   const accentColor = direction === 'AM' ? '#3b82f6' : '#f59e0b';
+  // Rough ETA at 30 km/h average
+  const etaMin = Math.round(nextStop.distance / (30000 / 60));
+  const etaStr = etaMin < 1 ? '<1 min' : `${etaMin} min`;
 
   return (
     <View style={[bannerStyles.container, { borderLeftColor: accentColor }]}>
-      <Text style={bannerStyles.label}>NEXT</Text>
-      <Text style={bannerStyles.name} numberOfLines={1}>
-        {nextStop.stop.stopName}
-      </Text>
-      <Text style={[bannerStyles.distance, { color: accentColor }]}>
-        {formatDistance(nextStop.distance)}
-      </Text>
+      <MaterialCommunityIcons name="map-marker-right" size={18} color={accentColor} />
+      <View style={bannerStyles.textBlock}>
+        <Text style={bannerStyles.label}>NEXT STOP</Text>
+        <Text style={bannerStyles.name} numberOfLines={1}>
+          {nextStop.stop.stopName}
+        </Text>
+      </View>
+      <View style={bannerStyles.metaBlock}>
+        <Text style={[bannerStyles.distance, { color: accentColor }]}>
+          {formatDistance(nextStop.distance)}
+        </Text>
+        <Text style={bannerStyles.eta}>{etaStr}</Text>
+      </View>
     </View>
   );
 }
@@ -95,32 +107,47 @@ const bannerStyles = StyleSheet.create({
     top: 50,
     left: 12,
     right: 64,
-    backgroundColor: GLASS_BG,
-    borderRadius: 8,
+    backgroundColor: 'rgba(15,23,42,0.88)',
+    borderRadius: 12,
     borderLeftWidth: 3,
     borderWidth: 1,
-    borderColor: GLASS_BORDER,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    borderColor: 'rgba(255,255,255,0.1)',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 10,
+  },
+  textBlock: {
+    flex: 1,
   },
   label: {
-    fontSize: 9,
+    fontSize: 10,
+    fontFamily: 'Inter_800ExtraBold',
     color: 'rgba(255,255,255,0.5)',
     fontWeight: '800',
-    letterSpacing: 1,
+    letterSpacing: 1.5,
+    marginBottom: 1,
   },
   name: {
-    flex: 1,
-    fontSize: 12,
+    fontSize: 15,
+    fontFamily: 'Inter_700Bold',
     fontWeight: '700',
     color: '#fff',
   },
+  metaBlock: {
+    alignItems: 'flex-end',
+  },
   distance: {
-    fontSize: 12,
+    fontSize: 15,
+    fontFamily: 'Inter_800ExtraBold',
     fontWeight: '800',
+  },
+  eta: {
+    fontSize: 11,
+    fontFamily: 'Inter_400Regular',
+    color: 'rgba(255,255,255,0.5)',
+    marginTop: 1,
   },
 });
 

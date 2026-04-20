@@ -519,13 +519,15 @@ const styles = StyleSheet.create({
     width: '85%',
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: 22,
+    fontFamily: 'Inter_800ExtraBold',
     fontWeight: 'bold',
     color: '#fff',
     marginBottom: 6,
   },
   modalSubtitle: {
-    fontSize: 13,
+    fontSize: 14,
+    fontFamily: 'Inter_400Regular',
     color: 'rgba(255,255,255,0.6)',
     marginBottom: 14,
   },
@@ -538,7 +540,8 @@ const styles = StyleSheet.create({
     minHeight: 80,
     textAlignVertical: 'top',
     marginBottom: 16,
-    fontSize: 14,
+    fontSize: 15,
+    fontFamily: 'Inter_400Regular',
     color: '#fff',
   },
   modalButtons: {
@@ -563,12 +566,14 @@ const styles = StyleSheet.create({
   },
   modalBtnCancelText: {
     color: 'rgba(255,255,255,0.7)',
+    fontFamily: 'Inter_600SemiBold',
     fontWeight: '600',
-    fontSize: 13,
+    fontSize: 14,
   },
   modalBtnSubmitText: {
     color: '#fff',
+    fontFamily: 'Inter_700Bold',
     fontWeight: 'bold',
-    fontSize: 13,
+    fontSize: 14,
   },
 });

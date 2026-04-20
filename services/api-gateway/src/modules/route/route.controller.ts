@@ -82,7 +82,7 @@ export class RouteController {
   }
 
   @Post('snap-to-road')
-  @Roles(Role.SCHOOL_ADMIN, Role.OSTA_ADMIN)
+  @Roles(Role.SCHOOL_ADMIN, Role.OSTA_ADMIN, Role.DRIVER)
   snapToRoad(@Body() waypoints: { lat: number; lng: number }[]) {
     return this.optimizationService.snapToRoad(waypoints);
   }
