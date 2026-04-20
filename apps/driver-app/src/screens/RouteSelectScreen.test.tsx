@@ -2,6 +2,10 @@ import React from 'react';
 import { render, screen } from '@testing-library/react-native';
 import RouteSelectScreen from './RouteSelectScreen';
 
+jest.mock('react-native-safe-area-context', () => ({
+  useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
+}));
+
 // Mock the Zustand store
 const mockLogout = jest.fn();
 const mockSetActiveRoute = jest.fn();

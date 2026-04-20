@@ -9,9 +9,14 @@ import {
   ActivityIndicator,
   Alert,
   RefreshControl,
+  StatusBar,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDriverStore } from '../store/useDriverStore';
 import { AlertService, ActiveAlert, AuditLogEntry } from '../services/alert.service';
+
+const GLASS_BG = 'rgba(15,23,42,0.82)';
+const GLASS_BORDER = 'rgba(255,255,255,0.12)';
 
 interface AlertWithMessages extends ActiveAlert {
   auditLog: AuditLogEntry[];
@@ -19,16 +24,17 @@ interface AlertWithMessages extends ActiveAlert {
 }
 
 const ACTION_LABELS: Record<string, { label: string; color: string }> = {
-  INFO_REQUESTED: { label: '📋 Info Requested', color: '#3b82f6' },
-  STATUS_UPDATE: { label: '💬 Response', color: '#10b981' },
-  CONFIRMED: { label: '✅ Confirmed', color: '#22c55e' },
-  FALSE_ALARM: { label: '🚫 False Alarm', color: '#ef4444' },
-  RESOLVED: { label: '✔️ Resolved', color: '#6b7280' },
-  CREATED: { label: '🔔 Created', color: '#f59e0b' },
-  ESCALATED: { label: '⬆️ Escalated', color: '#ef4444' },
+  INFO_REQUESTED: { label: 'Info Requested', color: '#3b82f6' },
+  STATUS_UPDATE: { label: 'Response', color: '#10b981' },
+  CONFIRMED: { label: 'Confirmed', color: '#22c55e' },
+  FALSE_ALARM: { label: 'False Alarm', color: '#ef4444' },
+  RESOLVED: { label: 'Resolved', color: '#6b7280' },
+  CREATED: { label: 'Created', color: '#f59e0b' },
+  ESCALATED: { label: 'Escalated', color: '#ef4444' },
 };
 
 export default function AlertMessagesScreen() {
+  const insets = useSafeAreaInsets();
   const activeRoute = useDriverStore((s) => s.activeRoute);
   const driver = useDriverStore((s) => s.driver);
   const [alerts, setAlerts] = useState<AlertWithMessages[]>([]);
@@ -62,7 +68,6 @@ export default function AlertMessagesScreen() {
 
   useEffect(() => {
     fetchAlerts();
-    // Poll every 15 seconds for new messages
     const interval = setInterval(fetchAlerts, 15000);
     return () => clearInterval(interval);
   }, [fetchAlerts]);
@@ -83,7 +88,7 @@ export default function AlertMessagesScreen() {
       await AlertService.addStatusUpdate(alertId, text, driver?.id);
       setReplyText((prev) => ({ ...prev, [alertId]: '' }));
       Alert.alert('Sent', 'Your response has been sent to the admin.');
-      await fetchAlerts(); // Refresh to show the new message
+      await fetchAlerts();
     } catch {
       Alert.alert('Error', 'Failed to send response. Please try again.');
     } finally {
@@ -97,17 +102,19 @@ export default function AlertMessagesScreen() {
     return (
       <View
         key={entry.id}
-        style={[styles.messageRow, isDriverMessage ? styles.messageRight : styles.messageLeft]}
+        style={[styles.msgRow, isDriverMessage ? styles.msgRight : styles.msgLeft]}
       >
         <View
           style={[
-            styles.messageBubble,
-            { backgroundColor: isDriverMessage ? '#dcfce7' : '#dbeafe' },
+            styles.msgBubble,
+            {
+              backgroundColor: isDriverMessage ? 'rgba(34,197,94,0.15)' : 'rgba(59,130,246,0.15)',
+            },
           ]}
         >
-          <Text style={[styles.messageAction, { color: meta.color }]}>{meta.label}</Text>
-          {entry.notes ? <Text style={styles.messageText}>{entry.notes}</Text> : null}
-          <Text style={styles.messageTime}>
+          <Text style={[styles.msgAction, { color: meta.color }]}>{meta.label}</Text>
+          {entry.notes ? <Text style={styles.msgText}>{entry.notes}</Text> : null}
+          <Text style={styles.msgTime}>
             {new Date(entry.timestamp).toLocaleTimeString([], {
               hour: '2-digit',
               minute: '2-digit',
@@ -124,8 +131,8 @@ export default function AlertMessagesScreen() {
     return (
       <View style={styles.alertCard}>
         <View style={styles.alertHeader}>
-          <View style={[styles.alertTypeBadge, item.infoRequested && styles.alertTypeBadgeUrgent]}>
-            <Text style={styles.alertTypeText}>{eventLabel}</Text>
+          <View style={[styles.alertBadge, item.infoRequested && styles.alertBadgeUrgent]}>
+            <Text style={styles.alertBadgeText}>{eventLabel}</Text>
           </View>
           <Text style={styles.alertTime}>
             {new Date(item.createdAt).toLocaleTimeString([], {
@@ -135,43 +142,39 @@ export default function AlertMessagesScreen() {
           </Text>
         </View>
 
-        {item.description ? <Text style={styles.alertDescription}>{item.description}</Text> : null}
+        {item.description ? <Text style={styles.alertDesc}>{item.description}</Text> : null}
 
         {item.infoRequested && (
-          <View style={styles.infoRequestBanner}>
-            <Text style={styles.infoRequestText}>
-              ℹ️ Admin has requested additional information
-            </Text>
+          <View style={styles.infoBanner}>
+            <Text style={styles.infoText}>Admin has requested additional information</Text>
           </View>
         )}
 
-        {/* Message thread */}
-        <View style={styles.messageThread}>
+        <View style={styles.msgThread}>
           {item.auditLog
             .filter((e) => e.action === 'INFO_REQUESTED' || e.action === 'STATUS_UPDATE')
             .map(renderAuditEntry)}
         </View>
 
-        {/* Reply input */}
         <View style={styles.replyRow}>
           <TextInput
             style={styles.replyInput}
-            placeholder="Type a response…"
-            placeholderTextColor="#999"
+            placeholder="Type a response..."
+            placeholderTextColor="rgba(255,255,255,0.3)"
             value={replyText[item.id] ?? ''}
             onChangeText={(text) => setReplyText((prev) => ({ ...prev, [item.id]: text }))}
             editable={!sending[item.id]}
             multiline
           />
           <TouchableOpacity
-            style={[styles.sendButton, sending[item.id] && styles.sendButtonDisabled]}
+            style={[styles.sendBtn, sending[item.id] && styles.sendBtnDisabled]}
             onPress={() => handleSendReply(item.id)}
             disabled={sending[item.id]}
           >
             {sending[item.id] ? (
               <ActivityIndicator size="small" color="#fff" />
             ) : (
-              <Text style={styles.sendButtonText}>Send</Text>
+              <Text style={styles.sendText}>Send</Text>
             )}
           </TouchableOpacity>
         </View>
@@ -181,26 +184,29 @@ export default function AlertMessagesScreen() {
 
   if (loading) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#007AFF" />
-        <Text style={styles.centerText}>Loading alerts…</Text>
+      <View style={[styles.centerView, { paddingTop: insets.top }]}>
+        <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+        <ActivityIndicator size="large" color="#3b82f6" />
+        <Text style={styles.centerText}>Loading alerts...</Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+
       <Text style={styles.header}>Alert Messages</Text>
       <Text style={styles.subHeader}>
         Active alerts for your route. Respond to admin info requests here.
       </Text>
 
       {alerts.length === 0 ? (
-        <View style={styles.center}>
-          <Text style={styles.emptyIcon}>✅</Text>
+        <View style={styles.centerView}>
+          <Text style={{ fontSize: 36 }}>✅</Text>
           <Text style={styles.centerText}>No active alerts on this route.</Text>
-          <TouchableOpacity onPress={handleRefresh} style={styles.refreshButton}>
-            <Text style={styles.refreshButtonText}>Refresh</Text>
+          <TouchableOpacity onPress={handleRefresh} style={styles.refreshBtn}>
+            <Text style={styles.refreshText}>Refresh</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -209,7 +215,9 @@ export default function AlertMessagesScreen() {
           keyExtractor={(item) => item.id}
           renderItem={renderAlert}
           contentContainerStyle={styles.list}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="#3b82f6" />
+          }
         />
       )}
     </View>
@@ -219,174 +227,177 @@ export default function AlertMessagesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#0f172a',
   },
   header: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    padding: 20,
-    paddingBottom: 4,
-    backgroundColor: '#fff',
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#fff',
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 2,
   },
   subHeader: {
-    fontSize: 14,
-    color: '#666',
-    paddingHorizontal: 20,
-    paddingBottom: 12,
-    backgroundColor: '#fff',
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.45)',
+    paddingHorizontal: 16,
+    paddingBottom: 10,
   },
-  center: {
+  centerView: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 12,
+    backgroundColor: '#0f172a',
+    gap: 10,
   },
   centerText: {
-    fontSize: 16,
-    color: '#555',
-  },
-  emptyIcon: {
-    fontSize: 40,
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.5)',
   },
   list: {
-    padding: 16,
-    paddingBottom: 32,
+    padding: 14,
+    paddingBottom: 28,
   },
-  // Alert card
   alertCard: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    marginBottom: 16,
+    backgroundColor: GLASS_BG,
+    borderWidth: 1,
+    borderColor: GLASS_BORDER,
+    borderRadius: 14,
+    marginBottom: 14,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 3,
   },
   alertHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
-    paddingBottom: 8,
+    padding: 14,
+    paddingBottom: 6,
   },
-  alertTypeBadge: {
-    backgroundColor: '#f59e0b',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
+  alertBadge: {
+    backgroundColor: 'rgba(245,158,11,0.4)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
   },
-  alertTypeBadgeUrgent: {
-    backgroundColor: '#ef4444',
+  alertBadgeUrgent: {
+    backgroundColor: 'rgba(239,68,68,0.4)',
   },
-  alertTypeText: {
+  alertBadgeText: {
     color: '#fff',
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: 'bold',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   alertTime: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.4)',
+  },
+  alertDesc: {
+    paddingHorizontal: 14,
+    paddingBottom: 6,
     fontSize: 13,
-    color: '#999',
+    color: 'rgba(255,255,255,0.7)',
   },
-  alertDescription: {
-    paddingHorizontal: 16,
-    paddingBottom: 8,
-    fontSize: 14,
-    color: '#333',
+  infoBanner: {
+    backgroundColor: 'rgba(59,130,246,0.15)',
+    marginHorizontal: 14,
+    marginBottom: 6,
+    padding: 8,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(59,130,246,0.2)',
   },
-  infoRequestBanner: {
-    backgroundColor: '#dbeafe',
-    marginHorizontal: 16,
-    marginBottom: 8,
-    padding: 10,
-    borderRadius: 8,
-  },
-  infoRequestText: {
-    color: '#1d4ed8',
-    fontSize: 13,
+  infoText: {
+    color: '#60a5fa',
+    fontSize: 12,
     fontWeight: '600',
   },
-  // Message thread
-  messageThread: {
-    paddingHorizontal: 16,
+  msgThread: {
+    paddingHorizontal: 14,
     paddingBottom: 4,
   },
-  messageRow: {
-    marginBottom: 8,
+  msgRow: {
+    marginBottom: 6,
   },
-  messageLeft: {
+  msgLeft: {
     alignItems: 'flex-start',
   },
-  messageRight: {
+  msgRight: {
     alignItems: 'flex-end',
   },
-  messageBubble: {
+  msgBubble: {
     maxWidth: '85%',
-    padding: 10,
-    borderRadius: 12,
+    padding: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: GLASS_BORDER,
   },
-  messageAction: {
-    fontSize: 12,
+  msgAction: {
+    fontSize: 10,
     fontWeight: '700',
     marginBottom: 2,
   },
-  messageText: {
-    fontSize: 14,
-    color: '#1a1a1a',
-    lineHeight: 20,
+  msgText: {
+    fontSize: 13,
+    color: '#fff',
+    lineHeight: 18,
   },
-  messageTime: {
-    fontSize: 11,
-    color: '#999',
-    marginTop: 4,
+  msgTime: {
+    fontSize: 10,
+    color: 'rgba(255,255,255,0.35)',
+    marginTop: 3,
   },
-  // Reply
   replyRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    padding: 12,
+    padding: 10,
     borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
-    gap: 8,
+    borderTopColor: 'rgba(255,255,255,0.06)',
+    gap: 6,
   },
   replyInput: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    fontSize: 14,
-    maxHeight: 100,
-    color: '#1a1a1a',
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderWidth: 1,
+    borderColor: GLASS_BORDER,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    fontSize: 13,
+    maxHeight: 80,
+    color: '#fff',
   },
-  sendButton: {
-    backgroundColor: '#007AFF',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    minWidth: 60,
+  sendBtn: {
+    backgroundColor: 'rgba(0,122,255,0.4)',
+    borderWidth: 1,
+    borderColor: GLASS_BORDER,
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    minWidth: 52,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  sendButtonDisabled: {
-    opacity: 0.6,
+  sendBtnDisabled: {
+    opacity: 0.5,
   },
-  sendButtonText: {
+  sendText: {
     color: '#fff',
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: 'bold',
   },
-  refreshButton: {
-    backgroundColor: '#007AFF',
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+  refreshBtn: {
+    backgroundColor: 'rgba(59,130,246,0.4)',
+    borderWidth: 1,
+    borderColor: GLASS_BORDER,
+    borderRadius: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
   },
-  refreshButtonText: {
+  refreshText: {
     color: '#fff',
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
   },
 });

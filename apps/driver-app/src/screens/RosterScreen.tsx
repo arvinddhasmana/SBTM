@@ -8,10 +8,15 @@ import {
   ActivityIndicator,
   Image,
   Alert,
+  StatusBar,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDriverStore } from '../store/useDriverStore';
 import type { Student, Stop } from '../types';
 import { SvgXml } from 'react-native-svg';
+
+const GLASS_BG = 'rgba(15,23,42,0.82)';
+const GLASS_BORDER = 'rgba(255,255,255,0.12)';
 
 interface Section {
   title: string;
@@ -25,7 +30,7 @@ function StudentAvatar({ name, avatarUrl }: { name: string; avatarUrl?: string }
       const xml = decodeURIComponent(avatarUrl.replace(/^data:image\/svg\+xml;utf8,/, ''));
       return (
         <View style={[styles.avatar, { overflow: 'hidden' }]}>
-          <SvgXml xml={xml} width="44" height="44" />
+          <SvgXml xml={xml} width="40" height="40" />
         </View>
       );
     }
@@ -37,10 +42,10 @@ function StudentAvatar({ name, avatarUrl }: { name: string; avatarUrl?: string }
     .join('')
     .slice(0, 2)
     .toUpperCase();
-  const colors = ['#007AFF', '#34C759', '#FF9500', '#AF52DE', '#FF3B30'];
+  const colors = ['#3b82f6', '#22c55e', '#f59e0b', '#a855f7', '#ef4444'];
   const colorIndex = name.charCodeAt(0) % colors.length;
   return (
-    <View style={[styles.avatarCircle, { backgroundColor: colors[colorIndex] }]}>
+    <View style={[styles.avatarCircle, { backgroundColor: `${colors[colorIndex]}66` }]}>
       <Text style={styles.avatarText}>{initials}</Text>
     </View>
   );
@@ -78,6 +83,7 @@ function buildSections(students: Student[], stops: Stop[]): Section[] {
 }
 
 export default function RosterScreen() {
+  const insets = useSafeAreaInsets();
   const students = useDriverStore((state) => state.students);
   const stops = useDriverStore((state) => state.stops);
   const rosterLoadState = useDriverStore((state) => state.rosterLoadState);
@@ -118,14 +124,14 @@ export default function RosterScreen() {
   );
 
   const renderItem = ({ item }: { item: Student }) => {
-    let statusColor = '#999';
+    let statusColor = 'rgba(255,255,255,0.25)';
     let buttonLabel = 'Board';
     if (item.status === 'BOARDED') {
-      statusColor = '#34C759';
+      statusColor = 'rgba(34,197,94,0.5)';
       buttonLabel = 'Alight';
     }
     if (item.status === 'ALIGHTED') {
-      statusColor = '#FF9500';
+      statusColor = 'rgba(245,158,11,0.5)';
       buttonLabel = 'Reset';
     }
 
@@ -134,8 +140,8 @@ export default function RosterScreen() {
         <StudentAvatar name={item.name} avatarUrl={item.avatarUrl} />
         <View style={styles.studentInfo}>
           <Text style={styles.name}>{item.name}</Text>
-          <View style={[styles.badge, { backgroundColor: statusColor }]}>
-            <Text style={styles.badgeText}>{item.status.replace('_', ' ')}</Text>
+          <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
+            <Text style={styles.statusText}>{item.status.replace('_', ' ')}</Text>
           </View>
         </View>
         <TouchableOpacity
@@ -152,50 +158,49 @@ export default function RosterScreen() {
 
   if (rosterLoadState === 'loading') {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#007AFF" />
-        <Text style={styles.infoText}>Loading roster…</Text>
+      <View style={[styles.centerView, { paddingTop: insets.top }]}>
+        <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+        <ActivityIndicator size="large" color="#3b82f6" />
+        <Text style={styles.infoText}>Loading roster...</Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
       <Text style={styles.header}>Student Roster</Text>
 
       {routeDirection === 'PM' && hasNotBoarded && (
-        <TouchableOpacity style={styles.bulkActionButton} onPress={handleBoardAll}>
-          <Text style={styles.bulkActionText}>Board All Students</Text>
+        <TouchableOpacity style={styles.bulkBtn} onPress={handleBoardAll}>
+          <Text style={styles.bulkText}>Board All Students</Text>
         </TouchableOpacity>
       )}
       {routeDirection === 'AM' && hasBoarded && (
-        <TouchableOpacity
-          style={[styles.bulkActionButton, styles.bulkAlightButton]}
-          onPress={handleAlightAll}
-        >
-          <Text style={styles.bulkActionText}>Alight All Students</Text>
+        <TouchableOpacity style={[styles.bulkBtn, styles.bulkAlight]} onPress={handleAlightAll}>
+          <Text style={styles.bulkText}>Alight All Students</Text>
         </TouchableOpacity>
       )}
 
       {isOffline && (
         <View style={styles.offlineBanner}>
-          <Text style={styles.offlineText}>Offline – changes will sync when reconnected</Text>
+          <Text style={styles.offlineText}>Offline - changes will sync when reconnected</Text>
         </View>
       )}
 
       {rosterLoadState === 'error' && (
         <View style={styles.errorBanner}>
           <Text style={styles.errorText}>{rosterError ?? 'Roster unavailable'}</Text>
-          <TouchableOpacity onPress={() => void refreshRoster()} style={styles.retryButton}>
+          <TouchableOpacity onPress={() => void refreshRoster()} style={styles.retryBtn}>
             <Text style={styles.retryText}>Retry</Text>
           </TouchableOpacity>
         </View>
       )}
 
       {students.length === 0 ? (
-        <View style={styles.center}>
+        <View style={styles.centerView}>
           <Text style={styles.infoText}>No students on this route yet.</Text>
-          <TouchableOpacity onPress={() => void refreshRoster()} style={styles.retryButton}>
+          <TouchableOpacity onPress={() => void refreshRoster()} style={styles.retryBtn}>
             <Text style={styles.retryText}>Refresh</Text>
           </TouchableOpacity>
         </View>
@@ -218,171 +223,181 @@ export default function RosterScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#0f172a',
   },
   header: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    padding: 20,
-    paddingBottom: 10,
-    backgroundColor: '#fff',
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#fff',
+    padding: 16,
+    paddingBottom: 8,
   },
-  center: {
+  centerView: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#0f172a',
     gap: 12,
   },
   infoText: {
-    fontSize: 16,
-    color: '#555',
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.5)',
     textAlign: 'center',
   },
   list: {
     paddingBottom: 20,
   },
-  // Section header
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#e8eef4',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
+    backgroundColor: 'rgba(30,41,59,0.95)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#d0d8e0',
+    borderBottomColor: 'rgba(255,255,255,0.06)',
   },
   sectionTitle: {
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: '700',
-    color: '#2c3e50',
+    color: 'rgba(255,255,255,0.8)',
     flex: 1,
     marginRight: 8,
   },
   arrivalTime: {
-    fontSize: 13,
-    color: '#607d8b',
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.45)',
     fontWeight: '600',
   },
-  // Student card
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    backgroundColor: GLASS_BG,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: 'rgba(255,255,255,0.04)',
   },
   avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
   },
   avatarCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: GLASS_BORDER,
   },
   avatarText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  studentInfo: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  name: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1a1a1a',
-    marginBottom: 4,
-  },
-  badge: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 10,
-  },
-  badgeText: {
-    color: 'white',
-    fontSize: 11,
-    fontWeight: 'bold',
-  },
-  actionButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 8,
-    minWidth: 70,
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 4,
-  },
-  actionButtonText: {
     color: '#fff',
     fontSize: 14,
     fontWeight: 'bold',
   },
-  syncIndicator: {
+  studentInfo: {
+    flex: 1,
+    marginLeft: 10,
+  },
+  name: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#fff',
+    marginBottom: 3,
+  },
+  statusBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  statusText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  actionButton: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 6,
+    minWidth: 60,
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 3,
+    borderWidth: 1,
+    borderColor: GLASS_BORDER,
+  },
+  actionButtonText: {
     color: '#fff',
     fontSize: 12,
+    fontWeight: 'bold',
   },
-  // Banners
+  syncIndicator: {
+    color: '#fff',
+    fontSize: 11,
+  },
   offlineBanner: {
-    backgroundColor: '#FFF3CD',
-    padding: 10,
-    marginHorizontal: 16,
-    marginTop: 8,
-    borderRadius: 8,
+    backgroundColor: 'rgba(245,158,11,0.2)',
+    borderWidth: 1,
+    borderColor: 'rgba(245,158,11,0.2)',
+    padding: 8,
+    marginHorizontal: 14,
+    marginTop: 6,
+    borderRadius: 6,
   },
   offlineText: {
-    color: '#856404',
-    fontSize: 13,
+    color: '#f59e0b',
+    fontSize: 12,
   },
   errorBanner: {
-    backgroundColor: '#F8D7DA',
-    borderRadius: 8,
-    padding: 10,
-    marginHorizontal: 16,
-    marginTop: 8,
+    backgroundColor: 'rgba(239,68,68,0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(239,68,68,0.2)',
+    borderRadius: 6,
+    padding: 8,
+    marginHorizontal: 14,
+    marginTop: 6,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
   errorText: {
-    color: '#721C24',
-    fontSize: 13,
+    color: '#ef4444',
+    fontSize: 12,
     flex: 1,
   },
-  retryButton: {
-    backgroundColor: '#007AFF',
-    borderRadius: 8,
+  retryBtn: {
+    backgroundColor: 'rgba(59,130,246,0.4)',
+    borderRadius: 6,
     paddingHorizontal: 12,
     paddingVertical: 6,
     marginLeft: 8,
+    borderWidth: 1,
+    borderColor: GLASS_BORDER,
   },
   retryText: {
     color: '#fff',
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
   },
-  bulkActionButton: {
-    backgroundColor: '#34C759',
-    borderRadius: 10,
-    padding: 14,
-    marginHorizontal: 16,
-    marginTop: 8,
+  bulkBtn: {
+    backgroundColor: 'rgba(34,197,94,0.3)',
+    borderWidth: 1,
+    borderColor: GLASS_BORDER,
+    borderRadius: 8,
+    padding: 12,
+    marginHorizontal: 14,
+    marginTop: 6,
     alignItems: 'center',
   },
-  bulkAlightButton: {
-    backgroundColor: '#FF9500',
+  bulkAlight: {
+    backgroundColor: 'rgba(245,158,11,0.3)',
   },
-  bulkActionText: {
+  bulkText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
   },
 });

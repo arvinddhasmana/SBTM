@@ -1,14 +1,37 @@
 import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, TextInput } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
+  TextInput,
+  Animated,
+  StatusBar,
+} from 'react-native';
 import MapView, { Marker, Polyline, LatLng } from 'react-native-maps';
+import Svg, { Path, Circle, Line } from 'react-native-svg';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDriverStore } from '../store/useDriverStore';
 import { GPSService } from '../services/gps.service';
 import { EmergencyService } from '../services/emergency.service';
-import { AlertService } from '../services/alert.service';
 import { useBleScanning } from '../hooks/useBleScanning';
+import { useRouteStatus } from '../hooks/useRouteStatus';
+import { usePanicDetection } from '../hooks/usePanicDetection';
 import { decodePolyline } from '../utils/polyline';
+import { DARK_MAP_STYLE } from '../constants/mapStyles';
+import BusNavigationMarker from '../components/map/BusNavigationMarker';
+import StopMarkerView from '../components/map/StopMarker';
+import SchoolMarkerView from '../components/map/SchoolMarker';
+import CollapsibleBottomPanel from '../components/CollapsibleBottomPanel';
+import PanicCountdownModal from '../components/PanicCountdownModal';
+import { SpeedIndicator, NextStopBanner, RouteProgressBar } from '../components/map/MapOverlays';
+
+const GLASS_BG = 'rgba(15,23,42,0.75)';
+const GLASS_BORDER = 'rgba(255,255,255,0.12)';
 
 export default function ActiveRouteScreen({ navigation }: any) {
+  const insets = useSafeAreaInsets();
   const activeRoute = useDriverStore((state) => state.activeRoute);
   const driver = useDriverStore((state) => state.driver);
   const endRoute = useDriverStore((state) => state.endRoute);
@@ -17,25 +40,33 @@ export default function ActiveRouteScreen({ navigation }: any) {
 
   const mapRef = useRef<MapView>(null);
 
-  // vehicleId is sourced from the authenticated route assignment – never hardcoded
   const vehicleId = activeRoute?.vehicleId ?? '';
   const schoolId = activeRoute?.schoolId ?? '';
 
-  // Current GPS location for the bus arrow marker
+  // Route status derived from active alerts
+  const { status: routeStatus, infoRequestCount } = useRouteStatus(activeRoute?.id);
+
+  // Current GPS location for the bus marker
   const [currentLocation, setCurrentLocation] = useState<{
     latitude: number;
     longitude: number;
     heading: number;
+    speed: number;
   } | null>(null);
 
-  // Unread info request badge count
-  const [infoRequestCount, setInfoRequestCount] = useState(0);
+  // Panel expanded state
+  const [panelExpanded, setPanelExpanded] = useState(false);
+  const panelAnim = useRef(new Animated.Value(0)).current;
 
-  // States for Incident Report Modal
+  // Panic countdown modal
+  const [panicModalVisible, setPanicModalVisible] = useState(false);
+  const [panicReason, setPanicReason] = useState('');
+
+  // Incident Report Modal
   const [isIncidentModalVisible, setIsIncidentModalVisible] = useState(false);
   const [incidentDescription, setIncidentDescription] = useState('');
 
-  // Default to Ottawa (Greenfield Elementary demo area)
+  // Default region
   const [region, setRegion] = useState({
     latitude: 45.3506,
     longitude: -75.7934,
@@ -43,7 +74,7 @@ export default function ActiveRouteScreen({ navigation }: any) {
     longitudeDelta: 0.05,
   });
 
-  // Decode route polyline into coordinates for the map
+  // Decode route polyline
   const routePath: LatLng[] = useMemo(() => {
     if (!activeRoute?.polyline) return [];
     return decodePolyline(activeRoute.polyline).map(([lat, lng]) => ({
@@ -52,7 +83,7 @@ export default function ActiveRouteScreen({ navigation }: any) {
     }));
   }, [activeRoute?.polyline]);
 
-  // BLE scanning – enabled only while an active route is running (NFR-BATT-001)
+  // BLE scanning
   const { scanState } = useBleScanning(
     activeRoute?.id ?? '',
     vehicleId,
@@ -60,21 +91,33 @@ export default function ActiveRouteScreen({ navigation }: any) {
     Boolean(activeRoute),
   );
 
-  // Poll for info requests (lightweight MVP)
-  const checkInfoRequests = useCallback(async () => {
-    if (!activeRoute) return;
+  // Night mode
+  const isNightMode = useMemo(() => {
+    if (!activeRoute?.startTime) return false;
+    const hour = parseInt(activeRoute.startTime.split(':')[0] ?? '12', 10);
+    return hour < 7 || hour >= 19;
+  }, [activeRoute?.startTime]);
+
+  // ── Panic detection (multi-tap + drop) ─────────────────────────
+  const firePanic = useCallback(async () => {
     try {
-      const alerts = await AlertService.getActiveAlerts(activeRoute.id);
-      let count = 0;
-      for (const alert of alerts) {
-        const log = await AlertService.getAlertAuditLog(alert.id);
-        count += log.filter((e) => e.action === 'INFO_REQUESTED').length;
-      }
-      setInfoRequestCount(count);
+      const loc = await GPSService.getCurrentLocation();
+      await EmergencyService.triggerPanic(
+        vehicleId,
+        activeRoute?.id ?? 'unknown',
+        { lat: loc.coords.latitude, lng: loc.coords.longitude },
+        driver?.id,
+      );
+      Alert.alert('Alert Sent', 'Help is on the way.');
     } catch {
-      // Non-critical; badge won't show
+      Alert.alert('Error', 'Failed to send panic alert.');
     }
-  }, [activeRoute]);
+  }, [vehicleId, activeRoute?.id, driver?.id]);
+
+  const { registerTap } = usePanicDetection(Boolean(activeRoute), (reason: string) => {
+    setPanicReason(reason);
+    setPanicModalVisible(true);
+  });
 
   useEffect(() => {
     startGps();
@@ -83,14 +126,7 @@ export default function ActiveRouteScreen({ navigation }: any) {
     };
   }, []);
 
-  // Poll for info request badges every 30 seconds
-  useEffect(() => {
-    checkInfoRequests();
-    const interval = setInterval(checkInfoRequests, 30000);
-    return () => clearInterval(interval);
-  }, [checkInfoRequests]);
-
-  // Fit map to route bounds when polyline or stops are available
+  // Fit map to route bounds
   useEffect(() => {
     if (!mapRef.current) return;
     const coords: LatLng[] = [...routePath];
@@ -116,22 +152,17 @@ export default function ActiveRouteScreen({ navigation }: any) {
       const current = await GPSService.getCurrentLocation();
       const lat = current.coords.latitude;
       const lng = current.coords.longitude;
-      setRegion({
-        ...region,
-        latitude: lat,
-        longitude: lng,
-      });
+      setRegion({ ...region, latitude: lat, longitude: lng });
       setCurrentLocation({
         latitude: lat,
         longitude: lng,
         heading: current.coords.heading ?? 0,
+        speed: current.coords.speed ?? 0,
       });
 
       if (activeRoute && driver && vehicleId) {
         await GPSService.startTracking(activeRoute.id, vehicleId, driver.id);
       }
-
-      // Start watching location for the bus marker
       startLocationWatch();
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : 'GPS unavailable';
@@ -149,32 +180,48 @@ export default function ActiveRouteScreen({ navigation }: any) {
             latitude: location.coords.latitude,
             longitude: location.coords.longitude,
             heading: location.coords.heading ?? 0,
+            speed: location.coords.speed ?? 0,
           });
         },
       );
     } catch {
-      // Fallback: marker stays at last known position
+      // marker stays at last known position
     }
   };
 
-  const handlePanic = async () => {
-    Alert.alert('Emergency', 'Are you sure you want to trigger a panic alert?', [
-      { text: 'Cancel', style: 'cancel' },
+  // ── Handlers ─────────────────────────────────────────────────────
+
+  const handleRecenter = useCallback(() => {
+    if (!currentLocation || !mapRef.current) return;
+    mapRef.current.animateToRegion(
       {
-        text: 'YES, PANIC',
-        style: 'destructive',
-        onPress: async () => {
-          const loc = await GPSService.getCurrentLocation();
-          await EmergencyService.triggerPanic(
-            vehicleId,
-            activeRoute?.id ?? 'unknown',
-            { lat: loc.coords.latitude, lng: loc.coords.longitude },
-            driver?.id,
-          );
-          Alert.alert('Alert Sent', 'Help is on the way.');
-        },
+        latitude: currentLocation.latitude,
+        longitude: currentLocation.longitude,
+        latitudeDelta: 0.005,
+        longitudeDelta: 0.005,
       },
-    ]);
+      500,
+    );
+  }, [currentLocation]);
+
+  const handleMapPress = useCallback(() => {
+    // Register tap for panic detection
+    registerTap();
+    // Collapse panel if expanded
+    if (panelExpanded) {
+      Animated.spring(panelAnim, {
+        toValue: 0,
+        useNativeDriver: false,
+        friction: 8,
+        tension: 40,
+      }).start();
+      setPanelExpanded(false);
+    }
+  }, [panelExpanded, panelAnim, registerTap]);
+
+  const handlePanic = () => {
+    setPanicReason('Manual panic trigger');
+    setPanicModalVisible(true);
   };
 
   const handleReportIncident = () => {
@@ -224,13 +271,23 @@ export default function ActiveRouteScreen({ navigation }: any) {
   if (!activeRoute)
     return (
       <View style={styles.center}>
-        <Text>No Active Route</Text>
+        <Text style={{ color: '#fff' }}>No Active Route</Text>
       </View>
     );
 
   return (
-    <View style={styles.container}>
-      {/* Incident Report Modal */}
+    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+
+      {/* Route Progress Bar */}
+      <RouteProgressBar
+        stops={stops}
+        currentLat={currentLocation?.latitude ?? null}
+        currentLng={currentLocation?.longitude ?? null}
+        direction={routeDirection}
+      />
+
+      {/* Incident Report Modal – glassmorphic */}
       {isIncidentModalVisible && (
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -239,22 +296,23 @@ export default function ActiveRouteScreen({ navigation }: any) {
             <TextInput
               style={styles.modalInput}
               placeholder="E.g., minor scrape, mechanical defect..."
+              placeholderTextColor="rgba(255,255,255,0.4)"
               value={incidentDescription}
               onChangeText={setIncidentDescription}
               multiline
             />
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonCancel]}
+                style={[styles.modalBtn, styles.modalBtnCancel]}
                 onPress={() => setIsIncidentModalVisible(false)}
               >
-                <Text style={styles.modalButtonCancelText}>Cancel</Text>
+                <Text style={styles.modalBtnCancelText}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonSubmit]}
+                style={[styles.modalBtn, styles.modalBtnSubmit]}
                 onPress={submitIncidentReport}
               >
-                <Text style={styles.modalButtonSubmitText}>Report</Text>
+                <Text style={styles.modalBtnSubmitText}>Report</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -267,8 +325,10 @@ export default function ActiveRouteScreen({ navigation }: any) {
         region={region}
         showsUserLocation={false}
         followsUserLocation={false}
+        customMapStyle={isNightMode ? DARK_MAP_STYLE : undefined}
+        onPress={handleMapPress}
       >
-        {/* Bus location – yellow navigation arrow */}
+        {/* Bus – bare navigation arrow colored by status */}
         {currentLocation && (
           <Marker
             coordinate={{
@@ -280,11 +340,9 @@ export default function ActiveRouteScreen({ navigation }: any) {
             rotation={currentLocation.heading}
             title="Bus"
             description="Current location"
+            zIndex={20}
           >
-            <View style={styles.busArrowContainer}>
-              <View style={styles.busArrow} />
-              <View style={styles.busArrowDot} />
-            </View>
+            <BusNavigationMarker status={routeStatus} />
           </Marker>
         )}
 
@@ -293,7 +351,10 @@ export default function ActiveRouteScreen({ navigation }: any) {
           <Polyline
             coordinates={routePath}
             strokeColor={routeDirection === 'AM' ? '#3b82f6' : '#f59e0b'}
-            strokeWidth={5}
+            strokeWidth={3}
+            lineJoin="round"
+            lineCap="round"
+            zIndex={1}
           />
         )}
 
@@ -306,11 +367,9 @@ export default function ActiveRouteScreen({ navigation }: any) {
               coordinate={{ latitude: stop.lat!, longitude: stop.lng! }}
               title={`Stop ${stop.sequence}: ${stop.stopName}`}
               description={stop.arrivalTime ? `Arrival: ${stop.arrivalTime}` : undefined}
-              pinColor="#007AFF"
+              zIndex={10}
             >
-              <View style={styles.stopMarker}>
-                <Text style={styles.stopMarkerText}>{stop.sequence}</Text>
-              </View>
+              <StopMarkerView sequence={stop.sequence} direction={routeDirection} />
             </Marker>
           ))}
 
@@ -322,282 +381,169 @@ export default function ActiveRouteScreen({ navigation }: any) {
               longitude: activeRoute.schoolLng,
             }}
             title={activeRoute.schoolName ?? 'School'}
-            pinColor="#8b5cf6"
+            zIndex={10}
           >
-            <View style={styles.schoolMarker}>
-              <Text style={styles.schoolMarkerText}>S</Text>
-            </View>
+            <SchoolMarkerView />
           </Marker>
         )}
       </MapView>
 
-      <View style={styles.controls}>
-        <View style={styles.infoPanel}>
-          <Text style={styles.routeTitle}>{activeRoute.name}</Text>
-          <Text style={styles.directionBadge}>
-            {routeDirection === 'AM' ? 'AM Route' : 'PM Route'}
-          </Text>
-          {scanState === 'scanning' && <Text style={styles.bleStatus}>BLE Scanning Active</Text>}
-          {scanState === 'permission_denied' && (
-            <Text style={styles.bleWarning}>Bluetooth permission denied – manual roster only</Text>
-          )}
-        </View>
+      {/* Next Stop Banner – glassmorphic */}
+      <NextStopBanner
+        stops={stops}
+        currentLat={currentLocation?.latitude ?? null}
+        currentLng={currentLocation?.longitude ?? null}
+        direction={routeDirection}
+      />
 
-        <View style={styles.buttonRow}>
-          <TouchableOpacity
-            style={[styles.button, styles.rosterButton]}
-            onPress={() => navigation.navigate('Roster')}
-          >
-            <Text style={styles.buttonText}>Roster</Text>
-          </TouchableOpacity>
+      {/* Reset Button – glassmorphic */}
+      <TouchableOpacity
+        style={[styles.resetButton, { top: insets.top + 50 }]}
+        onPress={handleRecenter}
+        hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
+      >
+        <Svg width={20} height={20} viewBox="0 0 24 24">
+          <Circle
+            cx={12}
+            cy={12}
+            r={8}
+            stroke="rgba(255,255,255,0.8)"
+            strokeWidth={2}
+            fill="none"
+          />
+          <Line x1={12} y1={2} x2={12} y2={6} stroke="rgba(255,255,255,0.8)" strokeWidth={2} />
+          <Line x1={12} y1={18} x2={12} y2={22} stroke="rgba(255,255,255,0.8)" strokeWidth={2} />
+          <Line x1={2} y1={12} x2={6} y2={12} stroke="rgba(255,255,255,0.8)" strokeWidth={2} />
+          <Line x1={18} y1={12} x2={22} y2={12} stroke="rgba(255,255,255,0.8)" strokeWidth={2} />
+          <Circle cx={12} cy={12} r={2} fill="rgba(255,255,255,0.8)" />
+        </Svg>
+      </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.button, styles.messagesButton]}
-            onPress={() => navigation.navigate('AlertMessages')}
-          >
-            <Text style={styles.buttonText}>Messages</Text>
-            {infoRequestCount > 0 && (
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>{infoRequestCount}</Text>
-              </View>
-            )}
-          </TouchableOpacity>
+      {/* Speed Indicator – glassmorphic */}
+      <SpeedIndicator speedMps={currentLocation?.speed ?? null} />
 
-          <TouchableOpacity style={[styles.button, styles.endButton]} onPress={handleEndRoute}>
-            <Text style={styles.buttonText}>End Route</Text>
-          </TouchableOpacity>
-        </View>
+      {/* Collapsible Bottom Panel – glassmorphic */}
+      <CollapsibleBottomPanel
+        routeName={activeRoute.name}
+        routeDirection={routeDirection}
+        scanState={scanState}
+        infoRequestCount={infoRequestCount}
+        onNavigateRoster={() => navigation.navigate('Roster')}
+        onNavigateMessages={() => navigation.navigate('AlertMessages')}
+        onEndRoute={handleEndRoute}
+        onReportIncident={handleReportIncident}
+        onPanic={handlePanic}
+      />
 
-        <View style={styles.alertRow}>
-          <TouchableOpacity style={styles.incidentButton} onPress={handleReportIncident}>
-            <Text style={styles.incidentText}>Report Incident</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.panicButton} onPress={handlePanic}>
-            <Text style={styles.panicText}>PANIC</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+      {/* Panic Countdown Modal */}
+      <PanicCountdownModal
+        visible={panicModalVisible}
+        reason={panicReason}
+        onConfirm={() => {
+          setPanicModalVisible(false);
+          firePanic();
+        }}
+        onCancel={() => setPanicModalVisible(false)}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: {
+    flex: 1,
+    backgroundColor: '#0f172a',
+  },
   map: { flex: 1 },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  controls: {
-    padding: 20,
-    backgroundColor: 'white',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 10,
-  },
-  infoPanel: {
-    marginBottom: 20,
-    alignItems: 'center',
-  },
-  routeTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  directionBadge: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 2,
-  },
-  bleStatus: {
-    fontSize: 13,
-    color: '#34C759',
-    marginTop: 4,
-  },
-  bleWarning: {
-    fontSize: 13,
-    color: '#FF9500',
-    marginTop: 4,
-    textAlign: 'center',
-  },
-  buttonRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  button: {
+  center: {
     flex: 1,
-    padding: 14,
-    borderRadius: 10,
+    justifyContent: 'center',
     alignItems: 'center',
-    marginHorizontal: 4,
-    position: 'relative',
+    backgroundColor: '#0f172a',
   },
-  rosterButton: { backgroundColor: '#007AFF' },
-  messagesButton: { backgroundColor: '#6366f1' },
-  endButton: { backgroundColor: '#FF9500' },
-  buttonText: { color: 'white', fontWeight: 'bold', fontSize: 14 },
-  badge: {
+  resetButton: {
     position: 'absolute',
-    top: -6,
-    right: -4,
-    backgroundColor: '#ef4444',
-    borderRadius: 10,
-    minWidth: 20,
-    height: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 5,
-  },
-  badgeText: {
-    color: '#fff',
-    fontSize: 11,
-    fontWeight: 'bold',
-  },
-  alertRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 8,
-  },
-  incidentButton: {
-    flex: 1,
-    backgroundColor: '#f59e0b',
-    padding: 14,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  incidentText: { color: 'white', fontWeight: 'bold', fontSize: 15 },
-  panicButton: {
-    flex: 1,
-    backgroundColor: '#FF3B30',
-    padding: 14,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  panicText: { color: 'white', fontWeight: 'bold', fontSize: 18 },
-  // Bus arrow marker – small, bright, non-blocking yellow directional arrow
-  busArrowContainer: {
-    width: 28,
-    height: 28,
+    right: 12,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: GLASS_BG,
+    borderWidth: 1,
+    borderColor: GLASS_BORDER,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  busArrow: {
-    width: 0,
-    height: 0,
-    borderLeftWidth: 8,
-    borderRightWidth: 8,
-    borderBottomWidth: 16,
-    borderLeftColor: 'transparent',
-    borderRightColor: 'transparent',
-    borderBottomColor: '#f59e0b',
-    shadowColor: '#000',
-    shadowOpacity: 0.3,
-    shadowRadius: 2,
-    elevation: 4,
-  },
-  busArrowDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#f59e0b',
-    marginTop: -2,
-    borderWidth: 1.5,
-    borderColor: '#fff',
-  },
-  stopMarker: {
-    backgroundColor: '#007AFF',
-    borderRadius: 12,
-    width: 24,
-    height: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#fff',
-  },
-  stopMarkerText: {
-    color: '#fff',
-    fontSize: 11,
-    fontWeight: 'bold',
-  },
-  schoolMarker: {
-    backgroundColor: '#8b5cf6',
-    borderRadius: 14,
-    width: 28,
-    height: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#fff',
-  },
-  schoolMarkerText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  // Modal styles
+  // Modal – glassmorphic
   modalOverlay: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 1000,
   },
   modalContent: {
-    backgroundColor: 'white',
-    padding: 24,
+    backgroundColor: 'rgba(15,23,42,0.92)',
+    borderWidth: 1,
+    borderColor: GLASS_BORDER,
+    padding: 20,
     borderRadius: 16,
     width: '85%',
-    shadowColor: '#000',
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-    elevation: 5,
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 8,
+    color: '#fff',
+    marginBottom: 6,
   },
   modalSubtitle: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 16,
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.6)',
+    marginBottom: 14,
   },
   modalInput: {
-    backgroundColor: '#f5f5f5',
-    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 1,
+    borderColor: GLASS_BORDER,
+    borderRadius: 10,
     padding: 12,
     minHeight: 80,
     textAlignVertical: 'top',
-    marginBottom: 20,
-    fontSize: 15,
+    marginBottom: 16,
+    fontSize: 14,
+    color: '#fff',
   },
   modalButtons: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    gap: 12,
+    gap: 10,
   },
-  modalButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
+  modalBtn: {
+    paddingVertical: 8,
+    paddingHorizontal: 18,
+    borderRadius: 6,
   },
-  modalButtonCancel: {
-    backgroundColor: '#f5f5f5',
+  modalBtnCancel: {
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderWidth: 1,
+    borderColor: GLASS_BORDER,
   },
-  modalButtonSubmit: {
-    backgroundColor: '#f59e0b',
+  modalBtnSubmit: {
+    backgroundColor: 'rgba(245,158,11,0.5)',
+    borderWidth: 1,
+    borderColor: 'rgba(245,158,11,0.3)',
   },
-  modalButtonCancelText: {
-    color: '#333',
+  modalBtnCancelText: {
+    color: 'rgba(255,255,255,0.7)',
     fontWeight: '600',
+    fontSize: 13,
   },
-  modalButtonSubmitText: {
-    color: 'white',
+  modalBtnSubmitText: {
+    color: '#fff',
     fontWeight: 'bold',
+    fontSize: 13,
   },
 });

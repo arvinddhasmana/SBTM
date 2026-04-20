@@ -2,6 +2,10 @@ import React from 'react';
 import { render, screen } from '@testing-library/react-native';
 import RosterScreen from './RosterScreen';
 
+jest.mock('react-native-safe-area-context', () => ({
+  useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
+}));
+
 // Mock react-native-svg
 jest.mock('react-native-svg', () => ({
   SvgXml: () => 'SvgXml',

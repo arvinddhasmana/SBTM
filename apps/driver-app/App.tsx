@@ -55,10 +55,25 @@ export default function App() {
     return () => ConnectivityService.stopMonitoring();
   }, [setOffline]);
 
+  const screenOptions = {
+    headerStyle: { backgroundColor: '#0f172a' },
+    headerTintColor: '#fff',
+    headerTitleStyle: { fontWeight: '700' as const, fontSize: 16 },
+    headerShadowVisible: false,
+    contentStyle: { backgroundColor: '#0f172a' },
+  };
+
   if (isRestoring) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#007AFF" />
+      <View
+        style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: '#0f172a',
+        }}
+      >
+        <ActivityIndicator size="large" color="#3b82f6" />
       </View>
     );
   }
@@ -66,7 +81,7 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <NavigationContainer>
-        <Stack.Navigator>
+        <Stack.Navigator screenOptions={screenOptions}>
           {!isAuthenticated ? (
             <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
           ) : (
@@ -74,7 +89,7 @@ export default function App() {
               <Stack.Screen
                 name="RouteSelect"
                 component={RouteSelectScreen}
-                options={{ title: 'My Routes' }}
+                options={{ title: 'My Routes', headerShown: false }}
               />
               <Stack.Screen
                 name="ActiveRoute"
