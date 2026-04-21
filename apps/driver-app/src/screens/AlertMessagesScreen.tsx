@@ -10,7 +10,9 @@ import {
   Alert,
   RefreshControl,
   StatusBar,
+  Platform,
 } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDriverStore } from '../store/useDriverStore';
 import { AlertService, ActiveAlert, AuditLogEntry } from '../services/alert.service';
@@ -42,6 +44,38 @@ export default function AlertMessagesScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [replyText, setReplyText] = useState<Record<string, string>>({});
   const [sending, setSending] = useState<Record<string, boolean>>({});
+
+  const startVoiceInput = (alertId: string) => {
+    if (Platform.OS === 'android') {
+      try {
+        const IntentLauncher = require('expo-intent-launcher');
+        IntentLauncher.startActivityAsync('android.speech.action.RECOGNIZE_SPEECH', {
+          extra: {
+            'android.speech.extra.LANGUAGE_MODEL': 'free_form',
+            'android.speech.extra.PROMPT': 'Speak your response...',
+          },
+        })
+          .then((result: any) => {
+            if (result.resultCode === -1 && result.data) {
+              const text = result.data?.extras?.['android.speech.extra.RESULTS']?.[0];
+              if (text) {
+                setReplyText((prev) => ({
+                  ...prev,
+                  [alertId]: prev[alertId] ? `${prev[alertId]} ${text}` : text,
+                }));
+              }
+            }
+          })
+          .catch(() => {
+            Alert.alert('Voice Input', 'Speech recognition unavailable.');
+          });
+      } catch {
+        Alert.alert('Voice Input', 'Voice input not supported.');
+      }
+    } else {
+      Alert.alert('Voice Input', 'On iOS, tap the microphone on the system keyboard.');
+    }
+  };
 
   const fetchAlerts = useCallback(async () => {
     if (!activeRoute) return;
@@ -159,24 +193,33 @@ export default function AlertMessagesScreen() {
         <View style={styles.replyRow}>
           <TextInput
             style={styles.replyInput}
-            placeholder="Type a response..."
+            placeholder="Type or speak a response..."
             placeholderTextColor="rgba(255,255,255,0.3)"
             value={replyText[item.id] ?? ''}
             onChangeText={(text) => setReplyText((prev) => ({ ...prev, [item.id]: text }))}
             editable={!sending[item.id]}
             multiline
           />
-          <TouchableOpacity
-            style={[styles.sendBtn, sending[item.id] && styles.sendBtnDisabled]}
-            onPress={() => handleSendReply(item.id)}
-            disabled={sending[item.id]}
-          >
-            {sending[item.id] ? (
-              <ActivityIndicator size="small" color="#fff" />
-            ) : (
-              <Text style={styles.sendText}>Send</Text>
-            )}
-          </TouchableOpacity>
+          <View style={styles.replyActions}>
+            <TouchableOpacity
+              style={styles.micBtn}
+              onPress={() => startVoiceInput(item.id)}
+              disabled={sending[item.id]}
+            >
+              <MaterialCommunityIcons name="microphone" size={18} color="rgba(255,255,255,0.65)" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.sendBtn, sending[item.id] && styles.sendBtnDisabled]}
+              onPress={() => handleSendReply(item.id)}
+              disabled={sending[item.id]}
+            >
+              {sending[item.id] ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <MaterialCommunityIcons name="send" size={16} color="#fff" />
+              )}
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     );
@@ -349,33 +392,46 @@ const styles = StyleSheet.create({
     marginTop: 3,
   },
   replyRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    padding: 10,
+    flexDirection: 'column',
+    padding: 8,
     borderTopWidth: 1,
     borderTopColor: 'rgba(255,255,255,0.06)',
     gap: 6,
   },
   replyInput: {
-    flex: 1,
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: 'rgba(255,255,255,0.05)',
     borderWidth: 1,
     borderColor: GLASS_BORDER,
-    borderRadius: 8,
+    borderRadius: 10,
     paddingHorizontal: 10,
-    paddingVertical: 8,
+    paddingVertical: 10,
     fontSize: 13,
-    maxHeight: 80,
+    fontFamily: 'Inter_400Regular',
+    minHeight: 120,
+    maxHeight: 300,
     color: '#fff',
+    textAlignVertical: 'top',
+  },
+  replyActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 6,
+  },
+  micBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   sendBtn: {
-    backgroundColor: 'rgba(0,122,255,0.4)',
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: 'rgba(59,130,246,0.4)',
     borderWidth: 1,
-    borderColor: GLASS_BORDER,
-    borderRadius: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    minWidth: 52,
+    borderColor: 'rgba(59,130,246,0.5)',
     alignItems: 'center',
     justifyContent: 'center',
   },

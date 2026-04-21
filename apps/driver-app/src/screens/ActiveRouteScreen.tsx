@@ -8,7 +8,9 @@ import {
   TextInput,
   Animated,
   StatusBar,
+  Platform,
 } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import MapView, { Marker, Polyline, LatLng } from 'react-native-maps';
 import Svg, { Path, Circle, Line } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -27,6 +29,7 @@ import SchoolMarkerView from '../components/map/SchoolMarker';
 import CollapsibleBottomPanel from '../components/CollapsibleBottomPanel';
 import PanicCountdownModal from '../components/PanicCountdownModal';
 import { SpeedIndicator, NextStopBanner, RouteProgressBar } from '../components/map/MapOverlays';
+import DashedPolyline from '../components/map/DashedPolyline';
 
 const GLASS_BG = 'rgba(15,23,42,0.75)';
 const GLASS_BORDER = 'rgba(255,255,255,0.12)';
@@ -66,6 +69,38 @@ export default function ActiveRouteScreen({ navigation }: any) {
   // Incident Report Modal
   const [isIncidentModalVisible, setIsIncidentModalVisible] = useState(false);
   const [incidentDescription, setIncidentDescription] = useState('');
+  const [isRecording, setIsRecording] = useState(false);
+
+  const startVoiceInput = useCallback((setter: (v: string) => void, current: string) => {
+    if (Platform.OS === 'android') {
+      try {
+        // Use Android's built-in speech recognizer via expo intent
+        const IntentLauncher = require('expo-intent-launcher');
+        IntentLauncher.startActivityAsync('android.speech.action.RECOGNIZE_SPEECH', {
+          extra: {
+            'android.speech.extra.LANGUAGE_MODEL': 'free_form',
+            'android.speech.extra.PROMPT': 'Speak to enter text...',
+          },
+        })
+          .then((result: any) => {
+            if (result.resultCode === -1 && result.data) {
+              const text = result.data?.extras?.['android.speech.extra.RESULTS']?.[0];
+              if (text) setter(current ? `${current} ${text}` : text);
+            }
+          })
+          .catch(() => {
+            Alert.alert('Voice Input', 'Speech recognition unavailable on this device.');
+          });
+      } catch {
+        Alert.alert('Voice Input', 'Voice input not supported on this device.');
+      }
+    } else {
+      Alert.alert(
+        'Voice Input',
+        'Voice input is supported on Android. On iOS use the system keyboard microphone.',
+      );
+    }
+  }, []);
 
   // Default region
   const [region, setRegion] = useState({
@@ -100,7 +135,11 @@ export default function ActiveRouteScreen({ navigation }: any) {
   }, [activeRoute?.startTime]);
 
   // Dynamic Rerouting
-  const { isDiverted, divertedPolyline } = useDynamicReroute(currentLocation, routePath, stops);
+  const { isDiverted, divertedPolyline, distFromRoute } = useDynamicReroute(
+    currentLocation,
+    routePath,
+    stops,
+  );
 
   // ── Panic detection (multi-tap + drop) ─────────────────────────
   const firePanic = useCallback(async () => {
@@ -208,20 +247,36 @@ export default function ActiveRouteScreen({ navigation }: any) {
     );
   }, [currentLocation]);
 
+  const togglePanel = useCallback(() => {
+    const toValue = panelExpanded ? 0 : 1;
+    Animated.spring(panelAnim, {
+      toValue,
+      useNativeDriver: false,
+      friction: 8,
+      tension: 40,
+    }).start();
+    setPanelExpanded(!panelExpanded);
+  }, [panelExpanded, panelAnim]);
+
   const handleMapPress = useCallback(() => {
     // Register tap for panic detection
     registerTap();
     // Collapse panel if expanded
     if (panelExpanded) {
-      Animated.spring(panelAnim, {
-        toValue: 0,
-        useNativeDriver: false,
-        friction: 8,
-        tension: 40,
-      }).start();
-      setPanelExpanded(false);
+      togglePanel();
     }
-  }, [panelExpanded, panelAnim, registerTap]);
+  }, [panelExpanded, togglePanel, registerTap]);
+
+  // Animated positions for overlays
+  const speedBottom = panelAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [125, 235],
+  });
+
+  const devBadgeBottom = panelAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [135, 245],
+  });
 
   const handlePanic = () => {
     setPanicReason('Manual panic trigger');
@@ -297,14 +352,26 @@ export default function ActiveRouteScreen({ navigation }: any) {
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Report Incident</Text>
             <Text style={styles.modalSubtitle}>Briefly describe the incident:</Text>
-            <TextInput
-              style={styles.modalInput}
-              placeholder="E.g., minor scrape, mechanical defect..."
-              placeholderTextColor="rgba(255,255,255,0.4)"
-              value={incidentDescription}
-              onChangeText={setIncidentDescription}
-              multiline
-            />
+            <View style={styles.modalInputWrapper}>
+              <TextInput
+                style={styles.modalInput}
+                placeholder="E.g., minor scrape, mechanical defect..."
+                placeholderTextColor="rgba(255,255,255,0.4)"
+                value={incidentDescription}
+                onChangeText={setIncidentDescription}
+                multiline
+              />
+              <TouchableOpacity
+                style={styles.micButton}
+                onPress={() => startVoiceInput(setIncidentDescription, incidentDescription)}
+              >
+                <MaterialCommunityIcons
+                  name="microphone"
+                  size={20}
+                  color={isRecording ? '#ef4444' : 'rgba(255,255,255,0.6)'}
+                />
+              </TouchableOpacity>
+            </View>
             <View style={styles.modalButtons}>
               <TouchableOpacity
                 style={[styles.modalBtn, styles.modalBtnCancel]}
@@ -350,15 +417,14 @@ export default function ActiveRouteScreen({ navigation }: any) {
           </Marker>
         )}
 
-        {/* Reroute polyline (shows if diverted) */}
+        {/* Reroute polyline – neon dashes back to next stop */}
         {isDiverted && divertedPolyline.length > 0 && (
-          <Polyline
+          <DashedPolyline
             coordinates={divertedPolyline}
-            strokeColor="#10b981" // Green to indicate Google-like re-route
+            strokeColor="#00ff88"
             strokeWidth={4}
-            lineDashPattern={[10, 10]}
-            lineJoin="round"
-            lineCap="round"
+            dashLength={25}
+            gapLength={15}
             zIndex={3}
           />
         )}
@@ -444,8 +510,17 @@ export default function ActiveRouteScreen({ navigation }: any) {
         </Svg>
       </TouchableOpacity>
 
-      {/* Speed Indicator – glassmorphic */}
-      <SpeedIndicator speedMps={currentLocation?.speed ?? null} />
+      {/* Speed Indicator */}
+      <SpeedIndicator speedMps={currentLocation?.speed ?? null} style={{ bottom: speedBottom }} />
+
+      {/* Divert debug badge - shows dist from route; hidden when on-route */}
+      {__DEV__ && (
+        <Animated.View style={[styles.debugBadge, { bottom: devBadgeBottom }]}>
+          <Text style={styles.debugText}>
+            {isDiverted ? `🔀 Deviation: ${distFromRoute}m` : `✅ Snapped`}
+          </Text>
+        </Animated.View>
+      )}
 
       {/* Collapsible Bottom Panel – glassmorphic */}
       <CollapsibleBottomPanel
@@ -453,6 +528,8 @@ export default function ActiveRouteScreen({ navigation }: any) {
         routeDirection={routeDirection}
         scanState={scanState}
         infoRequestCount={infoRequestCount}
+        expanded={panelExpanded}
+        onToggle={togglePanel}
         onNavigateRoster={() => navigation.navigate('Roster')}
         onNavigateMessages={() => navigation.navigate('AlertMessages')}
         onEndRoute={handleEndRoute}
@@ -498,6 +575,23 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  debugBadge: {
+    position: 'absolute',
+    bottom: 135,
+    right: 12,
+    backgroundColor: 'rgba(15,23,42,0.85)',
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  debugText: {
+    fontSize: 11,
+    color: '#00ff88',
+    fontFamily: 'Inter_700Bold',
+    fontWeight: '700',
+  },
   // Modal – glassmorphic
   modalOverlay: {
     position: 'absolute',
@@ -511,38 +605,48 @@ const styles = StyleSheet.create({
     zIndex: 1000,
   },
   modalContent: {
-    backgroundColor: 'rgba(15,23,42,0.92)',
+    backgroundColor: 'rgba(10,16,35,0.95)',
     borderWidth: 1,
-    borderColor: GLASS_BORDER,
-    padding: 20,
+    borderColor: 'rgba(255,255,255,0.1)',
+    padding: 18,
     borderRadius: 16,
-    width: '85%',
+    width: '90%',
   },
   modalTitle: {
-    fontSize: 22,
+    fontSize: 18,
     fontFamily: 'Inter_800ExtraBold',
     fontWeight: 'bold',
     color: '#fff',
-    marginBottom: 6,
+    marginBottom: 4,
   },
   modalSubtitle: {
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: 'Inter_400Regular',
-    color: 'rgba(255,255,255,0.6)',
+    color: 'rgba(255,255,255,0.5)',
+    marginBottom: 10,
+  },
+  modalInputWrapper: {
+    position: 'relative',
     marginBottom: 14,
   },
   modalInput: {
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: 'rgba(255,255,255,0.05)',
     borderWidth: 1,
-    borderColor: GLASS_BORDER,
+    borderColor: 'rgba(255,255,255,0.1)',
     borderRadius: 10,
     padding: 12,
-    minHeight: 80,
+    paddingRight: 44,
+    minHeight: 250,
     textAlignVertical: 'top',
-    marginBottom: 16,
-    fontSize: 15,
+    fontSize: 14,
     fontFamily: 'Inter_400Regular',
     color: '#fff',
+  },
+  micButton: {
+    position: 'absolute',
+    right: 10,
+    bottom: 10,
+    padding: 4,
   },
   modalButtons: {
     flexDirection: 'row',

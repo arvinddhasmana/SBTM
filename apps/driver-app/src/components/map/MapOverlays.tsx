@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Animated } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Stop } from '../../types';
 import { haversineMeters, formatDistance } from '../../utils/geo';
@@ -10,43 +10,44 @@ const GLASS_BORDER = 'rgba(255,255,255,0.12)';
 // ── Speed Indicator ──────────────────────────────────────────────────
 interface SpeedProps {
   speedMps: number | null;
+  style?: any;
 }
 
-export function SpeedIndicator({ speedMps }: SpeedProps) {
+export function SpeedIndicator({ speedMps, style }: SpeedProps) {
   const kph = Math.round((speedMps ?? 0) * 3.6);
   return (
-    <View style={speedStyles.container}>
+    <Animated.View style={[speedStyles.container, style]}>
       <Text style={speedStyles.value}>{kph}</Text>
       <Text style={speedStyles.unit}>km/h</Text>
-    </View>
+    </Animated.View>
   );
 }
 
 const speedStyles = StyleSheet.create({
   container: {
     position: 'absolute',
-    bottom: 80,
+    bottom: 125,
     left: 12,
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: GLASS_BG,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: 'rgba(10,16,35,0.7)',
     borderWidth: 1,
-    borderColor: GLASS_BORDER,
+    borderColor: 'rgba(255,255,255,0.1)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   value: {
-    fontSize: 20,
+    fontSize: 17,
     fontFamily: 'Inter_800ExtraBold',
     fontWeight: '800',
     color: '#fff',
-    lineHeight: 22,
+    lineHeight: 19,
   },
   unit: {
-    fontSize: 9,
+    fontSize: 8,
     fontFamily: 'Inter_600SemiBold',
-    color: 'rgba(255,255,255,0.6)',
+    color: 'rgba(255,255,255,0.55)',
     fontWeight: '600',
     marginTop: -1,
   },
@@ -107,30 +108,30 @@ const bannerStyles = StyleSheet.create({
     top: 50,
     left: 12,
     right: 64,
-    backgroundColor: 'rgba(15,23,42,0.88)',
-    borderRadius: 12,
+    backgroundColor: 'rgba(10,16,35,0.9)',
+    borderRadius: 10,
     borderLeftWidth: 3,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    borderColor: 'rgba(255,255,255,0.08)',
+    paddingHorizontal: 10,
+    paddingVertical: 7,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 8,
   },
   textBlock: {
     flex: 1,
   },
   label: {
-    fontSize: 10,
+    fontSize: 9,
     fontFamily: 'Inter_800ExtraBold',
-    color: 'rgba(255,255,255,0.5)',
+    color: 'rgba(255,255,255,0.45)',
     fontWeight: '800',
     letterSpacing: 1.5,
-    marginBottom: 1,
+    marginBottom: 0,
   },
   name: {
-    fontSize: 15,
+    fontSize: 7,
     fontFamily: 'Inter_700Bold',
     fontWeight: '700',
     color: '#fff',
@@ -139,14 +140,14 @@ const bannerStyles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   distance: {
-    fontSize: 15,
+    fontSize: 13,
     fontFamily: 'Inter_800ExtraBold',
     fontWeight: '800',
   },
   eta: {
-    fontSize: 11,
+    fontSize: 10,
     fontFamily: 'Inter_400Regular',
-    color: 'rgba(255,255,255,0.5)',
+    color: 'rgba(255,255,255,0.45)',
     marginTop: 1,
   },
 });

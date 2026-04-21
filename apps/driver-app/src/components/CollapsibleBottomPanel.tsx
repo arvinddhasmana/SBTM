@@ -9,6 +9,8 @@ interface Props {
   routeDirection: string;
   scanState: string;
   infoRequestCount: number;
+  expanded: boolean;
+  onToggle: () => void;
   onNavigateRoster: () => void;
   onNavigateMessages: () => void;
   onEndRoute: () => void;
@@ -21,29 +23,28 @@ export default function CollapsibleBottomPanel({
   routeDirection,
   scanState,
   infoRequestCount,
+  expanded,
+  onToggle,
   onNavigateRoster,
   onNavigateMessages,
   onEndRoute,
   onReportIncident,
   onPanic,
 }: Props) {
-  const [expanded, setExpanded] = useState(false);
   const animValue = useRef(new Animated.Value(0)).current;
 
-  const toggle = useCallback(() => {
-    const toValue = expanded ? 0 : 1;
+  React.useEffect(() => {
     Animated.spring(animValue, {
-      toValue,
+      toValue: expanded ? 1 : 0,
       useNativeDriver: false,
       friction: 8,
       tension: 40,
     }).start();
-    setExpanded(!expanded);
   }, [expanded, animValue]);
 
   const expandedHeight = animValue.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, 200],
+    outputRange: [0, 110],
   });
 
   const chevronRotation = animValue.interpolate({
@@ -57,7 +58,7 @@ export default function CollapsibleBottomPanel({
     <View style={styles.wrapper}>
       {/* Drag handle */}
       <TouchableOpacity
-        onPress={toggle}
+        onPress={onToggle}
         style={styles.chevronBar}
         activeOpacity={0.8}
         hitSlop={{ top: 14, bottom: 14, left: 40, right: 40 }}
@@ -166,18 +167,18 @@ const GLASS_BORDER = 'rgba(255,255,255,0.1)';
 
 const styles = StyleSheet.create({
   wrapper: {
-    backgroundColor: GLASS_BG,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    backgroundColor: 'rgba(10,16,35,0.39)',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
     borderTopWidth: 1,
     borderLeftWidth: 1,
     borderRightWidth: 1,
-    borderColor: GLASS_BORDER,
+    borderColor: 'rgba(255,255,255,0.04)',
   },
   chevronBar: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 10,
+    paddingVertical: 6,
   },
   dragHandle: {
     width: 38,
@@ -188,9 +189,9 @@ const styles = StyleSheet.create({
   collapsedStrip: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingBottom: 14,
-    gap: 10,
+    paddingHorizontal: 12,
+    paddingBottom: 8,
+    gap: 8,
   },
   routeInfo: {
     flex: 1,
@@ -199,10 +200,10 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   routeName: {
-    fontSize: 16,
-    fontFamily: 'Inter_700Bold',
-    fontWeight: '700',
-    color: '#fff',
+    fontSize: 7,
+    fontFamily: 'Inter_600SemiBold',
+    fontWeight: '600',
+    color: '#e2e8f0',
     flexShrink: 1,
   },
   dirBadge: {
@@ -237,25 +238,25 @@ const styles = StyleSheet.create({
   panicButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 10,
+    gap: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 8,
   },
   panicText: {
     color: '#fff',
     fontFamily: 'Inter_800ExtraBold',
     fontWeight: '900',
-    fontSize: 14,
+    fontSize: 12,
     letterSpacing: 0.5,
   },
   expandable: {
     overflow: 'hidden',
   },
   expandContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-    gap: 10,
+    paddingHorizontal: 10,
+    paddingBottom: 10,
+    gap: 6,
   },
   blePill: {
     flexDirection: 'row',
@@ -291,13 +292,13 @@ const styles = StyleSheet.create({
   },
   buttonRow: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 6,
   },
   btn: {
     flex: 1,
-    flexDirection: 'column',
-    paddingVertical: 12,
-    borderRadius: 12,
+    flexDirection: 'row',
+    paddingVertical: 8,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 5,
@@ -305,14 +306,14 @@ const styles = StyleSheet.create({
     borderColor: GLASS_BORDER,
     position: 'relative',
   },
-  btnRoster: { backgroundColor: 'rgba(59,130,246,0.3)', borderColor: 'rgba(59,130,246,0.4)' },
-  btnMessages: { backgroundColor: 'rgba(99,102,241,0.3)', borderColor: 'rgba(99,102,241,0.4)' },
-  btnEnd: { backgroundColor: 'rgba(245,158,11,0.3)', borderColor: 'rgba(245,158,11,0.4)' },
+  btnRoster: { backgroundColor: 'rgba(59,130,246,0.09)', borderColor: 'rgba(59,130,246,0.15)' },
+  btnMessages: { backgroundColor: 'rgba(99,102,241,0.09)', borderColor: 'rgba(99,102,241,0.15)' },
+  btnEnd: { backgroundColor: 'rgba(245,158,11,0.09)', borderColor: 'rgba(245,158,11,0.15)' },
   btnText: {
-    color: '#fff',
+    color: 'rgba(255,255,255,0.9)',
     fontFamily: 'Inter_600SemiBold',
     fontWeight: '600',
-    fontSize: 12,
+    fontSize: 11,
   },
   badge: {
     position: 'absolute',
@@ -336,17 +337,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    backgroundColor: 'rgba(245,158,11,0.15)',
-    paddingVertical: 12,
-    borderRadius: 12,
+    gap: 6,
+    backgroundColor: 'rgba(245,158,11,0.05)',
+    paddingVertical: 8,
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: 'rgba(245,158,11,0.3)',
+    borderColor: 'rgba(245,158,11,0.1)',
   },
   incidentText: {
-    color: 'rgba(255,255,255,0.85)',
+    color: 'rgba(255,255,255,0.75)',
     fontFamily: 'Inter_600SemiBold',
     fontWeight: '600',
-    fontSize: 13,
+    fontSize: 11,
   },
 });

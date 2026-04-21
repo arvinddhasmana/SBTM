@@ -150,6 +150,7 @@ export class OptimizationService {
     try {
       const coordStr = waypoints.map((w) => `${w.lng},${w.lat}`).join(';');
       const url = `${this.osrmBaseUrl}/route/v1/driving/${coordStr}`;
+      this.logger.log(`Calling OSRM: ${url}`);
 
       const response = await axios.get<OsrmRouteResponse>(url, {
         params: {
