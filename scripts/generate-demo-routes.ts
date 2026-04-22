@@ -922,6 +922,39 @@ function loadCache(): CacheData {
 }
 
 // ============================================================================
+// Sibling stop rule
+// ============================================================================
+
+/**
+ * Apply the sibling stop rule across all schools:
+ * Students with the same parent who are assigned to the same route must share the same bus stop.
+ * We keep the stop of the first sibling and assign it to all subsequent siblings on that route.
+ */
+function applySiblingStopRule(allSchools: SchoolData[]): void {
+  for (const sd of allSchools) {
+    for (const parent of sd.parents) {
+      if (parent.studentIds.length <= 1) continue;
+      const routeGroups = new Map<number, (typeof sd.students)[0][]>();
+      for (const childId of parent.studentIds) {
+        const child = sd.students.find((st) => st.id === childId);
+        if (!child) continue;
+        if (!routeGroups.has(child.amRouteIdx)) routeGroups.set(child.amRouteIdx, []);
+        routeGroups.get(child.amRouteIdx)!.push(child);
+      }
+      for (const siblings of routeGroups.values()) {
+        if (siblings.length <= 1) continue;
+        const sharedAmStop = siblings[0].amStopRefId;
+        const sharedPmStop = siblings[0].pmStopRefId;
+        for (const sibling of siblings.slice(1)) {
+          sibling.amStopRefId = sharedAmStop;
+          sibling.pmStopRefId = sharedPmStop;
+        }
+      }
+    }
+  }
+}
+
+// ============================================================================
 // Main
 // ============================================================================
 
@@ -951,6 +984,9 @@ async function main() {
 
     saveCache({ generatedAt: new Date().toISOString(), schools: allSchools });
   }
+
+  // Apply sibling stop rule to all schools (works whether data came from cache or fresh generation)
+  applySiblingStopRule(allSchools);
 
   // Generate SQL
   const sql = generateSql(allSchools);
