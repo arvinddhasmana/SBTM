@@ -26,9 +26,9 @@ This document is the operational setup guide for demos. For current capability g
 
 - [LiveDemoScript.md](LiveDemoScript.md)
 - [QUICK_REFERENCE.md](QUICK_REFERENCE.md)
-- [Real Phone Deployment Guide](../RealPhoneDeploymentGuide.md) -- deploy on a real phone and drive a route
-- [GapAnalysis.md](../prd/GapAnalysis.md)
-- [PhaseWiseImplementationPlan.md](../prd/PhaseWiseImplementationPlan.md)
+- [Real Phone Deployment Guide](../Operations/RealPhoneDeploymentGuide.md) -- deploy on a real phone and drive a route
+- [GapAnalysis.md](../prd/v4/GapAnalysis.md)
+- [PhaseWiseImplementationPlan.md](../prd/v1/PhaseWiseImplementationPlan.md)
 - [TestingGuide.md](../Test/TestingGuide.md)
 - [v4 Gap Analysis](../prd/v4/GapAnalysis.md)
 - [v4 Roles and Workflows](../prd/v4/RolesAndWorkflows.md)
@@ -354,7 +354,7 @@ This script is a presentation flow for stakeholders and internal walkthroughs. I
 
 - [DEMO_SETUP_GUIDE.md](DEMO_SETUP_GUIDE.md)
 - [QUICK_REFERENCE.md](QUICK_REFERENCE.md)
-- [GapAnalysis.md](../prd/GapAnalysis.md)
+- [GapAnalysis.md](../prd/v4/GapAnalysis.md)
 - [TestingGuide.md](../Test/TestingGuide.md)
 - [v4 Gap Analysis](../prd/v4/GapAnalysis.md)
 - [v4 Alert Strategy](../prd/v4/AlertStrategy.md)
@@ -538,7 +538,7 @@ This is the fast operational companion to `DEMO_SETUP_GUIDE.md`. For feature gap
 
 - [DEMO_SETUP_GUIDE.md](DEMO_SETUP_GUIDE.md)
 - [LiveDemoScript.md](LiveDemoScript.md)
-- [GapAnalysis.md](../prd/GapAnalysis.md)
+- [GapAnalysis.md](../prd/v4/GapAnalysis.md)
 - [TestingGuide.md](../Test/TestingGuide.md)
 
 ## Fast Commands

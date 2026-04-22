@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: osrm
+  labels:
+    app: osrm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: osrm
+  template:
+    metadata:
+      labels:
+        app: osrm
+      annotations:
+        azure.workload.identity/use: 'true'
+    spec:
+      serviceAccountName: sbtm-workload-sa
+      initContainers:
+        - name: fetch-osrm-data
+          image: mcr.microsoft.com/azure-cli:latest
+          command:
+            - sh
+            - -c
+            - |
+              az storage blob download-batch \
+                --connection-string "${AZURE_STORAGE_CONNECTION_STRING}" \
+                --source osrm-data \
+                --destination /osrm-data
+          env:
+            - name: AZURE_STORAGE_CONNECTION_STRING
+              valueFrom:
+                secretKeyRef:
+                  name: sbtm-secrets
+                  key: AZURE_STORAGE_CONNECTION_STRING
+          volumeMounts:
+            - name: osrm-data
+              mountPath: /osrm-data
+      containers:
+        - name: osrm
+          image: ghcr.io/project-osrm/osrm-backend:v5.27.1
+          args:
+            - osrm-routed
+            - --algorithm
+            - mld
+            - /osrm-data/ottawa-latest.osrm
+          ports:
+            - containerPort: 5000
+          volumeMounts:
+            - name: osrm-data
+              mountPath: /osrm-data
+          resources:
+            requests:
+              cpu: '500m'
+              memory: '1Gi'
+            limits:
+              cpu: '2'
+              memory: '2Gi'
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 20
+            periodSeconds: 15
+      volumes:
+        - name: osrm-data
+          emptyDir: {}

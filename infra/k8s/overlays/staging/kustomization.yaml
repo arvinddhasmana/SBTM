@@ -1,0 +1,100 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: sbtm-staging
+
+resources:
+  - ../../base/namespace.yaml
+  - ../../base/secrets/keyvault-csi.yaml
+  - ../../base/api-gateway/deployment.yaml
+  - ../../base/api-gateway/service.yaml
+  - ../../base/gps-tracking/deployment.yaml
+  - ../../base/gps-tracking/service.yaml
+  - ../../base/emergency-alerts/deployment.yaml
+  - ../../base/emergency-alerts/service.yaml
+  - ../../base/student-presence/deployment.yaml
+  - ../../base/student-presence/service.yaml
+  - ../../base/student-management/deployment.yaml
+  - ../../base/student-management/service.yaml
+  - ../../base/compliance-management/deployment.yaml
+  - ../../base/compliance-management/service.yaml
+  - ../../base/video-service/deployment.yaml
+  - ../../base/video-service/service.yaml
+  - ../../base/notification-service/deployment.yaml
+  - ../../base/notification-service/service.yaml
+  - ../../base/osrm/deployment.yaml
+  - ../../base/osrm/service.yaml
+  - ../../base/ingress/ingress-rules.yaml
+
+patches:
+  # Staging: 1 replica for all deployments
+  - patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 1
+    target:
+      kind: Deployment
+
+  # Staging: debug log level and staging NODE_ENV
+  - patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: LOG_LEVEL
+          value: debug
+      - op: replace
+        path: /spec/template/spec/containers/0/env/1/value
+        value: staging
+    target:
+      kind: Deployment
+      labelSelector: 'app in (api-gateway,gps-tracking,emergency-alerts,student-presence,student-management,compliance-management,video-service,notification-service)'
+
+  # Staging: imagePullPolicy Always (always pull latest)
+  - patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/imagePullPolicy
+        value: Always
+    target:
+      kind: Deployment
+
+  # Staging: Key Vault uses staging vault name
+  - patch: |-
+      - op: replace
+        path: /spec/parameters/keyvaultName
+        value: sbtm-kv-demo
+    target:
+      kind: SecretProviderClass
+      name: sbtm-keyvault-secrets
+
+  # Staging: ingress host
+  - patch: |-
+      - op: replace
+        path: /spec/rules/0/host
+        value: api.staging.sbtm.example.com
+      - op: replace
+        path: /spec/tls/0/hosts/0
+        value: api.staging.sbtm.example.com
+    target:
+      kind: Ingress
+      name: sbtm-ingress
+
+commonLabels:
+  environment: staging
+
+images:
+  - name: sbtmacrdemo.azurecr.io/sbtm/api-gateway
+    newTag: latest
+  - name: sbtmacrdemo.azurecr.io/sbtm/gps-tracking
+    newTag: latest
+  - name: sbtmacrdemo.azurecr.io/sbtm/emergency-alerts
+    newTag: latest
+  - name: sbtmacrdemo.azurecr.io/sbtm/student-presence
+    newTag: latest
+  - name: sbtmacrdemo.azurecr.io/sbtm/student-management
+    newTag: latest
+  - name: sbtmacrdemo.azurecr.io/sbtm/compliance-management
+    newTag: latest
+  - name: sbtmacrdemo.azurecr.io/sbtm/video-service
+    newTag: latest
+  - name: sbtmacrdemo.azurecr.io/sbtm/notification-service
+    newTag: latest

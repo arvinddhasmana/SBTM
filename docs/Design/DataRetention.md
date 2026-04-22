@@ -67,4 +67,4 @@ The following events should trigger lifecycle review:
 - [DataArchitecture.md](DataArchitecture.md)
 - [DatabaseSchema.md](DatabaseSchema.md)
 - [SecurityPrivacyArchitecture.md](SecurityPrivacyArchitecture.md)
-- [../../Operations/Runbooks.md](../../Operations/Runbooks.md)
+- [../Operations/Runbooks.md](../Operations/Runbooks.md)

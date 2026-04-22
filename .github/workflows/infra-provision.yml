@@ -1,0 +1,98 @@
+name: Infrastructure Provisioning
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        type: choice
+        options: [demo, production]
+      location:
+        description: 'Azure region (eastus for demo, canadacentral for production)'
+        required: false
+        default: 'eastus'
+        type: string
+
+jobs:
+  provision:
+    name: Provision Azure Infrastructure
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      id-token: write
+      contents: read
+
+    environment:
+      name: ${{ inputs.environment == 'production' && 'production' || 'staging' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Create resource group
+        run: |
+          az group create \
+            --name sbtm-rg \
+            --location ${{ inputs.location }} \
+            --output none
+
+      - name: Deploy Bicep templates
+        id: bicep
+        run: |
+          OUTPUT=$(az deployment group create \
+            --resource-group sbtm-rg \
+            --template-file infra/azure/main.bicep \
+            --parameters "@infra/azure/parameters.${{ inputs.environment }}.json" \
+            --query "properties.outputs" \
+            --output json)
+          echo "${OUTPUT}" | jq .
+          AKS_NAME=$(echo "${OUTPUT}" | jq -r '.aksClusterName.value')
+          ACR_SERVER=$(echo "${OUTPUT}" | jq -r '.acrLoginServer.value')
+          echo "aks_name=${AKS_NAME}" >> "$GITHUB_OUTPUT"
+          echo "acr_server=${ACR_SERVER}" >> "$GITHUB_OUTPUT"
+
+      - name: Get AKS credentials
+        run: |
+          az aks get-credentials \
+            --resource-group sbtm-rg \
+            --name ${{ steps.bicep.outputs.aks_name }} \
+            --overwrite-existing
+
+      - name: Install NGINX Ingress Controller
+        run: |
+          helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+          helm repo update
+          helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
+            --namespace ingress-nginx \
+            --create-namespace \
+            --set controller.service.annotations."service\.beta\.kubernetes\.io/azure-load-balancer-health-probe-request-path"=/healthz \
+            --wait
+
+      - name: Install cert-manager
+        run: |
+          helm repo add jetstack https://charts.jetstack.io
+          helm repo update
+          helm upgrade --install cert-manager jetstack/cert-manager \
+            --namespace cert-manager \
+            --create-namespace \
+            --set installCRDs=true \
+            --wait
+
+      - name: Apply namespaces
+        run: kubectl apply -f infra/k8s/base/namespace.yaml
+
+      - name: Summary
+        run: |
+          echo "### Infrastructure Provisioned" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Environment:** ${{ inputs.environment }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **AKS Cluster:** ${{ steps.bicep.outputs.aks_name }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **ACR Server:** ${{ steps.bicep.outputs.acr_server }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Next: Run setup-keyvault.sh and setup-db.sh, then deploy via deploy-staging.yml" >> "$GITHUB_STEP_SUMMARY"

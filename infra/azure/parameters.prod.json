@@ -1,0 +1,21 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "environment": { "value": "production" },
+    "location": { "value": "canadacentral" },
+    "aksNodeCount": { "value": 3 },
+    "aksNodeSize": { "value": "Standard_D4s_v3" },
+    "postgresSkuName": { "value": "Standard_D4s_v3" },
+    "postgresSkuTier": { "value": "GeneralPurpose" },
+    "postgresStorageGB": { "value": 256 },
+    "postgresAdminPassword": {
+      "reference": { "keyVault": { "id": "" }, "secretName": "postgres-admin-password" }
+    },
+    "redisSkuName": { "value": "Standard" },
+    "redisSkuFamily": { "value": "C" },
+    "redisSkuCapacity": { "value": 1 },
+    "storageSkuName": { "value": "Standard_ZRS" },
+    "acrSkuName": { "value": "Standard" }
+  }
+}

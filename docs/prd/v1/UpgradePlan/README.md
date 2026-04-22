@@ -40,5 +40,5 @@ graph LR
 
 - [../GapAnalysis.md](../GapAnalysis.md) — Verified gap inventory
 - [../PhaseWiseImplementationPlan.md](../PhaseWiseImplementationPlan.md) — Summary plan
-- [../../Business/Requirements.md](../../Business/Requirements.md) — Business requirements
-- [../../Design/Architecture.md](../../Design/Architecture.md) — System architecture
+- [../../Business/Requirements.md](../../../Business/Requirements.md) — Business requirements
+- [../../Design/Architecture.md](../../../Design/Architecture.md) — System architecture

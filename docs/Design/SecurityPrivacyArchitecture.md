@@ -13,7 +13,7 @@ This document captures the security and privacy architecture for SBTM with empha
 - [DataArchitecture.md](DataArchitecture.md)
 - [DatabaseSchema.md](DatabaseSchema.md)
 - [DataRetention.md](DataRetention.md)
-- [../../Operations/Runbooks.md](../../Operations/Runbooks.md)
+- [../Operations/Runbooks.md](../Operations/Runbooks.md)
 
 ## Security and Privacy Principles
 
@@ -25,12 +25,12 @@ This document captures the security and privacy architecture for SBTM with empha
 
 ## Identity and Access Model
 
-| Concern                  | Current State                         | Target Direction                                        |
-| ------------------------ | ------------------------------------- | ------------------------------------------------------- |
-| User authentication      | JWT via API Gateway                   | Continue at gateway with stronger session hardening     |
-| Role enforcement         | Gateway RBAC                          | Expand consistent downstream authorization expectations |
-| Tenant enforcement       | `school_id` filtering and scoped APIs | Add stronger DB and service-level guarantees            |
-| Service-to-service trust | Limited or absent                     | Internal JWT or mTLS before production rollout          |
+| Concern                  | Current State                         | Target Direction                                                                           |
+| ------------------------ | ------------------------------------- | ------------------------------------------------------------------------------------------ |
+| User authentication      | JWT via API Gateway                   | Continue at gateway with stronger session hardening                                        |
+| Role enforcement         | Gateway RBAC                          | Expand consistent downstream authorization expectations                                    |
+| Tenant enforcement       | `school_id` filtering and scoped APIs | Add stronger DB and service-level guarantees                                               |
+| Service-to-service trust | Limited or absent                     | Azure Workload Identity + AKS VNET policy (services only reachable within cluster network) |
 
 ## Trust Boundaries
 
@@ -70,10 +70,23 @@ flowchart LR
 ## Security Gaps to Close
 
 - Database-level tenant hardening, including RLS where feasible.
-- Service-to-service trust for internal calls.
+- Service-to-service trust: addressed in Azure AKS deployment via Workload Identity and VNET network policies restricting pod-to-pod traffic; full mTLS via service mesh is a future consideration.
 - Centralized audit coverage across all critical service mutations.
-- Stronger browser session hardening for parent-facing workflows.
-- Formalized key rotation, backup protection, and incident response procedures.
+- Stronger browser session hardening for parent-facing workflows (migrate to HttpOnly cookies for production).
+- Formalized key rotation via Azure Key Vault; backup encryption and incident response procedures documented in `docs/Operations/Runbooks.md`.
+- Parent App tokens currently in `localStorage` — migrate to HttpOnly cookie before production launch.
+
+## Azure Security Controls (Production Deployment)
+
+| Control             | Implementation                                                                                 |
+| ------------------- | ---------------------------------------------------------------------------------------------- |
+| Secrets management  | Azure Key Vault + CSI driver; no secrets in K8s ConfigMaps or image layers                     |
+| Network isolation   | AKS VNET with private endpoints for PostgreSQL and Redis; only API Gateway exposed via ingress |
+| Identity federation | Azure Workload Identity for pod-to-Azure-service auth (ACR, KV, Blob)                          |
+| TLS                 | cert-manager + Let's Encrypt for AKS ingress; Azure Static Web Apps enforces HTTPS             |
+| Image scanning      | Azure Defender for Containers scans ACR images on push                                         |
+| WAF                 | Azure Front Door WAF (Standard profile) for production public endpoints                        |
+| RBAC                | AKS RBAC + namespace isolation per environment (staging vs production)                         |
 
 ## Traceability
 

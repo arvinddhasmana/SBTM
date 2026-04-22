@@ -154,7 +154,7 @@ The table below maps key platform capabilities to the guide sections that cover 
 
 ## Current-State Note
 
-These guides describe the current system and call out partial or planned workflows explicitly. They should not be used to infer full production readiness. For implementation status, see [Gap Analysis](../prd/v1/GapAnalysis.md) and [Upgrade Plan](../prd/v1/UpgradePlan.md).
+These guides describe the current system and call out partial or planned workflows explicitly. They should not be used to infer full production readiness. For implementation status, see [Gap Analysis](../prd/v1/GapAnalysis.md) and [Upgrade Plan](../prd/v1/UpgradePlan/README.md).
 
 ---
 
@@ -365,7 +365,7 @@ This ensures a clean, focused experience: administrators are not overwhelmed by 
 
 ## When to Use the School Operator Guide Instead
 
-If your work is primarily school-level daily dispatch, route oversight, and immediate incident handling, the [School Operator Guide](../school-operator/README.md) is the better operational reference.
+If your work is primarily school-level daily dispatch, route oversight, and immediate incident handling, the [School Operator Guide](school-operator/README.md) is the better operational reference.
 
 ---
 

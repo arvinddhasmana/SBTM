@@ -12,11 +12,11 @@ Related documents:
 
 - [PhaseWiseImplementationPlan.md](./PhaseWiseImplementationPlan.md)
 - [UpgradePlan/](UpgradePlan/) — Self-contained phase plans (Phase 1–5)
-- [../Design/Architecture.md](../Design/Architecture.md)
-- [../Design/EventCatalog.md](../Design/EventCatalog.md)
-- [../Business/Requirements.md](../Business/Requirements.md)
-- [../Test/TestingGuide.md](../Test/TestingGuide.md)
-- [../Demo/DEMO_SETUP_GUIDE.md](../Demo/DEMO_SETUP_GUIDE.md)
+- [../Design/Architecture.md](../../Design/Architecture.md)
+- [../Design/EventCatalog.md](../../Design/EventCatalog.md)
+- [../Business/Requirements.md](../../Business/Requirements.md)
+- [../Test/TestingGuide.md](../../Test/TestingGuide.md)
+- [../Demo/DEMO_SETUP_GUIDE.md](../../Demo/DEMO_SETUP_GUIDE.md)
 
 ## Executive Summary
 

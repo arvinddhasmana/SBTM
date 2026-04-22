@@ -1,0 +1,70 @@
+name: Deploy to Staging
+
+on:
+  workflow_run:
+    workflows: [Build and Push Images]
+    types: [completed]
+    branches: [main]
+
+jobs:
+  deploy-staging:
+    name: Deploy to AKS Staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    permissions:
+      id-token: write
+      contents: read
+
+    environment:
+      name: staging
+      url: https://api.staging.sbtm.example.com/health
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Get AKS credentials
+        run: |
+          az aks get-credentials \
+            --resource-group ${{ secrets.AKS_RESOURCE_GROUP }} \
+            --name ${{ secrets.AKS_CLUSTER_NAME }} \
+            --overwrite-existing
+
+      - name: Set image tag from triggering workflow
+        id: tag
+        run: |
+          SHA_TAG="sha-$(echo '${{ github.event.workflow_run.head_sha }}' | cut -c1-7)"
+          echo "tag=${SHA_TAG}" >> "$GITHUB_OUTPUT"
+
+      - name: Update image tags in staging overlay
+        run: |
+          for svc in api-gateway gps-tracking emergency-alerts student-presence student-management compliance-management video-service notification-service; do
+            cd infra/k8s/overlays/staging
+            kustomize edit set image \
+              "${{ secrets.ACR_LOGIN_SERVER }}/sbtm/${svc}=${{ secrets.ACR_LOGIN_SERVER }}/sbtm/${svc}:${{ steps.tag.outputs.tag }}"
+            cd -
+          done
+
+      - name: Apply staging overlay
+        run: kubectl apply -k infra/k8s/overlays/staging
+
+      - name: Wait for rollout
+        run: kubectl rollout status deployment -n sbtm-staging --timeout=300s
+
+      - name: Smoke test
+        run: |
+          INGRESS_IP=$(kubectl get ingress sbtm-ingress -n sbtm-staging -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+          curl --fail --retry 5 --retry-delay 10 \
+            -H "Host: api.staging.sbtm.example.com" \
+            "http://${INGRESS_IP}/health" | jq .
+
+      - name: Pod status summary
+        if: always()
+        run: kubectl get pods -n sbtm-staging

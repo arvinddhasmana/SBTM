@@ -49,12 +49,12 @@ _Source: `prd/v1/PhaseWiseImplementationPlan.md`_
 - Last reviewed: 2026-03-30
 - Primary use: Delivery sequencing summary and index for detailed phase plans
 
-This is the summary index for the SBTM v1 upgrade plan. Each phase has a self-contained implementation plan in the [UpgradePlan/](UpgradePlan/) directory with full scope, acceptance criteria, verification, dependencies, and module cross-references.
+This is the summary index for the SBTM v1 upgrade plan. Each phase has a self-contained implementation plan in the [UpgradePlan/](v1/UpgradePlan/README.md) directory with full scope, acceptance criteria, verification, dependencies, and module cross-references.
 
 ## Related Documents
 
-- [GapAnalysis.md](GapAnalysis.md)
-- [UpgradePlan/README.md](UpgradePlan/README.md) — Phase plan index
+- [GapAnalysis.md](v4/GapAnalysis.md)
+- [UpgradePlan/README.md](v1/UpgradePlan/README.md) — Phase plan index
 - [../Business/Requirements.md](../Business/Requirements.md)
 - [../Design/Architecture.md](../Design/Architecture.md)
 - [../Design/TechnicalSpecifications.md](../Design/TechnicalSpecifications.md)
@@ -70,13 +70,13 @@ This is the summary index for the SBTM v1 upgrade plan. Each phase has a self-co
 
 ## Phase Summary
 
-| Phase                                                                                        | Goal                                                                                                                   | Gap Level | Detail                                                                      |
-| -------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | --------- | --------------------------------------------------------------------------- |
-| **[Phase 1: Parent Safety Communication](UpgradePlan/Phase-1-ParentSafetyCommunication.md)** | Deliver end-to-end parent notification — event occurs, parent receives message in near real time, delivery is recorded | Critical  | Notification backbone, parent delivery workflows, SSE integration           |
-| **[Phase 2: Driver Presence](UpgradePlan/Phase-2-DriverPresence.md)**                        | Make the driver app the authoritative presence-capture tool                                                            | High      | Roster-to-API wiring, BLE/SmartTag capture, route lifecycle state           |
-| **[Phase 3: GPS Intelligence](UpgradePlan/Phase-3-GpsEventingGeofencing.md)**                | Turn GPS from passive tracking into an operational intelligence pipeline                                               | High      | Event publication, geofencing, deviation detection, real route optimization |
-| **[Phase 4: Tenant Administration](UpgradePlan/Phase-4-TenantAdminProvisioning.md)**         | Operational multi-tenant onboarding without database seeding                                                           | Medium    | Org management, user provisioning, absence reporting, tenant dashboards     |
-| **[Phase 5: Production Hardening](UpgradePlan/Phase-5-SecurityProductionHardening.md)**      | Enterprise security, audit, and compliance controls                                                                    | Medium    | RLS, service-to-service auth, centralized audit, data lifecycle             |
+| Phase                                                                                           | Goal                                                                                                                   | Gap Level | Detail                                                                      |
+| ----------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | --------- | --------------------------------------------------------------------------- |
+| **[Phase 1: Parent Safety Communication](v1/UpgradePlan/Phase-1-ParentSafetyCommunication.md)** | Deliver end-to-end parent notification — event occurs, parent receives message in near real time, delivery is recorded | Critical  | Notification backbone, parent delivery workflows, SSE integration           |
+| **[Phase 2: Driver Presence](v1/UpgradePlan/Phase-2-DriverPresence.md)**                        | Make the driver app the authoritative presence-capture tool                                                            | High      | Roster-to-API wiring, BLE/SmartTag capture, route lifecycle state           |
+| **[Phase 3: GPS Intelligence](v1/UpgradePlan/Phase-3-GpsEventingGeofencing.md)**                | Turn GPS from passive tracking into an operational intelligence pipeline                                               | High      | Event publication, geofencing, deviation detection, real route optimization |
+| **[Phase 4: Tenant Administration](v1/UpgradePlan/Phase-4-TenantAdminProvisioning.md)**         | Operational multi-tenant onboarding without database seeding                                                           | Medium    | Org management, user provisioning, absence reporting, tenant dashboards     |
+| **[Phase 5: Production Hardening](v1/UpgradePlan/Phase-5-SecurityProductionHardening.md)**      | Enterprise security, audit, and compliance controls                                                                    | Medium    | RLS, service-to-service auth, centralized audit, data lifecycle             |
 
 ## Delivery Sequence
 
@@ -122,8 +122,8 @@ This analysis compares the revised v1 design in `docs/Design`, the business and 
 
 Related documents:
 
-- [PhaseWiseImplementationPlan.md](./PhaseWiseImplementationPlan.md)
-- [UpgradePlan/](UpgradePlan/) — Self-contained phase plans (Phase 1–5)
+- [PhaseWiseImplementationPlan.md](./v1/PhaseWiseImplementationPlan.md)
+- [UpgradePlan/](v1/UpgradePlan/README.md) — Self-contained phase plans (Phase 1–5)
 - [../Design/Architecture.md](../Design/Architecture.md)
 - [../Design/EventCatalog.md](../Design/EventCatalog.md)
 - [../Business/Requirements.md](../Business/Requirements.md)
@@ -386,13 +386,13 @@ Each phase file includes scope, acceptance criteria, verification steps, and cro
 
 ## Phase Index
 
-| Phase                                             | Focus                                            | Gap Level | Status  |
-| ------------------------------------------------- | ------------------------------------------------ | --------- | ------- |
-| [Phase 1](Phase-1-ParentSafetyCommunication.md)   | Complete the Parent Safety Communication Loop    | Critical  | Planned |
-| [Phase 2](Phase-2-DriverPresence.md)              | Finish the Driver Presence Workflow              | High      | Planned |
-| [Phase 3](Phase-3-GpsEventingGeofencing.md)       | GPS Eventing, Geofencing, and Route Intelligence | High      | Planned |
-| [Phase 4](Phase-4-TenantAdminProvisioning.md)     | Tenant Administration and User Provisioning      | Medium    | Planned |
-| [Phase 5](Phase-5-SecurityProductionHardening.md) | Security, Compliance, and Production Hardening   | Medium    | Planned |
+| Phase                                                            | Focus                                            | Gap Level | Status  |
+| ---------------------------------------------------------------- | ------------------------------------------------ | --------- | ------- |
+| [Phase 1](v1/UpgradePlan/Phase-1-ParentSafetyCommunication.md)   | Complete the Parent Safety Communication Loop    | Critical  | Planned |
+| [Phase 2](v1/UpgradePlan/Phase-2-DriverPresence.md)              | Finish the Driver Presence Workflow              | High      | Planned |
+| [Phase 3](v1/UpgradePlan/Phase-3-GpsEventingGeofencing.md)       | GPS Eventing, Geofencing, and Route Intelligence | High      | Planned |
+| [Phase 4](v1/UpgradePlan/Phase-4-TenantAdminProvisioning.md)     | Tenant Administration and User Provisioning      | Medium    | Planned |
+| [Phase 5](v1/UpgradePlan/Phase-5-SecurityProductionHardening.md) | Security, Compliance, and Production Hardening   | Medium    | Planned |
 
 ## Delivery Sequence
 
@@ -414,8 +414,8 @@ graph LR
 
 - [../GapAnalysis.md](../GapAnalysis.md) — Verified gap inventory
 - [../PhaseWiseImplementationPlan.md](../PhaseWiseImplementationPlan.md) — Summary plan
-- [../../Business/Requirements.md](../../Business/Requirements.md) — Business requirements
-- [../../Design/Architecture.md](../../Design/Architecture.md) — System architecture
+- [../../Business/Requirements.md](../Business/Requirements.md) — Business requirements
+- [../../Design/Architecture.md](../Design/Architecture.md) — System architecture
 
 ---
 
@@ -462,8 +462,8 @@ The notification delivery gap is classified as **Critical** in the gap analysis.
 
 **Implementation modules affected:**
 
-- [Module-4-EmergencyAlerts.md](../../Implementation/Module-4-EmergencyAlerts.md) — Producer side (already implemented)
-- [Module-6-StudentPresence.md](../../Implementation/Module-6-StudentPresence.md) — Producer side (already implemented)
+- [Module-4-EmergencyAlerts.md](../Implementation/Module-4-EmergencyAlerts.md) — Producer side (already implemented)
+- [Module-6-StudentPresence.md](../Implementation/Module-6-StudentPresence.md) — Producer side (already implemented)
 - New: Notification consumer (create or extend existing module)
 
 **Requirements traced:**
@@ -481,7 +481,7 @@ The notification delivery gap is classified as **Critical** in the gap analysis.
 
 **Implementation modules affected:**
 
-- [Module-2-ParentApp.md](../../Implementation/Module-2-ParentApp.md)
+- [Module-2-ParentApp.md](../Implementation/Module-2-ParentApp.md)
 
 ### 3. Parent App Real-Time Integration
 
@@ -491,8 +491,8 @@ The notification delivery gap is classified as **Critical** in the gap analysis.
 
 **Implementation modules affected:**
 
-- [Module-2-ParentApp.md](../../Implementation/Module-2-ParentApp.md)
-- [Module-8-ApiGateway.md](../../Implementation/Module-8-ApiGateway.md) — SSE proxy if needed
+- [Module-2-ParentApp.md](../Implementation/Module-2-ParentApp.md)
+- [Module-8-ApiGateway.md](../Implementation/Module-8-ApiGateway.md) — SSE proxy if needed
 
 ## Dependencies
 
@@ -528,9 +528,9 @@ After Phase 1 completion, the demo can show **real parent alerts** instead of na
 ## Related Documents
 
 - [../GapAnalysis.md](../GapAnalysis.md) — Gap: "Notifications" (Critical), "Parent real-time delivery" (High)
-- [../../Design/EventCatalog.md](../../Design/EventCatalog.md) — Event definitions
-- [../../Business/Requirements.md](../../Business/Requirements.md) — FR-NOTIFY-_, PR-CONSENT-_
-- [../../sdlc_guidelines/03_architecture_design/design_guidelines.md](../../sdlc_guidelines/03_architecture_design/design_guidelines.md) — Event-driven patterns
+- [../../Design/EventCatalog.md](../Design/EventCatalog.md) — Event definitions
+- [../../Business/Requirements.md](../Business/Requirements.md) — FR-NOTIFY-_, PR-CONSENT-_
+- [../../sdlc_guidelines/03_architecture_design/design_guidelines.md](../sdlc_guidelines/03_architecture_design/design_guidelines.md) — Event-driven patterns
 
 ---
 
@@ -576,8 +576,8 @@ Driver presence is the source-of-truth for whether a student is on the bus. Phas
 
 **Implementation modules affected:**
 
-- [Module-3-DriverApp.md](../../Implementation/Module-3-DriverApp.md)
-- [Module-6-StudentPresence.md](../../Implementation/Module-6-StudentPresence.md)
+- [Module-3-DriverApp.md](../Implementation/Module-3-DriverApp.md)
+- [Module-6-StudentPresence.md](../Implementation/Module-6-StudentPresence.md)
 
 **Requirements traced:**
 
@@ -594,8 +594,8 @@ Driver presence is the source-of-truth for whether a student is on the bus. Phas
 
 **Implementation modules affected:**
 
-- [Module-3-DriverApp.md](../../Implementation/Module-3-DriverApp.md)
-- [Module-6-StudentPresence.md](../../Implementation/Module-6-StudentPresence.md)
+- [Module-3-DriverApp.md](../Implementation/Module-3-DriverApp.md)
+- [Module-6-StudentPresence.md](../Implementation/Module-6-StudentPresence.md)
 
 **Requirements traced:**
 
@@ -610,8 +610,8 @@ Driver presence is the source-of-truth for whether a student is on the bus. Phas
 
 **Implementation modules affected:**
 
-- [Module-3-DriverApp.md](../../Implementation/Module-3-DriverApp.md)
-- [Module-1-GpsTracking.md](../../Implementation/Module-1-GpsTracking.md)
+- [Module-3-DriverApp.md](../Implementation/Module-3-DriverApp.md)
+- [Module-1-GpsTracking.md](../Implementation/Module-1-GpsTracking.md)
 
 ## Dependencies
 
@@ -646,10 +646,10 @@ After Phase 2 completion, the demo can show **true boarding and alighting flows*
 
 ## Related Documents
 
-- [Phase-1-ParentSafetyCommunication.md](Phase-1-ParentSafetyCommunication.md) — Prerequisite: notification pipeline
+- [Phase-1-ParentSafetyCommunication.md](v1/UpgradePlan/Phase-1-ParentSafetyCommunication.md) — Prerequisite: notification pipeline
 - [../GapAnalysis.md](../GapAnalysis.md) — Gap: "Driver presence workflow" (High)
-- [../../Design/Architecture.md](../../Design/Architecture.md) — Presence service architecture
-- [../../sdlc_guidelines/08_tech_specific/react_native_expo.md](../../sdlc_guidelines/08_tech_specific/react_native_expo.md) — Mobile conventions
+- [../../Design/Architecture.md](../Design/Architecture.md) — Presence service architecture
+- [../../sdlc_guidelines/08_tech_specific/react_native_expo.md](../sdlc_guidelines/08_tech_specific/react_native_expo.md) — Mobile conventions
 
 ---
 
@@ -696,7 +696,7 @@ GPS intelligence depends on the stable eventing foundation from Phase 1 and reli
 
 **Implementation modules affected:**
 
-- [Module-1-GpsTracking.md](../../Implementation/Module-1-GpsTracking.md)
+- [Module-1-GpsTracking.md](../Implementation/Module-1-GpsTracking.md)
 
 **Requirements traced:**
 
@@ -712,8 +712,8 @@ GPS intelligence depends on the stable eventing foundation from Phase 1 and reli
 
 **Implementation modules affected:**
 
-- [Module-1-GpsTracking.md](../../Implementation/Module-1-GpsTracking.md)
-- [Module-4-EmergencyAlerts.md](../../Implementation/Module-4-EmergencyAlerts.md) — Consume derived alert events
+- [Module-1-GpsTracking.md](../Implementation/Module-1-GpsTracking.md)
+- [Module-4-EmergencyAlerts.md](../Implementation/Module-4-EmergencyAlerts.md) — Consume derived alert events
 
 **Requirements traced:**
 
@@ -729,9 +729,9 @@ GPS intelligence depends on the stable eventing foundation from Phase 1 and reli
 
 **Implementation modules affected:**
 
-- [Module-7-AdminDashboard.md](../../Implementation/Module-7-AdminDashboard.md) — Route planner UI
-- [Module-8-ApiGateway.md](../../Implementation/Module-8-ApiGateway.md) — Route optimization proxy
-- [Module-1-GpsTracking.md](../../Implementation/Module-1-GpsTracking.md) — Route data model
+- [Module-7-AdminDashboard.md](../Implementation/Module-7-AdminDashboard.md) — Route planner UI
+- [Module-8-ApiGateway.md](../Implementation/Module-8-ApiGateway.md) — Route optimization proxy
+- [Module-1-GpsTracking.md](../Implementation/Module-1-GpsTracking.md) — Route data model
 
 ## Dependencies
 
@@ -767,11 +767,11 @@ After Phase 3 completion, the demo can show **real route intelligence** — live
 
 ## Related Documents
 
-- [Phase-1-ParentSafetyCommunication.md](Phase-1-ParentSafetyCommunication.md) — Event pipeline foundation
-- [Phase-2-DriverPresence.md](Phase-2-DriverPresence.md) — Route state dependency
+- [Phase-1-ParentSafetyCommunication.md](v1/UpgradePlan/Phase-1-ParentSafetyCommunication.md) — Event pipeline foundation
+- [Phase-2-DriverPresence.md](v1/UpgradePlan/Phase-2-DriverPresence.md) — Route state dependency
 - [../GapAnalysis.md](../GapAnalysis.md) — Gap: "GPS intelligence" (High), "Route optimization" (Medium)
-- [../../Design/DataArchitecture.md](../../Design/DataArchitecture.md) — GPS data domain
-- [../../sdlc_guidelines/08_tech_specific/postgresql_postgis.md](../../sdlc_guidelines/08_tech_specific/postgresql_postgis.md) — PostGIS guidelines
+- [../../Design/DataArchitecture.md](../Design/DataArchitecture.md) — GPS data domain
+- [../../sdlc_guidelines/08_tech_specific/postgresql_postgis.md](../sdlc_guidelines/08_tech_specific/postgresql_postgis.md) — PostGIS guidelines
 
 ---
 
@@ -817,8 +817,8 @@ Core safety workflows (Phases 1–3) must be stable before adding administrative
 
 **Implementation modules affected:**
 
-- [Module-7-AdminDashboard.md](../../Implementation/Module-7-AdminDashboard.md)
-- [Module-8-ApiGateway.md](../../Implementation/Module-8-ApiGateway.md) — Org management API endpoints
+- [Module-7-AdminDashboard.md](../Implementation/Module-7-AdminDashboard.md)
+- [Module-8-ApiGateway.md](../Implementation/Module-8-ApiGateway.md) — Org management API endpoints
 
 **Requirements traced:**
 
@@ -835,9 +835,9 @@ Core safety workflows (Phases 1–3) must be stable before adding administrative
 
 **Implementation modules affected:**
 
-- [Module-8-ApiGateway.md](../../Implementation/Module-8-ApiGateway.md) — Auth and provisioning endpoints
-- [Module-9-StudentManagement.md](../../Implementation/Module-9-StudentManagement.md) — Parent-student linking
-- [Module-7-AdminDashboard.md](../../Implementation/Module-7-AdminDashboard.md) — Provisioning UI
+- [Module-8-ApiGateway.md](../Implementation/Module-8-ApiGateway.md) — Auth and provisioning endpoints
+- [Module-9-StudentManagement.md](../Implementation/Module-9-StudentManagement.md) — Parent-student linking
+- [Module-7-AdminDashboard.md](../Implementation/Module-7-AdminDashboard.md) — Provisioning UI
 
 **Requirements traced:**
 
@@ -855,7 +855,7 @@ Core safety workflows (Phases 1–3) must be stable before adding administrative
 
 **Implementation modules affected:**
 
-- [Module-7-AdminDashboard.md](../../Implementation/Module-7-AdminDashboard.md)
+- [Module-7-AdminDashboard.md](../Implementation/Module-7-AdminDashboard.md)
 
 ### 4. Parent Absence Workflow
 
@@ -865,9 +865,9 @@ Core safety workflows (Phases 1–3) must be stable before adding administrative
 
 **Implementation modules affected:**
 
-- [Module-2-ParentApp.md](../../Implementation/Module-2-ParentApp.md)
-- [Module-6-StudentPresence.md](../../Implementation/Module-6-StudentPresence.md) — Absence-aware processing
-- [Module-7-AdminDashboard.md](../../Implementation/Module-7-AdminDashboard.md) — Admin visibility
+- [Module-2-ParentApp.md](../Implementation/Module-2-ParentApp.md)
+- [Module-6-StudentPresence.md](../Implementation/Module-6-StudentPresence.md) — Absence-aware processing
+- [Module-7-AdminDashboard.md](../Implementation/Module-7-AdminDashboard.md) — Admin visibility
 
 **Requirements traced:**
 
@@ -906,10 +906,10 @@ After Phase 4 completion, the demo can **onboard tenants and users live** instea
 
 ## Related Documents
 
-- [Phase-1-ParentSafetyCommunication.md](Phase-1-ParentSafetyCommunication.md) — Notification infrastructure for invitations
+- [Phase-1-ParentSafetyCommunication.md](v1/UpgradePlan/Phase-1-ParentSafetyCommunication.md) — Notification infrastructure for invitations
 - [../GapAnalysis.md](../GapAnalysis.md) — Gaps: "Organization management" (Medium), "Identity and provisioning" (Medium), "Parent absence" (Medium)
-- [../../Business/UseCases.md](../../Business/UseCases.md) — Admin and parent use cases
-- [../../Design/Architecture.md](../../Design/Architecture.md) — Multi-tenancy architecture
+- [../../Business/UseCases.md](../Business/UseCases.md) — Admin and parent use cases
+- [../../Design/Architecture.md](../Design/Architecture.md) — Multi-tenancy architecture
 
 ---
 
@@ -959,7 +959,7 @@ Hardening should be applied after core workflows are functionally complete. Phas
 **Implementation modules affected:**
 
 - All service modules (1–6, 8–10) — database-layer changes
-- [Module-8-ApiGateway.md](../../Implementation/Module-8-ApiGateway.md) — Tenant context propagation
+- [Module-8-ApiGateway.md](../Implementation/Module-8-ApiGateway.md) — Tenant context propagation
 
 **Requirements traced:**
 
@@ -976,7 +976,7 @@ Hardening should be applied after core workflows are functionally complete. Phas
 **Implementation modules affected:**
 
 - All backend service modules — authentication middleware
-- [Module-8-ApiGateway.md](../../Implementation/Module-8-ApiGateway.md) — Token delegation
+- [Module-8-ApiGateway.md](../Implementation/Module-8-ApiGateway.md) — Token delegation
 
 **Requirements traced:**
 
@@ -1022,7 +1022,7 @@ Hardening should be applied after core workflows are functionally complete. Phas
 **Implementation modules affected:**
 
 - All service modules — data lifecycle integration
-- [Module-10-ComplianceManagement.md](../../Implementation/Module-10-ComplianceManagement.md) — Compliance audit coordination
+- [Module-10-ComplianceManagement.md](../Implementation/Module-10-ComplianceManagement.md) — Compliance audit coordination
 
 **Requirements traced:**
 
@@ -1066,12 +1066,12 @@ After Phase 5, the platform can credibly move from demo-grade to **production-re
 
 ## Related Documents
 
-- [Phase-1-ParentSafetyCommunication.md](Phase-1-ParentSafetyCommunication.md) through [Phase-4-TenantAdminProvisioning.md](Phase-4-TenantAdminProvisioning.md) — Prerequisites
+- [Phase-1-ParentSafetyCommunication.md](v1/UpgradePlan/Phase-1-ParentSafetyCommunication.md) through [Phase-4-TenantAdminProvisioning.md](v1/UpgradePlan/Phase-4-TenantAdminProvisioning.md) — Prerequisites
 - [../GapAnalysis.md](../GapAnalysis.md) — Gaps: "Multi-tenant isolation" (Medium), "Service-to-service security" (Medium), "Audit and compliance" (Medium), "Data lifecycle" (Medium)
-- [../../sdlc_guidelines/01_security_compliance/privacy_compliance.md](../../sdlc_guidelines/01_security_compliance/privacy_compliance.md) — PIPEDA/MFIPPA compliance rules
-- [../../sdlc_guidelines/07_deployment_operations/monitoring_observability.md](../../sdlc_guidelines/07_deployment_operations/monitoring_observability.md) — Observability standards
-- [../../sdlc_guidelines/07_deployment_operations/incident_response.md](../../sdlc_guidelines/07_deployment_operations/incident_response.md) — Incident management
-- [../../Design/SecurityPrivacyArchitecture.md](../../Design/SecurityPrivacyArchitecture.md) — Security architecture
+- [../../sdlc_guidelines/01_security_compliance/privacy_compliance.md](../sdlc_guidelines/01_security_compliance/privacy_compliance.md) — PIPEDA/MFIPPA compliance rules
+- [../../sdlc_guidelines/07_deployment_operations/monitoring_observability.md](../sdlc_guidelines/07_deployment_operations/monitoring_observability.md) — Observability standards
+- [../../sdlc_guidelines/07_deployment_operations/incident_response.md](../sdlc_guidelines/07_deployment_operations/incident_response.md) — Incident management
+- [../../Design/SecurityPrivacyArchitecture.md](../Design/SecurityPrivacyArchitecture.md) — Security architecture
 
 ---
 
@@ -1540,12 +1540,12 @@ _Source: `prd/v4/UpgradePlan.md`_
 
 ## Related Documents
 
-- [Gap Analysis](./GapAnalysis.md)
-- [Roles and Workflows](./RolesAndWorkflows.md)
-- [Alert Strategy](./AlertStrategy.md)
-- [Integration and Migration](./IntegrationAndMigration.md)
-- [Production Rollout Guide](./ProductionRolloutGuide.md)
-- [Previous Upgrade Plans](../v1/PhaseWiseImplementationPlan.md)
+- [Gap Analysis](./v4/GapAnalysis.md)
+- [Roles and Workflows](./v4/RolesAndWorkflows.md)
+- [Alert Strategy](./v4/AlertStrategy.md)
+- [Integration and Migration](./v4/IntegrationAndMigration.md)
+- [Production Rollout Guide](./v4/ProductionRolloutGuide.md)
+- [Previous Upgrade Plans](./v1/PhaseWiseImplementationPlan.md)
 
 ---
 
@@ -1941,15 +1941,15 @@ _Source: `prd/v4/GapAnalysis.md`_
 
 ## Related Documents
 
-- [Roles and Workflows](./RolesAndWorkflows.md)
-- [Alert Strategy](./AlertStrategy.md)
-- [Integration and Migration](./IntegrationAndMigration.md)
-- [Upgrade Plan](./UpgradePlan.md)
-- [Production Rollout Guide](./ProductionRolloutGuide.md)
-- [Production Integration Checklist](./ProductionIntegrationChecklist.md)
-- [Business Requirements](../../Business/Requirements.md)
-- [Feature Catalog](../../Business/Features.md)
-- [Previous Gap Analysis (v1)](../v1/GapAnalysis.md)
+- [Roles and Workflows](./v4/RolesAndWorkflows.md)
+- [Alert Strategy](./v4/AlertStrategy.md)
+- [Integration and Migration](./v4/IntegrationAndMigration.md)
+- [Upgrade Plan](./v4/UpgradePlan.md)
+- [Production Rollout Guide](./v4/ProductionRolloutGuide.md)
+- [Production Integration Checklist](./v4/ProductionIntegrationChecklist.md)
+- [Business Requirements](../Business/Requirements.md)
+- [Feature Catalog](../Business/Features.md)
+- [Previous Gap Analysis (v1)](./v1/GapAnalysis.md)
 
 ## Executive Summary
 
@@ -2088,11 +2088,11 @@ _Source: `prd/v4/AlertStrategy.md`_
 
 ## Related Documents
 
-- [Gap Analysis](./GapAnalysis.md)
-- [Roles and Workflows](./RolesAndWorkflows.md)
-- [Business Requirements](../../Business/Requirements.md)
-- [Event Catalog](../../Design/EventCatalog.md)
-- [Emergency Alerts Module](../../Implementation/Module-4-EmergencyAlerts.md)
+- [Gap Analysis](./v4/GapAnalysis.md)
+- [Roles and Workflows](./v4/RolesAndWorkflows.md)
+- [Business Requirements](../Business/Requirements.md)
+- [Event Catalog](../Design/EventCatalog.md)
+- [Emergency Alerts Module](../Implementation/Module-4-EmergencyAlerts.md)
 
 ---
 
@@ -2428,11 +2428,11 @@ _Source: `prd/v4/RolesAndWorkflows.md`_
 
 ## Related Documents
 
-- [Gap Analysis](./GapAnalysis.md)
-- [Alert Strategy](./AlertStrategy.md)
-- [Integration and Migration](./IntegrationAndMigration.md)
-- [Business Requirements](../../Business/Requirements.md)
-- [Use Cases](../../Business/UseCases.md)
+- [Gap Analysis](./v4/GapAnalysis.md)
+- [Alert Strategy](./v4/AlertStrategy.md)
+- [Integration and Migration](./v4/IntegrationAndMigration.md)
+- [Business Requirements](../Business/Requirements.md)
+- [Use Cases](../Business/UseCases.md)
 
 ---
 
@@ -2899,12 +2899,12 @@ _Source: `prd/v4/IntegrationAndMigration.md`_
 
 ## Related Documents
 
-- [Gap Analysis](./GapAnalysis.md)
-- [Roles and Workflows](./RolesAndWorkflows.md)
-- [Alert Strategy](./AlertStrategy.md)
-- [Business Requirements](../../Business/Requirements.md)
-- [API Reference](../../Reference/APIReference.md)
-- [Service Contracts](../../Reference/ServiceContracts.md)
+- [Gap Analysis](./v4/GapAnalysis.md)
+- [Roles and Workflows](./v4/RolesAndWorkflows.md)
+- [Alert Strategy](./v4/AlertStrategy.md)
+- [Business Requirements](../Business/Requirements.md)
+- [API Reference](../Reference/APIReference.md)
+- [Service Contracts](../Reference/ServiceContracts.md)
 
 ---
 
@@ -3408,9 +3408,9 @@ _Source: `prd/v4/ProductionIntegrationChecklist.md`_
 
 ## Related Documents
 
-- [Production Rollout Guide](./ProductionRolloutGuide.md)
-- [Upgrade Plan](./UpgradePlan.md)
-- [Integration and Migration](./IntegrationAndMigration.md)
+- [Production Rollout Guide](./v4/ProductionRolloutGuide.md)
+- [Upgrade Plan](./v4/UpgradePlan.md)
+- [Integration and Migration](./v4/IntegrationAndMigration.md)
 
 ---
 
@@ -3695,12 +3695,12 @@ _Source: `prd/v4/ProductionRolloutGuide.md`_
 
 ## Related Documents
 
-- [Production Integration Checklist](./ProductionIntegrationChecklist.md)
-- [Upgrade Plan](./UpgradePlan.md)
-- [Integration and Migration](./IntegrationAndMigration.md)
-- [Deployment Architecture](../../Design/DeploymentArchitecture.md)
-- [Deployment Guide](../../Operations/DeploymentGuide.md)
-- [Runbooks](../../Operations/Runbooks.md)
+- [Production Integration Checklist](./v4/ProductionIntegrationChecklist.md)
+- [Upgrade Plan](./v4/UpgradePlan.md)
+- [Integration and Migration](./v4/IntegrationAndMigration.md)
+- [Deployment Architecture](../Design/DeploymentArchitecture.md)
+- [Deployment Guide](../Operations/DeploymentGuide.md)
+- [Runbooks](../Operations/Runbooks.md)
 
 ---
 
@@ -4198,15 +4198,15 @@ _Source: `prd/Backlog/UpgradePlan.md`_
 
 ## Purpose
 
-This plan addresses the implementation gaps identified in [GapAnalysis.md](GapAnalysis.md). It sequences the remaining work into focused increments that can be delivered independently.
+This plan addresses the implementation gaps identified in [GapAnalysis.md](v4/GapAnalysis.md). It sequences the remaining work into focused increments that can be delivered independently.
 
 ## Related Documents
 
-- [GapAnalysis.md](GapAnalysis.md) — Post-Phase-5 gap analysis
-- [../../Design/SecurityPrivacyArchitecture.md](../../Design/SecurityPrivacyArchitecture.md)
-- [../../Design/DataRetention.md](../../Design/DataRetention.md)
-- [../../Business/Requirements.md](../../Business/Requirements.md)
-- [../../sdlc_guidelines/07_deployment_operations/monitoring_observability.md](../../sdlc_guidelines/07_deployment_operations/monitoring_observability.md)
+- [GapAnalysis.md](v4/GapAnalysis.md) — Post-Phase-5 gap analysis
+- [../../Design/SecurityPrivacyArchitecture.md](../Design/SecurityPrivacyArchitecture.md)
+- [../../Design/DataRetention.md](../Design/DataRetention.md)
+- [../../Business/Requirements.md](../Business/Requirements.md)
+- [../../sdlc_guidelines/07_deployment_operations/monitoring_observability.md](../sdlc_guidelines/07_deployment_operations/monitoring_observability.md)
 
 ## Increment Overview
 
@@ -4538,11 +4538,11 @@ This analysis reviews the implementation state **after completion of all five up
 - [../GapAnalysis.md](../GapAnalysis.md) — Original pre-phase gap analysis
 - [../PhaseWiseImplementationPlan.md](../PhaseWiseImplementationPlan.md) — Original phase plan
 - [UpgradePlan.md](UpgradePlan.md) — New upgrade plan derived from this analysis
-- [../../Design/Architecture.md](../../Design/Architecture.md)
-- [../../Design/SecurityPrivacyArchitecture.md](../../Design/SecurityPrivacyArchitecture.md)
-- [../../Design/EventCatalog.md](../../Design/EventCatalog.md)
-- [../../Business/Requirements.md](../../Business/Requirements.md)
-- [../../Business/Features.md](../../Business/Features.md)
+- [../../Design/Architecture.md](../Design/Architecture.md)
+- [../../Design/SecurityPrivacyArchitecture.md](../Design/SecurityPrivacyArchitecture.md)
+- [../../Design/EventCatalog.md](../Design/EventCatalog.md)
+- [../../Business/Requirements.md](../Business/Requirements.md)
+- [../../Business/Features.md](../Business/Features.md)
 
 ## Executive Summary
 

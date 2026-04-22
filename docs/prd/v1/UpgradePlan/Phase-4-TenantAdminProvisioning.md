@@ -36,8 +36,8 @@ Core safety workflows (Phases 1–3) must be stable before adding administrative
 
 **Implementation modules affected:**
 
-- [Module-7-AdminDashboard.md](../../Implementation/Module-7-AdminDashboard.md)
-- [Module-8-ApiGateway.md](../../Implementation/Module-8-ApiGateway.md) — Org management API endpoints
+- [Module-7-AdminDashboard.md](../../../Implementation/Module-7-AdminDashboard.md)
+- [Module-8-ApiGateway.md](../../../Implementation/Module-8-ApiGateway.md) — Org management API endpoints
 
 **Requirements traced:**
 
@@ -54,9 +54,9 @@ Core safety workflows (Phases 1–3) must be stable before adding administrative
 
 **Implementation modules affected:**
 
-- [Module-8-ApiGateway.md](../../Implementation/Module-8-ApiGateway.md) — Auth and provisioning endpoints
-- [Module-9-StudentManagement.md](../../Implementation/Module-9-StudentManagement.md) — Parent-student linking
-- [Module-7-AdminDashboard.md](../../Implementation/Module-7-AdminDashboard.md) — Provisioning UI
+- [Module-8-ApiGateway.md](../../../Implementation/Module-8-ApiGateway.md) — Auth and provisioning endpoints
+- [Module-9-StudentManagement.md](../../../Implementation/Module-9-StudentManagement.md) — Parent-student linking
+- [Module-7-AdminDashboard.md](../../../Implementation/Module-7-AdminDashboard.md) — Provisioning UI
 
 **Requirements traced:**
 
@@ -74,7 +74,7 @@ Core safety workflows (Phases 1–3) must be stable before adding administrative
 
 **Implementation modules affected:**
 
-- [Module-7-AdminDashboard.md](../../Implementation/Module-7-AdminDashboard.md)
+- [Module-7-AdminDashboard.md](../../../Implementation/Module-7-AdminDashboard.md)
 
 ### 4. Parent Absence Workflow
 
@@ -84,9 +84,9 @@ Core safety workflows (Phases 1–3) must be stable before adding administrative
 
 **Implementation modules affected:**
 
-- [Module-2-ParentApp.md](../../Implementation/Module-2-ParentApp.md)
-- [Module-6-StudentPresence.md](../../Implementation/Module-6-StudentPresence.md) — Absence-aware processing
-- [Module-7-AdminDashboard.md](../../Implementation/Module-7-AdminDashboard.md) — Admin visibility
+- [Module-2-ParentApp.md](../../../Implementation/Module-2-ParentApp.md)
+- [Module-6-StudentPresence.md](../../../Implementation/Module-6-StudentPresence.md) — Absence-aware processing
+- [Module-7-AdminDashboard.md](../../../Implementation/Module-7-AdminDashboard.md) — Admin visibility
 
 **Requirements traced:**
 
@@ -127,5 +127,5 @@ After Phase 4 completion, the demo can **onboard tenants and users live** instea
 
 - [Phase-1-ParentSafetyCommunication.md](Phase-1-ParentSafetyCommunication.md) — Notification infrastructure for invitations
 - [../GapAnalysis.md](../GapAnalysis.md) — Gaps: "Organization management" (Medium), "Identity and provisioning" (Medium), "Parent absence" (Medium)
-- [../../Business/UseCases.md](../../Business/UseCases.md) — Admin and parent use cases
-- [../../Design/Architecture.md](../../Design/Architecture.md) — Multi-tenancy architecture
+- [../../Business/UseCases.md](../../../Business/UseCases.md) — Admin and parent use cases
+- [../../Design/Architecture.md](../../../Design/Architecture.md) — Multi-tenancy architecture

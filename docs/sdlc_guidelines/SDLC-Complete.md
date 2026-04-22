@@ -507,9 +507,9 @@ const students = await repo.find();
 
 ## Related Documents
 
-- [privacy_compliance.md](privacy_compliance.md) — PIPEDA and MFIPPA mapping
-- [supply_chain_security.md](supply_chain_security.md) — Dependency security
-- [../00_master_policy.md](../00_master_policy.md) — Universal rules (RULE-PII-\*)
+- [privacy_compliance.md](./01_security_compliance/privacy_compliance.md) — PIPEDA and MFIPPA mapping
+- [supply_chain_security.md](./01_security_compliance/supply_chain_security.md) — Dependency security
+- [../00_master_policy.md](./00_master_policy.md) — Universal rules (RULE-PII-\*)
 
 ---
 
@@ -584,9 +584,9 @@ When school boards (municipal institutions) provide student roster data to SBTM:
 
 ## Related Documents
 
-- [data_classification.md](data_classification.md) — Student PII classification tiers
-- [supply_chain_security.md](supply_chain_security.md) — Dependency security
-- [../00_master_policy.md](../00_master_policy.md) — Universal rules
+- [data_classification.md](./01_security_compliance/data_classification.md) — Student PII classification tiers
+- [supply_chain_security.md](./01_security_compliance/supply_chain_security.md) — Dependency security
+- [../00_master_policy.md](./00_master_policy.md) — Universal rules
 - [../../Business/Requirements.md](../../Business/Requirements.md) — Privacy requirements (PR-\*)
 
 ---
@@ -636,10 +636,10 @@ SBTM depends on open-source packages via npm and Docker images. This document de
 
 ## Related Documents
 
-- [data_classification.md](data_classification.md) — Data handling tiers
-- [privacy_compliance.md](privacy_compliance.md) — Compliance frameworks
-- [../06_integration_cicd/ci_cd_pipeline.md](../06_integration_cicd/ci_cd_pipeline.md) — CI pipeline definition
-- [../08_tech_specific/docker_guidelines.md](../08_tech_specific/docker_guidelines.md) — Docker standards
+- [data_classification.md](./01_security_compliance/data_classification.md) — Data handling tiers
+- [privacy_compliance.md](./01_security_compliance/privacy_compliance.md) — Compliance frameworks
+- [../06_integration_cicd/ci_cd_pipeline.md](./06_integration_cicd/ci_cd_pipeline.md) — CI pipeline definition
+- [../08_tech_specific/docker_guidelines.md](./08_tech_specific/docker_guidelines.md) — Docker standards
 
 ---
 
@@ -716,7 +716,7 @@ Each requirement should include:
 
 ## Related Documents
 
-- [traceability.md](traceability.md) — Traceability matrix
+- [traceability.md](./02_requirements/traceability.md) — Traceability matrix
 - [../../Business/Requirements.md](../../Business/Requirements.md) — Live requirements catalog
 - [../../Business/UseCases.md](../../Business/UseCases.md) — Use case index
 - [../../Business/Features.md](../../Business/Features.md) — Feature catalog
@@ -781,7 +781,7 @@ During PR review, check:
 
 ## Related Documents
 
-- [requirements_engineering.md](requirements_engineering.md) — Requirement capture format
+- [requirements_engineering.md](./02_requirements/requirements_engineering.md) — Requirement capture format
 - [../../Business/Requirements.md](../../Business/Requirements.md) — Requirements catalog
 - [../../prd/GapAnalysis.md](../../prd/GapAnalysis.md) — Gap inventory
 - [../../prd/PhaseWiseImplementationPlan.md](../../prd/PhaseWiseImplementationPlan.md) — Phase plan
@@ -876,8 +876,8 @@ What other options were evaluated?
 
 ## Related Documents
 
-- [design_guidelines.md](design_guidelines.md) — Microservice design patterns
-- [threat_modeling.md](threat_modeling.md) — Threat modeling methodology
+- [design_guidelines.md](./03_architecture_design/design_guidelines.md) — Microservice design patterns
+- [threat_modeling.md](./03_architecture_design/threat_modeling.md) — Threat modeling methodology
 - [../../Design/Architecture.md](../../Design/Architecture.md) — v1 architecture overview
 - [../../Design/SystemArchitecture.md](../../Design/SystemArchitecture.md) — System context and containers
 
@@ -968,8 +968,8 @@ graph LR
 
 ## Related Documents
 
-- [architecture_guidelines.md](architecture_guidelines.md) — C4 model and ADR format
-- [threat_modeling.md](threat_modeling.md) — Threat modeling
+- [architecture_guidelines.md](./03_architecture_design/architecture_guidelines.md) — C4 model and ADR format
+- [threat_modeling.md](./03_architecture_design/threat_modeling.md) — Threat modeling
 - [../../Design/IntegrationArchitecture.md](../../Design/IntegrationArchitecture.md) — Integration patterns
 - [../../Design/DataArchitecture.md](../../Design/DataArchitecture.md) — Data domain ownership
 
@@ -1051,10 +1051,10 @@ graph TD
 
 ## Related Documents
 
-- [architecture_guidelines.md](architecture_guidelines.md) — Architecture conventions
-- [design_guidelines.md](design_guidelines.md) — Multi-tenancy and event patterns
+- [architecture_guidelines.md](./03_architecture_design/architecture_guidelines.md) — Architecture conventions
+- [design_guidelines.md](./03_architecture_design/design_guidelines.md) — Multi-tenancy and event patterns
 - [../../Design/SecurityPrivacyArchitecture.md](../../Design/SecurityPrivacyArchitecture.md) — Security architecture
-- [../01_security_compliance/data_classification.md](../01_security_compliance/data_classification.md) — Data tiers
+- [../01_security_compliance/data_classification.md](./01_security_compliance/data_classification.md) — Data tiers
 
 ---
 
@@ -1128,9 +1128,9 @@ Establish baseline code quality rules enforced across the entire monorepo. Langu
 
 ## Related Documents
 
-- [typescript_standards.md](typescript_standards.md) — TypeScript-specific rules
-- [nestjs_standards.md](nestjs_standards.md) — NestJS conventions
-- [secure_coding.md](secure_coding.md) — Security-focused coding rules
+- [typescript_standards.md](./04_coding_standards/typescript_standards.md) — TypeScript-specific rules
+- [nestjs_standards.md](./04_coding_standards/nestjs_standards.md) — NestJS conventions
+- [secure_coding.md](./04_coding_standards/secure_coding.md) — Security-focused coding rules
 
 ---
 
@@ -1214,9 +1214,9 @@ export type Role = (typeof Role)[keyof typeof Role];
 
 ## Related Documents
 
-- [general_coding.md](general_coding.md) — Universal coding rules
-- [nestjs_standards.md](nestjs_standards.md) — NestJS-specific conventions
-- [secure_coding.md](secure_coding.md) — Security-focused coding rules
+- [general_coding.md](./04_coding_standards/general_coding.md) — Universal coding rules
+- [nestjs_standards.md](./04_coding_standards/nestjs_standards.md) — NestJS-specific conventions
+- [secure_coding.md](./04_coding_standards/secure_coding.md) — Security-focused coding rules
 
 ---
 
@@ -1315,10 +1315,10 @@ async findAll(@TenantId() schoolId: string) {
 
 ## Related Documents
 
-- [general_coding.md](general_coding.md) — Universal coding rules
-- [typescript_standards.md](typescript_standards.md) — TypeScript-specific rules
-- [secure_coding.md](secure_coding.md) — Security patterns
-- [../03_architecture_design/design_guidelines.md](../03_architecture_design/design_guidelines.md) — Multi-tenancy and event patterns
+- [general_coding.md](./04_coding_standards/general_coding.md) — Universal coding rules
+- [typescript_standards.md](./04_coding_standards/typescript_standards.md) — TypeScript-specific rules
+- [secure_coding.md](./04_coding_standards/secure_coding.md) — Security patterns
+- [../03_architecture_design/design_guidelines.md](./03_architecture_design/design_guidelines.md) — Multi-tenancy and event patterns
 
 ---
 
@@ -1422,10 +1422,10 @@ return { ...student, parent: { id: parent.id, hasConsent: parent.consentGranted 
 
 ## Related Documents
 
-- [general_coding.md](general_coding.md) — Universal coding rules
-- [../01_security_compliance/data_classification.md](../01_security_compliance/data_classification.md) — Data tier rules
-- [../01_security_compliance/privacy_compliance.md](../01_security_compliance/privacy_compliance.md) — PIPEDA/MFIPPA compliance
-- [../03_architecture_design/threat_modeling.md](../03_architecture_design/threat_modeling.md) — Threat model
+- [general_coding.md](./04_coding_standards/general_coding.md) — Universal coding rules
+- [../01_security_compliance/data_classification.md](./01_security_compliance/data_classification.md) — Data tier rules
+- [../01_security_compliance/privacy_compliance.md](./01_security_compliance/privacy_compliance.md) — PIPEDA/MFIPPA compliance
+- [../03_architecture_design/threat_modeling.md](./03_architecture_design/threat_modeling.md) — Threat model
 
 ---
 
@@ -1513,8 +1513,8 @@ Rules:
 
 ## Related Documents
 
-- [security_testing.md](security_testing.md) — Security-specific test patterns
-- [performance_testing.md](performance_testing.md) — Load and performance testing
+- [security_testing.md](./05_testing/security_testing.md) — Security-specific test patterns
+- [performance_testing.md](./05_testing/performance_testing.md) — Load and performance testing
 - [../../Test/TestingGuide.md](../../Test/TestingGuide.md) — Project testing guide
 
 ---
@@ -1614,10 +1614,10 @@ Test that malicious or malformed inputs are rejected:
 
 ## Related Documents
 
-- [testing_strategy.md](testing_strategy.md) — Test pyramid and coverage targets
-- [performance_testing.md](performance_testing.md) — Load testing
-- [../04_coding_standards/secure_coding.md](../04_coding_standards/secure_coding.md) — Secure coding rules
-- [../01_security_compliance/data_classification.md](../01_security_compliance/data_classification.md) — PII tier rules
+- [testing_strategy.md](./05_testing/testing_strategy.md) — Test pyramid and coverage targets
+- [performance_testing.md](./05_testing/performance_testing.md) — Load testing
+- [../04_coding_standards/secure_coding.md](./04_coding_standards/secure_coding.md) — Secure coding rules
+- [../01_security_compliance/data_classification.md](./01_security_compliance/data_classification.md) — PII tier rules
 
 ---
 
@@ -1703,9 +1703,9 @@ Collect these metrics during load tests:
 
 ## Related Documents
 
-- [testing_strategy.md](testing_strategy.md) — Test pyramid and coverage
-- [security_testing.md](security_testing.md) — Security test patterns
-- [../07_deployment_operations/monitoring_observability.md](../07_deployment_operations/monitoring_observability.md) — Production monitoring
+- [testing_strategy.md](./05_testing/testing_strategy.md) — Test pyramid and coverage
+- [security_testing.md](./05_testing/security_testing.md) — Security test patterns
+- [../07_deployment_operations/monitoring_observability.md](./07_deployment_operations/monitoring_observability.md) — Production monitoring
 
 ---
 
@@ -1779,9 +1779,9 @@ hotfix/AUTH-003-token-expiry
 
 ## Related Documents
 
-- [ci_cd_pipeline.md](ci_cd_pipeline.md) — CI/CD pipeline stages
-- [artifact_management.md](artifact_management.md) — Build artifacts and images
-- [../04_coding_standards/general_coding.md](../04_coding_standards/general_coding.md) — Commit message format
+- [ci_cd_pipeline.md](./06_integration_cicd/ci_cd_pipeline.md) — CI/CD pipeline stages
+- [artifact_management.md](./06_integration_cicd/artifact_management.md) — Build artifacts and images
+- [../04_coding_standards/general_coding.md](./04_coding_standards/general_coding.md) — Commit message format
 
 ---
 
@@ -1887,10 +1887,10 @@ graph LR
 
 ## Related Documents
 
-- [branching_strategy.md](branching_strategy.md) — Branch model and PR rules
-- [artifact_management.md](artifact_management.md) — Image tagging and registry
-- [../05_testing/testing_strategy.md](../05_testing/testing_strategy.md) — Coverage requirements
-- [../01_security_compliance/supply_chain_security.md](../01_security_compliance/supply_chain_security.md) — Dependency and image security
+- [branching_strategy.md](./06_integration_cicd/branching_strategy.md) — Branch model and PR rules
+- [artifact_management.md](./06_integration_cicd/artifact_management.md) — Image tagging and registry
+- [../05_testing/testing_strategy.md](./05_testing/testing_strategy.md) — Coverage requirements
+- [../01_security_compliance/supply_chain_security.md](./01_security_compliance/supply_chain_security.md) — Dependency and image security
 
 ---
 
@@ -1968,9 +1968,9 @@ SBTM uses a monorepo with workspaces. There are no published npm packages.
 
 ## Related Documents
 
-- [ci_cd_pipeline.md](ci_cd_pipeline.md) — Pipeline stages
-- [branching_strategy.md](branching_strategy.md) — Branch and tagging flow
-- [../01_security_compliance/supply_chain_security.md](../01_security_compliance/supply_chain_security.md) — Dependency and image security
+- [ci_cd_pipeline.md](./06_integration_cicd/ci_cd_pipeline.md) — Pipeline stages
+- [branching_strategy.md](./06_integration_cicd/branching_strategy.md) — Branch and tagging flow
+- [../01_security_compliance/supply_chain_security.md](./01_security_compliance/supply_chain_security.md) — Dependency and image security
 
 ---
 
@@ -2074,9 +2074,9 @@ Docker Compose health checks should be configured to poll this endpoint.
 
 ## Related Documents
 
-- [monitoring_observability.md](monitoring_observability.md) — Monitoring and alerting
-- [incident_response.md](incident_response.md) — Incident management
-- [../06_integration_cicd/ci_cd_pipeline.md](../06_integration_cicd/ci_cd_pipeline.md) — CI/CD pipeline
+- [monitoring_observability.md](./07_deployment_operations/monitoring_observability.md) — Monitoring and alerting
+- [incident_response.md](./07_deployment_operations/incident_response.md) — Incident management
+- [../06_integration_cicd/ci_cd_pipeline.md](./06_integration_cicd/ci_cd_pipeline.md) — CI/CD pipeline
 - [../../Operations/DeploymentGuide.md](../../Operations/DeploymentGuide.md) — Operations deployment guide
 
 ---
@@ -2186,9 +2186,9 @@ Minimum dashboard panels:
 
 ## Related Documents
 
-- [deployment_guidelines.md](deployment_guidelines.md) — Deployment procedures
-- [incident_response.md](incident_response.md) — Incident management
-- [../04_coding_standards/general_coding.md](../04_coding_standards/general_coding.md) — Logging conventions
+- [deployment_guidelines.md](./07_deployment_operations/deployment_guidelines.md) — Deployment procedures
+- [incident_response.md](./07_deployment_operations/incident_response.md) — Incident management
+- [../04_coding_standards/general_coding.md](./04_coding_standards/general_coding.md) — Logging conventions
 
 ---
 
@@ -2319,8 +2319,8 @@ Actions Taken:
 
 ## Related Documents
 
-- [monitoring_observability.md](monitoring_observability.md) — Alerting and metrics
-- [deployment_guidelines.md](deployment_guidelines.md) — Rollback procedures
+- [monitoring_observability.md](./07_deployment_operations/monitoring_observability.md) — Alerting and metrics
+- [deployment_guidelines.md](./07_deployment_operations/deployment_guidelines.md) — Rollback procedures
 - [../../Operations/DeploymentGuide.md](../../Operations/DeploymentGuide.md) — Operations guide
 
 ---
@@ -2432,9 +2432,9 @@ SELECT ST_Distance(
 
 ## Related Documents
 
-- [redis_bullmq.md](redis_bullmq.md) — Redis and queue patterns
-- [../03_architecture_design/design_guidelines.md](../03_architecture_design/design_guidelines.md) — Database design conventions
-- [../01_security_compliance/data_classification.md](../01_security_compliance/data_classification.md) — Data tier handling rules
+- [redis_bullmq.md](./08_tech_specific/redis_bullmq.md) — Redis and queue patterns
+- [../03_architecture_design/design_guidelines.md](./03_architecture_design/design_guidelines.md) — Database design conventions
+- [../01_security_compliance/data_classification.md](./01_security_compliance/data_classification.md) — Data tier handling rules
 
 ---
 
@@ -2550,9 +2550,9 @@ const worker = new Worker('notifications', async (job) => {
 
 ## Related Documents
 
-- [postgresql_postgis.md](postgresql_postgis.md) — Database conventions
-- [../03_architecture_design/design_guidelines.md](../03_architecture_design/design_guidelines.md) — Event-driven patterns
-- [../01_security_compliance/data_classification.md](../01_security_compliance/data_classification.md) — Data tier caching rules
+- [postgresql_postgis.md](./08_tech_specific/postgresql_postgis.md) — Database conventions
+- [../03_architecture_design/design_guidelines.md](./03_architecture_design/design_guidelines.md) — Event-driven patterns
+- [../01_security_compliance/data_classification.md](./01_security_compliance/data_classification.md) — Data tier caching rules
 
 ---
 
@@ -2690,9 +2690,9 @@ deploy:
 
 ## Related Documents
 
-- [../06_integration_cicd/ci_cd_pipeline.md](../06_integration_cicd/ci_cd_pipeline.md) — Docker build in CI
-- [../06_integration_cicd/artifact_management.md](../06_integration_cicd/artifact_management.md) — Image tagging and lifecycle
-- [../07_deployment_operations/deployment_guidelines.md](../07_deployment_operations/deployment_guidelines.md) — Deployment procedures
+- [../06_integration_cicd/ci_cd_pipeline.md](./06_integration_cicd/ci_cd_pipeline.md) — Docker build in CI
+- [../06_integration_cicd/artifact_management.md](./06_integration_cicd/artifact_management.md) — Image tagging and lifecycle
+- [../07_deployment_operations/deployment_guidelines.md](./07_deployment_operations/deployment_guidelines.md) — Deployment procedures
 
 ---
 
@@ -2829,9 +2829,9 @@ export function useGpsUpdates(routeId: string) {
 
 ## Related Documents
 
-- [react_native_expo.md](react_native_expo.md) — Mobile app conventions
-- [socketio_sse.md](socketio_sse.md) — Real-time patterns
-- [../04_coding_standards/typescript_standards.md](../04_coding_standards/typescript_standards.md) — TypeScript rules
+- [react_native_expo.md](./08_tech_specific/react_native_expo.md) — Mobile app conventions
+- [socketio_sse.md](./08_tech_specific/socketio_sse.md) — Real-time patterns
+- [../04_coding_standards/typescript_standards.md](./04_coding_standards/typescript_standards.md) — TypeScript rules
 
 ---
 
@@ -2954,9 +2954,9 @@ headers: {
 
 ## Related Documents
 
-- [react_vite.md](react_vite.md) — Web frontend conventions
-- [socketio_sse.md](socketio_sse.md) — Real-time patterns
-- [../04_coding_standards/typescript_standards.md](../04_coding_standards/typescript_standards.md) — TypeScript rules
+- [react_vite.md](./08_tech_specific/react_vite.md) — Web frontend conventions
+- [socketio_sse.md](./08_tech_specific/socketio_sse.md) — Real-time patterns
+- [../04_coding_standards/typescript_standards.md](./04_coding_standards/typescript_standards.md) — TypeScript rules
 
 ---
 
@@ -3099,9 +3099,9 @@ export function useLocationUpdates(routeId: string) {
 
 ## Related Documents
 
-- [react_vite.md](react_vite.md) — Web frontend Socket.IO integration
-- [react_native_expo.md](react_native_expo.md) — Mobile Socket.IO integration
-- [../07_deployment_operations/monitoring_observability.md](../07_deployment_operations/monitoring_observability.md) — WebSocket monitoring
+- [react_vite.md](./08_tech_specific/react_vite.md) — Web frontend Socket.IO integration
+- [react_native_expo.md](./08_tech_specific/react_native_expo.md) — Mobile Socket.IO integration
+- [../07_deployment_operations/monitoring_observability.md](./07_deployment_operations/monitoring_observability.md) — WebSocket monitoring
 
 ---
 
@@ -3191,9 +3191,9 @@ Before submitting agent-generated code for human review:
 
 ## Related Documents
 
-- [review_checklists.md](review_checklists.md) — Human code review checklists
-- [documentation_standards.md](documentation_standards.md) — Documentation format rules
-- [../00_master_policy.md](../00_master_policy.md) — Universal policies
+- [review_checklists.md](./09_governance/review_checklists.md) — Human code review checklists
+- [documentation_standards.md](./09_governance/documentation_standards.md) — Documentation format rules
+- [../00_master_policy.md](./00_master_policy.md) — Universal policies
 
 ---
 
@@ -3275,9 +3275,9 @@ PR touches student data, guardian data, or consent flows:
 
 ## Related Documents
 
-- [agent_governance.md](agent_governance.md) — AI agent rules
-- [documentation_standards.md](documentation_standards.md) — Documentation standards
-- [../01_security_compliance/privacy_compliance.md](../01_security_compliance/privacy_compliance.md) — PIPEDA/MFIPPA requirements
+- [agent_governance.md](./09_governance/agent_governance.md) — AI agent rules
+- [documentation_standards.md](./09_governance/documentation_standards.md) — Documentation standards
+- [../01_security_compliance/privacy_compliance.md](./01_security_compliance/privacy_compliance.md) — PIPEDA/MFIPPA requirements
 
 ---
 
@@ -3358,8 +3358,8 @@ Every document should include a metadata header:
 
 ## Related Documents
 
-- [review_checklists.md](review_checklists.md) — Code review checklists
-- [agent_governance.md](agent_governance.md) — Agent documentation rules
+- [review_checklists.md](./09_governance/review_checklists.md) — Code review checklists
+- [agent_governance.md](./09_governance/agent_governance.md) — Agent documentation rules
 - [../../Governance/DocumentationPolicy.md](../../Governance/DocumentationPolicy.md) — Project documentation policy
 
 ---
@@ -3501,6 +3501,6 @@ Minimum required variables:
 
 ## Related Documents
 
-- [../08_tech_specific/docker_guidelines.md](../08_tech_specific/docker_guidelines.md) — Docker conventions
-- [../07_deployment_operations/deployment_guidelines.md](../07_deployment_operations/deployment_guidelines.md) — Deployment procedures
+- [../08_tech_specific/docker_guidelines.md](./08_tech_specific/docker_guidelines.md) — Docker conventions
+- [../07_deployment_operations/deployment_guidelines.md](./07_deployment_operations/deployment_guidelines.md) — Deployment procedures
 - [../../Demo/DEMO_SETUP_GUIDE.md](../../Demo/DEMO_SETUP_GUIDE.md) — Demo setup guide

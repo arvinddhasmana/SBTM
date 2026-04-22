@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: student-presence
+spec:
+  selector:
+    app: student-presence
+  ports:
+    - name: http
+      port: 80
+      targetPort: 3003
+  type: ClusterIP

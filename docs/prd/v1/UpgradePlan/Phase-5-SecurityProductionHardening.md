@@ -40,7 +40,7 @@ Hardening should be applied after core workflows are functionally complete. Phas
 **Implementation modules affected:**
 
 - All service modules (1–6, 8–10) — database-layer changes
-- [Module-8-ApiGateway.md](../../Implementation/Module-8-ApiGateway.md) — Tenant context propagation
+- [Module-8-ApiGateway.md](../../../Implementation/Module-8-ApiGateway.md) — Tenant context propagation
 
 **Requirements traced:**
 
@@ -57,7 +57,7 @@ Hardening should be applied after core workflows are functionally complete. Phas
 **Implementation modules affected:**
 
 - All backend service modules — authentication middleware
-- [Module-8-ApiGateway.md](../../Implementation/Module-8-ApiGateway.md) — Token delegation
+- [Module-8-ApiGateway.md](../../../Implementation/Module-8-ApiGateway.md) — Token delegation
 
 **Requirements traced:**
 
@@ -103,7 +103,7 @@ Hardening should be applied after core workflows are functionally complete. Phas
 **Implementation modules affected:**
 
 - All service modules — data lifecycle integration
-- [Module-10-ComplianceManagement.md](../../Implementation/Module-10-ComplianceManagement.md) — Compliance audit coordination
+- [Module-10-ComplianceManagement.md](../../../Implementation/Module-10-ComplianceManagement.md) — Compliance audit coordination
 
 **Requirements traced:**
 
@@ -149,7 +149,7 @@ After Phase 5, the platform can credibly move from demo-grade to **production-re
 
 - [Phase-1-ParentSafetyCommunication.md](Phase-1-ParentSafetyCommunication.md) through [Phase-4-TenantAdminProvisioning.md](Phase-4-TenantAdminProvisioning.md) — Prerequisites
 - [../GapAnalysis.md](../GapAnalysis.md) — Gaps: "Multi-tenant isolation" (Medium), "Service-to-service security" (Medium), "Audit and compliance" (Medium), "Data lifecycle" (Medium)
-- [../../sdlc_guidelines/01_security_compliance/privacy_compliance.md](../../sdlc_guidelines/01_security_compliance/privacy_compliance.md) — PIPEDA/MFIPPA compliance rules
-- [../../sdlc_guidelines/07_deployment_operations/monitoring_observability.md](../../sdlc_guidelines/07_deployment_operations/monitoring_observability.md) — Observability standards
-- [../../sdlc_guidelines/07_deployment_operations/incident_response.md](../../sdlc_guidelines/07_deployment_operations/incident_response.md) — Incident management
-- [../../Design/SecurityPrivacyArchitecture.md](../../Design/SecurityPrivacyArchitecture.md) — Security architecture
+- [../../sdlc_guidelines/01_security_compliance/privacy_compliance.md](../../../sdlc_guidelines/01_security_compliance/privacy_compliance.md) — PIPEDA/MFIPPA compliance rules
+- [../../sdlc_guidelines/07_deployment_operations/monitoring_observability.md](../../../sdlc_guidelines/07_deployment_operations/monitoring_observability.md) — Observability standards
+- [../../sdlc_guidelines/07_deployment_operations/incident_response.md](../../../sdlc_guidelines/07_deployment_operations/incident_response.md) — Incident management
+- [../../Design/SecurityPrivacyArchitecture.md](../../../Design/SecurityPrivacyArchitecture.md) — Security architecture

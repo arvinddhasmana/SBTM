@@ -1,0 +1,95 @@
+name: Deploy to Production
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  deploy-production:
+    name: Deploy to AKS Production
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      id-token: write
+      contents: read
+      deployments: write
+
+    environment:
+      name: production
+      url: https://api.sbtm.example.com/health
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Get AKS credentials
+        run: |
+          az aks get-credentials \
+            --resource-group ${{ secrets.AKS_RESOURCE_GROUP }} \
+            --name ${{ secrets.AKS_CLUSTER_NAME }} \
+            --overwrite-existing
+
+      - name: Pre-deployment database backup
+        run: |
+          bash scripts/azure/setup-db.sh backup
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL_PROD }}
+
+      - name: Set release image tag
+        id: tag
+        run: echo "tag=${{ github.event.release.tag_name }}" >> "$GITHUB_OUTPUT"
+
+      - name: Update image tags in production overlay
+        run: |
+          for svc in api-gateway gps-tracking emergency-alerts student-presence student-management compliance-management video-service notification-service; do
+            cd infra/k8s/overlays/production
+            kustomize edit set image \
+              "${{ secrets.ACR_LOGIN_SERVER }}/sbtm/${svc}=${{ secrets.ACR_LOGIN_SERVER }}/sbtm/${svc}:${{ steps.tag.outputs.tag }}"
+            cd -
+          done
+
+      - name: Apply production overlay
+        run: kubectl apply -k infra/k8s/overlays/production
+
+      - name: Wait for rollout
+        id: rollout
+        run: kubectl rollout status deployment -n sbtm-production --timeout=600s
+
+      - name: Smoke test
+        id: smoke
+        run: |
+          curl --fail --retry 5 --retry-delay 15 \
+            https://api.sbtm.example.com/health | jq .
+
+      - name: Rollback on failure
+        if: failure() && steps.rollout.outcome == 'failure'
+        run: |
+          echo "==> Rolling back all deployments in sbtm-production"
+          kubectl rollout undo deployment -n sbtm-production --all
+          kubectl rollout status deployment -n sbtm-production --timeout=300s
+
+      - name: Pod status summary
+        if: always()
+        run: kubectl get pods -n sbtm-production
+
+      - name: Create deployment comment
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.repos.createDeploymentStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              deployment_id: context.payload.deployment?.id,
+              state: 'success',
+              environment_url: 'https://api.sbtm.example.com/health',
+              description: 'Production deployment ${{ steps.tag.outputs.tag }} succeeded'
+            });

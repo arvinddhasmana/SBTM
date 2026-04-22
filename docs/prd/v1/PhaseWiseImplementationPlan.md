@@ -10,11 +10,11 @@ This is the summary index for the SBTM v1 upgrade plan. Each phase has a self-co
 
 - [GapAnalysis.md](GapAnalysis.md)
 - [UpgradePlan/README.md](UpgradePlan/README.md) — Phase plan index
-- [../Business/Requirements.md](../Business/Requirements.md)
-- [../Design/Architecture.md](../Design/Architecture.md)
-- [../Design/TechnicalSpecifications.md](../Design/TechnicalSpecifications.md)
-- [../Test/TestingGuide.md](../Test/TestingGuide.md)
-- [../Demo/DEMO_SETUP_GUIDE.md](../Demo/DEMO_SETUP_GUIDE.md)
+- [../Business/Requirements.md](../../Business/Requirements.md)
+- [../Design/Architecture.md](../../Design/Architecture.md)
+- [../Design/TechnicalSpecifications.md](../../Design/TechnicalSpecifications.md)
+- [../Test/TestingGuide.md](../../Test/TestingGuide.md)
+- [../Demo/DEMO_SETUP_GUIDE.md](../../Demo/DEMO_SETUP_GUIDE.md)
 
 ## Planning Principles
 

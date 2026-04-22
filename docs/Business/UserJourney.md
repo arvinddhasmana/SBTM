@@ -11,7 +11,7 @@ This document describes the currently deliverable user flow at a business level.
 - [Requirements.md](Requirements.md)
 - [UseCases.md](UseCases.md)
 - [Features.md](Features.md)
-- [GapAnalysis.md](../prd/GapAnalysis.md)
+- [GapAnalysis.md](../prd/v4/GapAnalysis.md)
 - [LiveDemoScript.md](../Demo/LiveDemoScript.md)
 - [v4 Roles and Workflows](../prd/v4/RolesAndWorkflows.md)
 - [v4 Alert Strategy](../prd/v4/AlertStrategy.md)

@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: student-management
+spec:
+  selector:
+    app: student-management
+  ports:
+    - name: http
+      port: 80
+      targetPort: 3004
+  type: ClusterIP

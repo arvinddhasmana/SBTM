@@ -38,9 +38,9 @@ Use this index to find the authoritative document for each kind of question.
 
 ### PRD
 
-- [GapAnalysis.md](prd/GapAnalysis.md) is the authoritative gap inventory.
-- [PhaseWiseImplementationPlan.md](prd/PhaseWiseImplementationPlan.md) is the authoritative delivery roadmap.
-- [UpgradePlan/](prd/UpgradePlan/) contains self-contained phase plans (Phase 1–5) with scope, acceptance criteria, and module cross-references.
+- [GapAnalysis.md](prd/v4/GapAnalysis.md) is the authoritative gap inventory.
+- [PhaseWiseImplementationPlan.md](prd/v1/PhaseWiseImplementationPlan.md) is the authoritative delivery roadmap.
+- [UpgradePlan/](prd/v4/UpgradePlan.md) contains self-contained phase plans (Phase 1–5) with scope, acceptance criteria, and module cross-references.
 
 ### SDLC Guidelines
 
@@ -57,9 +57,9 @@ Use this index to find the authoritative document for each kind of question.
 
 ## Audience-Based Entry Points
 
-- Product and delivery: [Business requirements](Business/Requirements.md), [feature matrix](Business/Features.md), [phase plan](prd/PhaseWiseImplementationPlan.md), and [detailed phase plans](prd/UpgradePlan/)
+- Product and delivery: [Business requirements](Business/Requirements.md), [feature matrix](Business/Features.md), [phase plan](prd/v1/PhaseWiseImplementationPlan.md), and [detailed phase plans](prd/v4/UpgradePlan.md)
 - Architects and senior engineers: [v1 architecture](Design/Architecture.md), [system architecture](Design/SystemArchitecture.md), [integration architecture](Design/IntegrationArchitecture.md), and [technical specifications](Design/TechnicalSpecifications.md)
-- Developers: [Implementation](Implementation), [reference docs](Reference/README.md), service `README.md` files, [gap analysis](prd/GapAnalysis.md), and [SDLC guidelines](sdlc_guidelines/)
+- Developers: [Implementation](Implementation), [reference docs](Reference/README.md), service `README.md` files, [gap analysis](prd/v4/GapAnalysis.md), and [SDLC guidelines](sdlc_guidelines/)
 - Demo owners and QA: [demo setup guide](Demo/DEMO_SETUP_GUIDE.md), [live demo script](Demo/LiveDemoScript.md), [testing guide](Test/TestingGuide.md), and [operations docs](Operations/README.md)
 - Documentation maintainers: [documentation policy](Governance/DocumentationPolicy.md)
 - End users and operators: [user guide index](UserGuide/README.md)
@@ -69,8 +69,8 @@ Use this index to find the authoritative document for each kind of question.
 1. [Business requirements](Business/Requirements.md)
 2. [business use cases](Business/UseCases.md)
 3. [v1 architecture](Design/Architecture.md)
-4. [gap analysis](prd/GapAnalysis.md)
-5. [phase plan](prd/PhaseWiseImplementationPlan.md)
+4. [gap analysis](prd/v4/GapAnalysis.md)
+5. [phase plan](prd/v1/PhaseWiseImplementationPlan.md)
 6. [implementation module docs](Implementation)
 7. [operations docs](Operations/README.md) or [testing guide](Test/TestingGuide.md), depending on the task
 
@@ -104,7 +104,7 @@ Use this index to find the authoritative document for each kind of question.
 - [reference index](Reference/README.md)
 - [user guide index](UserGuide/README.md)
 - [operations index](Operations/README.md)
-- [gap analysis](prd/GapAnalysis.md)
-- [phase plan](prd/PhaseWiseImplementationPlan.md)
+- [gap analysis](prd/v4/GapAnalysis.md)
+- [phase plan](prd/v1/PhaseWiseImplementationPlan.md)
 - [testing guide](Test/TestingGuide.md)
 - [demo setup guide](Demo/DEMO_SETUP_GUIDE.md)

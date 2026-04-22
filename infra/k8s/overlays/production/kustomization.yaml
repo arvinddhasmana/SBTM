@@ -1,0 +1,116 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: sbtm-production
+
+resources:
+  - ../../base/namespace.yaml
+  - ../../base/secrets/keyvault-csi.yaml
+  - ../../base/api-gateway/deployment.yaml
+  - ../../base/api-gateway/service.yaml
+  - ../../base/api-gateway/hpa.yaml
+  - ../../base/gps-tracking/deployment.yaml
+  - ../../base/gps-tracking/service.yaml
+  - ../../base/gps-tracking/hpa.yaml
+  - ../../base/emergency-alerts/deployment.yaml
+  - ../../base/emergency-alerts/service.yaml
+  - ../../base/emergency-alerts/hpa.yaml
+  - ../../base/student-presence/deployment.yaml
+  - ../../base/student-presence/service.yaml
+  - ../../base/student-management/deployment.yaml
+  - ../../base/student-management/service.yaml
+  - ../../base/compliance-management/deployment.yaml
+  - ../../base/compliance-management/service.yaml
+  - ../../base/video-service/deployment.yaml
+  - ../../base/video-service/service.yaml
+  - ../../base/notification-service/deployment.yaml
+  - ../../base/notification-service/service.yaml
+  - ../../base/osrm/deployment.yaml
+  - ../../base/osrm/service.yaml
+  - ../../base/ingress/ingress-rules.yaml
+
+patches:
+  # Production: 2 replicas for standard services
+  - patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 2
+    target:
+      kind: Deployment
+      labelSelector: 'app in (gps-tracking,student-presence,student-management,compliance-management,video-service,notification-service,osrm)'
+
+  # Production: 3 replicas for api-gateway and emergency-alerts (higher traffic)
+  - patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 3
+    target:
+      kind: Deployment
+      labelSelector: 'app in (api-gateway,emergency-alerts)'
+
+  # Production: info log level
+  - patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: LOG_LEVEL
+          value: info
+    target:
+      kind: Deployment
+      labelSelector: 'app in (api-gateway,gps-tracking,emergency-alerts,student-presence,student-management,compliance-management,video-service,notification-service)'
+
+  # Production: imagePullPolicy IfNotPresent (use cached images)
+  - patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/imagePullPolicy
+        value: IfNotPresent
+    target:
+      kind: Deployment
+
+  # Production: higher resource requests and limits
+  - patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/resources
+        value:
+          requests:
+            cpu: "1"
+            memory: "512Mi"
+          limits:
+            cpu: "2"
+            memory: "1Gi"
+    target:
+      kind: Deployment
+      labelSelector: 'app in (api-gateway,gps-tracking,emergency-alerts,student-presence,student-management,compliance-management,video-service,notification-service)'
+
+  # Production: ingress host
+  - patch: |-
+      - op: replace
+        path: /spec/rules/0/host
+        value: api.sbtm.example.com
+      - op: replace
+        path: /spec/tls/0/hosts/0
+        value: api.sbtm.example.com
+    target:
+      kind: Ingress
+      name: sbtm-ingress
+
+commonLabels:
+  environment: production
+
+images:
+  - name: sbtmacrdemo.azurecr.io/sbtm/api-gateway
+    newTag: latest
+  - name: sbtmacrdemo.azurecr.io/sbtm/gps-tracking
+    newTag: latest
+  - name: sbtmacrdemo.azurecr.io/sbtm/emergency-alerts
+    newTag: latest
+  - name: sbtmacrdemo.azurecr.io/sbtm/student-presence
+    newTag: latest
+  - name: sbtmacrdemo.azurecr.io/sbtm/student-management
+    newTag: latest
+  - name: sbtmacrdemo.azurecr.io/sbtm/compliance-management
+    newTag: latest
+  - name: sbtmacrdemo.azurecr.io/sbtm/video-service
+    newTag: latest
+  - name: sbtmacrdemo.azurecr.io/sbtm/notification-service
+    newTag: latest

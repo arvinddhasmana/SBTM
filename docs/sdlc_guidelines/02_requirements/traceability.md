@@ -24,18 +24,19 @@ graph LR
 
 ## Traceability Rules
 
-| Source | Must Link To | How |
-|---|---|---|
-| Requirement (FR-*, PR-*, etc.) | Use cases and features | `Traces To` field in requirement record |
-| Use case (UC-*) | Requirements, design sections | Related Documents section in UC file |
-| Feature (FEAT-*) | Requirements, implementation module | Requirement Coverage column in Features.md |
-| Design document | Business requirements justifying the design | Related Documents section |
-| Implementation module | Gap analysis, delivery phase | Source of Truth section in Module-*.md |
-| Test case | Requirement or acceptance criteria it verifies | Test description or comment |
+| Source                         | Must Link To                                   | How                                        |
+| ------------------------------ | ---------------------------------------------- | ------------------------------------------ |
+| Requirement (FR-_, PR-_, etc.) | Use cases and features                         | `Traces To` field in requirement record    |
+| Use case (UC-\*)               | Requirements, design sections                  | Related Documents section in UC file       |
+| Feature (FEAT-\*)              | Requirements, implementation module            | Requirement Coverage column in Features.md |
+| Design document                | Business requirements justifying the design    | Related Documents section                  |
+| Implementation module          | Gap analysis, delivery phase                   | Source of Truth section in Module-\*.md    |
+| Test case                      | Requirement or acceptance criteria it verifies | Test description or comment                |
 
 ## Gap Traceability
 
 Items in `docs/prd/GapAnalysis.md` must:
+
 - Reference the v1 design target that created the gap.
 - Reference the current implementation state that confirms the gap.
 - Be assigned to a phase in `docs/prd/PhaseWiseImplementationPlan.md`.
@@ -43,6 +44,7 @@ Items in `docs/prd/GapAnalysis.md` must:
 ## Verification
 
 During PR review, check:
+
 - New features trace back to a requirement ID.
 - New requirements have corresponding use cases or feature entries.
 - Implementation modules reference their delivery phase.
@@ -52,5 +54,5 @@ During PR review, check:
 
 - [requirements_engineering.md](requirements_engineering.md) — Requirement capture format
 - [../../Business/Requirements.md](../../Business/Requirements.md) — Requirements catalog
-- [../../prd/GapAnalysis.md](../../prd/GapAnalysis.md) — Gap inventory
-- [../../prd/PhaseWiseImplementationPlan.md](../../prd/PhaseWiseImplementationPlan.md) — Phase plan
+- [../../prd/v4/GapAnalysis.md](../../prd/v4/GapAnalysis.md) — Gap inventory
+- [../../prd/v1/PhaseWiseImplementationPlan.md](../../prd/v1/PhaseWiseImplementationPlan.md) — Phase plan

@@ -1,0 +1,84 @@
+name: Mobile App Build and Submit
+
+on:
+  release:
+    types: [published]
+  push:
+    branches:
+      - 'mobile/**'
+
+jobs:
+  mobile-build:
+    name: EAS Build & Submit
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: apps/driver-app
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install EAS CLI
+        run: npm install -g eas-cli
+
+      - name: EAS login
+        run: eas login --non-interactive
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Build Android (AAB)
+        id: android-build
+        run: |
+          eas build \
+            --platform android \
+            --profile production \
+            --non-interactive \
+            --json | tee /tmp/android-build.json
+          BUILD_ID=$(jq -r '.[0].id' /tmp/android-build.json)
+          echo "build_id=${BUILD_ID}" >> "$GITHUB_OUTPUT"
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Build iOS (IPA)
+        id: ios-build
+        run: |
+          eas build \
+            --platform ios \
+            --profile production \
+            --non-interactive \
+            --json | tee /tmp/ios-build.json
+          BUILD_ID=$(jq -r '.[0].id' /tmp/ios-build.json)
+          echo "build_id=${BUILD_ID}" >> "$GITHUB_OUTPUT"
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Submit Android to Play Store (internal testing)
+        if: github.event_name == 'release'
+        run: |
+          eas submit \
+            --platform android \
+            --profile production \
+            --id ${{ steps.android-build.outputs.build_id }} \
+            --non-interactive
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          GOOGLE_PLAY_KEY: ${{ secrets.GOOGLE_PLAY_KEY }}
+
+      - name: Submit iOS to TestFlight
+        if: github.event_name == 'release'
+        run: |
+          eas submit \
+            --platform ios \
+            --profile production \
+            --id ${{ steps.ios-build.outputs.build_id }} \
+            --non-interactive
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}

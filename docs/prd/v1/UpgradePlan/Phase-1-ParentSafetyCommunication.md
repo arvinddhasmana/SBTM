@@ -37,8 +37,8 @@ The notification delivery gap is classified as **Critical** in the gap analysis.
 
 **Implementation modules affected:**
 
-- [Module-4-EmergencyAlerts.md](../../Implementation/Module-4-EmergencyAlerts.md) — Producer side (already implemented)
-- [Module-6-StudentPresence.md](../../Implementation/Module-6-StudentPresence.md) — Producer side (already implemented)
+- [Module-4-EmergencyAlerts.md](../../../Implementation/Module-4-EmergencyAlerts.md) — Producer side (already implemented)
+- [Module-6-StudentPresence.md](../../../Implementation/Module-6-StudentPresence.md) — Producer side (already implemented)
 - New: Notification consumer (create or extend existing module)
 
 **Requirements traced:**
@@ -56,7 +56,7 @@ The notification delivery gap is classified as **Critical** in the gap analysis.
 
 **Implementation modules affected:**
 
-- [Module-2-ParentApp.md](../../Implementation/Module-2-ParentApp.md)
+- [Module-2-ParentApp.md](../../../Implementation/Module-2-ParentApp.md)
 
 ### 3. Parent App Real-Time Integration
 
@@ -66,8 +66,8 @@ The notification delivery gap is classified as **Critical** in the gap analysis.
 
 **Implementation modules affected:**
 
-- [Module-2-ParentApp.md](../../Implementation/Module-2-ParentApp.md)
-- [Module-8-ApiGateway.md](../../Implementation/Module-8-ApiGateway.md) — SSE proxy if needed
+- [Module-2-ParentApp.md](../../../Implementation/Module-2-ParentApp.md)
+- [Module-8-ApiGateway.md](../../../Implementation/Module-8-ApiGateway.md) — SSE proxy if needed
 
 ## Dependencies
 
@@ -103,6 +103,6 @@ After Phase 1 completion, the demo can show **real parent alerts** instead of na
 ## Related Documents
 
 - [../GapAnalysis.md](../GapAnalysis.md) — Gap: "Notifications" (Critical), "Parent real-time delivery" (High)
-- [../../Design/EventCatalog.md](../../Design/EventCatalog.md) — Event definitions
-- [../../Business/Requirements.md](../../Business/Requirements.md) — FR-NOTIFY-_, PR-CONSENT-_
-- [../../sdlc_guidelines/03_architecture_design/design_guidelines.md](../../sdlc_guidelines/03_architecture_design/design_guidelines.md) — Event-driven patterns
+- [../../Design/EventCatalog.md](../../../Design/EventCatalog.md) — Event definitions
+- [../../Business/Requirements.md](../../../Business/Requirements.md) — FR-NOTIFY-_, PR-CONSENT-_
+- [../../sdlc_guidelines/03_architecture_design/design_guidelines.md](../../../sdlc_guidelines/03_architecture_design/design_guidelines.md) — Event-driven patterns

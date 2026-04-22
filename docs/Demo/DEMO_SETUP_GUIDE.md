@@ -12,9 +12,9 @@ This document is the operational setup guide for demos. For current capability g
 
 - [LiveDemoScript.md](LiveDemoScript.md)
 - [QUICK_REFERENCE.md](QUICK_REFERENCE.md)
-- [Real Phone Deployment Guide](../RealPhoneDeploymentGuide.md) -- deploy on a real phone and drive a route
-- [GapAnalysis.md](../prd/GapAnalysis.md)
-- [PhaseWiseImplementationPlan.md](../prd/PhaseWiseImplementationPlan.md)
+- [Real Phone Deployment Guide](../Operations/RealPhoneDeploymentGuide.md) -- deploy on a real phone and drive a route
+- [GapAnalysis.md](../prd/v4/GapAnalysis.md)
+- [PhaseWiseImplementationPlan.md](../prd/v1/PhaseWiseImplementationPlan.md)
 - [TestingGuide.md](../Test/TestingGuide.md)
 - [v4 Gap Analysis](../prd/v4/GapAnalysis.md)
 - [v4 Roles and Workflows](../prd/v4/RolesAndWorkflows.md)

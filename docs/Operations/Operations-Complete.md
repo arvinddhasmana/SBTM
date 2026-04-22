@@ -553,9 +553,9 @@ pkill -f 'ngrok http'        # stop ngrok
 
 ## Related Docs
 
-- [Driver App Development Guide](dev/driver-app-development.md) — detailed setup, WSL2 networking, known issues
-- [Demo Setup Guide](Demo/DEMO_SETUP_GUIDE.md) — full demo simulation with all roles
-- [Local Dev Testing Guide](dev/local_dev_testing_guide.md) — Mock / Hybrid / Full Docker modes
+- [Driver App Development Guide](../dev/driver-app-development.md) — detailed setup, WSL2 networking, known issues
+- [Demo Setup Guide](../Demo/DEMO_SETUP_GUIDE.md) — full demo simulation with all roles
+- [Local Dev Testing Guide](../dev/local_dev_testing_guide.md) — Mock / Hybrid / Full Docker modes
 
 ---
 

@@ -10,8 +10,8 @@ This analysis reviews the implementation state **after completion of all five up
 
 ## Related Documents
 
-- [../GapAnalysis.md](../GapAnalysis.md) — Original pre-phase gap analysis
-- [../PhaseWiseImplementationPlan.md](../PhaseWiseImplementationPlan.md) — Original phase plan
+- [../GapAnalysis.md](../v4/GapAnalysis.md) — Original pre-phase gap analysis
+- [../PhaseWiseImplementationPlan.md](../v1/PhaseWiseImplementationPlan.md) — Original phase plan
 - [UpgradePlan.md](UpgradePlan.md) — New upgrade plan derived from this analysis
 - [../../Design/Architecture.md](../../Design/Architecture.md)
 - [../../Design/SecurityPrivacyArchitecture.md](../../Design/SecurityPrivacyArchitecture.md)
@@ -31,22 +31,22 @@ The remaining gaps cluster into three categories:
 
 ## Gap Matrix (Post-Phase-5)
 
-| Area | v1 Target | Current State | Gap Level | Phase Origin |
-|---|---|---|---|---|
-| Rate limiting activation | Throttler guards applied to all public endpoints | Package installed, config in docker-compose, guard not applied to controllers | Medium | Phase 5 |
-| Service-to-service auth activation | Internal JWT/mTLS validated on all inter-service calls | Guard file exists in student-management; not applied to endpoints in any service | High | Phase 5 |
-| Centralized audit pipeline | Cross-service audit events centrally queryable | No consumer service, no cross-service event schema, compliance service logs locally only | High | Phase 5 |
-| Correlation ID propagation | Requests traceable across service boundaries | No HTTP interceptor or middleware propagating correlation headers | High | Phase 5 |
-| OpenTelemetry instrumentation | Distributed tracing with span generation and export | `@opentelemetry/api` package present; no exporter configuration or span code | Medium | Phase 5 |
-| Data retention and purge | Scheduled purge/archival by data class per retention matrix | No purge job code, no archival workflow | Medium | Phase 5 |
-| DSAR workflow | Data subject access requests fulfilled within 30 days | Not implemented | Medium | Phase 5 |
-| Secret management | Centralized secret management, no hardcoded secrets | Secrets in docker-compose env vars; no vault or managed secret integration | Medium | Phase 5 |
-| CORS origin validation | All services validate CORS origins | Config present in docker-compose; not all services integrate it | Low | Phase 5 |
-| Notification service (end-to-end) | Dedicated notification consumer for parent push/SMS/email | Phase 1 scope — verify consumer is wired and delivering | Verify | Phase 1 |
-| BLE scanning in driver app | Expo BLE scanning producing SmartTag payloads | Phase 2 scope — verify implementation completeness | Verify | Phase 2 |
-| Route deviation alerting | Deviation events produce downstream emergency alerts | Phase 3 scope — verify consumer wiring | Verify | Phase 3 |
-| Tenant onboarding UI | Full CRUD for boards/schools with invitation workflows | Phase 4 scope — verify beyond listing pages | Verify | Phase 4 |
-| Absence reporting | Parent reports absence affecting driver roster | Phase 4 scope — verify endpoint and UI | Verify | Phase 4 |
+| Area                               | v1 Target                                                   | Current State                                                                            | Gap Level | Phase Origin |
+| ---------------------------------- | ----------------------------------------------------------- | ---------------------------------------------------------------------------------------- | --------- | ------------ |
+| Rate limiting activation           | Throttler guards applied to all public endpoints            | Package installed, config in docker-compose, guard not applied to controllers            | Medium    | Phase 5      |
+| Service-to-service auth activation | Internal JWT/mTLS validated on all inter-service calls      | Guard file exists in student-management; not applied to endpoints in any service         | High      | Phase 5      |
+| Centralized audit pipeline         | Cross-service audit events centrally queryable              | No consumer service, no cross-service event schema, compliance service logs locally only | High      | Phase 5      |
+| Correlation ID propagation         | Requests traceable across service boundaries                | No HTTP interceptor or middleware propagating correlation headers                        | High      | Phase 5      |
+| OpenTelemetry instrumentation      | Distributed tracing with span generation and export         | `@opentelemetry/api` package present; no exporter configuration or span code             | Medium    | Phase 5      |
+| Data retention and purge           | Scheduled purge/archival by data class per retention matrix | No purge job code, no archival workflow                                                  | Medium    | Phase 5      |
+| DSAR workflow                      | Data subject access requests fulfilled within 30 days       | Not implemented                                                                          | Medium    | Phase 5      |
+| Secret management                  | Centralized secret management, no hardcoded secrets         | Secrets in docker-compose env vars; no vault or managed secret integration               | Medium    | Phase 5      |
+| CORS origin validation             | All services validate CORS origins                          | Config present in docker-compose; not all services integrate it                          | Low       | Phase 5      |
+| Notification service (end-to-end)  | Dedicated notification consumer for parent push/SMS/email   | Phase 1 scope — verify consumer is wired and delivering                                  | Verify    | Phase 1      |
+| BLE scanning in driver app         | Expo BLE scanning producing SmartTag payloads               | Phase 2 scope — verify implementation completeness                                       | Verify    | Phase 2      |
+| Route deviation alerting           | Deviation events produce downstream emergency alerts        | Phase 3 scope — verify consumer wiring                                                   | Verify    | Phase 3      |
+| Tenant onboarding UI               | Full CRUD for boards/schools with invitation workflows      | Phase 4 scope — verify beyond listing pages                                              | Verify    | Phase 4      |
+| Absence reporting                  | Parent reports absence affecting driver roster              | Phase 4 scope — verify endpoint and UI                                                   | Verify    | Phase 4      |
 
 ## Detailed Gap Analysis
 
@@ -66,7 +66,8 @@ The remaining gaps cluster into three categories:
 
 **Impact**: Inter-service calls remain unauthenticated. Any network-accessible service can call any other without identity.
 
-**Recommendation**: 
+**Recommendation**:
+
 - Generate a shared internal JWT signing key for service-to-service calls.
 - Apply the auth guard to all internal endpoints across services.
 - Add service identity headers to outgoing inter-service HTTP calls.
@@ -78,6 +79,7 @@ The remaining gaps cluster into three categories:
 **Impact**: Audit trail is fragmented. Critical mutations in GPS, presence, alerts, and gateway services are not captured in a unified audit log.
 
 **Recommendation**:
+
 - Define a standard audit event schema (action, resource, resourceId, userId, schoolId, timestamp, details).
 - Add audit event emission to critical mutation endpoints across all services.
 - Create a centralized audit consumer (or extend compliance service) to persist cross-service audit records.
@@ -89,6 +91,7 @@ The remaining gaps cluster into three categories:
 **Impact**: Cross-service debugging requires manual log correlation. Incident investigation is slower and less reliable.
 
 **Recommendation**:
+
 - Add correlation ID middleware to the API Gateway that generates or propagates `X-Request-Id` headers.
 - Propagate correlation headers in all outgoing HTTP calls from the gateway to downstream services.
 - Include correlation ID in all structured log entries.
@@ -100,6 +103,7 @@ The remaining gaps cluster into three categories:
 **Impact**: No distributed tracing capability. Production observability is limited to individual service logs.
 
 **Recommendation**:
+
 - Configure OpenTelemetry SDK with a tracer provider and exporter (Jaeger, Zipkin, or OTLP).
 - Add automatic HTTP instrumentation for NestJS and Express services.
 - Export traces to a local collector for development; plan for managed collector in production.
@@ -111,6 +115,7 @@ The remaining gaps cluster into three categories:
 **Impact**: Data grows unbounded. Privacy compliance is not achievable for production deployment.
 
 **Recommendation**:
+
 - Implement scheduled purge jobs for each data class using cron or BullMQ scheduled jobs.
 - Add archival support for audit logs and alert records.
 - Implement DSAR workflow for personal data retrieval and deletion.
@@ -127,22 +132,23 @@ The remaining gaps cluster into three categories:
 
 The following documents contain status or claims that need updating:
 
-| Document | Issue |
-|---|---|
-| `docs/prd/UpgradePlan/README.md` | All phases show status "Planned" — should reflect implementation status |
-| `docs/prd/UpgradePlan/Phase-*.md` | All five phases show status "Planned" — acceptance criteria should be checked |
-| `docs/prd/GapAnalysis.md` | Gap matrix shows pre-implementation state — needs post-implementation update |
-| `docs/Business/Features.md` | Feature status (Partial/Planned) needs update for delivered phases |
-| `docs/Design/EventCatalog.md` | `location.updated` and `route.deviation` show "Implemented — Phase 3" but other events need status verification |
-| `docs/UserGuide/*` | Caveats about incomplete features need updating for delivered phases |
-| `docs/Demo/*` | ~~Scripts reference PowerShell (.ps1) — need updating for bash/Ubuntu~~ **RESOLVED** |
-| `docs/Operations/*` | ~~References to PowerShell scripts need updating~~ **RESOLVED** |
+| Document                          | Issue                                                                                                           |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `docs/prd/UpgradePlan/README.md`  | All phases show status "Planned" — should reflect implementation status                                         |
+| `docs/prd/UpgradePlan/Phase-*.md` | All five phases show status "Planned" — acceptance criteria should be checked                                   |
+| `docs/prd/GapAnalysis.md`         | Gap matrix shows pre-implementation state — needs post-implementation update                                    |
+| `docs/Business/Features.md`       | Feature status (Partial/Planned) needs update for delivered phases                                              |
+| `docs/Design/EventCatalog.md`     | `location.updated` and `route.deviation` show "Implemented — Phase 3" but other events need status verification |
+| `docs/UserGuide/*`                | Caveats about incomplete features need updating for delivered phases                                            |
+| `docs/Demo/*`                     | ~~Scripts reference PowerShell (.ps1) — need updating for bash/Ubuntu~~ **RESOLVED**                            |
+| `docs/Operations/*`               | ~~References to PowerShell scripts need updating~~ **RESOLVED**                                                 |
 
 ### 3. Cross-Cutting Concerns
 
 #### 3.1 Development Environment — RESOLVED
 
 Bash equivalents have been created for all scripts:
+
 - `init-db.sh` (replaces `init-db.ps1`)
 - `reset-demo-db.sh` (replaces `reset-demo-db.ps1`)
 - `simulate-demo.sh` (replaces `simulate-demo.ps1`)
@@ -154,6 +160,7 @@ All documentation references have been updated from PowerShell to bash. The orig
 #### 3.2 Testing Infrastructure — RESOLVED
 
 The testing guide has been expanded to include:
+
 - Structured test pyramid documentation
 - Test scenario index with IDs (UT01-UT12, IT01-IT08, SM01-SM08, AZ01-AZ05)
 - Coverage requirements by component
@@ -162,14 +169,14 @@ The testing guide has been expanded to include:
 
 ## Recommendations Summary
 
-| Priority | Gap | Effort | Requirement |
-|---|---|---|---|
-| Critical | Centralized audit pipeline | High | OPS-AUDIT-001 |
-| Critical | Correlation ID propagation | Medium | OPS-TRACE-001 |
-| High | Service-to-service auth activation | Low | SR-SVC-001 |
-| High | Rate limiting guard activation | Low | SR-INPUT-001 |
-| Medium | OpenTelemetry configuration | Medium | NFR-OBS-001 |
-| Medium | Data retention/purge jobs | High | PR-RET-001 |
-| Medium | DSAR workflow | Medium | PR-DEL-001 |
-| Medium | Secret management planning | Medium | NFR-DATA-001 |
-| Low | CORS integration across services | Low | SR-INPUT-001 |
+| Priority | Gap                                | Effort | Requirement   |
+| -------- | ---------------------------------- | ------ | ------------- |
+| Critical | Centralized audit pipeline         | High   | OPS-AUDIT-001 |
+| Critical | Correlation ID propagation         | Medium | OPS-TRACE-001 |
+| High     | Service-to-service auth activation | Low    | SR-SVC-001    |
+| High     | Rate limiting guard activation     | Low    | SR-INPUT-001  |
+| Medium   | OpenTelemetry configuration        | Medium | NFR-OBS-001   |
+| Medium   | Data retention/purge jobs          | High   | PR-RET-001    |
+| Medium   | DSAR workflow                      | Medium | PR-DEL-001    |
+| Medium   | Secret management planning         | Medium | NFR-DATA-001  |
+| Low      | CORS integration across services   | Low    | SR-INPUT-001  |

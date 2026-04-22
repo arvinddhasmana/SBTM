@@ -1,0 +1,22 @@
+# NGINX Ingress Controller Helm values override
+# Applied via: helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx -f this-file.yaml
+controller:
+  replicaCount: 2
+  service:
+    annotations:
+      service.beta.kubernetes.io/azure-load-balancer-health-probe-request-path: /healthz
+  config:
+    use-forwarded-headers: 'true'
+    proxy-body-size: '100m'
+    proxy-read-timeout: '120'
+    proxy-send-timeout: '120'
+    # WebSocket support for Socket.IO (emergency alerts)
+    proxy-http-version: '1.1'
+    upstream-keepalive-connections: '200'
+  resources:
+    requests:
+      cpu: '100m'
+      memory: '128Mi'
+    limits:
+      cpu: '500m'
+      memory: '512Mi'

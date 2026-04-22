@@ -15,13 +15,13 @@ This document is the architectural index for the SBTM v1 target state. It separa
 - [SecurityPrivacyArchitecture.md](SecurityPrivacyArchitecture.md)
 - [TechnicalSpecifications.md](TechnicalSpecifications.md)
 - [EventCatalog.md](EventCatalog.md)
-- [../../Business/Requirements.md](../../Business/Requirements.md)
-- [../../prd/GapAnalysis.md](../../prd/GapAnalysis.md)
-- [../../prd/v4/GapAnalysis.md](../../prd/v4/GapAnalysis.md) (v4 Business Gap Analysis)
-- [../../prd/v4/RolesAndWorkflows.md](../../prd/v4/RolesAndWorkflows.md) (v4 Roles and Workflows)
-- [../../prd/v4/AlertStrategy.md](../../prd/v4/AlertStrategy.md) (v4 Alert Strategy)
-- [../../prd/v4/IntegrationAndMigration.md](../../prd/v4/IntegrationAndMigration.md) (v4 Integration)
-- [../../prd/v4/UpgradePlan.md](../../prd/v4/UpgradePlan.md) (v4 Upgrade Plan)
+- [../Business/Requirements.md](../Business/Requirements.md)
+- [../prd/v4/GapAnalysis.md](../prd/v4/GapAnalysis.md)
+- [../prd/v4/GapAnalysis.md](../prd/v4/GapAnalysis.md) (v4 Business Gap Analysis)
+- [../prd/v4/RolesAndWorkflows.md](../prd/v4/RolesAndWorkflows.md) (v4 Roles and Workflows)
+- [../prd/v4/AlertStrategy.md](../prd/v4/AlertStrategy.md) (v4 Alert Strategy)
+- [../prd/v4/IntegrationAndMigration.md](../prd/v4/IntegrationAndMigration.md) (v4 Integration)
+- [../prd/v4/UpgradePlan.md](../prd/v4/UpgradePlan.md) (v4 Upgrade Plan)
 
 ## Architecture Intent
 

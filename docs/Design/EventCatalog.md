@@ -11,7 +11,7 @@ This catalog defines the domain events in the SBTM v1 architecture. Each entry l
 - [Architecture.md](Architecture.md)
 - [IntegrationArchitecture.md](IntegrationArchitecture.md)
 - [TechnicalSpecifications.md](TechnicalSpecifications.md)
-- [../../Business/Requirements.md](../../Business/Requirements.md)
+- [../Business/Requirements.md](../Business/Requirements.md)
 
 ---
 

@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  labels:
+    app: api-gateway
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+      annotations:
+        azure.workload.identity/use: 'true'
+    spec:
+      serviceAccountName: sbtm-workload-sa
+      volumes:
+        - name: secrets-store
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: sbtm-keyvault-secrets
+      containers:
+        - name: api-gateway
+          image: sbtmacrdemo.azurecr.io/sbtm/api-gateway:latest
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - secretRef:
+                name: sbtm-secrets
+          env:
+            - name: PORT
+              value: '3000'
+            - name: NODE_ENV
+              value: 'production'
+          volumeMounts:
+            - name: secrets-store
+              mountPath: /mnt/secrets-store
+              readOnly: true
+          resources:
+            requests:
+              cpu: '500m'
+              memory: '256Mi'
+            limits:
+              cpu: '1'
+              memory: '512Mi'
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10

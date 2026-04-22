@@ -18,14 +18,14 @@
 
 ## Phase Status
 
-| Phase       | Name                                    | Status      | Completion Notes                                                                         |
-| ----------- | --------------------------------------- | ----------- | ---------------------------------------------------------------------------------------- |
-| **Phase A** | Parent Safety Communication             | ✅ Complete | Alert notification pipeline, BullMQ fan-out, presence notifications, WebSocket real-time |
-| **Phase B** | Alert Governance and Confirmation       | ✅ Complete | See implementation notes below                                                           |
-| **Phase C** | Role Boundary Enforcement and Workflows | ✅ Complete | See implementation notes below                                                           |
-| **Phase D** | External System Integration             | 🔲 Planned  | Depends on Phase C                                                                       |
-| **Phase E** | Operational Maturity                    | 🔲 Planned  | Depends on Phase C                                                                       |
-| **Phase F** | Production Deployment and Hardening     | 🔲 Planned  | Depends on all above                                                                     |
+| Phase       | Name                                    | Status         | Completion Notes                                                                         |
+| ----------- | --------------------------------------- | -------------- | ---------------------------------------------------------------------------------------- |
+| **Phase A** | Parent Safety Communication             | ✅ Complete    | Alert notification pipeline, BullMQ fan-out, presence notifications, WebSocket real-time |
+| **Phase B** | Alert Governance and Confirmation       | ✅ Complete    | See implementation notes below                                                           |
+| **Phase C** | Role Boundary Enforcement and Workflows | ✅ Complete    | See implementation notes below                                                           |
+| **Phase D** | External System Integration             | 🔲 Planned     | Depends on Phase C                                                                       |
+| **Phase E** | Operational Maturity                    | 🔲 Planned     | Depends on Phase C                                                                       |
+| **Phase F** | Production Deployment and Hardening     | 🔄 In Progress | Azure AKS + CI/CD + mobile store deployment underway — see `docs/Deployment/`            |
 
 ---
 

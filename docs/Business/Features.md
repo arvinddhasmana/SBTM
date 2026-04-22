@@ -12,7 +12,7 @@ This catalog translates the requirements baseline into business-facing capabilit
 - [UseCases.md](UseCases.md)
 - [UserJourney.md](UserJourney.md)
 - [../Design/Architecture.md](../Design/Architecture.md)
-- [../prd/GapAnalysis.md](../prd/GapAnalysis.md)
+- [../prd/v4/GapAnalysis.md](../prd/v4/GapAnalysis.md)
 - [../prd/v4/GapAnalysis.md](../prd/v4/GapAnalysis.md) (v4 Business Gap Analysis)
 - [../prd/v4/UpgradePlan.md](../prd/v4/UpgradePlan.md) (v4 Upgrade Plan)
 - [../prd/v4/AlertStrategy.md](../prd/v4/AlertStrategy.md) (v4 Alert Strategy)

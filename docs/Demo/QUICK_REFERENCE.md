@@ -10,7 +10,7 @@ This is the fast operational companion to `DEMO_SETUP_GUIDE.md`. For feature gap
 
 - [DEMO_SETUP_GUIDE.md](DEMO_SETUP_GUIDE.md)
 - [LiveDemoScript.md](LiveDemoScript.md)
-- [GapAnalysis.md](../prd/GapAnalysis.md)
+- [GapAnalysis.md](../prd/v4/GapAnalysis.md)
 - [TestingGuide.md](../Test/TestingGuide.md)
 
 ## Fast Commands

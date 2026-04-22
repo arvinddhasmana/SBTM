@@ -13,8 +13,8 @@ This document is the index for the SBTM use case set. Each use case now lives in
 - [UserJourney.md](UserJourney.md)
 - [../Design/SystemArchitecture.md](../Design/SystemArchitecture.md)
 - [../Design/IntegrationArchitecture.md](../Design/IntegrationArchitecture.md)
-- [../prd/GapAnalysis.md](../prd/GapAnalysis.md)
-- [../prd/PhaseWiseImplementationPlan.md](../prd/PhaseWiseImplementationPlan.md)
+- [../prd/v4/GapAnalysis.md](../prd/v4/GapAnalysis.md)
+- [../prd/v1/PhaseWiseImplementationPlan.md](../prd/v1/PhaseWiseImplementationPlan.md)
 - [../prd/v4/GapAnalysis.md](../prd/v4/GapAnalysis.md) (v4 Business Gap Analysis)
 - [../prd/v4/RolesAndWorkflows.md](../prd/v4/RolesAndWorkflows.md) (v4 Roles and Workflows)
 

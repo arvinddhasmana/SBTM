@@ -37,7 +37,7 @@ GPS intelligence depends on the stable eventing foundation from Phase 1 and reli
 
 **Implementation modules affected:**
 
-- [Module-1-GpsTracking.md](../../Implementation/Module-1-GpsTracking.md)
+- [Module-1-GpsTracking.md](../../../Implementation/Module-1-GpsTracking.md)
 
 **Requirements traced:**
 
@@ -53,8 +53,8 @@ GPS intelligence depends on the stable eventing foundation from Phase 1 and reli
 
 **Implementation modules affected:**
 
-- [Module-1-GpsTracking.md](../../Implementation/Module-1-GpsTracking.md)
-- [Module-4-EmergencyAlerts.md](../../Implementation/Module-4-EmergencyAlerts.md) — Consume derived alert events
+- [Module-1-GpsTracking.md](../../../Implementation/Module-1-GpsTracking.md)
+- [Module-4-EmergencyAlerts.md](../../../Implementation/Module-4-EmergencyAlerts.md) — Consume derived alert events
 
 **Requirements traced:**
 
@@ -70,9 +70,9 @@ GPS intelligence depends on the stable eventing foundation from Phase 1 and reli
 
 **Implementation modules affected:**
 
-- [Module-7-AdminDashboard.md](../../Implementation/Module-7-AdminDashboard.md) — Route planner UI
-- [Module-8-ApiGateway.md](../../Implementation/Module-8-ApiGateway.md) — Route optimization proxy
-- [Module-1-GpsTracking.md](../../Implementation/Module-1-GpsTracking.md) — Route data model
+- [Module-7-AdminDashboard.md](../../../Implementation/Module-7-AdminDashboard.md) — Route planner UI
+- [Module-8-ApiGateway.md](../../../Implementation/Module-8-ApiGateway.md) — Route optimization proxy
+- [Module-1-GpsTracking.md](../../../Implementation/Module-1-GpsTracking.md) — Route data model
 
 ## Dependencies
 
@@ -111,5 +111,5 @@ After Phase 3 completion, the demo can show **real route intelligence** — live
 - [Phase-1-ParentSafetyCommunication.md](Phase-1-ParentSafetyCommunication.md) — Event pipeline foundation
 - [Phase-2-DriverPresence.md](Phase-2-DriverPresence.md) — Route state dependency
 - [../GapAnalysis.md](../GapAnalysis.md) — Gap: "GPS intelligence" (High), "Route optimization" (Medium)
-- [../../Design/DataArchitecture.md](../../Design/DataArchitecture.md) — GPS data domain
-- [../../sdlc_guidelines/08_tech_specific/postgresql_postgis.md](../../sdlc_guidelines/08_tech_specific/postgresql_postgis.md) — PostGIS guidelines
+- [../../Design/DataArchitecture.md](../../../Design/DataArchitecture.md) — GPS data domain
+- [../../sdlc_guidelines/08_tech_specific/postgresql_postgis.md](../../../sdlc_guidelines/08_tech_specific/postgresql_postgis.md) — PostGIS guidelines

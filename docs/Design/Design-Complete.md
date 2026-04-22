@@ -36,13 +36,13 @@ This document is the architectural index for the SBTM v1 target state. It separa
 - [SecurityPrivacyArchitecture.md](SecurityPrivacyArchitecture.md)
 - [TechnicalSpecifications.md](TechnicalSpecifications.md)
 - [EventCatalog.md](EventCatalog.md)
-- [../../Business/Requirements.md](../../Business/Requirements.md)
-- [../../prd/GapAnalysis.md](../../prd/GapAnalysis.md)
-- [../../prd/v4/GapAnalysis.md](../../prd/v4/GapAnalysis.md) (v4 Business Gap Analysis)
-- [../../prd/v4/RolesAndWorkflows.md](../../prd/v4/RolesAndWorkflows.md) (v4 Roles and Workflows)
-- [../../prd/v4/AlertStrategy.md](../../prd/v4/AlertStrategy.md) (v4 Alert Strategy)
-- [../../prd/v4/IntegrationAndMigration.md](../../prd/v4/IntegrationAndMigration.md) (v4 Integration)
-- [../../prd/v4/UpgradePlan.md](../../prd/v4/UpgradePlan.md) (v4 Upgrade Plan)
+- [../Business/Requirements.md](../Business/Requirements.md)
+- [../prd/v4/GapAnalysis.md](../prd/v4/GapAnalysis.md)
+- [../prd/v4/GapAnalysis.md](../prd/v4/GapAnalysis.md) (v4 Business Gap Analysis)
+- [../prd/v4/RolesAndWorkflows.md](../prd/v4/RolesAndWorkflows.md) (v4 Roles and Workflows)
+- [../prd/v4/AlertStrategy.md](../prd/v4/AlertStrategy.md) (v4 Alert Strategy)
+- [../prd/v4/IntegrationAndMigration.md](../prd/v4/IntegrationAndMigration.md) (v4 Integration)
+- [../prd/v4/UpgradePlan.md](../prd/v4/UpgradePlan.md) (v4 Upgrade Plan)
 
 ## Architecture Intent
 
@@ -485,7 +485,7 @@ This catalog defines the domain events in the SBTM v1 architecture. Each entry l
 - [Architecture.md](Architecture.md)
 - [IntegrationArchitecture.md](IntegrationArchitecture.md)
 - [TechnicalSpecifications.md](TechnicalSpecifications.md)
-- [../../Business/Requirements.md](../../Business/Requirements.md)
+- [../Business/Requirements.md](../Business/Requirements.md)
 
 ---
 
@@ -896,7 +896,7 @@ This document captures the security and privacy architecture for SBTM with empha
 - [DataArchitecture.md](DataArchitecture.md)
 - [DatabaseSchema.md](DatabaseSchema.md)
 - [DataRetention.md](DataRetention.md)
-- [../../Operations/Runbooks.md](../../Operations/Runbooks.md)
+- [../Operations/Runbooks.md](../Operations/Runbooks.md)
 
 ## Security and Privacy Principles
 
@@ -1038,7 +1038,7 @@ The following events should trigger lifecycle review:
 - [DataArchitecture.md](DataArchitecture.md)
 - [DatabaseSchema.md](DatabaseSchema.md)
 - [SecurityPrivacyArchitecture.md](SecurityPrivacyArchitecture.md)
-- [../../Operations/Runbooks.md](../../Operations/Runbooks.md)
+- [../Operations/Runbooks.md](../Operations/Runbooks.md)
 
 ---
 
@@ -1063,9 +1063,9 @@ This document describes the target v1 technical baseline. It should be read with
 - [DeploymentArchitecture.md](DeploymentArchitecture.md)
 - [SecurityPrivacyArchitecture.md](SecurityPrivacyArchitecture.md)
 - [EventCatalog.md](EventCatalog.md)
-- [GapAnalysis.md](../prd/GapAnalysis.md)
-- [PhaseWiseImplementationPlan.md](../prd/PhaseWiseImplementationPlan.md)
-- [TestingGuide.md](../../Test/TestingGuide.md)
+- [GapAnalysis.md](../prd/v4/GapAnalysis.md)
+- [PhaseWiseImplementationPlan.md](../prd/v1/PhaseWiseImplementationPlan.md)
+- [TestingGuide.md](../Test/TestingGuide.md)
 
 ## 1. Technology Stack
 

@@ -67,6 +67,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: test
+    outputs:
+      sha: ${{ steps.meta.outputs.sha }}
     services:
       postgres:
         image: postgis/postgis:15-3.3-alpine
@@ -119,3 +121,17 @@ jobs:
               (cd "$dir" && pnpm run test:e2e --passWithNoTests 2>/dev/null || true)
             fi
           done
+
+      - name: Set commit SHA output
+        id: meta
+        run: echo "sha=sha-$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+
+  # ── Build and push Docker images to ACR (main branch only) ──────────────
+  build-images:
+    name: Build & Push Images
+    needs: integration
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    uses: ./.github/workflows/build-images.yml
+    with:
+      sha_tag: ${{ needs.integration.outputs.sha }}
+    secrets: inherit

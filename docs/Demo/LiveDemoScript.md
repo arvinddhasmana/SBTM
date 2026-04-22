@@ -10,7 +10,7 @@ This script is a presentation flow for stakeholders and internal walkthroughs. I
 
 - [DEMO_SETUP_GUIDE.md](DEMO_SETUP_GUIDE.md)
 - [QUICK_REFERENCE.md](QUICK_REFERENCE.md)
-- [GapAnalysis.md](../prd/GapAnalysis.md)
+- [GapAnalysis.md](../prd/v4/GapAnalysis.md)
 - [TestingGuide.md](../Test/TestingGuide.md)
 - [v4 Gap Analysis](../prd/v4/GapAnalysis.md)
 - [v4 Alert Strategy](../prd/v4/AlertStrategy.md)

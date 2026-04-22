@@ -4,7 +4,7 @@
 - Last reviewed: 2026-03-30
 - Primary use: Target-state technical baseline, interfaces, and non-functional design
 
-This document describes the target v1 technical baseline. It should be read with the current-state implementation notes in `docs/Implementation` and the verified upgrade gaps in `docs/prd/GapAnalysis.md`.
+This document describes the target v1 technical baseline. It should be read with the current-state implementation notes in `docs/Implementation` and the verified upgrade gaps in `docs/prd/v4/GapAnalysis.md`.
 
 ## Related Documents
 
@@ -15,9 +15,9 @@ This document describes the target v1 technical baseline. It should be read with
 - [DeploymentArchitecture.md](DeploymentArchitecture.md)
 - [SecurityPrivacyArchitecture.md](SecurityPrivacyArchitecture.md)
 - [EventCatalog.md](EventCatalog.md)
-- [GapAnalysis.md](../prd/GapAnalysis.md)
-- [PhaseWiseImplementationPlan.md](../prd/PhaseWiseImplementationPlan.md)
-- [TestingGuide.md](../../Test/TestingGuide.md)
+- [GapAnalysis.md](../prd/v4/GapAnalysis.md)
+- [PhaseWiseImplementationPlan.md](../prd/v1/PhaseWiseImplementationPlan.md)
+- [TestingGuide.md](../Test/TestingGuide.md)
 
 ## 1. Technology Stack
 
@@ -37,8 +37,26 @@ This document describes the target v1 technical baseline. It should be read with
 | Event Bus            | BullMQ (Redis-backed)                       | Domain event queuing and consumer groups                                                       |
 | Relational DB        | PostgreSQL (PostGIS enabled)                | Per-service schemas, `school_id` tenant column                                                 |
 | Cache / Queue broker | Redis                                       | BullMQ queues, presence state cache                                                            |
-| Object Storage       | MinIO (S3-compatible) or local              | Video file storage                                                                             |
+| Object Storage       | MinIO (S3-compatible) or local              | Video file storage — replaced by Azure Blob Storage in cloud deployment                        |
 | Route Engine         | OSRM v5.27.1 (self-hosted)                  | Route geometry, optimization, ETA calculations                                                 |
+
+---
+
+## 1a. Azure Cloud Service Equivalents
+
+When deploying to Azure AKS, local infrastructure components map to the following managed services. See [`docs/Deployment/AzureArchitecture.md`](../Deployment/AzureArchitecture.md) for full details.
+
+| Local Component         | Azure Service                           | Demo SKU                          | Notes                                                    |
+| ----------------------- | --------------------------------------- | --------------------------------- | -------------------------------------------------------- |
+| PostgreSQL container    | Azure DB for PostgreSQL Flexible Server | B2ms, 32GB                        | PostGIS extension supported; private endpoint in VNET    |
+| Redis container         | Azure Cache for Redis                   | Basic C0 (250MB)                  | Standard C1 for production (persistence + replica)       |
+| MinIO / local storage   | Azure Blob Storage                      | LRS Hot tier                      | S3-compatible SDK; no code changes needed beyond env var |
+| Docker Compose services | Azure Kubernetes Service (AKS)          | Standard tier, 2× Standard_D2s_v3 | Kustomize manifests in `infra/k8s/`                      |
+| NGINX (local)           | NGINX Ingress Controller + cert-manager | Free (in-cluster)                 | Let's Encrypt TLS; single public IP                      |
+| Jaeger (local)          | Azure Monitor + Application Insights    | Pay-per-GB                        | OpenTelemetry → App Insights OTLP endpoint               |
+| `.env` secrets          | Azure Key Vault + CSI driver            | Standard tier                     | SecretProviderClass mounts secrets as pod volumes        |
+| Docker Hub images       | Azure Container Registry (ACR)          | Basic SKU                         | Integrated with AKS via managed identity pull            |
+| Static file serving     | Azure Static Web Apps                   | Free tier                         | CDN-backed; zero-ops; Admin Dashboard + Parent Portal    |
 
 ---
 

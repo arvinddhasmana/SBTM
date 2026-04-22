@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: video-service
+  labels:
+    app: video-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: video-service
+  template:
+    metadata:
+      labels:
+        app: video-service
+      annotations:
+        azure.workload.identity/use: 'true'
+    spec:
+      serviceAccountName: sbtm-workload-sa
+      volumes:
+        - name: secrets-store
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: sbtm-keyvault-secrets
+      containers:
+        - name: video-service
+          image: sbtmacrdemo.azurecr.io/sbtm/video-service:latest
+          ports:
+            - containerPort: 3006
+          envFrom:
+            - secretRef:
+                name: sbtm-secrets
+          env:
+            - name: PORT
+              value: '3006'
+            - name: NODE_ENV
+              value: 'production'
+          volumeMounts:
+            - name: secrets-store
+              mountPath: /mnt/secrets-store
+              readOnly: true
+          resources:
+            requests:
+              cpu: '250m'
+              memory: '256Mi'
+            limits:
+              cpu: '1'
+              memory: '512Mi'
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3006
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3006
+            initialDelaySeconds: 5
+            periodSeconds: 10

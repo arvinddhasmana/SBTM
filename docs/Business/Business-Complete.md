@@ -41,7 +41,7 @@ This catalog translates the requirements baseline into business-facing capabilit
 - [UseCases.md](UseCases.md)
 - [UserJourney.md](UserJourney.md)
 - [../Design/Architecture.md](../Design/Architecture.md)
-- [../prd/GapAnalysis.md](../prd/GapAnalysis.md)
+- [../prd/v4/GapAnalysis.md](../prd/v4/GapAnalysis.md)
 - [../prd/v4/GapAnalysis.md](../prd/v4/GapAnalysis.md) (v4 Business Gap Analysis)
 - [../prd/v4/UpgradePlan.md](../prd/v4/UpgradePlan.md) (v4 Upgrade Plan)
 - [../prd/v4/AlertStrategy.md](../prd/v4/AlertStrategy.md) (v4 Alert Strategy)
@@ -178,8 +178,8 @@ This document defines the requirements baseline for SBTM using stable identifier
 - [../Design/Architecture.md](../Design/Architecture.md)
 - [../Design/SystemArchitecture.md](../Design/SystemArchitecture.md)
 - [../Design/SecurityPrivacyArchitecture.md](../Design/SecurityPrivacyArchitecture.md)
-- [../prd/GapAnalysis.md](../prd/GapAnalysis.md)
-- [../prd/PhaseWiseImplementationPlan.md](../prd/PhaseWiseImplementationPlan.md)
+- [../prd/v4/GapAnalysis.md](../prd/v4/GapAnalysis.md)
+- [../prd/v1/PhaseWiseImplementationPlan.md](../prd/v1/PhaseWiseImplementationPlan.md)
 - [../prd/v4/GapAnalysis.md](../prd/v4/GapAnalysis.md) (v4 Business Gap Analysis)
 - [../prd/v4/RolesAndWorkflows.md](../prd/v4/RolesAndWorkflows.md) (v4 Roles and Workflows)
 - [../prd/v4/AlertStrategy.md](../prd/v4/AlertStrategy.md) (v4 Alert Strategy)
@@ -331,8 +331,8 @@ This document is the index for the SBTM use case set. Each use case now lives in
 - [UserJourney.md](UserJourney.md)
 - [../Design/SystemArchitecture.md](../Design/SystemArchitecture.md)
 - [../Design/IntegrationArchitecture.md](../Design/IntegrationArchitecture.md)
-- [../prd/GapAnalysis.md](../prd/GapAnalysis.md)
-- [../prd/PhaseWiseImplementationPlan.md](../prd/PhaseWiseImplementationPlan.md)
+- [../prd/v4/GapAnalysis.md](../prd/v4/GapAnalysis.md)
+- [../prd/v1/PhaseWiseImplementationPlan.md](../prd/v1/PhaseWiseImplementationPlan.md)
 - [../prd/v4/GapAnalysis.md](../prd/v4/GapAnalysis.md) (v4 Business Gap Analysis)
 - [../prd/v4/RolesAndWorkflows.md](../prd/v4/RolesAndWorkflows.md) (v4 Roles and Workflows)
 
@@ -388,7 +388,7 @@ This document describes the currently deliverable user flow at a business level.
 - [Requirements.md](Requirements.md)
 - [UseCases.md](UseCases.md)
 - [Features.md](Features.md)
-- [GapAnalysis.md](../prd/GapAnalysis.md)
+- [GapAnalysis.md](../prd/v4/GapAnalysis.md)
 - [LiveDemoScript.md](../Demo/LiveDemoScript.md)
 - [v4 Roles and Workflows](../prd/v4/RolesAndWorkflows.md)
 - [v4 Alert Strategy](../prd/v4/AlertStrategy.md)
@@ -635,12 +635,12 @@ An authorized tenant administrator prepares the organizational structure needed 
 
 ## 9. v4 Enhancements (Planned)
 
-- **Super Admin role** for initial system bootstrap — creates OSTA Admin, configures system settings (see [v4 Gap Analysis](../../prd/v4/GapAnalysis.md), GAP-ROLE-001).
+- **Super Admin role** for initial system bootstrap — creates OSTA Admin, configures system settings (see [v4 Gap Analysis](../prd/v4/GapAnalysis.md), GAP-ROLE-001).
 - **Board Admin school management** — Board Admin can create, modify, and deactivate schools within their board scope (GAP-ROLE-003).
 - **Guided tenant provisioning wizard** — Step-by-step workflow for adding new boards and schools post-initial-setup (GAP-OPS-002).
 - **Parent auto-provisioning from SIS** — When students are imported from SIS, parent accounts are auto-generated with invitation emails (GAP-INT-005).
-- **SIS integration** — Batch or API sync of student data from school board SIS, reducing manual data entry (see [UC-DATAMIG-001](UC012_data_migration_and_integration.md)).
-- See [v4 Roles and Workflows](../../prd/v4/RolesAndWorkflows.md) for the complete RACI matrix across all admin roles.
+- **SIS integration** — Batch or API sync of student data from school board SIS, reducing manual data entry (see [UC-DATAMIG-001](usecases/UC012_data_migration_and_integration.md)).
+- See [v4 Roles and Workflows](../prd/v4/RolesAndWorkflows.md) for the complete RACI matrix across all admin roles.
 
 ## 10. Requirements Traced
 
@@ -725,13 +725,13 @@ An operator or school administrator defines a route, associates stops and a vehi
 
 ## 9. v4 Enhancements (Planned)
 
-- **Bulk route import** from Excel/CSV with geocoding and OSRM polyline generation. Admin uploads file -> system validates, geocodes, and previews on map -> admin confirms (see [UC-DATAMIG-001](UC012_data_migration_and_integration.md), [v4 Gap Analysis](../../prd/v4/GapAnalysis.md) GAP-INT-003).
+- **Bulk route import** from Excel/CSV with geocoding and OSRM polyline generation. Admin uploads file -> system validates, geocodes, and previews on map -> admin confirms (see [UC-DATAMIG-001](usecases/UC012_data_migration_and_integration.md), [v4 Gap Analysis](../prd/v4/GapAnalysis.md) GAP-INT-003).
 - **Address geocoding** for stop creation — admin types address, system geocodes via Nominatim or Google, admin confirms pin on map (GAP-INT-006).
-- **Fleet assignment workflow** — OSTA proposes vehicle-to-route assignment, School Admin reviews and confirms (see [UC-FLEET-ASSIGN-001](UC010_fleet_assignment_workflow.md), GAP-WF-001).
+- **Fleet assignment workflow** — OSTA proposes vehicle-to-route assignment, School Admin reviews and confirms (see [UC-FLEET-ASSIGN-001](usecases/UC010_fleet_assignment_workflow.md), GAP-WF-001).
 - **Route change notification** — When a route is modified, parents of affected students are notified before the change takes effect (GAP-WF-002, FR-WORKFLOW-002).
 - **Seasonal route planning** — Clone previous year routes and adjust for new school year (GAP-WF-004).
 - **Academic calendar awareness** — Routes marked inactive on holidays and non-operational days (GAP-OPS-003).
-- See [v4 Integration and Migration](../../prd/v4/IntegrationAndMigration.md) for complete route import wizard design.
+- See [v4 Integration and Migration](../prd/v4/IntegrationAndMigration.md) for complete route import wizard design.
 
 ## 10. Requirements Traced
 
@@ -1065,15 +1065,15 @@ A parent uses the web portal to view linked children, inspect the current route 
 
 ## 9. v4 Enhancements (Planned)
 
-- **Push notifications for boarding/alighting** — Parent receives push notification when their child boards or alights the bus: "[Child name] boarded bus at [Stop] at [Time]" (see [v4 Alert Strategy](../../prd/v4/AlertStrategy.md), Tier 3 Informational Notifications).
+- **Push notifications for boarding/alighting** — Parent receives push notification when their child boards or alights the bus: "[Child name] boarded bus at [Stop] at [Time]" (see [v4 Alert Strategy](../prd/v4/AlertStrategy.md), Tier 3 Informational Notifications).
 - **Multi-channel notification delivery** — Push (primary), SMS (emergency escalation), Email (daily summary, route changes). See GAP-ALERT-004.
-- **Emergency notification with admin confirmation** — Safety alerts go through School Admin confirmation before parent delivery. Auto-escalate after 2-minute timeout (see [UC-ALERT-CONFIRM-001](UC011_alert_confirmation_and_governance.md)).
+- **Emergency notification with admin confirmation** — Safety alerts go through School Admin confirmation before parent delivery. Auto-escalate after 2-minute timeout (see [UC-ALERT-CONFIRM-001](usecases/UC011_alert_confirmation_and_governance.md)).
 - **Notification preference management** — Parents can configure which events to receive, on which channels, with quiet hours and emergency override (GAP-ALERT-005).
-- **Absence reporting with confirmation** — Parent reports absence, receives confirmation, driver roster updated automatically (see [UC-ABSENCE-001](UC014_absence_reporting_workflow.md)).
+- **Absence reporting with confirmation** — Parent reports absence, receives confirmation, driver roster updated automatically (see [UC-ABSENCE-001](usecases/UC014_absence_reporting_workflow.md)).
 - **Bus approaching notification** — Push notification when bus is within X minutes of child's stop.
 - **Route change notification** — Push + email notification before route changes affecting child take effect.
 - **Privacy consent management** — During onboarding, parent accepts privacy notice and consent form (GAP-GOV-005).
-- See [v4 Roles and Workflows](../../prd/v4/RolesAndWorkflows.md) for parent role responsibilities and the [v4 User Guide](../../UserGuide/parent/README.md) for the target parent experience.
+- See [v4 Roles and Workflows](../prd/v4/RolesAndWorkflows.md) for parent role responsibilities and the [v4 User Guide](../../UserGuide/parent/README.md) for the target parent experience.
 
 ## 10. Requirements Traced
 
@@ -1162,14 +1162,14 @@ An in-route incident occurs and the platform must capture the event, expose it t
 
 ## 9. v4 Enhancements (Planned)
 
-- **Alert classification by tier** — Alerts classified as Tier 1 (Safety: admin + parent), Tier 2 (Operational: admin only), Tier 3 (Informational: parent only). See [v4 Alert Strategy](../../prd/v4/AlertStrategy.md), GAP-ALERT-001.
-- **School Admin confirmation before parent delivery** — Tier 1 alerts require School Admin confirmation within 2 minutes. If unconfirmed, auto-escalate to parents. See [UC-ALERT-CONFIRM-001](UC011_alert_confirmation_and_governance.md), GAP-WF-005.
+- **Alert classification by tier** — Alerts classified as Tier 1 (Safety: admin + parent), Tier 2 (Operational: admin only), Tier 3 (Informational: parent only). See [v4 Alert Strategy](../prd/v4/AlertStrategy.md), GAP-ALERT-001.
+- **School Admin confirmation before parent delivery** — Tier 1 alerts require School Admin confirmation within 2 minutes. If unconfirmed, auto-escalate to parents. See [UC-ALERT-CONFIRM-001](usecases/UC011_alert_confirmation_and_governance.md), GAP-WF-005.
 - **Escalation chain** — Unacknowledged alerts escalate: 5 min -> Board Admin, 15 min -> OSTA Admin (GAP-ALERT-006).
 - **Multi-channel parent delivery** — Push notification (primary) + SMS (emergency escalation) + Email (follow-up). See GAP-ALERT-004.
 - **Incident report generation** — After alert resolution, system generates incident report template with timeline, alert details, responder actions, resolution notes, video evidence links. Exportable as PDF (GAP-GOV-003).
 - **Alert lifecycle audit trail** — Every state transition (CREATED, CONFIRMED, AUTO_ESCALATED, RESOLVED, REOPENED) recorded with actor, timestamp, and notes (GAP-GOV-002).
 - **False alarm handling** — School Admin can classify alert as false alarm, preventing parent notification and recording in audit for reporting.
-- See [v4 Roles and Workflows](../../prd/v4/RolesAndWorkflows.md) Section 3.2 for the complete emergency alert confirmation sequence diagram.
+- See [v4 Roles and Workflows](../prd/v4/RolesAndWorkflows.md) Section 3.2 for the complete emergency alert confirmation sequence diagram.
 
 ## 10. Requirements Traced
 
@@ -1338,8 +1338,8 @@ After step 12: 13. OSTA Admin or School Admin selects "Generate Assignment Agree
 
 ## v4 References
 
-- [Roles and Workflows](../../prd/v4/RolesAndWorkflows.md) - Section 3.1: Fleet Assignment Workflow
-- [Gap Analysis](../../prd/v4/GapAnalysis.md) - GAP-ROLE-002, GAP-WF-001
+- [Roles and Workflows](../prd/v4/RolesAndWorkflows.md) - Section 3.1: Fleet Assignment Workflow
+- [Gap Analysis](../prd/v4/GapAnalysis.md) - GAP-ROLE-002, GAP-WF-001
 
 ---
 
@@ -1470,9 +1470,9 @@ After step 8 (CONFIRMED):
 
 ## v4 References
 
-- [Alert Strategy](../../prd/v4/AlertStrategy.md) - Complete alert tier model and confirmation workflow
-- [Roles and Workflows](../../prd/v4/RolesAndWorkflows.md) - Section 3.2: Emergency Alert Confirmation Workflow
-- [Gap Analysis](../../prd/v4/GapAnalysis.md) - GAP-WF-005, GAP-ALERT-001, GAP-ALERT-003, GAP-ALERT-006
+- [Alert Strategy](../prd/v4/AlertStrategy.md) - Complete alert tier model and confirmation workflow
+- [Roles and Workflows](../prd/v4/RolesAndWorkflows.md) - Section 3.2: Emergency Alert Confirmation Workflow
+- [Gap Analysis](../prd/v4/GapAnalysis.md) - GAP-WF-005, GAP-ALERT-001, GAP-ALERT-003, GAP-ALERT-006
 
 ---
 
@@ -1599,8 +1599,8 @@ _Source: `docs/Business/usecases/UC012_data_migration_and_integration.md`_
 
 ## v4 References
 
-- [Integration and Migration](../../prd/v4/IntegrationAndMigration.md) - Complete integration design
-- [Gap Analysis](../../prd/v4/GapAnalysis.md) - GAP-INT-001, GAP-INT-002, GAP-INT-003, GAP-INT-006
+- [Integration and Migration](../prd/v4/IntegrationAndMigration.md) - Complete integration design
+- [Gap Analysis](../prd/v4/GapAnalysis.md) - GAP-INT-001, GAP-INT-002, GAP-INT-003, GAP-INT-006
 
 ---
 
@@ -1688,8 +1688,8 @@ _Source: `docs/Business/usecases/UC013_pre_trip_inspection_enforcement.md`_
 
 ## v4 References
 
-- [Roles and Workflows](../../prd/v4/RolesAndWorkflows.md) - Section 3.5: Pre-Trip Inspection and Route Start Workflow
-- [Gap Analysis](../../prd/v4/GapAnalysis.md) - GAP-GOV-004
+- [Roles and Workflows](../prd/v4/RolesAndWorkflows.md) - Section 3.5: Pre-Trip Inspection and Route Start Workflow
+- [Gap Analysis](../prd/v4/GapAnalysis.md) - GAP-GOV-004
 
 ---
 
@@ -1788,5 +1788,5 @@ If the parent tries to report absence for a route that has already started:
 
 ## v4 References
 
-- [Roles and Workflows](../../prd/v4/RolesAndWorkflows.md) - Section 3.6: Absence Reporting Workflow
-- [Gap Analysis](../../prd/v4/GapAnalysis.md) - GAP-ROLE-006
+- [Roles and Workflows](../prd/v4/RolesAndWorkflows.md) - Section 3.6: Absence Reporting Workflow
+- [Gap Analysis](../prd/v4/GapAnalysis.md) - GAP-ROLE-006

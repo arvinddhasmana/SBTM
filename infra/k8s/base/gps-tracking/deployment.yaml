@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gps-tracking
+  labels:
+    app: gps-tracking
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gps-tracking
+  template:
+    metadata:
+      labels:
+        app: gps-tracking
+      annotations:
+        azure.workload.identity/use: 'true'
+    spec:
+      serviceAccountName: sbtm-workload-sa
+      volumes:
+        - name: secrets-store
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: sbtm-keyvault-secrets
+      containers:
+        - name: gps-tracking
+          image: sbtmacrdemo.azurecr.io/sbtm/gps-tracking:latest
+          ports:
+            - containerPort: 3001
+          envFrom:
+            - secretRef:
+                name: sbtm-secrets
+          env:
+            - name: PORT
+              value: '3001'
+            - name: NODE_ENV
+              value: 'production'
+          volumeMounts:
+            - name: secrets-store
+              mountPath: /mnt/secrets-store
+              readOnly: true
+          resources:
+            requests:
+              cpu: '250m'
+              memory: '256Mi'
+            limits:
+              cpu: '1'
+              memory: '512Mi'
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3001
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3001
+            initialDelaySeconds: 5
+            periodSeconds: 10

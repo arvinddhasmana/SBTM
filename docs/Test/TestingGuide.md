@@ -9,7 +9,7 @@ This guide is the testing reference for the SBTM platform. It covers test layers
 ## Related Documents
 
 - [GapAnalysis.md](../prd/v1/GapAnalysis.md)
-- [UpgradePlan.md](../prd/v1/UpgradePlan.md)
+- [UpgradePlan.md](../prd/v1/UpgradePlan/README.md)
 - [Requirements.md](../Business/Requirements.md)
 - [DEMO_SETUP_GUIDE.md](../Demo/DEMO_SETUP_GUIDE.md)
 
