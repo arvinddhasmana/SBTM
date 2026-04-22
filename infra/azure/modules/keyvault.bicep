@@ -38,13 +38,16 @@ resource aksWorkloadIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2
   location: location
 }
 
-// Federated credential so AKS service account can assume this managed identity
+// Federated credential so AKS service account can assume this managed identity.
+// The federated subject's namespace is environment-driven so the same identity
+// works on the demo cluster (sbtm-demo namespace) and the production cluster
+// (sbtm-production namespace).
 resource federatedCredential 'Microsoft.ManagedIdentity/userAssignedIdentities/federatedIdentityCredentials@2023-01-31' = {
   parent: aksWorkloadIdentity
   name: 'sbtm-aks-federation'
   properties: {
     issuer: aksOidcIssuerUrl
-    subject: 'system:serviceaccount:sbtm-production:sbtm-workload-sa'
+    subject: 'system:serviceaccount:sbtm-${environment}:sbtm-workload-sa'
     audiences: ['api://AzureADTokenExchange']
   }
 }

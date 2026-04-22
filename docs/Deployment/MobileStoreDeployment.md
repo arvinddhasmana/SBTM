@@ -50,17 +50,9 @@ Key values already configured:
 - All required permissions declared (Bluetooth, background location, foreground service)
 - New Architecture enabled
 
-### eas.json — Production Profile Fix Required
+### eas.json — Production Profile
 
-**Current state (incomplete):**
-
-```json
-"production": {
-  "autoIncrement": true
-}
-```
-
-**Required for App Store and Play Store:**
+The production profile in `apps/driver-app/eas.json` is fully configured for store submission:
 
 ```json
 "production": {
@@ -74,9 +66,8 @@ Key values already configured:
 }
 ```
 
-> The `buildType: "app-bundle"` produces an `.aab` file required by Google Play (not an `.apk`). The `simulator: false` is required for real device / App Store builds.
-
-> **This fix is applied automatically** during Phase 5 implementation.
+- `buildType: "app-bundle"` produces an `.aab` file required by Google Play (not an `.apk`).
+- `simulator: false` is required for real-device / App Store builds.
 
 ---
 

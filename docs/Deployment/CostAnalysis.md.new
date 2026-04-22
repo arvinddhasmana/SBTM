@@ -8,12 +8,12 @@
 
 SBTM uses **only two Azure environments** — Demo and Production — each in its own resource group:
 
-| Environment    | Resource Group | Region          | Use Case                                      | Est. Monthly Cost (USD) |
-| -------------- | -------------- | --------------- | --------------------------------------------- | ----------------------- |
-| **Demo**       | `sbtm-demo-rg` | `eastus`        | Demos, dev/test, pilot rollouts, ~10–50 users | ~$215–235               |
-| **Production** | `sbtm-rg`      | `canadacentral` | Full board (6+ schools, 100+ users)           | ~$900–1,500             |
+| Environment    | Resource Group | Region          | Use Case                                    | Est. Monthly Cost (USD) |
+| -------------- | -------------- | --------------- | ------------------------------------------- | ----------------------- |
+| **Demo**       | `sbtm-demo-rg` | `eastus`        | Demos, dev/test, pilot rollouts, ~10–50 users | ~$215–235             |
+| **Production** | `sbtm-rg`      | `canadacentral` | Full board (6+ schools, 100+ users)         | ~$900–1,500             |
 
-> **What happened to "Pilot"?** Pilot is a _business stage_, not a separate environment. Early-customer pilots run on the Production environment behind tenant feature flags, OR (for cheaper pre-pilot trials) in a separate `sbtm-pilot` namespace on the Demo AKS cluster — see "Sharing infrastructure between environments" below.
+> **What happened to "Pilot"?** Pilot is a *business stage*, not a separate environment. Early-customer pilots run on the Production environment behind tenant feature flags, OR (for cheaper pre-pilot trials) in a separate `sbtm-pilot` namespace on the Demo AKS cluster — see "Sharing infrastructure between environments" below.
 
 ---
 
@@ -21,19 +21,19 @@ SBTM uses **only two Azure environments** — Demo and Production — each in it
 
 Suitable for: client presentations, proof-of-concept validation, developer testing, low-traffic pilots.
 
-| Azure Service                    | SKU                                         | Est. Cost/month |
-| -------------------------------- | ------------------------------------------- | --------------- |
-| AKS cluster (control plane)      | Free tier (Standard tier disabled for demo) | $0              |
-| AKS system node pool             | 1× Standard_D2s_v3 (2 vCPU, 8GB RAM)        | ~$70            |
-| AKS app node pool                | 1× Standard_D2s_v3                          | ~$70            |
-| Azure DB for PostgreSQL Flexible | B2ms, 32GB storage                          | ~$50            |
-| Azure Cache for Redis            | Basic C0 (250MB)                            | ~$16            |
-| Azure Blob Storage               | LRS, Hot tier, ~50GB                        | ~$2             |
-| Azure Container Registry         | Basic                                       | ~$5             |
-| Azure Key Vault                  | Standard (10K operations)                   | ~$3             |
-| Azure Monitor + App Insights     | ~5GB logs/month                             | ~$8             |
-| Public IP (ingress)              | Standard                                    | ~$4             |
-| **Total**                        |                                             | **~$228/month** |
+| Azure Service                    | SKU                                  | Est. Cost/month |
+| -------------------------------- | ------------------------------------ | --------------- |
+| AKS cluster (control plane)      | Free tier (Standard tier disabled for demo) | $0       |
+| AKS system node pool             | 1× Standard_D2s_v3 (2 vCPU, 8GB RAM) | ~$70            |
+| AKS app node pool                | 1× Standard_D2s_v3                   | ~$70            |
+| Azure DB for PostgreSQL Flexible | B2ms, 32GB storage                   | ~$50            |
+| Azure Cache for Redis            | Basic C0 (250MB)                     | ~$16            |
+| Azure Blob Storage               | LRS, Hot tier, ~50GB                 | ~$2             |
+| Azure Container Registry         | Basic                                | ~$5             |
+| Azure Key Vault                  | Standard (10K operations)            | ~$3             |
+| Azure Monitor + App Insights     | ~5GB logs/month                      | ~$8             |
+| Public IP (ingress)              | Standard                             | ~$4             |
+| **Total**                        |                                      | **~$228/month** |
 
 ---
 
@@ -72,13 +72,11 @@ bash scripts/azure/teardown-azure.sh production
 ```
 
 The teardown script:
-
 1. Deletes the entire resource group (AKS, ACR, PostgreSQL, Redis, Blob, KV, networking)
 2. Purges the soft-deleted Key Vault so the same name can be reused
 3. Submits async — typical completion 5–15 minutes
 
 To recreate from scratch (~10–15 min):
-
 ```bash
 export POSTGRES_ADMIN_PASSWORD='...'
 bash scripts/azure/provision-azure.sh demo eastus false
@@ -107,9 +105,9 @@ bash scripts/azure/cost-stop.sh demo   # stops AKS + PostgreSQL
 bash scripts/azure/cost-start.sh demo  # resumes (~5–10 min)
 ```
 
-| What stops billing     | What keeps billing                                                                  |
-| ---------------------- | ----------------------------------------------------------------------------------- |
-| AKS compute (~$140/mo) | PostgreSQL storage ($3–10/mo), Redis Basic (~$16/mo), Blob storage, ACR storage, KV |
+| What stops billing      | What keeps billing                                                                |
+| ----------------------- | --------------------------------------------------------------------------------- |
+| AKS compute (~$140/mo)  | PostgreSQL storage ($3–10/mo), Redis Basic (~$16/mo), Blob storage, ACR storage, KV |
 
 Estimated cost while paused: **~$30–40/month** (vs ~$228 running).
 
@@ -120,13 +118,11 @@ Estimated cost while paused: **~$30–40/month** (vs ~$228 running).
 ## Azure Dev/Test Pricing (~40% VM Discount)
 
 **Eligibility** (set at the **subscription level**, not per resource):
-
 - Visual Studio Subscription holders
 - Enterprise Agreement / MCA customers with Dev/Test enrollment
 - Pay-As-You-Go Dev/Test offers
 
 ### How to enable
-
 1. Convert subscription via [Azure Portal → Subscriptions → "Change offer"](https://portal.azure.com) — pick **Pay-As-You-Go Dev/Test** or **EA Dev/Test**
 2. Confirm with finance/admin that the legal terms (no production workloads) are acceptable
 3. After conversion, all VMs in the subscription automatically get the discount — **no per-resource flag needed**
@@ -138,7 +134,6 @@ Estimated cost while paused: **~$30–40/month** (vs ~$228 running).
    This adds the `devTestEligible=true` tag to all resources for cost reporting.
 
 ### Is it implemented?
-
 **Yes — partially.** The Bicep template accepts an `isDevTestSubscription` parameter that tags resources. The actual ~40% discount is applied automatically by Azure billing once the subscription itself is on a Dev/Test offer; there is no infrastructure-side switch to flip. **You must convert the subscription manually** in the Portal.
 
 > **Warning:** Microsoft's Dev/Test terms prohibit production workloads. Use Dev/Test pricing only for the **Demo** environment, never Production.
@@ -151,14 +146,13 @@ Yes — implemented and recommended for cost-conscious teams.
 
 The Demo AKS cluster (`sbtm-aks-demo`) is a single Kubernetes cluster that can host multiple isolated workloads via namespaces. Today it hosts:
 
-| Namespace    | Purpose                              | Overlay                        |
-| ------------ | ------------------------------------ | ------------------------------ |
-| `sbtm-demo`  | Live demo + integration testing      | `infra/k8s/overlays/demo`      |
-| `sbtm-pilot` | (optional) Early-customer pilot      | clone `demo` overlay → `pilot` |
-| `sbtm-test`  | (optional) Per-PR or QA environments | clone `demo` overlay → `test`  |
+| Namespace      | Purpose                              | Overlay                          |
+| -------------- | ------------------------------------ | -------------------------------- |
+| `sbtm-demo`    | Live demo + integration testing      | `infra/k8s/overlays/demo`        |
+| `sbtm-pilot`   | (optional) Early-customer pilot      | clone `demo` overlay → `pilot`   |
+| `sbtm-test`    | (optional) Per-PR or QA environments | clone `demo` overlay → `test`    |
 
 To add a Pilot namespace on the demo cluster (no new Azure resources, no extra base cost):
-
 ```bash
 cp -r infra/k8s/overlays/demo infra/k8s/overlays/pilot
 sed -i 's/sbtm-demo/sbtm-pilot/g' infra/k8s/overlays/pilot/kustomization.yaml

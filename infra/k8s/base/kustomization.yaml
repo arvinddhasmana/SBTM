@@ -1,0 +1,27 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - api-gateway/deployment.yaml
+  - api-gateway/service.yaml
+  - api-gateway/hpa.yaml
+  - gps-tracking/deployment.yaml
+  - gps-tracking/service.yaml
+  - gps-tracking/hpa.yaml
+  - emergency-alerts/deployment.yaml
+  - emergency-alerts/service.yaml
+  - emergency-alerts/hpa.yaml
+  - student-presence/deployment.yaml
+  - student-presence/service.yaml
+  - student-management/deployment.yaml
+  - student-management/service.yaml
+  - compliance-management/deployment.yaml
+  - compliance-management/service.yaml
+  - video-service/deployment.yaml
+  - video-service/service.yaml
+  - notification-service/deployment.yaml
+  - notification-service/service.yaml
+  - osrm/deployment.yaml
+  - osrm/service.yaml
+  - ingress/ingress-rules.yaml
+  - secrets/keyvault-csi.yaml

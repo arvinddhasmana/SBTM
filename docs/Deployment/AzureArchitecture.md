@@ -56,65 +56,75 @@ C4Container
   title SBTM Container Diagram — Azure AKS
 
   Person(user, "Users", "Parents, Drivers, Admins, OSTA")
+  Container(driverapp, "Driver App", "React Native + Expo 54", "GPS tracking, BLE scanning, student presence, emergency alerts")
 
-  System_Boundary(azure, "Azure Cloud") {
-    System_Boundary(static, "Azure Static Web Apps") {
-      Container(adminui, "Admin Dashboard", "React 19 + Vite + Tailwind + Leaflet", "Fleet management, alert response, compliance, and route management UI")
-      Container(parentui, "Parent Portal", "React 19 + Vite + Tailwind + Leaflet", "Bus tracking, presence notifications, and safety communication UI")
+  Container_Boundary(azure, "Azure Cloud") {
+
+    Container_Boundary(static, "Azure Static Web Apps") {
+      Container(adminui, "Admin Dashboard", "React 19 + Vite", "Fleet management, alert response, and route UI")
+      Container(parentui, "Parent Portal", "React 19 + Vite", "Bus tracking and safety communication UI")
     }
 
-    System_Boundary(aks, "AKS Cluster — sbtm-aks") {
-      Container(ingress, "NGINX Ingress + cert-manager", "Kubernetes Ingress Controller", "TLS termination (Let's Encrypt), public HTTPS entry point for API")
-      Container(gw, "API Gateway", "NestJS v10 + TypeORM + JWT + Passport", "Authentication, RBAC, multi-tenant scoping, reverse proxy to all services")
-      Container(gps, "GPS Tracking", "Express + Prisma v5 + PostGIS", "Location ingest (POST), history queries (GET), snap-to-road via OSRM")
-      Container(alerts, "Emergency Alerts", "NestJS + TypeORM + BullMQ + Socket.IO", "Alert classification (Tier 1/2/3), admin confirmation, escalation chain, WebSocket broadcast")
-      Container(presence, "Student Presence", "NestJS + TypeORM + BullMQ", "Board/alight state persistence, Redis cache, BullMQ event publication")
-      Container(students, "Student Management", "NestJS + TypeORM", "Student enrollment, route assignment, absence reporting, bulk import")
-      Container(compliance, "Compliance Management", "NestJS + TypeORM", "Driver records, pre-trip inspections, compliance expiry tracking, audit log")
-      Container(video, "Video Service", "NestJS + TypeORM", "Video event metadata, Azure Blob Storage integration for uploads/downloads")
-      Container(notify, "Notification Service", "NestJS + BullMQ", "Multi-channel fan-out: FCM push, email (SMTP/SES), SMS (Twilio/SNS)")
-      Container(osrmapp, "OSRM", "OSRM v5.27.1", "Route optimization engine; Ottawa road data loaded from Azure Blob Storage")
+    Container_Boundary(aks, "AKS Cluster — sbtm-aks-{env}") {
+      Container(ingress, "NGINX Ingress", "Kubernetes Ingress", "TLS termination (Let's Encrypt), public HTTPS entry point")
+      Container(gw, "API Gateway", "NestJS v10 + JWT", "Auth, RBAC, multi-tenant scoping, reverse proxy")
+      Container(gps, "GPS Tracking", "Express + PostGIS", "Location ingest, history, and snap-to-road")
+      Container(alerts, "Emergency Alerts", "NestJS + Socket.IO", "Alert classification and WebSocket broadcast")
+      Container(presence, "Student Presence", "NestJS + BullMQ", "Board/alight state persistence")
+      Container(students, "Student Management", "NestJS + TypeORM", "Student enrollment and route assignment")
+      Container(compliance, "Compliance", "NestJS + TypeORM", "Driver records and inspections")
+      Container(video, "Video Service", "NestJS + TypeORM", "Video event metadata and Blob integration")
+      Container(notify, "Notification Service", "NestJS + BullMQ", "Multi-channel fan-out (FCM, SMS, Email)")
+      Container(osrmapp, "OSRM", "OSRM v5.27.1", "Route optimization engine")
     }
 
-    System_Boundary(data, "Managed Data Services") {
-      ContainerDb(pg, "PostgreSQL + PostGIS", "Azure DB for PostgreSQL Flexible Server", "All domain data; multi-tenant with school_id; private endpoint")
-      ContainerDb(redis, "Redis", "Azure Cache for Redis", "BullMQ queues for event routing; Student Presence state cache; private endpoint")
-      ContainerDb(blob, "Blob Storage", "Azure Blob Storage (LRS/ZRS)", "Driver videos, OSRM routing data, document exports")
+    Container_Boundary(data, "Managed Data Services") {
+      ContainerDb(pg, "PostgreSQL + PostGIS", "Azure DB", "All domain data; multi-tenant")
+      ContainerDb(redis, "Redis", "Azure Cache", "BullMQ queues and presence state cache")
+      ContainerDb(blob, "Blob Storage", "Azure Blob Storage", "Driver videos and OSRM routing data")
     }
 
-    Container(acr, "Container Registry", "Azure Container Registry (Basic/Standard)", "Docker images for all 8 backend services; integrated with AKS via managed identity")
-    Container(kv, "Key Vault + CSI Driver", "Azure Key Vault + secrets-store-csi-driver", "JWT secret, DB credentials, FCM server key, Twilio token; mounted as pod volumes")
-    Container(monitor, "Observability", "Azure Monitor + Application Insights + Log Analytics", "Pod metrics, distributed traces (OpenTelemetry), log aggregation, health alerts")
+    Container(acr, "Container Registry", "ACR", "Docker images for backend services")
+    Container(kv, "Key Vault", "Azure Key Vault", "Secrets and Credentials")
   }
 
-  Container(driverapp, "Driver App", "React Native + Expo 54 + expo-location + react-native-ble-plx", "GPS tracking, BLE SmartTag scanning, student presence marking, emergency alerts, offline queue")
+  %% External Systems
+  System_Ext(fcm, "FCM", "Firebase Cloud Messaging")
+  System_Ext(twilio, "Twilio", "SMS Gateway")
 
+  %% Relationships
   Rel(user, adminui, "Opens browser", "HTTPS")
   Rel(user, parentui, "Opens browser", "HTTPS")
   Rel(driverapp, ingress, "API and WebSocket calls", "HTTPS / WSS")
   Rel(adminui, ingress, "API calls", "HTTPS")
   Rel(parentui, ingress, "API calls + SSE stream", "HTTPS / SSE")
+
   Rel(ingress, gw, "Routes to API Gateway", "HTTP")
-  Rel(gw, gps, "Proxies location requests", "HTTP")
-  Rel(gw, alerts, "Proxies alert requests", "HTTP / WebSocket upgrade")
-  Rel(gw, presence, "Proxies presence events", "HTTP")
-  Rel(gw, students, "Proxies student management", "HTTP")
-  Rel(gw, compliance, "Proxies compliance requests", "HTTP")
-  Rel(gw, video, "Proxies video metadata", "HTTP")
-  Rel(gw, osrmapp, "Route geometry and snap-to-road", "HTTP — cluster internal")
-  Rel(alerts, notify, "alert.created event", "BullMQ via Redis")
-  Rel(presence, notify, "presence.boarded / presence.alighted events", "BullMQ via Redis")
-  Rel(gps, pg, "Reads/writes location_events", "Prisma ORM")
-  Rel(alerts, pg, "Reads/writes alerts, audit_log", "TypeORM")
-  Rel(presence, pg, "Reads/writes presence_events", "TypeORM")
-  Rel(presence, redis, "Caches route presence summary", "Redis GET/SET")
-  Rel(students, pg, "Reads/writes students, absences", "TypeORM")
-  Rel(compliance, pg, "Reads/writes driver_records, inspections", "TypeORM")
-  Rel(video, pg, "Reads/writes video_events", "TypeORM")
-  Rel(video, blob, "Uploads/downloads video files", "Azure Blob SDK")
-  Rel(osrmapp, blob, "Loads Ottawa .osrm data on startup", "Azure Blob SDK init")
-  Rel(notify, fcm, "Sends push notifications", "FCM HTTP API")
-  Rel(notify, twilio, "Sends SMS for emergency alerts", "Twilio API")
+
+  Rel(gw, gps, "Proxies requests", "HTTP")
+  Rel(gw, alerts, "Proxies requests", "HTTP/WS")
+  Rel(gw, presence, "Proxies events", "HTTP")
+  Rel(gw, students, "Proxies requests", "HTTP")
+  Rel(gw, compliance, "Proxies requests", "HTTP")
+  Rel(gw, video, "Proxies requests", "HTTP")
+  Rel(gw, osrmapp, "Route geometry", "HTTP")
+
+  Rel(alerts, notify, "alert.created", "BullMQ")
+  Rel(presence, notify, "presence events", "BullMQ")
+
+  Rel(gps, pg, "Reads/writes", "Prisma")
+  Rel(alerts, pg, "Reads/writes", "TypeORM")
+  Rel(presence, pg, "Reads/writes", "TypeORM")
+  Rel(presence, redis, "Caches state", "Redis")
+  Rel(students, pg, "Reads/writes", "TypeORM")
+  Rel(compliance, pg, "Reads/writes", "TypeORM")
+  Rel(video, pg, "Reads/writes", "TypeORM")
+
+  Rel(video, blob, "Uploads/downloads", "Azure SDK")
+  Rel(osrmapp, blob, "Loads road data", "Azure SDK")
+
+  Rel(notify, fcm, "Sends push", "HTTPS")
+  Rel(notify, twilio, "Sends SMS", "HTTPS")
 ```
 
 ### Level 3 — Component Diagrams
@@ -196,23 +206,24 @@ C4Component
 
 ### Security
 
-| Control           | Implementation                                                                             |
-| ----------------- | ------------------------------------------------------------------------------------------ |
-| Secrets           | Azure Key Vault + CSI driver; no secrets in ConfigMaps, env files, or images               |
-| Network           | AKS VNET; private endpoints for PostgreSQL and Redis; only ingress has public IP           |
-| Identity          | Azure Workload Identity for pod → Azure service auth (ACR pull, KV read, Blob write)       |
-| TLS               | cert-manager + Let's Encrypt; auto-renewal; HTTP redirected to HTTPS by ingress            |
-| Registry scanning | Azure Defender for Containers scans all images pushed to ACR                               |
-| WAF               | Azure Front Door Standard WAF for production (OWASP rules + rate limiting)                 |
-| RBAC              | AKS RBAC; separate namespaces for staging and production; least-privilege service accounts |
+| Control           | Implementation                                                                                                         |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Secrets           | Azure Key Vault + CSI driver; no secrets in ConfigMaps, env files, or images                                           |
+| Network           | AKS VNET; private endpoints for PostgreSQL and Redis; only ingress has public IP                                       |
+| Identity          | Azure Workload Identity for pod → Azure service auth (ACR pull, KV read, Blob write)                                   |
+| TLS               | cert-manager + Let's Encrypt; auto-renewal; HTTP redirected to HTTPS by ingress                                        |
+| Registry scanning | Azure Defender for Containers scans all images pushed to ACR                                                           |
+| WAF               | Azure Front Door Standard WAF for production (OWASP rules + rate limiting)                                             |
+| RBAC              | AKS RBAC; separate namespaces (`sbtm-demo`, `sbtm-production`) on dedicated clusters; least-privilege service accounts |
 
 ### Cost Optimization
 
 | Tier       | AKS Nodes                        | PostgreSQL                     | Redis       | Est. Cost/month |
 | ---------- | -------------------------------- | ------------------------------ | ----------- | --------------- |
 | Demo       | 2× Standard_D2s_v3 (East US)     | B2ms, 32GB                     | Basic C0    | ~$215–235       |
-| Pilot      | 2× Standard_D4s_v3               | GP_Standard_D2s_v3, 128GB      | Standard C1 | ~$450–550       |
 | Production | 3–5× Standard_D4s_v3 (autoscale) | GP_Standard_D4s_v3, 256GB + HA | Standard C2 | ~$900–1,500     |
+
+> Pilot rollouts run on either the Demo cluster (in a separate namespace, no extra Azure cost) or on Production with feature-flag gating — see [CostAnalysis.md](CostAnalysis.md#sharing-infrastructure-between-environments-k8s-namespaces).
 
 **Cost reduction options for demo:**
 
@@ -234,8 +245,8 @@ C4Component
 
 | Concern       | Implementation                                                                                                              |
 | ------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| CI/CD         | GitHub Actions: lint → build → test → push ACR → deploy staging → manual gate → production                                  |
-| GitOps        | Kustomize overlays in `infra/k8s/overlays/staging` and `production`; changes applied via `kubectl apply -k`                 |
+| CI/CD         | GitHub Actions: lint → build → test → push ACR → deploy demo → manual gate → production                                     |
+| GitOps        | Kustomize overlays in `infra/k8s/overlays/demo` and `production`; changes applied via `kubectl apply -k`                    |
 | Observability | Azure Monitor Container Insights (pod metrics), Application Insights (traces + exceptions), Log Analytics (structured logs) |
 | Alerting      | Azure Monitor alerts on pod CrashLoopBackOff, error rate spike, PostgreSQL connection exhaustion                            |
 | Runbooks      | `docs/Operations/Runbooks.md` covers incident response, rollback, and backup restore procedures                             |

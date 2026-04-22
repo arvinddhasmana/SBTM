@@ -1,0 +1,219 @@
+# SBTM Deployment Prerequisites & Checklist
+
+- Document owner: Engineering and DevOps
+- Last reviewed: 2026-04-22
+- Audience: Anyone running a fresh Demo or Production deployment
+
+This document is the **single starting point** before deploying SBTM to Azure. Run through every section in order. The matching automation lives at `scripts/azure/preflight-check.sh`.
+
+---
+
+## 0. Environment Model (read this first)
+
+SBTM has **two Azure environments**, each isolated in its own resource group:
+
+| Environment    | Resource Group | AKS Cluster           | ACR                            | Key Vault            | K8s Namespace     | Region          |
+| -------------- | -------------- | --------------------- | ------------------------------ | -------------------- | ----------------- | --------------- |
+| **Demo**       | `sbtm-demo-rg` | `sbtm-aks-demo`       | `sbtmacrdemo.azurecr.io`       | `sbtm-kv-demo`       | `sbtm-demo`       | `eastus`        |
+| **Production** | `sbtm-rg`      | `sbtm-aks-production` | `sbtmacrproduction.azurecr.io` | `sbtm-kv-production` | `sbtm-production` | `canadacentral` |
+
+> "Pilot" is a **business stage** (early-customer rollout), not a separate environment. Pilots run on the Production environment behind feature flags and a per-tenant rollout list. The cost docs no longer list a dedicated Pilot tier.
+
+---
+
+## 1. One-Time Account Setup
+
+### Azure
+
+- [ ] Active Azure subscription (note the **Subscription ID**)
+- [ ] You have **Owner** or **Contributor + User Access Administrator** role on the subscription (needed for role assignments inside Bicep)
+- [ ] (Optional, recommended for Demo) Convert subscription to **Azure Dev/Test pricing** for ~40% VM discount — see [CostAnalysis.md](CostAnalysis.md#azure-devtest-pricing)
+- [ ] Quotas: at least **8 vCPUs of Dsv3 family** in the target region (16 for production)
+
+### GitHub
+
+- [ ] Repository admin access (to create environments and secrets)
+- [ ] An OIDC federated identity created (see [AzureCICD.md](AzureCICD.md#setting-up-azure-oidc))
+
+### Mobile (only if shipping the driver app)
+
+- [ ] Expo organization account
+- [ ] Google Play Console account ($25 one-time)
+- [ ] Apple Developer Program account ($99/year)
+- [ ] Firebase project for FCM
+
+### External SaaS
+
+- [ ] Twilio account (SMS for emergency alerts) — get Account SID + Auth Token
+- [ ] Domain name registered + DNS provider with API access (for cert-manager DNS-01 challenge)
+
+---
+
+## 2. Local Workstation Tools
+
+| Tool        | Min version | Install                                                     |
+| ----------- | ----------- | ----------------------------------------------------------- |
+| `az` CLI    | 2.60+       | https://aka.ms/azcli                                        |
+| `kubectl`   | 1.28+       | https://kubernetes.io/docs/tasks/tools/                     |
+| `kustomize` | 5.0+        | https://kubectl.docs.kubernetes.io/installation/kustomize/  |
+| `helm`      | 3.13+       | https://helm.sh/docs/intro/install/                         |
+| `psql`      | 15+         | `apt install postgresql-client` / `brew install postgresql` |
+| `jq`        | any         | `apt install jq` / `brew install jq`                        |
+| `bicep`     | 0.24+       | bundled with `az` CLI; verify `az bicep version`            |
+
+Run `bash scripts/azure/preflight-check.sh demo` to verify all of the above.
+
+---
+
+## 3. GitHub Repository Secrets — Where to Set
+
+Go to **Settings → Secrets and variables → Actions → New repository secret**.
+
+### Per-environment secrets (set under Settings → Environments → `demo` and `production`)
+
+| Secret                    | Demo value                   | Production value                                                             | How to get                                                        |
+| ------------------------- | ---------------------------- | ---------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| `AZURE_CLIENT_ID`         | demo SP client ID            | prod SP client ID                                                            | `az ad sp create-for-rbac` output                                 |
+| `AZURE_TENANT_ID`         | tenant ID                    | tenant ID                                                                    | `az account show --query tenantId -o tsv`                         |
+| `AZURE_SUBSCRIPTION_ID`   | subscription ID              | subscription ID                                                              | `az account show --query id -o tsv`                               |
+| `AKS_DEMO_RESOURCE_GROUP` | `sbtm-demo-rg`               | n/a                                                                          | constant                                                          |
+| `AKS_DEMO_CLUSTER_NAME`   | `sbtm-aks-demo`              | n/a                                                                          | constant                                                          |
+| `AKS_PROD_RESOURCE_GROUP` | n/a                          | `sbtm-rg`                                                                    | constant                                                          |
+| `AKS_PROD_CLUSTER_NAME`   | n/a                          | `sbtm-aks-production`                                                        | constant                                                          |
+| `ACR_DEMO_LOGIN_SERVER`   | `sbtmacrdemo.azurecr.io`     | n/a                                                                          | `az acr show --name sbtmacrdemo --query loginServer -o tsv`       |
+| `ACR_PROD_LOGIN_SERVER`   | n/a                          | `sbtmacrproduction.azurecr.io`                                               | `az acr show --name sbtmacrproduction --query loginServer -o tsv` |
+| `DATABASE_URL_PROD`       | n/a                          | `postgresql://sbtmadmin:...@sbtm-pg-production...:5432/sbms?sslmode=require` | from Bicep outputs + KV password                                  |
+| `EXPO_TOKEN`              | shared                       | shared                                                                       | https://expo.dev → Account Settings → Access Tokens               |
+| `GOOGLE_PLAY_KEY`         | shared (base64-encoded JSON) | shared                                                                       | Google Play Console → Setup → API access                          |
+
+> **Application secrets (JWT, DB password, FCM key, Twilio key) are NOT GitHub secrets.** They live in Azure Key Vault and are seeded via `scripts/azure/setup-keyvault.sh` (see step 6 below).
+
+### Creating GitHub Environments (for approval gates)
+
+1. **Settings → Environments → New environment → `demo`** — no required reviewers; URL = `https://api.demo.sbtm.example.com/health`
+2. **Settings → Environments → New environment → `production`** — **add Required reviewers (≥1)**; URL = `https://api.sbtm.example.com/health`; deployment branches = `main` only
+
+---
+
+## 4. Pre-Provision Checklist (before running `provision-azure.sh`)
+
+- [ ] `az login && az account set --subscription "<id>"` — correct subscription selected
+- [ ] `az account show --query name` matches the target subscription name
+- [ ] Strong PostgreSQL admin password generated and exported: `export POSTGRES_ADMIN_PASSWORD='...'` (16+ chars, mixed case, digits, symbols)
+- [ ] DNS for `api.demo.sbtm.example.com` (demo) or `api.sbtm.example.com` (production) is ready to be CNAMEd to the ingress IP after provisioning
+- [ ] `bash scripts/azure/preflight-check.sh demo` (or `production`) passes with no `✗` rows
+
+---
+
+## 5. Provision Infrastructure
+
+```bash
+# Demo (cheap, ephemeral, eastus)
+export POSTGRES_ADMIN_PASSWORD='...'
+bash scripts/azure/preflight-check.sh demo
+bash scripts/azure/provision-azure.sh demo eastus false
+#                                    │     │      └── isDevTestSubscription
+#                                    │     └────────── location
+#                                    └──────────────── environment
+
+# Production
+export POSTGRES_ADMIN_PASSWORD='...'
+bash scripts/azure/preflight-check.sh production
+bash scripts/azure/provision-azure.sh production canadacentral false
+```
+
+Or via GitHub Actions: **Actions → Infrastructure Provisioning → Run workflow → choose environment**.
+
+---
+
+## 6. Seed Key Vault Secrets
+
+Create `.env.production` (gitignored) from the template, fill in real values, then:
+
+```bash
+KV_NAME="sbtm-kv-demo"        bash scripts/azure/setup-keyvault.sh   # demo
+KV_NAME="sbtm-kv-production"  bash scripts/azure/setup-keyvault.sh   # production
+```
+
+Required keys in `.env.production`:
+
+- `JWT_SECRET` — generate with `openssl rand -hex 32`
+- `DB_PASSWORD` — same value you exported as `POSTGRES_ADMIN_PASSWORD`
+- `DATABASE_URL` — `postgresql://sbtmadmin:<password>@<pg-fqdn>:5432/sbms?sslmode=require`
+- `REDIS_URL` — `rediss://:<key>@<redis-host>:6380`
+- `FCM_SERVER_KEY` — from Firebase Console
+- `TWILIO_AUTH_TOKEN`, `TWILIO_ACCOUNT_SID`
+- `AZURE_STORAGE_CONNECTION_STRING` — `az storage account show-connection-string -n sbtmblobdemo`
+- `APPLICATIONINSIGHTS_CONNECTION_STRING` — from Bicep output
+
+> **Yes — both Demo and Production read secrets from Azure Key Vault** at runtime via the Key Vault CSI driver + Workload Identity. No secrets are ever baked into images or stored as Kubernetes Secrets.
+
+---
+
+## 7. Database Migration
+
+```bash
+# Run from a workstation that can reach the private endpoint
+# (use Azure Bastion or a jumpbox in the services subnet for production)
+DATABASE_URL='...' bash scripts/azure/setup-db.sh migrate
+```
+
+For demo seeding only:
+
+```bash
+DATABASE_URL='...' bash scripts/azure/setup-db.sh seed-demo
+```
+
+---
+
+## 8. First Deployment
+
+```bash
+# Demo
+bash scripts/azure/deploy-services.sh demo
+
+# Production (requires explicit confirmation)
+bash scripts/azure/deploy-services.sh production
+```
+
+After deploy:
+
+- [ ] `kubectl get pods -n sbtm-demo` (or `sbtm-production`) — all `Running`
+- [ ] `kubectl get ingress -n sbtm-demo` — note the EXTERNAL-IP
+- [ ] DNS A/CNAME → ingress IP
+- [ ] `curl https://api.demo.sbtm.example.com/health` returns 200
+
+---
+
+## 9. After-Demo Cost Cleanup (Demo only)
+
+```bash
+# Pause: stops AKS + PostgreSQL, preserves data (~$30/mo residual)
+bash scripts/azure/cost-stop.sh demo
+
+# Resume:
+bash scripts/azure/cost-start.sh demo
+
+# Full delete (zero monthly cost):
+bash scripts/azure/teardown-azure.sh demo
+```
+
+---
+
+## 10. Production-Only Additional Checks
+
+- [ ] Production approver list configured in GitHub Environment
+- [ ] Backup strategy verified — `bash scripts/azure/setup-db.sh backup` succeeds
+- [ ] Azure Monitor alerts enabled (CrashLoopBackOff, error rate, DB connection saturation)
+- [ ] WAF / Front Door enabled (planned post-pilot — not in current Bicep)
+- [ ] Privacy policy URL live and linked in app stores
+- [ ] On-call rotation defined and runbook reviewed
+
+---
+
+## Related Documents
+
+- [AzureCICD.md](AzureCICD.md) — workflow definitions and OIDC setup
+- [InfrastructureAsCode.md](InfrastructureAsCode.md) — how to change tier configuration
+- [CostAnalysis.md](CostAnalysis.md) — cost breakdown, Dev/Test pricing, namespace sharing
+- [MobileStoreDeployment.md](MobileStoreDeployment.md) — mobile build & submit

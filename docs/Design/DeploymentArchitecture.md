@@ -109,7 +109,7 @@ flowchart TB
 
 ## Deployment Principles
 
-- Keep services independently deployable via Kustomize overlays (`infra/k8s/overlays/staging` and `production`).
+- Keep services independently deployable via Kustomize overlays (`infra/k8s/overlays/demo` and `production`).
 - All secrets via Azure Key Vault CSI driver — no secrets in ConfigMaps or image layers.
 - Managed PaaS for stateful services (PostgreSQL, Redis, Blob Storage) — no stateful in-cluster workloads except OSRM.
 - API Gateway is the only externally exposed backend endpoint; all other services are cluster-internal.

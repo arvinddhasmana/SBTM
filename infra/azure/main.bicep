@@ -42,6 +42,18 @@ param storageSkuName string = 'Standard_LRS'
 @description('ACR SKU')
 param acrSkuName string = 'Basic'
 
+@description('Set to true if the target subscription is an Azure Dev/Test subscription. Adds the dev-test-eligible tag and stamps the deployment so cost reports can identify Dev/Test billing. Eligibility is set at the subscription level, not on individual resources — see docs/Deployment/CostAnalysis.md.')
+param isDevTestSubscription bool = false
+
+@description('Common tags applied to all resources for cost tracking and lifecycle automation')
+param commonTags object = {
+  environment: environment
+  application: 'sbtm'
+  managedBy: 'bicep'
+  costCenter: environment == 'production' ? 'sbtm-prod' : 'sbtm-demo'
+  devTestEligible: string(isDevTestSubscription)
+}
+
 // ── 1. Networking ──────────────────────────────────────────────────────────
 module network 'modules/network.bicep' = {
   name: 'network'

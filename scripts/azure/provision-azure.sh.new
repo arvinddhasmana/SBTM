@@ -99,36 +99,11 @@ helm upgrade --install cert-manager jetstack/cert-manager \
   --set installCRDs=true \
   --wait
 
-echo "==> [6/7] Applying namespaces + base SBTM manifests via Kustomize"
-OVERLAY_PATH="infra/k8s/overlays/${ENVIRONMENT}"
-if [[ ! -d "${OVERLAY_PATH}" ]]; then
-  echo "ERROR: Kustomize overlay not found: ${OVERLAY_PATH}"
-  exit 1
-fi
-if command -v kustomize >/dev/null 2>&1; then
-  KUSTOMIZE_CMD="kustomize"
-else
-  KUSTOMIZE_CMD="kubectl kustomize"
-fi
-echo "    Validating overlay (build + kubectl dry-run): ${OVERLAY_PATH}"
-if ! ${KUSTOMIZE_CMD} build "${OVERLAY_PATH}" | kubectl apply --dry-run=client -f - >/dev/null 2>&1; then
-  echo "ERROR: Kustomize overlay failed validation."
-  echo "       Run: ${KUSTOMIZE_CMD} build ${OVERLAY_PATH} | kubectl apply --dry-run=client -f -"
-  exit 1
-fi
-RESOURCE_COUNT=$(${KUSTOMIZE_CMD} build "${OVERLAY_PATH}" 2>/dev/null | grep -c "^kind:" || true)
-echo "    Overlay valid — ${RESOURCE_COUNT} resources."
-# Create namespace (idempotent)
-kubectl create namespace "sbtm-${ENVIRONMENT}" --dry-run=client -o yaml | kubectl apply -f -
+echo "==> [6/7] Applying SBTM namespaces"
+kubectl apply -f infra/k8s/base/namespace.yaml
 
 echo "==> [7/7] Seeding Key Vault secrets"
-if [[ -f ".env.production" ]]; then
-  KV_NAME="${KV_NAME}" bash scripts/azure/setup-keyvault.sh
-else
-  echo "  ⚠  .env.production not found — skipping Key Vault seeding."
-  echo "     Copy .env.production.template, fill in values, then run:"
-  echo "     KV_NAME=${KV_NAME} bash scripts/azure/setup-keyvault.sh"
-fi
+KV_NAME="${KV_NAME}" bash scripts/azure/setup-keyvault.sh
 
 cat <<EOF
 

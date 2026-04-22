@@ -49,7 +49,7 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Log in to ACR
-        run: az acr login --name ${{ secrets.ACR_LOGIN_SERVER }}
+        run: az acr login --name ${{ secrets.ACR_DEMO_LOGIN_SERVER }}
 
       - name: Set image tag
         id: tag
@@ -59,7 +59,7 @@ jobs:
             SHA_TAG="sha-$(git rev-parse --short HEAD)"
           fi
           echo "tag=${SHA_TAG}" >> "$GITHUB_OUTPUT"
-          echo "image=${{ secrets.ACR_LOGIN_SERVER }}/sbtm/${{ matrix.service.name }}" >> "$GITHUB_OUTPUT"
+          echo "image=${{ secrets.ACR_DEMO_LOGIN_SERVER }}/sbtm/${{ matrix.service.name }}" >> "$GITHUB_OUTPUT"
 
       - name: Build and push ${{ matrix.service.name }}
         uses: docker/build-push-action@v5

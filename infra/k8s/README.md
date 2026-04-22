@@ -7,7 +7,7 @@ Cloud-agnostic Kustomize-based manifests for all SBTM microservices.
 ```
 infra/k8s/
 ├── base/                    # Environment-agnostic base manifests
-│   ├── namespace.yaml       # sbtm-staging and sbtm-production namespaces
+│   ├── namespace.yaml — per overlay (demo/ and production/) namespaces
 │   ├── api-gateway/         # Deployment, Service, HPA
 │   ├── gps-tracking/        # Deployment, Service, HPA
 │   ├── emergency-alerts/    # Deployment, Service, HPA
@@ -20,16 +20,16 @@ infra/k8s/
 │   ├── ingress/            # NGINX Ingress values + routing rules
 │   └── secrets/            # SecretProviderClass for Azure Key Vault CSI
 └── overlays/
-    ├── staging/            # 1 replica, debug logging, Always pull, staging domain
+    ├── demo/              # 1 replica, debug logging, Always pull, demo domain, sbtm-kv-demo
     └── production/         # 2-3 replicas, HPA, info logging, IfNotPresent pull
 ```
 
 ## Deploy
 
 ```bash
-# Staging
-kubectl apply -k infra/k8s/overlays/staging
-kubectl get pods -n sbtm-staging
+# Demo
+kubectl apply -k infra/k8s/overlays/demo
+kubectl get pods -n sbtm-demo
 
 # Production (use deploy-services.sh for confirmation gate)
 bash scripts/azure/deploy-services.sh production

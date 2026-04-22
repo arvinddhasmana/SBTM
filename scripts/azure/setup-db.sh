@@ -29,6 +29,21 @@ if [[ -z "${DATABASE_URL:-}" ]]; then
   exit 1
 fi
 
+# Verify psql is available
+if ! command -v psql >/dev/null 2>&1; then
+  echo "ERROR: 'psql' not found. Install PostgreSQL client tools first."
+  exit 1
+fi
+
+# Test DB connection before running any SQL
+echo "==> Testing database connection"
+if ! psql "${DATABASE_URL}" -c "SELECT 1" --quiet --no-align --tuples-only 2>/dev/null | grep -q "1"; then
+  echo "ERROR: Cannot connect to database. Check DATABASE_URL and network access."
+  echo "       PostgreSQL private endpoint requires VPN or Azure Bastion access."
+  exit 1
+fi
+echo "    ✓ Database connection OK"
+
 SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/scripts"
 
 case "${COMMAND}" in
@@ -40,6 +55,13 @@ case "${COMMAND}" in
     echo "==> Seeding standard data"
     psql "${DATABASE_URL}" -f "${SCRIPTS_DIR}/seed-standard.sql"
     echo "==> Migration complete"
+    echo ""
+    echo "    Verifying tables:"
+    TABLE_COUNT=$(psql "${DATABASE_URL}" -t -c \
+      "SELECT count(*) FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE'" \
+      2>/dev/null | tr -d ' ' || echo "0")
+    echo "    ✓ ${TABLE_COUNT} table(s) in public schema"
+    psql "${DATABASE_URL}" -c "\dt" --quiet 2>/dev/null | head -20 || true
     ;;
 
   seed-demo)
@@ -54,6 +76,13 @@ case "${COMMAND}" in
     echo "==> Creating backup: ${BACKUP_FILE}"
     pg_dump "${DATABASE_URL}" -f "${BACKUP_FILE}" --clean --if-exists
     echo "==> Backup written to ${BACKUP_FILE}"
+    BACKUP_SIZE=$(du -sh "${BACKUP_FILE}" | cut -f1)
+    echo "    Size: ${BACKUP_SIZE}"
+    echo ""
+    echo "    To upload to Azure Blob Storage:"
+    echo "      az storage blob upload --account-name <STORAGE_ACCOUNT> \\"
+    echo "        --container-name backups --file ${BACKUP_FILE} \\"
+    echo "        --name sbtm-backup-${TIMESTAMP}.sql --auth-mode login"
     ;;
 
   *)

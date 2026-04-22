@@ -41,14 +41,14 @@
 
 ## Workflow Files
 
-| File                                      | Trigger                                          | Description                                                                     |
-| ----------------------------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------- |
-| `.github/workflows/ci.yml`                | Push to main; PR to main                         | Lint, build, unit tests, integration tests                                      |
-| `.github/workflows/build-images.yml`      | Called by ci.yml (main branch only)              | Build all 8 Docker images and push to **demo** ACR                              |
-| `.github/workflows/deploy-demo.yml`       | On completion of build-images                    | Deploy latest images to AKS `sbtm-demo` namespace on `sbtm-aks-demo`            |
-| `.github/workflows/deploy-production.yml` | GitHub Release tag `v*.*.*`                      | Manual approval gate → deploy to AKS `sbtm-production` on `sbtm-aks-production` |
-| `.github/workflows/mobile-build.yml`      | Release tag or push to `mobile/**`               | EAS Cloud Build + EAS Submit to stores                                          |
-| `.github/workflows/infra-provision.yml`   | Manual dispatch (env input: `demo`/`production`) | Run Bicep deployment for Azure resource provisioning                            |
+| File                                      | Trigger                                        | Description                                                              |
+| ----------------------------------------- | ---------------------------------------------- | ------------------------------------------------------------------------ |
+| `.github/workflows/ci.yml`                | Push to main; PR to main                       | Lint, build, unit tests, integration tests                               |
+| `.github/workflows/build-images.yml`      | Called by ci.yml (main branch only)            | Build all 8 Docker images and push to **demo** ACR                       |
+| `.github/workflows/deploy-demo.yml`       | On completion of build-images                  | Deploy latest images to AKS `sbtm-demo` namespace on `sbtm-aks-demo`     |
+| `.github/workflows/deploy-production.yml` | GitHub Release tag `v*.*.*`                    | Manual approval gate → deploy to AKS `sbtm-production` on `sbtm-aks-production` |
+| `.github/workflows/mobile-build.yml`      | Release tag or push to `mobile/**`             | EAS Cloud Build + EAS Submit to stores                                   |
+| `.github/workflows/infra-provision.yml`   | Manual dispatch (env input: `demo`/`production`) | Run Bicep deployment for Azure resource provisioning                     |
 
 ---
 
@@ -58,19 +58,19 @@ Set under **Settings → Environments → `demo`** and **Settings → Environmen
 
 ### Per-environment secrets
 
-| Secret                    | Demo Environment             | Production Environment         | Source                                                        |
-| ------------------------- | ---------------------------- | ------------------------------ | ------------------------------------------------------------- |
-| `AZURE_CLIENT_ID`         | demo SP client ID            | prod SP client ID              | `az ad sp create-for-rbac` output                             |
-| `AZURE_TENANT_ID`         | tenant ID                    | tenant ID                      | `az account show --query tenantId -o tsv`                     |
-| `AZURE_SUBSCRIPTION_ID`   | subscription ID              | subscription ID                | `az account show --query id -o tsv`                           |
-| `AKS_DEMO_RESOURCE_GROUP` | `sbtm-demo-rg`               | —                              | constant                                                      |
-| `AKS_DEMO_CLUSTER_NAME`   | `sbtm-aks-demo`              | —                              | constant                                                      |
-| `ACR_DEMO_LOGIN_SERVER`   | `sbtmacrdemo.azurecr.io`     | —                              | `az acr show -n sbtmacrdemo --query loginServer -o tsv`       |
-| `AKS_PROD_RESOURCE_GROUP` | —                            | `sbtm-rg`                      | constant                                                      |
-| `AKS_PROD_CLUSTER_NAME`   | —                            | `sbtm-aks-production`          | constant                                                      |
-| `ACR_PROD_LOGIN_SERVER`   | —                            | `sbtmacrproduction.azurecr.io` | `az acr show -n sbtmacrproduction --query loginServer -o tsv` |
-| `EXPO_TOKEN`              | shared                       | shared                         | Expo dashboard → Account Settings → Access Tokens             |
-| `GOOGLE_PLAY_KEY`         | shared (base64-encoded JSON) | shared                         | Google Play Console → Setup → API access                      |
+| Secret                     | Demo Environment             | Production Environment           | Source                                                                |
+| -------------------------- | ---------------------------- | -------------------------------- | --------------------------------------------------------------------- |
+| `AZURE_CLIENT_ID`          | demo SP client ID            | prod SP client ID                | `az ad sp create-for-rbac` output                                     |
+| `AZURE_TENANT_ID`          | tenant ID                    | tenant ID                        | `az account show --query tenantId -o tsv`                             |
+| `AZURE_SUBSCRIPTION_ID`    | subscription ID              | subscription ID                  | `az account show --query id -o tsv`                                   |
+| `AKS_DEMO_RESOURCE_GROUP`  | `sbtm-demo-rg`               | —                                | constant                                                              |
+| `AKS_DEMO_CLUSTER_NAME`    | `sbtm-aks-demo`              | —                                | constant                                                              |
+| `ACR_DEMO_LOGIN_SERVER`    | `sbtmacrdemo.azurecr.io`     | —                                | `az acr show -n sbtmacrdemo --query loginServer -o tsv`               |
+| `AKS_PROD_RESOURCE_GROUP`  | —                            | `sbtm-rg`                        | constant                                                              |
+| `AKS_PROD_CLUSTER_NAME`    | —                            | `sbtm-aks-production`            | constant                                                              |
+| `ACR_PROD_LOGIN_SERVER`    | —                            | `sbtmacrproduction.azurecr.io`   | `az acr show -n sbtmacrproduction --query loginServer -o tsv`         |
+| `EXPO_TOKEN`               | shared                       | shared                           | Expo dashboard → Account Settings → Access Tokens                     |
+| `GOOGLE_PLAY_KEY`          | shared (base64-encoded JSON) | shared                           | Google Play Console → Setup → API access                              |
 
 > **Application secrets (JWT, DB password, Twilio, FCM) are NOT in GitHub Secrets.** They live in Azure Key Vault and are seeded by `scripts/azure/setup-keyvault.sh`. Pods read them via the Key Vault CSI driver + Workload Identity. See [DeploymentChecklist.md](DeploymentChecklist.md#6-seed-key-vault-secrets).
 
@@ -191,11 +191,11 @@ Steps:
 
 Manual dispatch only. Inputs:
 
-| Input                   | Required | Default | Description                                             |
-| ----------------------- | -------- | ------- | ------------------------------------------------------- |
-| `environment`           | yes      | `demo`  | `demo` → RG `sbtm-demo-rg`; `production` → RG `sbtm-rg` |
-| `location`              | no       | derived | Defaults: demo=`eastus`, production=`canadacentral`     |
-| `isDevTestSubscription` | no       | `false` | Tags resources for Dev/Test cost reporting              |
+| Input               | Required | Default | Description                                                |
+| ------------------- | -------- | ------- | ---------------------------------------------------------- |
+| `environment`       | yes      | `demo`  | `demo` → RG `sbtm-demo-rg`; `production` → RG `sbtm-rg`    |
+| `location`          | no       | derived | Defaults: demo=`eastus`, production=`canadacentral`        |
+| `isDevTestSubscription` | no   | `false` | Tags resources for Dev/Test cost reporting                 |
 
 Steps:
 

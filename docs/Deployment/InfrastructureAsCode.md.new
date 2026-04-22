@@ -15,10 +15,10 @@ Infrastructure is managed at two layers:
 
 Each environment lives in its own Azure resource group:
 
-| Environment    | Resource Group | AKS Cluster           | ACR Registry        | Key Vault            |
-| -------------- | -------------- | --------------------- | ------------------- | -------------------- |
-| **Demo**       | `sbtm-demo-rg` | `sbtm-aks-demo`       | `sbtmacrdemo`       | `sbtm-kv-demo`       |
-| **Production** | `sbtm-rg`      | `sbtm-aks-production` | `sbtmacrproduction` | `sbtm-kv-production` |
+| Environment    | Resource Group | AKS Cluster           | ACR Registry            | Key Vault            |
+| -------------- | -------------- | --------------------- | ----------------------- | -------------------- |
+| **Demo**       | `sbtm-demo-rg` | `sbtm-aks-demo`       | `sbtmacrdemo`           | `sbtm-kv-demo`       |
+| **Production** | `sbtm-rg`      | `sbtm-aks-production` | `sbtmacrproduction`     | `sbtm-kv-production` |
 
 ---
 
@@ -71,7 +71,6 @@ All sizing is parameterised. There are two ways to change a tier:
 **1. Edit the per-environment parameters file** (persistent, version-controlled):
 
 `infra/azure/parameters.demo.json`:
-
 ```json
 {
   "parameters": {
@@ -86,10 +85,9 @@ All sizing is parameterised. There are two ways to change a tier:
 }
 ```
 
-Then re-run `bash scripts/azure/provision-azure.sh demo` — Bicep is idempotent and does an in-place update for SKU changes (note: PG tier change _between Burstable and GeneralPurpose_ requires a brief restart).
+Then re-run `bash scripts/azure/provision-azure.sh demo` — Bicep is idempotent and does an in-place update for SKU changes (note: PG tier change *between Burstable and GeneralPurpose* requires a brief restart).
 
 **2. One-off override via CLI** (temporary):
-
 ```bash
 az deployment group create \
   --resource-group sbtm-demo-rg \
@@ -100,30 +98,30 @@ az deployment group create \
 
 ### Parameter Reference
 
-| Parameter               | Demo Value        | Prod Value        | Description                                                                                                              |
-| ----------------------- | ----------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `environment`           | `demo`            | `production`      | Suffix for resource names; sets K8s namespace                                                                            |
-| `location`              | `eastus`          | `canadacentral`   | Azure region                                                                                                             |
-| `aksNodeCount`          | `2`               | `3`               | Initial app node pool count                                                                                              |
-| `aksNodeSize`           | `Standard_D2s_v3` | `Standard_D4s_v3` | Node VM SKU                                                                                                              |
-| `postgresSkuName`       | `Standard_B2ms`   | `Standard_D4s_v3` | PostgreSQL SKU                                                                                                           |
-| `postgresSkuTier`       | `Burstable`       | `GeneralPurpose`  | PostgreSQL tier                                                                                                          |
-| `postgresStorageGB`     | `32`              | `256`             | PostgreSQL storage                                                                                                       |
-| `redisSkuName`          | `Basic`           | `Standard`        | Redis SKU                                                                                                                |
-| `redisSkuCapacity`      | `0`               | `1`               | Redis capacity (C0=0, C1=1, C2=2)                                                                                        |
-| `storageSkuName`        | `Standard_LRS`    | `Standard_ZRS`    | Blob redundancy                                                                                                          |
-| `acrSkuName`            | `Basic`           | `Standard`        | Container Registry SKU                                                                                                   |
-| `isDevTestSubscription` | `false`           | `false`           | Tags resources for Dev/Test cost reporting (see [CostAnalysis.md](CostAnalysis.md#azure-devtest-pricing-40-vm-discount)) |
+| Parameter                 | Demo Value        | Prod Value        | Description                                     |
+| ------------------------- | ----------------- | ----------------- | ----------------------------------------------- |
+| `environment`             | `demo`            | `production`      | Suffix for resource names; sets K8s namespace   |
+| `location`                | `eastus`          | `canadacentral`   | Azure region                                    |
+| `aksNodeCount`            | `2`               | `3`               | Initial app node pool count                     |
+| `aksNodeSize`             | `Standard_D2s_v3` | `Standard_D4s_v3` | Node VM SKU                                     |
+| `postgresSkuName`         | `Standard_B2ms`   | `Standard_D4s_v3` | PostgreSQL SKU                                  |
+| `postgresSkuTier`         | `Burstable`       | `GeneralPurpose`  | PostgreSQL tier                                 |
+| `postgresStorageGB`       | `32`              | `256`             | PostgreSQL storage                              |
+| `redisSkuName`            | `Basic`           | `Standard`        | Redis SKU                                       |
+| `redisSkuCapacity`        | `0`               | `1`               | Redis capacity (C0=0, C1=1, C2=2)               |
+| `storageSkuName`          | `Standard_LRS`    | `Standard_ZRS`    | Blob redundancy                                 |
+| `acrSkuName`              | `Basic`           | `Standard`        | Container Registry SKU                          |
+| `isDevTestSubscription`   | `false`           | `false`           | Tags resources for Dev/Test cost reporting (see [CostAnalysis.md](CostAnalysis.md#azure-devtest-pricing-40-vm-discount)) |
 
 ### Common Tier-Change Recipes
 
-| Goal                                  | Edit                                                                      |
-| ------------------------------------- | ------------------------------------------------------------------------- |
-| Cheapest demo (single-node, ~$130/mo) | `aksNodeCount=1`, `redisSkuCapacity=0`                                    |
-| Heavy-load demo (load test, ~$400/mo) | `aksNodeCount=3`, `aksNodeSize=Standard_D4s_v3`                           |
-| Production HA upgrade                 | `postgresSkuTier=GeneralPurpose`, set `postgresHA=ZoneRedundant` in Bicep |
-| Add node autoscaling                  | Set `aksAutoscaleMin/Max` in `aks.bicep`                                  |
-| Switch to Spot instances (demo only)  | Edit `aks.bicep` agentPoolProfile: `priority: 'Spot'`                     |
+| Goal                                        | Edit                                                                      |
+| ------------------------------------------- | ------------------------------------------------------------------------- |
+| Cheapest demo (single-node, ~$130/mo)       | `aksNodeCount=1`, `redisSkuCapacity=0`                                    |
+| Heavy-load demo (load test, ~$400/mo)       | `aksNodeCount=3`, `aksNodeSize=Standard_D4s_v3`                           |
+| Production HA upgrade                       | `postgresSkuTier=GeneralPurpose`, set `postgresHA=ZoneRedundant` in Bicep |
+| Add node autoscaling                        | Set `aksAutoscaleMin/Max` in `aks.bicep`                                  |
+| Switch to Spot instances (demo only)        | Edit `aks.bicep` agentPoolProfile: `priority: 'Spot'`                     |
 
 ---
 
@@ -211,7 +209,6 @@ Pods authenticate to Azure Key Vault via **Workload Identity** (no passwords). T
 | `sbtm-blob-connection-string`  | video-service, osrm      | `AZURE_STORAGE_CONNECTION_STRING` |
 
 Seed before first deployment:
-
 ```bash
 KV_NAME=sbtm-kv-demo bash scripts/azure/setup-keyvault.sh
 ```
@@ -224,12 +221,12 @@ The Demo AKS cluster (`sbtm-aks-demo`) can host multiple isolated workloads via 
 
 Default namespaces:
 
-| Cluster               | Namespace         | Overlay                         | Purpose                 |
-| --------------------- | ----------------- | ------------------------------- | ----------------------- |
-| `sbtm-aks-demo`       | `sbtm-demo`       | `infra/k8s/overlays/demo`       | Live demo + integration |
-| `sbtm-aks-demo`       | `sbtm-pilot` \*   | clone `demo` → `pilot`          | Optional pilot rollout  |
-| `sbtm-aks-demo`       | `sbtm-test` \*    | clone `demo` → `test`           | Optional QA / per-PR    |
-| `sbtm-aks-production` | `sbtm-production` | `infra/k8s/overlays/production` | Production traffic only |
+| Cluster                | Namespace         | Overlay                          | Purpose                  |
+| ---------------------- | ----------------- | -------------------------------- | ------------------------ |
+| `sbtm-aks-demo`        | `sbtm-demo`       | `infra/k8s/overlays/demo`        | Live demo + integration  |
+| `sbtm-aks-demo`        | `sbtm-pilot` *    | clone `demo` → `pilot`           | Optional pilot rollout   |
+| `sbtm-aks-demo`        | `sbtm-test` *     | clone `demo` → `test`            | Optional QA / per-PR     |
+| `sbtm-aks-production`  | `sbtm-production` | `infra/k8s/overlays/production`  | Production traffic only  |
 
 \* Optional — create on demand.
 
@@ -244,14 +241,12 @@ DATABASE_URL='postgresql://...' bash scripts/azure/setup-db.sh migrate
 ```
 
 This script:
-
 1. Connects to Azure PostgreSQL via private endpoint (requires being on VNET or using Azure Bastion)
 2. Runs `scripts/init-db.sql` for schema creation
 3. Applies `scripts/rls-policies.sql` for Row-Level Security policies
 4. Runs `scripts/seed-standard.sql` for initial data
 
 For demo seeding, run additionally:
-
 ```bash
 DATABASE_URL='...' bash scripts/azure/setup-db.sh seed-demo
 ```
@@ -287,10 +282,10 @@ kubectl logs -n sbtm-demo deployment/osrm
 
 ## Tearing Down / Pausing
 
-| Goal                                | Command                                     |
-| ----------------------------------- | ------------------------------------------- |
-| Pause AKS + DB (keep data, ~$30/mo) | `bash scripts/azure/cost-stop.sh demo`      |
-| Resume from pause                   | `bash scripts/azure/cost-start.sh demo`     |
+| Goal                                | Command                                 |
+| ----------------------------------- | --------------------------------------- |
+| Pause AKS + DB (keep data, ~$30/mo) | `bash scripts/azure/cost-stop.sh demo`  |
+| Resume from pause                   | `bash scripts/azure/cost-start.sh demo` |
 | Full delete (zero residual cost)    | `bash scripts/azure/teardown-azure.sh demo` |
 
 > Production teardown requires typing the literal string `DELETE PRODUCTION` to confirm.

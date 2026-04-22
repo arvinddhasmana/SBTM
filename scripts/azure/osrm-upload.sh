@@ -30,11 +30,24 @@ if [[ -z "${CONNECTION_STRING}" ]]; then
   exit 1
 fi
 
+# Verify azcopy is available
+if ! command -v azcopy >/dev/null 2>&1; then
+  echo "ERROR: 'azcopy' not found."
+  echo "Install: https://learn.microsoft.com/en-us/azure/storage/common/storage-use-azcopy-v10"
+  exit 1
+fi
+
 if [[ ! -d "${OSRM_DATA_DIR}" ]]; then
   echo "ERROR: OSRM data directory not found: ${OSRM_DATA_DIR}"
   echo "Download the Ottawa OSRM dataset and place it in infra/osrm-data/"
   exit 1
 fi
+
+echo "==> Ensuring Blob container exists: ${CONTAINER_NAME}"
+az storage container create \
+  --connection-string "${CONNECTION_STRING}" \
+  --name "${CONTAINER_NAME}" \
+  --output none 2>/dev/null || true
 
 echo "==> Uploading OSRM data from ${OSRM_DATA_DIR} to Blob Storage container: ${CONTAINER_NAME}"
 
@@ -50,4 +63,10 @@ azcopy copy "${OSRM_DATA_DIR}/*" \
   --recursive
 
 echo "==> OSRM data upload complete"
-echo "    Verify: az storage blob list --connection-string \"\${AZURE_STORAGE_CONNECTION_STRING}\" --container-name ${CONTAINER_NAME} --query '[].name' -o tsv"
+echo ""
+echo "    Verifying uploaded blobs:"
+az storage blob list \
+  --connection-string "${CONNECTION_STRING}" \
+  --container-name "${CONTAINER_NAME}" \
+  --query "[].{name:name, size:properties.contentLength}" \
+  -o table 2>/dev/null || echo "    (Could not list blobs — verify manually in the portal)"

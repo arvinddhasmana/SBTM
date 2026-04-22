@@ -33,8 +33,8 @@ jobs:
       - name: Get AKS credentials
         run: |
           az aks get-credentials \
-            --resource-group ${{ secrets.AKS_RESOURCE_GROUP }} \
-            --name ${{ secrets.AKS_CLUSTER_NAME }} \
+            --resource-group ${{ secrets.AKS_PROD_RESOURCE_GROUP }} \
+            --name ${{ secrets.AKS_PROD_CLUSTER_NAME }} \
             --overwrite-existing
 
       - name: Pre-deployment database backup
@@ -52,7 +52,7 @@ jobs:
           for svc in api-gateway gps-tracking emergency-alerts student-presence student-management compliance-management video-service notification-service; do
             cd infra/k8s/overlays/production
             kustomize edit set image \
-              "${{ secrets.ACR_LOGIN_SERVER }}/sbtm/${svc}=${{ secrets.ACR_LOGIN_SERVER }}/sbtm/${svc}:${{ steps.tag.outputs.tag }}"
+              "${{ secrets.ACR_PROD_LOGIN_SERVER }}/sbtm/${svc}=${{ secrets.ACR_PROD_LOGIN_SERVER }}/sbtm/${svc}:${{ steps.tag.outputs.tag }}"
             cd -
           done
 

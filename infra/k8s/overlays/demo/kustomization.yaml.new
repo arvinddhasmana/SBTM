@@ -4,27 +4,38 @@ kind: Kustomization
 namespace: sbtm-demo
 
 resources:
-  - namespace.yaml
-  - ../../base
+  - ../../base/namespace.yaml
+  - ../../base/secrets/keyvault-csi.yaml
+  - ../../base/api-gateway/deployment.yaml
+  - ../../base/api-gateway/service.yaml
+  - ../../base/gps-tracking/deployment.yaml
+  - ../../base/gps-tracking/service.yaml
+  - ../../base/emergency-alerts/deployment.yaml
+  - ../../base/emergency-alerts/service.yaml
+  - ../../base/student-presence/deployment.yaml
+  - ../../base/student-presence/service.yaml
+  - ../../base/student-management/deployment.yaml
+  - ../../base/student-management/service.yaml
+  - ../../base/compliance-management/deployment.yaml
+  - ../../base/compliance-management/service.yaml
+  - ../../base/video-service/deployment.yaml
+  - ../../base/video-service/service.yaml
+  - ../../base/notification-service/deployment.yaml
+  - ../../base/notification-service/service.yaml
+  - ../../base/osrm/deployment.yaml
+  - ../../base/osrm/service.yaml
+  - ../../base/ingress/ingress-rules.yaml
 
-    # Demo: 1 replica for all deployments
-
-    # Demo: debug log level and demo NODE_ENV
-
-    # Demo: imagePullPolicy Always (always pull latest)
-
-    # Demo: Key Vault uses demo vault name
-
-    # Demo: SecretProviderClass placed in sbtm-demo namespace (overrides hard-coded sbtm-production)
-
-    # Demo: ingress host
 patches:
+  # Demo: 1 replica for all deployments
   - patch: |-
       - op: replace
         path: /spec/replicas
         value: 1
     target:
       kind: Deployment
+
+  # Demo: debug log level and demo NODE_ENV
   - patch: |-
       - op: add
         path: /spec/template/spec/containers/0/env/-
@@ -36,13 +47,17 @@ patches:
         value: demo
     target:
       kind: Deployment
-      labelSelector: app in (api-gateway,gps-tracking,emergency-alerts,student-presence,student-management,compliance-management,video-service,notification-service)
+      labelSelector: 'app in (api-gateway,gps-tracking,emergency-alerts,student-presence,student-management,compliance-management,video-service,notification-service)'
+
+  # Demo: imagePullPolicy Always (always pull latest)
   - patch: |-
       - op: add
         path: /spec/template/spec/containers/0/imagePullPolicy
         value: Always
     target:
       kind: Deployment
+
+  # Demo: Key Vault uses demo vault name
   - patch: |-
       - op: replace
         path: /spec/parameters/keyvaultName
@@ -50,6 +65,8 @@ patches:
     target:
       kind: SecretProviderClass
       name: sbtm-keyvault-secrets
+
+  # Demo: SecretProviderClass placed in sbtm-demo namespace (overrides hard-coded sbtm-production)
   - patch: |-
       - op: replace
         path: /metadata/namespace
@@ -57,6 +74,8 @@ patches:
     target:
       kind: SecretProviderClass
       name: sbtm-keyvault-secrets
+
+  # Demo: ingress host
   - patch: |-
       - op: replace
         path: /spec/rules/0/host
@@ -67,6 +86,9 @@ patches:
     target:
       kind: Ingress
       name: sbtm-ingress
+
+commonLabels:
+  environment: demo
 
 images:
   - name: sbtmacrdemo.azurecr.io/sbtm/api-gateway
@@ -85,7 +107,3 @@ images:
     newTag: latest
   - name: sbtmacrdemo.azurecr.io/sbtm/notification-service
     newTag: latest
-labels:
-  - includeSelectors: true
-    pairs:
-      environment: demo
