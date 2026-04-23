@@ -76,9 +76,9 @@ PARAM_FILE="infra/azure/parameters.${ENVIRONMENT}.json"
   && ok "${PARAM_FILE} present" \
   || fail "Missing parameter file: ${PARAM_FILE}"
 
-[[ -f ".env.production" ]] \
-  && ok ".env.production present (source for Key Vault secrets)" \
-  || warn ".env.production missing — setup-keyvault.sh will fail until present"
+[[ -f ".env.${ENVIRONMENT}" ]] \
+  && ok ".env.${ENVIRONMENT} present (source for Key Vault secrets)" \
+  || warn ".env.${ENVIRONMENT} missing — setup-keyvault.sh will fail until present"
 
 # ── Bicep lint ─────────────────────────────────────────────────────────────────
 echo ""

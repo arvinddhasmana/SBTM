@@ -107,11 +107,34 @@ Go to **Settings → Secrets and variables → Actions → New repository secret
 
 ## 5. Provision Infrastructure
 
+### Option A — Single-command bootstrap (steps 5, 6, 7 in one go)
+
 ```bash
-# Demo (cheap, ephemeral, eastus)
+bash scripts/azure/bootstrap.sh demo eastus              # demo  → sbtm-demo-rg, B1ms/D2s_v3 SKUs
+bash scripts/azure/bootstrap.sh production canadacentral # prod  → sbtm-rg
+```
+
+The script will:
+
+1. Install missing WSL/Ubuntu prereqs (`az`, `kubectl`, `helm`, `kustomize`, `azcopy`, `jq`, `psql`, `bicep`).
+2. Run `az login` if needed and prompt to confirm subscription.
+3. Prompt for `POSTGRES_ADMIN_PASSWORD` and `JWT_SECRET` (offers to auto-generate); FCM/Twilio prompts are optional (Enter to skip).
+4. Run `preflight-check.sh`.
+5. Run `provision-azure.sh`.
+6. Build `.env.<env>` (chmod 600, gitignored) by querying Azure for FQDN/keys/connection strings.
+7. Run `setup-keyvault.sh` to seed Key Vault.
+8. Run `setup-db.sh migrate` — automatically falls back to `db-migrate-via-aks.sh` if local `psql` cannot reach the private Postgres endpoint.
+9. Run `osrm-upload.sh` (skipped if `infra/osrm-data/` is empty).
+
+Re-runnable: every step detects existing resources and skips no-op work.
+
+### Option B — Manual provisioning
+
+```bash
+# Demo (cheap, ephemeral, eastus, dev/test SKUs)
 export POSTGRES_ADMIN_PASSWORD='...'
 bash scripts/azure/preflight-check.sh demo
-bash scripts/azure/provision-azure.sh demo eastus false
+bash scripts/azure/provision-azure.sh demo eastus true
 #                                    │     │      └── isDevTestSubscription
 #                                    │     └────────── location
 #                                    └──────────────── environment
@@ -124,27 +147,36 @@ bash scripts/azure/provision-azure.sh production canadacentral false
 
 Or via GitHub Actions: **Actions → Infrastructure Provisioning → Run workflow → choose environment**.
 
+> Bicep parameter files are `infra/azure/parameters.demo.json` and `infra/azure/parameters.production.json` (the filename matches the `ENVIRONMENT` argument exactly).
+
 ---
 
 ## 6. Seed Key Vault Secrets
 
-Create `.env.production` (gitignored) from the template, fill in real values, then:
+Each environment uses its own gitignored env file:
+
+- Demo: `.env.demo` (template: [.env.demo.template](../../.env.demo.template))
+- Production: `.env.production` (template: `.env.production.template`)
+
+Copy the template and fill in real values, then:
 
 ```bash
-KV_NAME="sbtm-kv-demo"        bash scripts/azure/setup-keyvault.sh   # demo
-KV_NAME="sbtm-kv-production"  bash scripts/azure/setup-keyvault.sh   # production
+KV_NAME=sbtm-kv-demo       ENV_FILE=.env.demo       bash scripts/azure/setup-keyvault.sh
+KV_NAME=sbtm-kv-production ENV_FILE=.env.production bash scripts/azure/setup-keyvault.sh
 ```
 
-Required keys in `.env.production`:
+> The bootstrap script populates `.env.<env>` automatically from Azure outputs; you only need to do this manually if you ran `provision-azure.sh` directly.
 
-- `JWT_SECRET` — generate with `openssl rand -hex 32`
-- `DB_PASSWORD` — same value you exported as `POSTGRES_ADMIN_PASSWORD`
+Required keys in `.env.<env>`:
+
+- `JWT_SECRET` — generate with `openssl rand -base64 48`
+- `DB_PASSWORD` — **same value as `POSTGRES_ADMIN_PASSWORD`** used during provisioning
 - `DATABASE_URL` — `postgresql://sbtmadmin:<password>@<pg-fqdn>:5432/sbms?sslmode=require`
 - `REDIS_URL` — `rediss://:<key>@<redis-host>:6380`
-- `FCM_SERVER_KEY` — from Firebase Console
-- `TWILIO_AUTH_TOKEN`, `TWILIO_ACCOUNT_SID`
-- `AZURE_STORAGE_CONNECTION_STRING` — `az storage account show-connection-string -n sbtmblobdemo`
-- `APPLICATIONINSIGHTS_CONNECTION_STRING` — from Bicep output
+- `FCM_SERVER_KEY` — from Firebase Console (optional)
+- `TWILIO_AUTH_TOKEN`, `TWILIO_ACCOUNT_SID` — from Twilio (optional)
+- `AZURE_STORAGE_CONNECTION_STRING` — `az storage account show-connection-string -g <rg> -n <storage>`
+- `APPLICATIONINSIGHTS_CONNECTION_STRING` — `az monitor app-insights component show -g <rg> -a <ai>`
 
 > **Yes — both Demo and Production read secrets from Azure Key Vault** at runtime via the Key Vault CSI driver + Workload Identity. No secrets are ever baked into images or stored as Kubernetes Secrets.
 
@@ -152,16 +184,32 @@ Required keys in `.env.production`:
 
 ## 7. Database Migration
 
+Postgres uses a **private endpoint**, so workstation `psql` cannot reach it directly. Pick the cheapest option that works for your situation:
+
+| Option                            | Cost              | Command                                                     | Notes                                                                                                                                                                                                 |
+| --------------------------------- | ----------------- | ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **In-AKS pod** (recommended)      | **$0**            | `bash scripts/azure/db-migrate-via-aks.sh demo migrate`     | Runs `postgres:16-alpine` as a one-shot Job inside the cluster (already in the VNET). Auto-cleans up. Sub-commands: `migrate`, `seed-demo`, `backup`, `psql`.                                         |
+| **Temporary jumpbox VM**          | ~$0.02/run        | `bash scripts/azure/db-jumpbox.sh demo migrate`             | Spins up a `Standard_B1s` VM in `services-subnet` with NSG locked to **your current public IP**, runs the command, and **always deletes the VM on exit** (even on Ctrl+C). Use when AKS isn't up yet. |
+| **Local `psql` over VPN/Bastion** | Bastion ≈ $140/mo | `ENV_FILE=.env.demo bash scripts/azure/setup-db.sh migrate` | Only if you already have private connectivity.                                                                                                                                                        |
+
+Demo seeding (after `migrate`):
+
 ```bash
-# Run from a workstation that can reach the private endpoint
-# (use Azure Bastion or a jumpbox in the services subnet for production)
-DATABASE_URL='...' bash scripts/azure/setup-db.sh migrate
+bash scripts/azure/db-migrate-via-aks.sh demo seed-demo
+# OR (cost <$0.02)
+bash scripts/azure/db-jumpbox.sh demo seed-demo
 ```
 
-For demo seeding only:
+Ad-hoc backup with download to `./backups/`:
 
 ```bash
-DATABASE_URL='...' bash scripts/azure/setup-db.sh seed-demo
+bash scripts/azure/db-jumpbox.sh demo backup
+```
+
+Interactive psql session (no cost — uses AKS):
+
+```bash
+bash scripts/azure/db-migrate-via-aks.sh demo psql
 ```
 
 ---

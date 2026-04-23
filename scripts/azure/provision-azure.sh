@@ -122,12 +122,14 @@ echo "    Overlay valid — ${RESOURCE_COUNT} resources."
 kubectl create namespace "sbtm-${ENVIRONMENT}" --dry-run=client -o yaml | kubectl apply -f -
 
 echo "==> [7/7] Seeding Key Vault secrets"
-if [[ -f ".env.production" ]]; then
-  KV_NAME="${KV_NAME}" bash scripts/azure/setup-keyvault.sh
+# Per-environment env file: .env.demo or .env.production
+ENV_FILE_FOR_KV=".env.${ENVIRONMENT}"
+if [[ -f "${ENV_FILE_FOR_KV}" ]]; then
+  KV_NAME="${KV_NAME}" ENV_FILE="${ENV_FILE_FOR_KV}" bash scripts/azure/setup-keyvault.sh
 else
-  echo "  ⚠  .env.production not found — skipping Key Vault seeding."
-  echo "     Copy .env.production.template, fill in values, then run:"
-  echo "     KV_NAME=${KV_NAME} bash scripts/azure/setup-keyvault.sh"
+  echo "  ⚠  ${ENV_FILE_FOR_KV} not found — skipping Key Vault seeding."
+  echo "     Copy .env.${ENVIRONMENT}.template, fill in values, then run:"
+  echo "     KV_NAME=${KV_NAME} ENV_FILE=${ENV_FILE_FOR_KV} bash scripts/azure/setup-keyvault.sh"
 fi
 
 cat <<EOF

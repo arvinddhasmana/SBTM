@@ -15,7 +15,7 @@ STORAGE_ACCOUNT="${STORAGE_ACCOUNT:-}"
 CONNECTION_STRING="${AZURE_STORAGE_CONNECTION_STRING:-}"
 
 if [[ -z "${STORAGE_ACCOUNT}" ]] && [[ -z "${CONNECTION_STRING}" ]]; then
-  ENV_FILE=".env.production"
+  ENV_FILE="${ENV_FILE:-.env.production}"
   if [[ -f "${ENV_FILE}" ]]; then
     set -a
     # shellcheck disable=SC1090

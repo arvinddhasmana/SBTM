@@ -21,3 +21,7 @@ scripts/dynamic-config.json
 *.swo
 apps/admin-dashboard/test-results/
 apps/admin-dashboard/playwright-report/
+
+# Deployment specific
+.env.production
+.env.demo

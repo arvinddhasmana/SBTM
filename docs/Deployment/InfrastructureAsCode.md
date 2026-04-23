@@ -29,8 +29,8 @@ Each environment lives in its own Azure resource group:
 ```
 infra/azure/
 ├── main.bicep              # Orchestrator: deploys all modules in order
-├── parameters.demo.json    # Parameter values for demo tier
-├── parameters.prod.json    # Parameter values for production tier
+├── parameters.demo.json          # Parameter values for demo tier
+├── parameters.production.json    # Parameter values for production tier
 └── modules/
     ├── network.bicep       # VNET, subnets, NSGs
     ├── aks.bicep           # AKS cluster + node pools
@@ -239,22 +239,25 @@ Default namespaces:
 
 ## Database Migration
 
-```bash
-DATABASE_URL='postgresql://...' bash scripts/azure/setup-db.sh migrate
-```
-
-This script:
-
-1. Connects to Azure PostgreSQL via private endpoint (requires being on VNET or using Azure Bastion)
-2. Runs `scripts/init-db.sql` for schema creation
-3. Applies `scripts/rls-policies.sql` for Row-Level Security policies
-4. Runs `scripts/seed-standard.sql` for initial data
-
-For demo seeding, run additionally:
+Postgres uses a private endpoint, so workstation `psql` can't reach it directly. Three options (cheapest first):
 
 ```bash
-DATABASE_URL='...' bash scripts/azure/setup-db.sh seed-demo
+# Option A — FREE: run migrations from a one-shot pod inside AKS (already in the VNET)
+bash scripts/azure/db-migrate-via-aks.sh demo migrate
+bash scripts/azure/db-migrate-via-aks.sh demo seed-demo
+bash scripts/azure/db-migrate-via-aks.sh demo psql       # interactive shell
+
+# Option B — ~$0.02/run: temporary B1s jumpbox VM (NSG locked to caller IP, auto-deletes)
+bash scripts/azure/db-jumpbox.sh demo migrate
+bash scripts/azure/db-jumpbox.sh demo backup             # downloads dump to ./backups/
+
+# Option C — local psql, only if you already have VPN or Azure Bastion connectivity
+ENV_FILE=.env.demo bash scripts/azure/setup-db.sh migrate
 ```
+
+All three paths run the same SQL: `scripts/init-db.sql` (schema) → `scripts/rls-policies.sql` (RLS) → `scripts/seed-standard.sql` (reference data). Demo seeding adds `scripts/seed-demo.sql`.
+
+> The single-command [`bootstrap.sh`](../../scripts/azure/bootstrap.sh) automatically tries Option C first and falls back to Option A on connection failure.
 
 ---
 
