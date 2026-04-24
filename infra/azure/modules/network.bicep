@@ -26,6 +26,14 @@ resource vnet 'Microsoft.Network/virtualNetworks@2023-06-01' = {
         properties: {
           addressPrefix: '10.0.2.0/24'
           networkSecurityGroup: { id: servicesNsg.id }
+          delegations: [
+            {
+              name: 'postgres-flexible-server-delegation'
+              properties: {
+                serviceName: 'Microsoft.DBforPostgreSQL/flexibleServers'
+              }
+            }
+          ]
         }
       }
     ]

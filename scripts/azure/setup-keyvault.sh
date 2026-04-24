@@ -23,11 +23,30 @@ if [[ ! -f "${ENV_FILE}" ]]; then
   exit 1
 fi
 
-# Load env file (strips comments and empty lines)
-set -a
-# shellcheck disable=SC1090
-source <(grep -v '^\s*#' "${ENV_FILE}" | grep -v '^\s*$')
-set +a
+read_env_value() {
+  local key="$1"
+  local raw=""
+  raw=$(grep -E "^${key}=" "${ENV_FILE}" | head -1 | cut -d'=' -f2- || true)
+  raw="${raw%$'\r'}"
+
+  # Strip matching single/double quotes.
+  if [[ "${raw}" =~ ^\".*\"$ ]]; then
+    raw="${raw:1:${#raw}-2}"
+  elif [[ "${raw}" =~ ^\'.*\'$ ]]; then
+    raw="${raw:1:${#raw}-2}"
+  fi
+  printf '%s' "${raw}"
+}
+
+JWT_SECRET="$(read_env_value JWT_SECRET)"
+DB_PASSWORD="$(read_env_value DB_PASSWORD)"
+DATABASE_URL="$(read_env_value DATABASE_URL)"
+REDIS_URL="$(read_env_value REDIS_URL)"
+FCM_SERVER_KEY="$(read_env_value FCM_SERVER_KEY)"
+TWILIO_AUTH_TOKEN="$(read_env_value TWILIO_AUTH_TOKEN)"
+TWILIO_ACCOUNT_SID="$(read_env_value TWILIO_ACCOUNT_SID)"
+AZURE_STORAGE_CONNECTION_STRING="$(read_env_value AZURE_STORAGE_CONNECTION_STRING)"
+APPLICATIONINSIGHTS_CONNECTION_STRING="$(read_env_value APPLICATIONINSIGHTS_CONNECTION_STRING)"
 
 # ── Strength check for critical secrets ───────────────────────────────────────
 if [[ -n "${JWT_SECRET:-}" ]] && [[ "${#JWT_SECRET}" -lt 32 ]]; then

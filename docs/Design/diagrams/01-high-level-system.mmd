@@ -1,0 +1,70 @@
+%% SBTM — High-Level System Architecture (C4 Context)
+flowchart LR
+    classDef actor fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#0d47a1
+    classDef client fill:#fff3e0,stroke:#e65100,stroke-width:1px,color:#bf360c
+    classDef edge fill:#f3e5f5,stroke:#6a1b9a,stroke-width:1px,color:#4a148c
+    classDef core fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#1b5e20
+    classDef data fill:#fce4ec,stroke:#ad1457,stroke-width:1px,color:#880e4f
+    classDef ext  fill:#eceff1,stroke:#455a64,stroke-width:1px,color:#263238
+
+    %% Actors
+    Parent([Parent / Guardian]):::actor
+    Driver([Bus Driver]):::actor
+    Admin([School Admin / Dispatcher]):::actor
+    OSTA([OSTA / Board Operator]):::actor
+
+    %% Client surfaces
+    subgraph Clients["Client Applications"]
+        ParentApp["Parent App<br/>React + Flutter"]:::client
+        DriverApp["Driver App<br/>React Native + Expo"]:::client
+        AdminUI["Admin Dashboard<br/>React + Vite"]:::client
+    end
+
+    %% Edge / Gateway
+    subgraph Edge["Edge"]
+        Ingress["NGINX Ingress<br/>(TLS / cert-manager)"]:::edge
+        APIGW["API Gateway<br/>NestJS · JWT · RBAC<br/>Tenant context (school_id)"]:::edge
+    end
+
+    %% SBTM Platform (logical)
+    subgraph SBTM["SBTM Platform (AKS)"]
+        Services["8 Microservices<br/>GPS · Presence · Alerts · Video<br/>Students · Compliance · Notifications · OSRM"]:::core
+        RT["Real-time Layer<br/>Socket.IO + BullMQ (Redis)"]:::core
+    end
+
+    %% Data plane
+    subgraph Data["Data Plane"]
+        PG[("PostgreSQL 15 + PostGIS<br/>RLS by school_id")]:::data
+        RDS[("Redis<br/>cache + queues")]:::data
+        BLOB[("Azure Blob Storage<br/>video · OSRM data")]:::data
+    end
+
+    %% Externals
+    subgraph Ext["External Services"]
+        FCM["Firebase Cloud<br/>Messaging (Push)"]:::ext
+        TW["Twilio (SMS)"]:::ext
+        SMTP["SMTP / Email"]:::ext
+        AppI["Azure Monitor +<br/>Application Insights"]:::ext
+    end
+
+    Parent -->|HTTPS| ParentApp
+    Driver -->|HTTPS / GPS / BLE| DriverApp
+    Admin  -->|HTTPS| AdminUI
+    OSTA   -->|HTTPS| AdminUI
+
+    ParentApp -->|REST + WS| Ingress
+    DriverApp -->|REST + WS| Ingress
+    AdminUI   -->|REST + WS| Ingress
+
+    Ingress --> APIGW
+    APIGW --> Services
+    Services <--> RT
+    Services --> PG
+    Services --> RDS
+    Services --> BLOB
+
+    RT -->|push| FCM
+    RT -->|sms| TW
+    RT -->|email| SMTP
+    Services -.telemetry.-> AppI
+    APIGW    -.telemetry.-> AppI

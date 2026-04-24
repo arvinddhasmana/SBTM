@@ -33,7 +33,6 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2024-01-01' = {
   }
   properties: {
     dnsPrefix: 'sbtm-${environment}'
-    kubernetesVersion: '1.29'
 
     agentPoolProfiles: [
       {

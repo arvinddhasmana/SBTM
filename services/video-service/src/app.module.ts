@@ -39,6 +39,10 @@ import { RealtimeModule } from './modules/realtime/realtime.module';
         database: configService.get('DB_DATABASE', 'video_service'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         synchronize: false,
+        ssl:
+          configService.get<string>('DB_SSL', 'false') === 'true'
+            ? { rejectUnauthorized: false }
+            : false,
         logging: configService.get('DB_LOGGING', 'false') === 'true',
       }),
       inject: [ConfigService],

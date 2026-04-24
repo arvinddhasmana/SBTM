@@ -4,7 +4,7 @@
   "parameters": {
     "environment": { "value": "demo" },
     "location": { "value": "eastus" },
-    "aksNodeCount": { "value": 2 },
+    "aksNodeCount": { "value": 1 },
     "aksNodeSize": { "value": "Standard_D2s_v3" },
     "postgresSkuName": { "value": "Standard_B2ms" },
     "postgresSkuTier": { "value": "Burstable" },

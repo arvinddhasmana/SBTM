@@ -1,0 +1,116 @@
+%% SBTM — Database ER (core tenant-isolated schema)
+erDiagram
+    SCHOOL_BOARDS ||--o{ SCHOOLS : has
+    SCHOOLS ||--o{ USERS : employs
+    SCHOOLS ||--o{ STUDENTS : enrolls
+    SCHOOLS ||--o{ ROUTES : operates
+    SCHOOLS ||--o{ VEHICLES : owns
+
+    USERS ||--o{ STUDENTS : "parent_user_id"
+    USERS ||--o{ DEVICE_TOKENS : registers
+    USERS ||--o{ NOTIFICATION_PREFERENCES : configures
+
+    ROUTES ||--o{ ROUTE_STOPS : contains
+    ROUTES ||--o{ ROUTE_GEOFENCES : has
+    ROUTES ||--o{ ROUTE_LIFECYCLE_EVENTS : emits
+    ROUTES ||--o{ LOCATION_POINTS : produces
+
+    VEHICLES ||--o{ FLEET_ASSIGNMENTS : assigned
+    VEHICLES ||--o{ DRIVER_COMPLIANCE : tracked
+
+    STUDENTS ||--o{ STUDENT_TAG : "BLE / RFID"
+    STUDENTS ||--o{ PRESENCE_EVENT : generates
+    STUDENTS ||--o{ STUDENT_ABSENCES : has
+    STUDENTS }o--|| ROUTE_STOPS : "am/pm stop"
+
+    EMERGENCY_ALERT ||--o{ ALERT_AUDIT_LOG : "trail"
+    EMERGENCY_ALERT ||--o{ ALERT_NOTIFICATION_LOG : "delivery"
+
+    VIDEO_EVENTS ||--o{ VIDEO_ACCESS_LOGS : "audit"
+
+    SCHOOLS ||--o{ AUDIT_LOGS : "tenant"
+
+    SCHOOL_BOARDS {
+        uuid id PK
+        string name
+        timestamptz created_at
+    }
+    SCHOOLS {
+        uuid id PK
+        uuid board_id FK
+        string name
+        float lat
+        float lng
+    }
+    USERS {
+        uuid id PK
+        string email
+        string role "ADMIN|DRIVER|PARENT|SYSTEM"
+        uuid school_id FK
+        uuid board_id FK
+    }
+    STUDENTS {
+        uuid id PK
+        uuid school_id FK "RLS"
+        uuid parent_user_id FK
+        string external_student_id
+        uuid am_route_id FK
+        uuid pm_route_id FK
+        string status
+    }
+    ROUTES {
+        uuid id PK
+        uuid school_id FK
+        string name
+        geography corridor
+    }
+    LOCATION_POINTS {
+        uuid id PK
+        uuid school_id
+        uuid route_id
+        timestamptz timestamp
+        float lat
+        float lng
+        float snapped_lat
+        float snapped_lng
+        float speed_kph
+    }
+    PRESENCE_EVENT {
+        uuid id PK
+        uuid school_id "RLS"
+        uuid student_id
+        uuid route_id
+        string event_type "BOARD|ALIGHT"
+        string source "SMARTTAG|MANUAL|RFID"
+        timestamptz timestamp
+    }
+    EMERGENCY_ALERT {
+        uuid id PK
+        uuid school_id "RLS"
+        string event_type
+        string status
+        string tier
+        string escalation_level
+        timestamptz timestamp
+    }
+    DEVICE_TOKENS {
+        uuid id PK
+        uuid user_id
+        string token
+        string platform "android|ios|web"
+        bool is_active
+    }
+    DRIVER_COMPLIANCE {
+        uuid id PK
+        uuid driver_id UK
+        uuid school_id "RLS"
+        string status
+        date license_expiry
+    }
+    AUDIT_LOGS {
+        uuid id PK
+        uuid school_id "RLS"
+        uuid user_id
+        string action
+        jsonb changes
+    }

@@ -24,4 +24,5 @@ resources:
   - osrm/deployment.yaml
   - osrm/service.yaml
   - ingress/ingress-rules.yaml
+  - secrets/serviceaccount.yaml
   - secrets/keyvault-csi.yaml

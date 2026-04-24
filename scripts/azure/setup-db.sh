@@ -35,9 +35,9 @@ if ! command -v psql >/dev/null 2>&1; then
   exit 1
 fi
 
-# Test DB connection before running any SQL
+# Test DB connection before running any SQL (5-second timeout for private endpoint detection)
 echo "==> Testing database connection"
-if ! psql "${DATABASE_URL}" -c "SELECT 1" --quiet --no-align --tuples-only 2>/dev/null | grep -q "1"; then
+if ! PGCONNECT_TIMEOUT=5 psql "${DATABASE_URL}" -c "SELECT 1" --quiet --no-align --tuples-only 2>/dev/null | grep -q "1"; then
   echo "ERROR: Cannot connect to database. Check DATABASE_URL and network access."
   echo "       PostgreSQL private endpoint requires VPN or Azure Bastion access."
   exit 1

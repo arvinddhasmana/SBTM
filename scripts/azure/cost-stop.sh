@@ -26,7 +26,12 @@ else
 fi
 
 AKS_NAME="sbtm-aks-${ENVIRONMENT}"
-PG_NAME="sbtm-pg-${ENVIRONMENT}"
+# PG Flexible Server names may have a region suffix (e.g. sbtm-pg-demo-centralus); resolve dynamically.
+PG_NAME=$(az postgres flexible-server list --resource-group "${RESOURCE_GROUP}" \
+  --query "[?starts_with(name, 'sbtm-pg-${ENVIRONMENT}')].name | [0]" -o tsv 2>/dev/null || true)
+if [[ -z "${PG_NAME}" ]]; then
+  echo "WARNING: Could not find a PostgreSQL Flexible Server starting with 'sbtm-pg-${ENVIRONMENT}' in ${RESOURCE_GROUP}. Skipping PG stop."
+fi
 
 # ── verify resource group exists ─────────────────────────────────────────────
 if ! az group show --name "${RESOURCE_GROUP}" --output none 2>/dev/null; then
@@ -44,15 +49,19 @@ else
   echo "    ✓ AKS stop command issued."
 fi
 
-echo "==> [2/4] Stopping PostgreSQL Flexible Server: ${PG_NAME}"
-PG_STATE=$(az postgres flexible-server show --resource-group "${RESOURCE_GROUP}" --name "${PG_NAME}" \
-  --query "state" -o tsv 2>/dev/null || echo "Unknown")
-if [[ "${PG_STATE}" == "Stopped" ]]; then
-  echo "    Already stopped."
+echo "==> [2/4] Stopping PostgreSQL Flexible Server: ${PG_NAME:-<not found>}"
+if [[ -z "${PG_NAME}" ]]; then
+  echo "    Skipped (server not found)."
 else
-  az postgres flexible-server stop --resource-group "${RESOURCE_GROUP}" --name "${PG_NAME}" 2>/dev/null \
-    && echo "    ✓ PostgreSQL stop command issued." \
-    || echo "    ⚠  Could not stop PostgreSQL (may already be stopping)."
+  PG_STATE=$(az postgres flexible-server show --resource-group "${RESOURCE_GROUP}" --name "${PG_NAME}" \
+    --query "state" -o tsv 2>/dev/null || echo "Unknown")
+  if [[ "${PG_STATE}" == "Stopped" ]]; then
+    echo "    Already stopped."
+  else
+    az postgres flexible-server stop --resource-group "${RESOURCE_GROUP}" --name "${PG_NAME}" 2>/dev/null \
+      && echo "    ✓ PostgreSQL stop command issued." \
+      || echo "    ⚠  Could not stop PostgreSQL (may already be stopping)."
+  fi
 fi
 
 echo "==> [3/4] Verifying AKS power state (wait up to 3 min)"
@@ -75,10 +84,14 @@ if [[ "${AKS_FINAL}" != "Stopped" ]]; then
 fi
 
 echo "==> [4/4] Current resource states"
-PG_FINAL=$(az postgres flexible-server show --resource-group "${RESOURCE_GROUP}" --name "${PG_NAME}" \
-  --query "state" -o tsv 2>/dev/null || echo "unknown")
+if [[ -n "${PG_NAME}" ]]; then
+  PG_FINAL=$(az postgres flexible-server show --resource-group "${RESOURCE_GROUP}" --name "${PG_NAME}" \
+    --query "state" -o tsv 2>/dev/null || echo "unknown")
+else
+  PG_FINAL="not found"
+fi
 echo "    AKS:        ${AKS_FINAL}"
-echo "    PostgreSQL: ${PG_FINAL}"
+echo "    PostgreSQL: ${PG_FINAL} (${PG_NAME:-n/a})"
 
 cat <<EOF
 

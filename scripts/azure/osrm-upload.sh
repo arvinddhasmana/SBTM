@@ -30,6 +30,11 @@ if [[ -z "${CONNECTION_STRING}" ]]; then
   exit 1
 fi
 
+if [[ "${CONNECTION_STRING}" == *"<"*">"* || "${CONNECTION_STRING}" == "DefaultEndpointsProtocol=https,"* ]]; then
+  echo "ERROR: AZURE_STORAGE_CONNECTION_STRING appears invalid or placeholder-like."
+  exit 1
+fi
+
 # Verify azcopy is available
 if ! command -v azcopy >/dev/null 2>&1; then
   echo "ERROR: 'azcopy' not found."
@@ -51,15 +56,26 @@ az storage container create \
 
 echo "==> Uploading OSRM data from ${OSRM_DATA_DIR} to Blob Storage container: ${CONTAINER_NAME}"
 
+if [[ -z "${STORAGE_ACCOUNT}" ]]; then
+  STORAGE_ACCOUNT=$(echo "${CONNECTION_STRING}" | sed -n 's/.*AccountName=\([^;]*\).*/\1/p')
+fi
+if [[ -z "${STORAGE_ACCOUNT}" ]]; then
+  echo "ERROR: Could not determine storage account name from connection string."
+  exit 1
+fi
+
+SAS_TOKEN=$(az storage container generate-sas \
+  --connection-string "${CONNECTION_STRING}" \
+  --name "${CONTAINER_NAME}" \
+  --permissions rwl \
+  --expiry "$(date -u -d '1 hour' '+%Y-%m-%dT%H:%MZ')" \
+  --https-only \
+  --output tsv)
+DEST_URL="https://${STORAGE_ACCOUNT}.blob.core.windows.net/${CONTAINER_NAME}?${SAS_TOKEN}"
+
 # Use azcopy for reliable large-file upload with progress
 azcopy copy "${OSRM_DATA_DIR}/*" \
-  "$(az storage container generate-sas \
-    --connection-string "${CONNECTION_STRING}" \
-    --name "${CONTAINER_NAME}" \
-    --permissions rwl \
-    --expiry "$(date -u -d '1 hour' '+%Y-%m-%dT%H:%MZ')" \
-    --https-only \
-    --output tsv)" \
+  "${DEST_URL}" \
   --recursive
 
 echo "==> OSRM data upload complete"

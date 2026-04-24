@@ -17,7 +17,12 @@ else
 fi
 
 AKS_NAME="sbtm-aks-${ENVIRONMENT}"
-PG_NAME="sbtm-pg-${ENVIRONMENT}"
+# PG Flexible Server names may have a region suffix (e.g. sbtm-pg-demo-centralus); resolve dynamically.
+PG_NAME=$(az postgres flexible-server list --resource-group "${RESOURCE_GROUP}" \
+  --query "[?starts_with(name, 'sbtm-pg-${ENVIRONMENT}')].name | [0]" -o tsv 2>/dev/null || true)
+if [[ -z "${PG_NAME}" ]]; then
+  echo "WARNING: Could not find a PostgreSQL Flexible Server starting with 'sbtm-pg-${ENVIRONMENT}' in ${RESOURCE_GROUP}. Skipping PG step."
+fi
 NAMESPACE="sbtm-${ENVIRONMENT}"
 
 # ── verify resource group exists ─────────────────────────────────────────────

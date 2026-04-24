@@ -1,0 +1,67 @@
+%% SBTM — Real-time Data & Event Flow
+sequenceDiagram
+    autonumber
+    participant DA as Driver App
+    participant GW as API Gateway
+    participant GPS as gps-tracking
+    participant SP as student-presence
+    participant EA as emergency-alerts
+    participant Q as BullMQ (Redis)
+    participant NS as notification-service
+    participant FCM as FCM / Twilio / SMTP
+    participant WS as Socket.IO hub
+    participant AD as Admin Dashboard
+    participant PA as Parent App
+
+    Note over DA: Bus in motion (BLE on, GPS on)
+
+    loop Every 3-5 seconds
+        DA->>GW: POST /api/v1/location {lat,lng,speed,heading}
+        GW->>GPS: forward (JWT verified, school_id set)
+        GPS->>GPS: snap-to-road (OSRM), persist location_points
+        GPS-->>WS: emit live-location
+        WS-->>AD: route live-location update
+        WS-->>PA: child route update
+    end
+
+    Note over DA: Student boards bus (BLE SmartTag detected)
+    DA->>GW: POST /api/v1/student-presence-events
+    GW->>SP: forward
+    SP->>SP: persist presence_event (BOARD)
+    SP-->>WS: emit student-boarded
+    WS-->>AD: occupancy update
+    WS-->>PA: child boarded notification
+    SP->>Q: enqueue notify(parent, BOARD)
+    Q->>NS: pull job
+    NS->>NS: read prefs + device_tokens
+    NS->>FCM: push / sms / email
+    NS->>NS: write notification_delivery_log
+
+    Note over DA: Driver presses panic button
+    DA->>GW: POST /api/v1/emergency-events {PANIC_BUTTON}
+    GW->>EA: forward
+    EA->>EA: persist emergency_alert (TIER_1)
+    EA-->>WS: emit new-alert
+    WS-->>AD: red banner alert
+    EA->>Q: enqueue dispatch(school admins)
+    Q->>NS: pull job
+    NS->>FCM: notify SCHOOL admins (push+sms)
+
+    alt No confirmation in N minutes
+        EA->>EA: AUTO_ESCALATED → BOARD
+        EA->>Q: enqueue dispatch(BOARD ops)
+        Q->>NS: pull
+        NS->>FCM: notify BOARD ops
+    end
+
+    alt Still unconfirmed
+        EA->>EA: escalate → OSTA (TIER_3)
+        EA->>Q: enqueue dispatch(OSTA)
+        Q->>NS: pull
+        NS->>FCM: notify OSTA on-call
+    end
+
+    AD->>GW: POST /alerts/:id/confirm
+    GW->>EA: confirm
+    EA->>EA: status = CONFIRMED · audit log
+    EA-->>WS: alert-resolved (or status update)

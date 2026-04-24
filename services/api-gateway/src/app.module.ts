@@ -43,6 +43,10 @@ import configuration from './config/env';
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         synchronize: false,
         autoLoadEntities: true,
+        ssl:
+          configService.get<string>('DB_SSL', 'false') === 'true'
+            ? { rejectUnauthorized: false }
+            : false,
       }),
       inject: [ConfigService],
     }),

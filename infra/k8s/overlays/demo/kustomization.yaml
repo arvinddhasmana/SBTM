@@ -7,17 +7,22 @@ resources:
   - namespace.yaml
   - ../../base
 
-    # Demo: 1 replica for all deployments
+# Demo: skip Ingress + cert-manager (no real DNS for *.sbtm.example.com).
+# Verify services via kubectl port-forward instead. Re-add ingress once a
+# real DNS name and TLS issuer are wired up.
+patchesStrategicMerge: []
 
-    # Demo: debug log level and demo NODE_ENV
+  # Demo: 1 replica for all deployments
 
-    # Demo: imagePullPolicy Always (always pull latest)
+  # Demo: debug log level and demo NODE_ENV
 
-    # Demo: Key Vault uses demo vault name
+  # Demo: imagePullPolicy Always (always pull latest)
 
-    # Demo: SecretProviderClass placed in sbtm-demo namespace (overrides hard-coded sbtm-production)
+  # Demo: Key Vault uses demo vault name
 
-    # Demo: ingress host
+  # Demo: SecretProviderClass placed in sbtm-demo namespace (overrides hard-coded sbtm-production)
+
+  # Demo: ingress host
 patches:
   - patch: |-
       - op: replace
@@ -37,16 +42,80 @@ patches:
     target:
       kind: Deployment
       labelSelector: app in (api-gateway,gps-tracking,emergency-alerts,student-presence,student-management,compliance-management,video-service,notification-service)
+  # Demo: inject Postgres connection settings (TypeORM services use individual DB_* vars)
+  - patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: DB_HOST
+          value: sbtm-pg-demo-centralus.postgres.database.azure.com
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: DB_PORT
+          value: "5432"
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: DB_USERNAME
+          value: sbtmadmin
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: DB_DATABASE
+          value: sbms
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: DB_SSL
+          value: "true"
+    target:
+      kind: Deployment
+      labelSelector: app in (api-gateway,emergency-alerts,student-presence,student-management,compliance-management,video-service,notification-service)
   - patch: |-
       - op: add
         path: /spec/template/spec/containers/0/imagePullPolicy
         value: Always
     target:
       kind: Deployment
+  # Demo: services with global prefix `api/v1` need health probe path adjusted
+  - patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/livenessProbe/httpGet/path
+        value: /api/v1/health
+      - op: replace
+        path: /spec/template/spec/containers/0/readinessProbe/httpGet/path
+        value: /api/v1/health
+    target:
+      kind: Deployment
+      labelSelector: app in (api-gateway,notification-service,video-service)
+  # Demo: OSRM has no /health endpoint - use TCP socket probes
+  - patch: |-
+      - op: remove
+        path: /spec/template/spec/containers/0/livenessProbe/httpGet
+      - op: remove
+        path: /spec/template/spec/containers/0/readinessProbe/httpGet
+      - op: add
+        path: /spec/template/spec/containers/0/livenessProbe/tcpSocket
+        value:
+          port: 5000
+      - op: add
+        path: /spec/template/spec/containers/0/readinessProbe/tcpSocket
+        value:
+          port: 5000
+    target:
+      kind: Deployment
+      name: osrm
   - patch: |-
       - op: replace
         path: /spec/parameters/keyvaultName
         value: sbtm-kv-demo
+      - op: replace
+        path: /spec/parameters/clientID
+        value: a712cbea-4d44-49a7-94e5-ed744b66a8d4
+      - op: replace
+        path: /spec/parameters/tenantId
+        value: b13ceef6-6c21-40a4-ad1c-bbaac66921c2
     target:
       kind: SecretProviderClass
       name: sbtm-keyvault-secrets
@@ -59,14 +128,33 @@ patches:
       name: sbtm-keyvault-secrets
   - patch: |-
       - op: replace
-        path: /spec/rules/0/host
-        value: api.demo.sbtm.example.com
+        path: /metadata/annotations/azure.workload.identity~1client-id
+        value: a712cbea-4d44-49a7-94e5-ed744b66a8d4
       - op: replace
-        path: /spec/tls/0/hosts/0
-        value: api.demo.sbtm.example.com
+        path: /metadata/annotations/azure.workload.identity~1tenant-id
+        value: b13ceef6-6c21-40a4-ad1c-bbaac66921c2
+    target:
+      kind: ServiceAccount
+      name: sbtm-workload-sa
+  # Demo: remove Ingress + ClusterIssuer (placeholder DNS rejected by ACME).
+  - patch: |-
+      $patch: delete
+      apiVersion: networking.k8s.io/v1
+      kind: Ingress
+      metadata:
+        name: sbtm-ingress
     target:
       kind: Ingress
       name: sbtm-ingress
+  - patch: |-
+      $patch: delete
+      apiVersion: cert-manager.io/v1
+      kind: ClusterIssuer
+      metadata:
+        name: letsencrypt-prod
+    target:
+      kind: ClusterIssuer
+      name: letsencrypt-prod
 
 images:
   - name: sbtmacrdemo.azurecr.io/sbtm/api-gateway

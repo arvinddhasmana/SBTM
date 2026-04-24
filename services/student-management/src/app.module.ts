@@ -36,6 +36,10 @@ import { AppController } from './app.controller';
         entities: [Student],
         synchronize: false,
         autoLoadEntities: true,
+        ssl:
+          configService.get<string>('DB_SSL', 'false') === 'true'
+            ? { rejectUnauthorized: false }
+            : false,
       }),
       inject: [ConfigService],
     }),

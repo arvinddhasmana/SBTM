@@ -1,0 +1,86 @@
+%% SBTM — Network Architecture (Azure)
+flowchart TB
+    classDef pub fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
+    classDef vnet fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+    classDef subnet fill:#f1f8e9,stroke:#558b2f,color:#33691e
+    classDef pe fill:#fce4ec,stroke:#ad1457,color:#880e4f
+    classDef paas fill:#fff3e0,stroke:#e65100,color:#bf360c
+    classDef sec fill:#ffebee,stroke:#b71c1c,color:#b71c1c
+    classDef obs fill:#ede7f6,stroke:#4527a0,color:#311b92
+
+    %% Public users
+    Users([Users · Parents · Drivers · Admins]):::pub
+    Internet((Internet)):::pub
+
+    %% Azure Region
+    subgraph REGION["Azure Region — eastus (demo) / canadacentral (prod)"]
+
+        subgraph VNET["sbtm-vnet · 10.20.0.0/16"]
+            direction TB
+
+            subgraph SNAKS["snet-aks · 10.20.0.0/22 (Azure CNI Overlay)"]
+                AKS["AKS Cluster<br/>sbtm-aks-{env}<br/>System + App node pools<br/>Workload Identity (OIDC)"]:::subnet
+                ING["NGINX Ingress<br/>+ cert-manager<br/>Public LB IP"]:::subnet
+            end
+
+            subgraph SNSVC["snet-services · 10.20.4.0/24"]
+                JUMP["(optional) Jump host /<br/>Ops runners"]:::subnet
+            end
+
+            subgraph SNPE["snet-private-endpoints · 10.20.5.0/24"]
+                PEPG[("PE: PostgreSQL")]:::pe
+                PERD[("PE: Redis")]:::pe
+                PEKV[("PE: Key Vault")]:::pe
+                PEBL[("PE: Blob Storage")]:::pe
+                PEAI[("PE: App Insights")]:::pe
+            end
+
+            subgraph SNDB["snet-db · 10.20.6.0/24 (delegated)"]
+                PGNET["PostgreSQL Flexible<br/>VNET injection"]:::subnet
+            end
+
+            NSG["NSG rules<br/>deny 0.0.0.0/0 inbound<br/>allow intra-VNET"]:::sec
+        end
+
+        subgraph PAAS["Azure PaaS"]
+            PG[("Azure DB for PostgreSQL<br/>Flexible · PostGIS<br/>Private FQDN")]:::paas
+            RD[("Azure Cache for Redis<br/>TLS :6380")]:::paas
+            KV[("Azure Key Vault<br/>RBAC · soft-delete")]:::paas
+            BL[("Storage Account<br/>blobs: video / osrm")]:::paas
+            ACR[("Azure Container<br/>Registry")]:::paas
+        end
+
+        subgraph OBS["Observability"]
+            LA[("Log Analytics<br/>Workspace")]:::obs
+            AI[("Application Insights")]:::obs
+            CIN["Container Insights<br/>(AKS add-on)"]:::obs
+        end
+
+        DNS["Private DNS Zones<br/>privatelink.postgres / redis / vault / blob"]:::sec
+    end
+
+    %% Flows
+    Users --> Internet
+    Internet -->|HTTPS 443| ING
+    ING --> AKS
+
+    AKS -->|pulls images, MI| ACR
+    AKS -->|TLS via PE| PEPG --> PG
+    AKS -->|TLS via PE| PERD --> RD
+    AKS -->|CSI driver via PE| PEKV --> KV
+    AKS -->|via PE| PEBL --> BL
+    AKS -.OTel/logs via PE.-> PEAI --> AI
+
+    AKS --> CIN --> LA
+    AI --> LA
+
+    PGNET -.alt: VNET-injected.-> AKS
+
+    DNS -.resolves.-> PEPG
+    DNS -.resolves.-> PERD
+    DNS -.resolves.-> PEKV
+    DNS -.resolves.-> PEBL
+
+    NSG -.guards.-> SNAKS
+    NSG -.guards.-> SNDB
+    NSG -.guards.-> SNPE

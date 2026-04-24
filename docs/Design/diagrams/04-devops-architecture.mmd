@@ -1,0 +1,72 @@
+%% SBTM — DevOps / CI-CD Architecture
+flowchart LR
+    classDef dev fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
+    classDef vcs fill:#ede7f6,stroke:#4527a0,color:#311b92
+    classDef ci fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+    classDef art fill:#fff3e0,stroke:#e65100,color:#bf360c
+    classDef env fill:#fce4ec,stroke:#ad1457,color:#880e4f
+    classDef sec fill:#ffebee,stroke:#b71c1c,color:#b71c1c
+    classDef mob fill:#f1f8e9,stroke:#558b2f,color:#33691e
+
+    Dev([Developer]):::dev
+    PR([Pull Request]):::dev
+
+    subgraph VCS["GitHub (arvinddhasmana/SBTM)"]
+        Repo["main branch"]:::vcs
+        Tag["release tags"]:::vcs
+    end
+
+    subgraph GHA["GitHub Actions"]
+        CI["ci.yml<br/>lint · build · unit · integration<br/>(pg + redis services)"]:::ci
+        BLD["build-images.yml<br/>matrix × 8 services<br/>OIDC → ACR"]:::ci
+        DDEMO["deploy-demo.yml<br/>kustomize edit · kubectl apply"]:::ci
+        DPROD["deploy-production.yml<br/>DB backup · rollout · smoke<br/>· auto-rollback"]:::ci
+        INFRA["infra-provision.yml<br/>az deployment group create<br/>(Bicep)"]:::ci
+        MOB["mobile-build.yml<br/>EAS Android / iOS"]:::ci
+    end
+
+    subgraph BS["Bootstrap (one-time per env)"]
+        BOOT["scripts/azure/bootstrap.sh<br/>9 steps · AUTO_YES<br/>preflight → provision → KV<br/>→ DB migrate → OSRM upload"]:::ci
+    end
+
+    subgraph ART["Artifacts"]
+        ACR[("Azure Container Registry<br/>sbtmacr*.azurecr.io")]:::art
+        EAS[("Expo EAS Build<br/>APK / AAB / IPA")]:::art
+    end
+
+    subgraph KEY["Auth"]
+        OIDC["Azure OIDC<br/>workload-identity federation"]:::sec
+        KVS["Key Vault<br/>secrets · CSI"]:::sec
+    end
+
+    subgraph TGT["Target Environments"]
+        AKSDEMO[("AKS · sbtm-demo<br/>namespace: sbtm-demo")]:::env
+        AKSPROD[("AKS · sbtm-prod<br/>namespace: sbtm-production")]:::env
+        STORE[("Play Store /<br/>App Store")]:::mob
+    end
+
+    Dev -->|push / open PR| PR --> Repo
+    Repo -->|on push / PR| CI
+    Repo -->|on merge main| BLD
+    Tag  -->|on release| DPROD
+
+    CI -->|status check| PR
+    BLD -->|push images| ACR
+    BLD --> DDEMO
+    DDEMO -->|kubectl apply -k overlays/demo| AKSDEMO
+    DPROD -->|kubectl apply -k overlays/production| AKSPROD
+
+    INFRA --> AKSDEMO
+    INFRA --> AKSPROD
+
+    BOOT -->|bicep + KV seed + db migrate + osrm| AKSDEMO
+
+    OIDC -. federates .-> BLD
+    OIDC -. federates .-> DDEMO
+    OIDC -. federates .-> DPROD
+    OIDC -. federates .-> INFRA
+
+    AKSDEMO -. CSI mount .- KVS
+    AKSPROD -. CSI mount .- KVS
+
+    MOB --> EAS --> STORE

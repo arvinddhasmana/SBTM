@@ -63,10 +63,6 @@ kubectl -n "${NAMESPACE}" create configmap "${CM_NAME}" \
   --from-file=seed-demo.sql=scripts/seed-demo.sql \
   >/dev/null
 
-echo "==> Creating Secret with DATABASE_URL"
-kubectl -n "${NAMESPACE}" create secret generic "${JOB_NAME}-env" \
-  --from-literal=DATABASE_URL="${DATABASE_URL}" >/dev/null
-
 case "${COMMAND}" in
   migrate)
     SCRIPT='psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f /sql/init-db.sql && \
@@ -97,6 +93,11 @@ case "${COMMAND}" in
     ;;
 esac
 
+echo "==> Creating Secret with DATABASE_URL"
+kubectl -n "${NAMESPACE}" create secret generic "${JOB_NAME}-env" \
+  --from-literal=DATABASE_URL="${DATABASE_URL}" \
+  --from-literal=RUN_SCRIPT="${SCRIPT}" >/dev/null
+
 echo "==> Submitting Job ${JOB_NAME}"
 cat <<YAML | kubectl apply -f -
 apiVersion: batch/v1
@@ -120,7 +121,7 @@ spec:
           args:
             - |
               set -e
-              ${SCRIPT}
+              eval "\$RUN_SCRIPT"
           volumeMounts:
             - name: sql
               mountPath: /sql
@@ -131,16 +132,38 @@ spec:
 YAML
 
 echo "==> Waiting for pod to start"
-kubectl -n "${NAMESPACE}" wait --for=condition=Ready pod \
-  -l job-name="${JOB_NAME}" --timeout=120s 2>/dev/null || true
+# Wait for pod to exist and be scheduled (batch pods don't get 'Ready' condition)
+for i in $(seq 1 60); do
+  POD_NAME=$(kubectl -n "${NAMESPACE}" get pods -l job-name="${JOB_NAME}" -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)
+  [[ -n "${POD_NAME}" ]] && break
+  sleep 2
+done
+if [[ -z "${POD_NAME:-}" ]]; then
+  echo "==> ✗ Pod never appeared for job ${JOB_NAME}"
+  exit 1
+fi
+echo "    Pod: ${POD_NAME}"
+
+# Wait for pod to reach Running or Completed/Failed
+kubectl -n "${NAMESPACE}" wait --for=condition=PodReadyToStartContainers pod/"${POD_NAME}" --timeout=120s 2>/dev/null || \
+  kubectl -n "${NAMESPACE}" wait --for=condition=Initialized pod/"${POD_NAME}" --timeout=120s 2>/dev/null || true
 
 echo "==> Streaming logs"
-kubectl -n "${NAMESPACE}" logs -f -l job-name="${JOB_NAME}" --tail=-1
+kubectl -n "${NAMESPACE}" logs -f "${POD_NAME}" || true
 
 echo "==> Waiting for completion"
-if kubectl -n "${NAMESPACE}" wait --for=condition=complete --timeout=600s job/"${JOB_NAME}"; then
+# Job may have already finished by the time we get here; tolerate NotFound (TTL cleanup)
+if kubectl -n "${NAMESPACE}" wait --for=condition=complete --timeout=300s job/"${JOB_NAME}" 2>/dev/null; then
   echo "==> ✓ ${COMMAND} succeeded"
+elif kubectl -n "${NAMESPACE}" get job "${JOB_NAME}" 2>/dev/null | grep -q "1/1"; then
+  echo "==> ✓ ${COMMAND} succeeded (job already complete)"
 else
-  echo "==> ✗ ${COMMAND} FAILED — check logs above"
-  exit 1
+  # Check pod exit code as final arbiter
+  EXIT_CODE=$(kubectl -n "${NAMESPACE}" get pod "${POD_NAME}" -o jsonpath='{.status.containerStatuses[0].state.terminated.exitCode}' 2>/dev/null || echo "1")
+  if [[ "${EXIT_CODE}" == "0" ]]; then
+    echo "==> ✓ ${COMMAND} succeeded (pod exit 0)"
+  else
+    echo "==> ✗ ${COMMAND} FAILED (pod exit ${EXIT_CODE}) — check logs above"
+    exit 1
+  fi
 fi

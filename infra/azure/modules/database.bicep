@@ -3,6 +3,9 @@
 @description('Deployment environment')
 param environment string
 
+@description('PostgreSQL flexible server name')
+param serverName string = 'sbtm-pg-${environment}'
+
 @description('Azure region')
 param location string
 
@@ -25,14 +28,17 @@ param postgresStorageGB int = 32
 @description('Services subnet ID for private endpoint')
 param servicesSubnetId string
 
+@description('Use delegated subnet + private DNS for PostgreSQL networking')
+param usePrivateNetwork bool = true
+
 resource postgresServer 'Microsoft.DBforPostgreSQL/flexibleServers@2023-06-01-preview' = {
-  name: 'sbtm-pg-${environment}'
+  name: serverName
   location: location
   sku: {
     name: postgresSkuName
     tier: postgresSkuTier
   }
-  properties: {
+  properties: union({
     administratorLogin: adminLogin
     administratorLoginPassword: adminPassword
     version: '15'
@@ -46,11 +52,12 @@ resource postgresServer 'Microsoft.DBforPostgreSQL/flexibleServers@2023-06-01-pr
     highAvailability: {
       mode: environment == 'production' ? 'ZoneRedundant' : 'Disabled'
     }
+  }, usePrivateNetwork ? {
     network: {
       delegatedSubnetResourceId: servicesSubnetId
       privateDnsZoneArmResourceId: privateDnsZone.id
     }
-  }
+  } : {})
 }
 
 resource postgresDatabase 'Microsoft.DBforPostgreSQL/flexibleServers/databases@2023-06-01-preview' = {
@@ -72,9 +79,18 @@ resource postgresConfig 'Microsoft.DBforPostgreSQL/flexibleServers/configuration
   }
 }
 
-resource privateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
+resource privateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = if (usePrivateNetwork) {
   name: 'sbtm-pg-${environment}.private.postgres.database.azure.com'
   location: 'global'
+}
+
+resource postgresFirewallAllowAzure 'Microsoft.DBforPostgreSQL/flexibleServers/firewallRules@2023-06-01-preview' = if (!usePrivateNetwork) {
+  parent: postgresServer
+  name: 'AllowAzureServices'
+  properties: {
+    startIpAddress: '0.0.0.0'
+    endIpAddress: '0.0.0.0'
+  }
 }
 
 @description('PostgreSQL server FQDN')

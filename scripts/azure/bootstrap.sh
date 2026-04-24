@@ -34,7 +34,7 @@ if [[ "${ENVIRONMENT}" == "production" ]]; then
   IS_DEVTEST="false"
 else
   RESOURCE_GROUP="sbtm-demo-rg"
-  IS_DEVTEST="true"
+  IS_DEVTEST="false"
 fi
 
 ENV_FILE=".env.${ENVIRONMENT}"
@@ -57,6 +57,11 @@ prompt_secret() {
     ok "${name} already set in environment"
     return
   fi
+  if [[ "${AUTO_YES:-false}" == "true" && "${optional}" == "yes" ]]; then
+    export "${name}="
+    ok "${name} auto-skipped (AUTO_YES=true)"
+    return
+  fi
   local prompt_msg="  Enter ${desc}"
   [[ "${optional}" == "yes" ]] && prompt_msg+=" (optional, press Enter to skip)"
   prompt_msg+=": "
@@ -71,8 +76,65 @@ prompt_secret() {
 
 confirm() {
   local msg="$1"; local ans=""
+  if [[ "${AUTO_YES:-false}" == "true" ]]; then
+    echo "  ${msg} [y/N]: y (AUTO_YES=true)"
+    return 0
+  fi
   read -r -p "  ${msg} [y/N]: " ans || true
   [[ "${ans}" =~ ^[Yy]$ ]]
+}
+
+ensure_kv_data_plane_access() {
+  local kv_name="$1"
+  local kv_id=""
+  local assignee=""
+
+  kv_id=$(az keyvault show --name "${kv_name}" --query id -o tsv 2>/dev/null || true)
+  assignee=$(az account show --query user.name -o tsv 2>/dev/null || true)
+
+  if [[ -z "${kv_id}" || -z "${assignee}" ]]; then
+    warn "Could not resolve Key Vault scope or current identity; skipping auto-RBAC fix"
+    return
+  fi
+
+  if az keyvault secret list --vault-name "${kv_name}" --maxresults 1 --query "[0].name" -o tsv >/dev/null 2>&1; then
+    ok "Current identity already has Key Vault data-plane access"
+    return
+  fi
+
+  warn "Current identity lacks Key Vault secret permissions; ensuring RBAC role assignment"
+  local existing_roles=""
+  existing_roles=$(az role assignment list \
+    --assignee "${assignee}" \
+    --scope "${kv_id}" \
+    --query "[?roleDefinitionName=='Key Vault Secrets Officer' || roleDefinitionName=='Key Vault Administrator'].roleDefinitionName" \
+    -o tsv 2>/dev/null || true)
+
+  if [[ -z "${existing_roles}" ]]; then
+    if az role assignment create \
+      --assignee "${assignee}" \
+      --role "Key Vault Secrets Officer" \
+      --scope "${kv_id}" \
+      --output none >/dev/null 2>&1; then
+      ok "Assigned 'Key Vault Secrets Officer' to ${assignee}"
+    else
+      warn "Could not auto-assign Key Vault role. Ensure your identity has 'Key Vault Secrets Officer' on ${kv_name}."
+      return
+    fi
+  else
+    ok "Existing Key Vault data role detected: ${existing_roles//$'\n'/, }"
+  fi
+
+  # RBAC propagation can take a short while; wait until data-plane access works.
+  for _ in {1..24}; do
+    if az keyvault secret list --vault-name "${kv_name}" --maxresults 1 --query "[0].name" -o tsv >/dev/null 2>&1; then
+      ok "Key Vault data-plane access confirmed"
+      return
+    fi
+    sleep 5
+  done
+
+  warn "Key Vault RBAC may still be propagating; Step 7 may need one re-run in a minute"
 }
 
 # ── 1. Prerequisite tools ──────────────────────────────────────────────────────
@@ -80,12 +142,13 @@ hr "Step 1/9 — Install prerequisite tools"
 
 install_apt() {
   local pkg="$1"
-  if ! command -v "${pkg}" >/dev/null 2>&1; then
+  local cmd="${2:-$1}"
+  if ! command -v "${cmd}" >/dev/null 2>&1; then
     step "Installing ${pkg} via apt"
     sudo apt-get update -qq
     sudo apt-get install -y -qq "${pkg}"
   fi
-  ok "${pkg} present ($(command -v "${pkg}"))"
+  ok "${pkg} present ($(command -v "${cmd}"))"
 }
 
 install_az() {
@@ -125,7 +188,7 @@ install_azcopy() {
 
 install_apt jq
 install_apt curl
-install_apt postgresql-client       # provides psql
+install_apt postgresql-client psql  # package name differs from executable
 install_az
 install_kubectl
 install_helm
@@ -147,7 +210,12 @@ CURRENT_SUB_ID=$(az account show --query id -o tsv)
 ok "Current subscription: ${CURRENT_SUB} (${CURRENT_SUB_ID})"
 if confirm "Use a different subscription?"; then
   az account list --query "[].{Name:name,Id:id}" -o table
-  read -r -p "  Enter subscription ID or name: " SUB_CHOICE
+  if [[ "${AUTO_YES:-false}" == "true" ]]; then
+    SUB_CHOICE="${CURRENT_SUB_ID}"
+    echo "  Enter subscription ID or name: ${SUB_CHOICE} (AUTO_YES=true)"
+  else
+    read -r -p "  Enter subscription ID or name: " SUB_CHOICE
+  fi
   az account set --subscription "${SUB_CHOICE}"
   ok "Switched to: $(az account show --query name -o tsv)"
 fi
@@ -204,10 +272,6 @@ hr "Step 6/9 — Build ${ENV_FILE} from Azure resource outputs"
 
 [[ -f "${ENV_TEMPLATE}" ]] || die "${ENV_TEMPLATE} not found; cannot scaffold ${ENV_FILE}"
 
-if [[ -f "${ENV_FILE}" ]]; then
-  warn "${ENV_FILE} already exists — backing up to ${ENV_FILE}.bak.$(date +%s)"
-  cp "${ENV_FILE}" "${ENV_FILE}.bak.$(date +%s)"
-fi
 cp "${ENV_TEMPLATE}" "${ENV_FILE}"
 ok "Copied ${ENV_TEMPLATE} → ${ENV_FILE}"
 
@@ -225,10 +289,10 @@ STORAGE_CS=""
 if [[ -n "${STORAGE_NAME}" ]]; then
   STORAGE_CS=$(az storage account show-connection-string -g "${RESOURCE_GROUP}" -n "${STORAGE_NAME}" --query connectionString -o tsv 2>/dev/null || true)
 fi
-AI_NAME=$(az monitor app-insights component list -g "${RESOURCE_GROUP}" --query "[0].name" -o tsv 2>/dev/null || true)
+AI_NAME=$(az resource list -g "${RESOURCE_GROUP}" --resource-type "Microsoft.Insights/components" --query "[0].name" -o tsv 2>/dev/null || true)
 AI_CS=""
 if [[ -n "${AI_NAME}" ]]; then
-  AI_CS=$(az monitor app-insights component show -g "${RESOURCE_GROUP}" -a "${AI_NAME}" --query connectionString -o tsv 2>/dev/null || true)
+  AI_CS=$(az resource show -g "${RESOURCE_GROUP}" -n "${AI_NAME}" --resource-type "Microsoft.Insights/components" --query "properties.ConnectionString" -o tsv 2>/dev/null || true)
 fi
 
 DB_NAME="sbms"
@@ -249,32 +313,45 @@ echo "    App Insights:       ${AI_NAME:-<not found>}"
 # Replace each KEY=<...> placeholder line with the real value (sed-safe via python).
 write_env() {
   python3 - "$ENV_FILE" <<'PY'
-import os, re, sys
+import os
+import re
+import shlex
+import sys
+
 path = sys.argv[1]
 keys = [
-    "JWT_SECRET", "DB_PASSWORD", "DATABASE_URL", "REDIS_URL",
-    "FCM_SERVER_KEY", "TWILIO_AUTH_TOKEN", "TWILIO_ACCOUNT_SID",
-    "AZURE_STORAGE_CONNECTION_STRING", "APPLICATIONINSIGHTS_CONNECTION_STRING",
+  "JWT_SECRET",
+  "DB_PASSWORD",
+  "DATABASE_URL",
+  "REDIS_URL",
+  "FCM_SERVER_KEY",
+  "TWILIO_AUTH_TOKEN",
+  "TWILIO_ACCOUNT_SID",
+  "AZURE_STORAGE_CONNECTION_STRING",
+  "APPLICATIONINSIGHTS_CONNECTION_STRING",
 ]
 values = {k: os.environ.get(k, "") for k in keys}
-with open(path) as f:
-    lines = f.readlines()
+
+with open(path, "r", encoding="utf-8") as f:
+  lines = f.readlines()
+
 out = []
 seen = set()
 for line in lines:
-    m = re.match(r"^([A-Z_][A-Z0-9_]*)=", line)
-    if m and m.group(1) in values:
-        key = m.group(1)
-        out.append(f"{key}={values[key]}\n")
-        seen.add(key)
-    else:
-        out.append(line)
-# Append any missing keys at end (shouldn't happen if template is complete)
+  m = re.match(r"^([A-Z_][A-Z0-9_]*)=", line)
+  if m and m.group(1) in values:
+    key = m.group(1)
+    out.append(f"{key}={shlex.quote(values[key])}\n")
+    seen.add(key)
+  else:
+    out.append(line)
+
 for k in keys:
-    if k not in seen and values[k]:
-        out.append(f"{k}={values[k]}\n")
-with open(path, "w") as f:
-    f.writelines(out)
+  if k not in seen and values[k]:
+    out.append(f"{k}={shlex.quote(values[k])}\n")
+
+with open(path, "w", encoding="utf-8") as f:
+  f.writelines(out)
 PY
 }
 
@@ -297,10 +374,40 @@ hr "Step 7/9 — Seed Azure Key Vault"
 KV_NAME=$(az keyvault list -g "${RESOURCE_GROUP}" --query "[0].name" -o tsv)
 [[ -n "${KV_NAME}" ]] || die "No Key Vault found in ${RESOURCE_GROUP}"
 ok "Key Vault: ${KV_NAME}"
-KV_NAME="${KV_NAME}" ENV_FILE="${ENV_FILE}" bash scripts/azure/setup-keyvault.sh
+ensure_kv_data_plane_access "${KV_NAME}"
+KV_SEED_LOG=$(mktemp)
+set +e
+KV_NAME="${KV_NAME}" ENV_FILE="${ENV_FILE}" bash scripts/azure/setup-keyvault.sh >"${KV_SEED_LOG}" 2>&1
+KV_SEED_EXIT=$?
+set -e
+if [[ "${KV_SEED_EXIT}" -ne 0 ]]; then
+  if grep -Eqi "ForbiddenByRbac|Caller is not authorized to perform action" "${KV_SEED_LOG}"; then
+    warn "Key Vault seeding skipped due to RBAC denial for current identity"
+    warn "Grant 'Key Vault Secrets Officer' on ${KV_NAME}, then re-run:"
+    warn "    KV_NAME=${KV_NAME} ENV_FILE=${ENV_FILE} bash scripts/azure/setup-keyvault.sh"
+  else
+    cat "${KV_SEED_LOG}" >&2
+    rm -f "${KV_SEED_LOG}"
+    exit "${KV_SEED_EXIT}"
+  fi
+else
+  cat "${KV_SEED_LOG}"
+fi
+rm -f "${KV_SEED_LOG}"
 
 # ── 8. Database migration + seed ──────────────────────────────────────────────
 hr "Step 8/9 — Database migration"
+# Allow-list required PostgreSQL extensions on Azure Flexible Server
+PG_SERVER_NAME=$(az postgres flexible-server list -g "${RESOURCE_GROUP}" --query "[0].name" -o tsv 2>/dev/null || true)
+if [[ -n "${PG_SERVER_NAME}" ]]; then
+  az postgres flexible-server parameter set \
+    -g "${RESOURCE_GROUP}" -s "${PG_SERVER_NAME}" \
+    --name azure.extensions \
+    --value "PGCRYPTO,UUID-OSSP,CITEXT,POSTGIS" \
+    -o none 2>/dev/null && ok "PostgreSQL extensions allow-listed" || \
+    warn "Could not allow-list extensions — migration may fail if pgcrypto/uuid-ossp/postgis are missing"
+fi
+
 # Postgres uses a private endpoint, so psql from WSL won't reach it.
 # Strategy: try local psql first (works if you're on VPN/Bastion), and
 # automatically fall back to running psql inside the AKS cluster (free,

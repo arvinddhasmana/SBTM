@@ -19,6 +19,7 @@ Use this index to find the authoritative document for each kind of question.
 ### Design
 
 - [Design](Design) defines the target v1 architecture, event model, and technical baseline.
+- [Design/ArchitectureDiagrams.md](Design/ArchitectureDiagrams.md) is the 360° visual entry point (high-level, detailed, network, DevOps, data-flow, and ER diagrams as Mermaid + SVG).
 
 ### Operations
 

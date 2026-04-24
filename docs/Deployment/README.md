@@ -56,11 +56,17 @@ bash scripts/azure/provision-azure.sh demo eastus true   # true = dev/test SKUs
 #                                    │     └────────── location
 #                                    └──────────────── environment (demo|production)
 
+# Note: PostgreSQL Flexible Server now defaults to deploy in eastus2
+# (override with POSTGRES_LOCATION=<region> if needed).
+
 # 2. Build .env.<env> from .env.<env>.template (fill in values from Azure outputs)
 cp .env.demo.template .env.demo  # then edit; see template comments for az queries
 
 # 3. Seed secrets into Key Vault
 KV_NAME=sbtm-kv-demo ENV_FILE=.env.demo bash scripts/azure/setup-keyvault.sh
+
+# If .env.demo still has template placeholders (<...>), provisioning/bootstrap
+# will skip Key Vault seeding until real values are materialized.
 
 # 4. Run database migration (private endpoint — see options below)
 ENV_FILE=.env.demo bash scripts/azure/setup-db.sh migrate                # local psql (needs VPN/Bastion)

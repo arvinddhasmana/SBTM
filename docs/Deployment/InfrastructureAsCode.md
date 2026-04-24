@@ -213,8 +213,10 @@ Pods authenticate to Azure Key Vault via **Workload Identity** (no passwords). T
 Seed before first deployment:
 
 ```bash
-KV_NAME=sbtm-kv-demo bash scripts/azure/setup-keyvault.sh
+KV_NAME=sbtm-kv-demo ENV_FILE=.env.demo bash scripts/azure/setup-keyvault.sh
 ```
+
+If `.env.demo` still has template placeholders (`<...>`), seeding will be skipped/fail until the file is populated with real values.
 
 ---
 

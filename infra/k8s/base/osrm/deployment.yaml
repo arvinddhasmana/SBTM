@@ -13,7 +13,6 @@ spec:
     metadata:
       labels:
         app: osrm
-      annotations:
         azure.workload.identity/use: 'true'
     spec:
       serviceAccountName: sbtm-workload-sa
@@ -44,7 +43,7 @@ spec:
             - osrm-routed
             - --algorithm
             - mld
-            - /osrm-data/ottawa-latest.osrm
+            - /osrm-data/ottawa.osrm
           ports:
             - containerPort: 5000
           volumeMounts:

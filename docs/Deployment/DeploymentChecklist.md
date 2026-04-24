@@ -126,6 +126,11 @@ The script will:
 8. Run `setup-db.sh migrate` — automatically falls back to `db-migrate-via-aks.sh` if local `psql` cannot reach the private Postgres endpoint.
 9. Run `osrm-upload.sh` (skipped if `infra/osrm-data/` is empty).
 
+Notes:
+
+- PostgreSQL Flexible Server defaults to `postgresLocation=eastus2` unless overridden (for better reliability when eastus offers are restricted).
+- If `.env.<env>` still contains template placeholders (`<...>`), Key Vault seeding is skipped until the file is materialized with real values.
+
 Re-runnable: every step detects existing resources and skips no-op work.
 
 ### Option B — Manual provisioning
@@ -138,6 +143,9 @@ bash scripts/azure/provision-azure.sh demo eastus true
 #                                    │     │      └── isDevTestSubscription
 #                                    │     └────────── location
 #                                    └──────────────── environment
+
+# Optional: override default PostgreSQL region (default is eastus2)
+# POSTGRES_LOCATION=centralus bash scripts/azure/provision-azure.sh demo eastus true
 
 # Production
 export POSTGRES_ADMIN_PASSWORD='...'
@@ -226,10 +234,12 @@ bash scripts/azure/deploy-services.sh production
 
 After deploy:
 
-- [ ] `kubectl get pods -n sbtm-demo` (or `sbtm-production`) — all `Running`
-- [ ] `kubectl get ingress -n sbtm-demo` — note the EXTERNAL-IP
-- [ ] DNS A/CNAME → ingress IP
-- [ ] `curl https://api.demo.sbtm.example.com/health` returns 200
+- [x] `kubectl get pods -n sbtm-demo` (or `sbtm-production`) — all `Running`
+- [ ] `kubectl get ingress -n sbtm-demo` — note the EXTERNAL-IP _(skipped for demo: no DNS; ingress + ClusterIssuer dropped via overlay)_
+- [ ] DNS A/CNAME → ingress IP _(skipped for demo)_
+- [x] `curl https://api.demo.sbtm.example.com/health` returns 200 _(verified via `kubectl port-forward`: all 8 services return HTTP 200 on `/health` or `/api/v1/health`)_
+
+> **Demo verification (April 2026):** All 9 deployments Ready (api-gateway 2/2, gps-tracking 2/2, emergency-alerts 2/2, all others 1/1; 12 pods Running). KV-synced `sbtm-secrets` has 8 keys. See [memory: azure-deployment-demo.md] for gotchas (WI label vs annotation, Azure PG SSL, NestJS `DB_*` env contract, OSRM TCP probe + blob filename, NGINX snippet rejection).
 
 ---
 

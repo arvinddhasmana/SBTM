@@ -46,6 +46,60 @@ if [[ -z "${POSTGRES_ADMIN_PASSWORD:-}" ]]; then
   exit 1
 fi
 
+ensure_kv_data_plane_access() {
+  local kv_name="$1"
+  local kv_id=""
+  local assignee=""
+
+  kv_id=$(az keyvault show --name "${kv_name}" --query id -o tsv 2>/dev/null || true)
+  assignee=$(az account show --query user.name -o tsv 2>/dev/null || true)
+
+  if [[ -z "${kv_id}" || -z "${assignee}" ]]; then
+    echo "  ⚠  Could not resolve Key Vault scope or current identity; skipping auto-RBAC fix"
+    return
+  fi
+
+  if az keyvault secret list --vault-name "${kv_name}" --maxresults 1 --query "[0].name" -o tsv >/dev/null 2>&1; then
+    return
+  fi
+
+  echo "  ⚠  Current identity lacks Key Vault secret permissions; ensuring RBAC role assignment"
+  local existing_roles=""
+  existing_roles=$(az role assignment list \
+    --assignee "${assignee}" \
+    --scope "${kv_id}" \
+    --query "[?roleDefinitionName=='Key Vault Secrets Officer' || roleDefinitionName=='Key Vault Administrator'].roleDefinitionName" \
+    -o tsv 2>/dev/null || true)
+
+  if [[ -z "${existing_roles}" ]]; then
+    if az role assignment create \
+      --assignee "${assignee}" \
+      --role "Key Vault Secrets Officer" \
+      --scope "${kv_id}" \
+      --output none >/dev/null 2>&1; then
+      echo "  ✓ Assigned 'Key Vault Secrets Officer' to ${assignee}"
+    else
+      echo "  ⚠  Could not auto-assign Key Vault role for ${assignee}."
+      return
+    fi
+  fi
+
+  for _ in {1..24}; do
+    if az keyvault secret list --vault-name "${kv_name}" --maxresults 1 --query "[0].name" -o tsv >/dev/null 2>&1; then
+      echo "  ✓ Key Vault data-plane access confirmed"
+      return
+    fi
+    sleep 5
+  done
+
+  echo "  ⚠  Key Vault RBAC may still be propagating"
+}
+
+env_file_has_placeholders() {
+  local env_file="$1"
+  grep -Eq '^[A-Z_][A-Z0-9_]*=<.*>$' "${env_file}" 2>/dev/null
+}
+
 echo "==> [1/7] Creating resource group: ${RESOURCE_GROUP} in ${LOCATION}"
 az group create \
   --name "${RESOURCE_GROUP}" \
@@ -53,14 +107,152 @@ az group create \
   --tags environment="${ENVIRONMENT}" application=sbtm managedBy=bicep devTestEligible="${IS_DEVTEST}" \
   --output none
 
+echo "==> [1.5/7] Ensuring required Azure resource providers are registered"
+REQUIRED_RPS=(
+  "Microsoft.ContainerService"
+  "Microsoft.OperationsManagement"
+  "Microsoft.OperationalInsights"
+  "Microsoft.DBforPostgreSQL"
+  "Microsoft.Network"
+)
+for RP in "${REQUIRED_RPS[@]}"; do
+  STATE=$(az provider show --namespace "${RP}" --query registrationState -o tsv 2>/dev/null || echo "NotRegistered")
+  if [[ "${STATE}" != "Registered" ]]; then
+    echo "    Registering ${RP} (current: ${STATE})"
+    az provider register --namespace "${RP}" --output none || true
+    # Poll for a short bounded period to avoid hanging indefinitely on subscriptions
+    # where registration can remain in 'Registering' for a long time.
+    ATTEMPTS=0
+    MAX_ATTEMPTS=6
+    while [[ "${ATTEMPTS}" -lt "${MAX_ATTEMPTS}" ]]; do
+      STATE=$(az provider show --namespace "${RP}" --query registrationState -o tsv 2>/dev/null || echo "Unknown")
+      if [[ "${STATE}" == "Registered" ]]; then
+        break
+      fi
+      ATTEMPTS=$((ATTEMPTS + 1))
+    done
+  fi
+
+  if [[ "${STATE}" == "Registered" ]]; then
+    echo "    ✓ ${RP} registered"
+  else
+    echo "    ⚠ ${RP} still ${STATE}; continuing (Azure may finish registration asynchronously)"
+  fi
+done
+
 echo "==> [2/7] Deploying Bicep templates (environment: ${ENVIRONMENT}, devTest: ${IS_DEVTEST})"
-DEPLOYMENT_OUTPUT=$(az deployment group create \
+# Default PostgreSQL region to eastus2 unless explicitly overridden.
+POSTGRES_LOCATION="${POSTGRES_LOCATION:-eastus2}"
+DEPLOY_ERR_LOG=$(mktemp)
+PG_SERVER_BASE_NAME="sbtm-pg-${ENVIRONMENT}"
+PG_SERVER_NAME="${PG_SERVER_BASE_NAME}"
+DEPLOYMENT_NAME="main-${ENVIRONMENT}-$(date +%Y%m%d%H%M%S)"
+echo "    Deployment name: ${DEPLOYMENT_NAME}"
+
+echo "    Cleaning up stale running deployments in ${RESOURCE_GROUP}"
+RUNNING_DEPLOYMENTS=$(az deployment group list -g "${RESOURCE_GROUP}" --query "[?properties.provisioningState=='Running'].name" -o tsv 2>/dev/null || true)
+if [[ -n "${RUNNING_DEPLOYMENTS}" ]]; then
+  while IFS= read -r d; do
+    [[ -z "${d}" ]] && continue
+    az deployment group cancel -g "${RESOURCE_GROUP}" -n "${d}" >/dev/null 2>&1 || true
+  done <<< "${RUNNING_DEPLOYMENTS}"
+fi
+
+# If any matching server already exists, pin both name and location for idempotency.
+EXISTING_PG_NAME=$(az resource list \
   --resource-group "${RESOURCE_GROUP}" \
-  --template-file infra/azure/main.bicep \
-  --parameters "@${PARAMETERS_FILE}" \
-  --parameters postgresAdminPassword="${POSTGRES_ADMIN_PASSWORD}" isDevTestSubscription="${IS_DEVTEST}" \
-  --query "properties.outputs" \
-  --output json)
+  --resource-type "Microsoft.DBforPostgreSQL/flexibleServers" \
+  --query "[?starts_with(name, '${PG_SERVER_BASE_NAME}')][0].name" -o tsv 2>/dev/null || true)
+if [[ -n "${EXISTING_PG_NAME}" ]]; then
+  EXISTING_PG_LOCATION=$(az resource show \
+    --resource-group "${RESOURCE_GROUP}" \
+    --resource-type "Microsoft.DBforPostgreSQL/flexibleServers" \
+    --name "${EXISTING_PG_NAME}" \
+    --query location -o tsv 2>/dev/null || true)
+  if [[ -n "${EXISTING_PG_LOCATION}" ]]; then
+    PG_SERVER_NAME="${EXISTING_PG_NAME}"
+    POSTGRES_LOCATION="${EXISTING_PG_LOCATION}"
+    echo "    Detected existing ${PG_SERVER_NAME} in ${POSTGRES_LOCATION}; pinning postgresLocation"
+  fi
+fi
+
+run_deployment() {
+  local pg_location="${1:-${POSTGRES_LOCATION:-${LOCATION}}}"
+  local pg_private_network="true"
+  local pg_server_name="${PG_SERVER_BASE_NAME}"
+  if [[ "${pg_location}" != "${LOCATION}" ]]; then
+    pg_server_name="${PG_SERVER_BASE_NAME}-${pg_location//-/}"
+    pg_private_network="false"
+  fi
+  # Keep existing server name when we discovered one earlier.
+  if [[ -n "${EXISTING_PG_NAME:-}" ]]; then
+    pg_server_name="${PG_SERVER_NAME}"
+    if [[ "${POSTGRES_LOCATION}" != "${LOCATION}" ]]; then
+      pg_private_network="false"
+    fi
+  fi
+  az deployment group create \
+    --name "${DEPLOYMENT_NAME}" \
+    --resource-group "${RESOURCE_GROUP}" \
+    --template-file infra/azure/main.bicep \
+    --parameters "@${PARAMETERS_FILE}" \
+    --parameters postgresAdminPassword="${POSTGRES_ADMIN_PASSWORD}" isDevTestSubscription="${IS_DEVTEST}" deploymentSuffix="${DEPLOYMENT_NAME}" postgresLocation="${pg_location}" postgresServerName="${pg_server_name}" postgresUsePrivateNetwork="${pg_private_network}" \
+    --query "properties.outputs" \
+    --output json
+}
+
+is_postgres_location_restricted() {
+  local err_file="$1"
+  if grep -Eqi "LocationIsOfferRestricted|restricted from provisioning in location|request-quota-increase" "${err_file}"; then
+    return 0
+  fi
+
+  # Some Azure CLI failures don't surface the nested module error text on stderr.
+  # Probe the failed nested DB deployment directly for restricted-location errors.
+  local nested="database-${DEPLOYMENT_NAME}"
+  local nested_msg=""
+  nested_msg=$(az deployment operation group list \
+    -g "${RESOURCE_GROUP}" \
+    -n "${nested}" \
+    --query "[?properties.provisioningState=='Failed'].properties.statusMessage.error.message" \
+    -o tsv 2>/dev/null || true)
+
+  if [[ -n "${nested_msg}" ]] && echo "${nested_msg}" | grep -Eqi "restricted from provisioning in location|LocationIsOfferRestricted|request-quota-increase"; then
+    return 0
+  fi
+
+  return 1
+}
+
+set +e
+DEPLOYMENT_OUTPUT=$(run_deployment "${POSTGRES_LOCATION}" 2>"${DEPLOY_ERR_LOG}")
+DEPLOY_EXIT=$?
+set -e
+
+if [[ "${DEPLOY_EXIT}" -ne 0 ]] && is_postgres_location_restricted "${DEPLOY_ERR_LOG}"; then
+  echo "    ⚠  PostgreSQL offer restricted in ${POSTGRES_LOCATION}; retrying with fallback regions"
+  for FALLBACK in eastus2 centralus westus2 canadacentral; do
+    [[ "${FALLBACK}" == "${POSTGRES_LOCATION}" ]] && continue
+    echo "    → Retrying deployment with postgresLocation=${FALLBACK}"
+    set +e
+    DEPLOYMENT_OUTPUT=$(run_deployment "${FALLBACK}" 2>"${DEPLOY_ERR_LOG}")
+    DEPLOY_EXIT=$?
+    set -e
+    if [[ "${DEPLOY_EXIT}" -eq 0 ]]; then
+      POSTGRES_LOCATION="${FALLBACK}"
+      break
+    fi
+  done
+fi
+
+if [[ "${DEPLOY_EXIT}" -ne 0 ]]; then
+  cat "${DEPLOY_ERR_LOG}" >&2
+  rm -f "${DEPLOY_ERR_LOG}"
+  exit "${DEPLOY_EXIT}"
+fi
+
+rm -f "${DEPLOY_ERR_LOG}"
+echo "    PostgreSQL location used: ${POSTGRES_LOCATION}"
 
 # Parse outputs
 AKS_CLUSTER=$(echo "${DEPLOYMENT_OUTPUT}" | jq -r '.aksClusterName.value')
@@ -125,7 +317,31 @@ echo "==> [7/7] Seeding Key Vault secrets"
 # Per-environment env file: .env.demo or .env.production
 ENV_FILE_FOR_KV=".env.${ENVIRONMENT}"
 if [[ -f "${ENV_FILE_FOR_KV}" ]]; then
-  KV_NAME="${KV_NAME}" ENV_FILE="${ENV_FILE_FOR_KV}" bash scripts/azure/setup-keyvault.sh
+  if env_file_has_placeholders "${ENV_FILE_FOR_KV}"; then
+    echo "  ⚠  ${ENV_FILE_FOR_KV} still has template placeholders — skipping Key Vault seeding."
+    echo "     Bootstrap step 6 will materialize values, then seed Key Vault in step 7."
+  else
+    ensure_kv_data_plane_access "${KV_NAME}"
+    KV_SEED_LOG=$(mktemp)
+    set +e
+    KV_NAME="${KV_NAME}" ENV_FILE="${ENV_FILE_FOR_KV}" bash scripts/azure/setup-keyvault.sh >"${KV_SEED_LOG}" 2>&1
+    KV_SEED_EXIT=$?
+    set -e
+    if [[ "${KV_SEED_EXIT}" -ne 0 ]]; then
+      if grep -Eqi "ForbiddenByRbac|Caller is not authorized to perform action" "${KV_SEED_LOG}"; then
+        echo "  ⚠  Key Vault seeding skipped due to RBAC denial for current identity."
+        echo "     Grant 'Key Vault Secrets Officer' on ${KV_NAME}, then re-run:"
+        echo "     KV_NAME=${KV_NAME} ENV_FILE=${ENV_FILE_FOR_KV} bash scripts/azure/setup-keyvault.sh"
+      else
+        cat "${KV_SEED_LOG}" >&2
+        rm -f "${KV_SEED_LOG}"
+        exit "${KV_SEED_EXIT}"
+      fi
+    else
+      cat "${KV_SEED_LOG}"
+    fi
+    rm -f "${KV_SEED_LOG}"
+  fi
 else
   echo "  ⚠  ${ENV_FILE_FOR_KV} not found — skipping Key Vault seeding."
   echo "     Copy .env.${ENVIRONMENT}.template, fill in values, then run:"

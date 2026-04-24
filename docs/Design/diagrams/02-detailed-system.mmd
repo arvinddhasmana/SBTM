@@ -1,0 +1,137 @@
+%% SBTM — Detailed System Architecture (C4 Container)
+flowchart TB
+    classDef client fill:#fff3e0,stroke:#e65100,color:#bf360c
+    classDef edge fill:#f3e5f5,stroke:#6a1b9a,color:#4a148c
+    classDef svc fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+    classDef data fill:#fce4ec,stroke:#ad1457,color:#880e4f
+    classDef queue fill:#fffde7,stroke:#f9a825,color:#f57f17
+    classDef ext fill:#eceff1,stroke:#455a64,color:#263238
+    classDef shared fill:#e0f7fa,stroke:#00838f,color:#006064
+
+    %% Clients
+    subgraph CLIENTS["Client Tier"]
+        AD["Admin Dashboard<br/>:5173 / :80<br/>React + Leaflet + Recharts"]:::client
+        DA["Driver App<br/>React Native + Expo<br/>BLE · expo-location"]:::client
+        PW["Parent Web<br/>:3000 React"]:::client
+        PM["Parent Mobile<br/>Flutter"]:::client
+    end
+
+    %% Edge
+    subgraph EDGE["Edge / Ingress"]
+        ING["NGINX Ingress + cert-manager"]:::edge
+        GW["api-gateway :3001<br/>NestJS · Passport JWT<br/>RBAC · Rate limit · Proxy"]:::edge
+    end
+
+    %% Microservices
+    subgraph SVCS["Microservices (AKS namespace: sbtm-{env})"]
+        GPS["gps-tracking :3002<br/>Express + Prisma<br/>Ingest · Live · History"]:::svc
+        EA["emergency-alerts :3003<br/>NestJS + Socket.IO<br/>Tier 1/2/3 escalation"]:::svc
+        SP["student-presence :3004<br/>NestJS + Socket.IO<br/>Board / Alight events"]:::svc
+        VID["video-service :3005<br/>NestJS + MinIO SDK<br/>Presigned URLs"]:::svc
+        SM["student-management :3006<br/>NestJS · CSV import"]:::svc
+        CM["compliance-management :3007<br/>NestJS · Cron jobs"]:::svc
+        NS["notification-service :3008<br/>NestJS · BullMQ workers<br/>FCM · Twilio · SMTP"]:::svc
+        OSRM["osrm :5000<br/>Routing · snap-to-road"]:::svc
+        COMMON[["@sbtm/common<br/>Guards · Filters · OTel"]]:::shared
+    end
+
+    %% Async
+    subgraph ASYNC["Async Plane"]
+        Q1{{"BullMQ: alerts"}}:::queue
+        Q2{{"BullMQ: presence"}}:::queue
+        Q3{{"BullMQ: notifications"}}:::queue
+        WSA(["WS /alerts"]):::queue
+        WSP(["WS /presence"]):::queue
+        WSV(["WS /video"]):::queue
+    end
+
+    %% Data
+    subgraph DATA["Data Plane"]
+        PG[("PostgreSQL 15 + PostGIS<br/>RLS by school_id")]:::data
+        RD[("Redis<br/>cache + BullMQ")]:::data
+        BL[("Azure Blob Storage<br/>video · OSRM .osrm files")]:::data
+        KV[("Azure Key Vault<br/>via CSI driver")]:::data
+    end
+
+    %% Externals
+    subgraph EXT["External / Managed"]
+        FCM["FCM"]:::ext
+        TW["Twilio"]:::ext
+        SMTP["SMTP"]:::ext
+        AI["App Insights<br/>+ Log Analytics"]:::ext
+    end
+
+    %% Client → Edge
+    AD --> ING
+    DA --> ING
+    PW --> ING
+    PM --> ING
+    ING --> GW
+
+    %% Gateway → services
+    GW -->|/auth /routes /fleet /org| GW
+    GW -->|proxy| GPS
+    GW -->|proxy| EA
+    GW -->|proxy| SP
+    GW -->|proxy| VID
+    GW -->|proxy| SM
+    GW -->|proxy| CM
+    GW -->|proxy| NS
+    GW -->|HTTP| OSRM
+
+    %% Service → Data
+    GPS --> PG
+    EA --> PG
+    SP --> PG
+    VID --> PG
+    SM --> PG
+    CM --> PG
+    NS --> PG
+    GW --> PG
+
+    GPS --> RD
+    EA --> RD
+    SP --> RD
+    NS --> RD
+    GW --> RD
+
+    VID --> BL
+    OSRM --> BL
+
+    GW -. mounts .-> KV
+    NS -. mounts .-> KV
+    EA -. mounts .-> KV
+
+    %% Real-time + queues
+    EA --> Q1
+    SP --> Q2
+    NS --> Q3
+    Q1 --> NS
+    Q2 --> NS
+    Q3 --> NS
+
+    EA --> WSA
+    SP --> WSP
+    VID --> WSV
+    WSA --> AD
+    WSP --> AD
+    WSP --> PW
+    WSV --> AD
+
+    %% External delivery
+    NS --> FCM
+    NS --> TW
+    NS --> SMTP
+
+    %% Observability
+    GW -.OTel.-> AI
+    GPS -.OTel.-> AI
+    EA -.OTel.-> AI
+    SP -.OTel.-> AI
+    VID -.OTel.-> AI
+    SM -.OTel.-> AI
+    CM -.OTel.-> AI
+    NS -.OTel.-> AI
+
+    %% Common lib usage (visual hint)
+    COMMON -. used by .-> SVCS

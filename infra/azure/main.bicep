@@ -23,6 +23,24 @@ param postgresSkuTier string = 'Burstable'
 @description('PostgreSQL storage in GB')
 param postgresStorageGB int = 32
 
+@description('Optional PostgreSQL region override when the primary deployment location has offer restrictions for Flexible Server')
+param postgresLocation string = location
+
+@description('Optional PostgreSQL server name override')
+param postgresServerName string = ''
+
+@description('Use private delegated subnet networking for PostgreSQL')
+param postgresUsePrivateNetwork bool = true
+
+@description('Optional per-run suffix to avoid nested deployment name collisions')
+param deploymentSuffix string = ''
+
+var postgresBaseServerName = 'sbtm-pg-${environment}'
+var resolvedPostgresServerName = !empty(postgresServerName)
+  ? postgresServerName
+  : (postgresLocation == location ? postgresBaseServerName : '${postgresBaseServerName}-${replace(postgresLocation, '-', '')}')
+var moduleSuffix = empty(deploymentSuffix) ? '' : '-${deploymentSuffix}'
+
 @description('PostgreSQL administrator password')
 @secure()
 param postgresAdminPassword string
@@ -56,7 +74,7 @@ param commonTags object = {
 
 // ── 1. Networking ──────────────────────────────────────────────────────────
 module network 'modules/network.bicep' = {
-  name: 'network'
+  name: 'network${moduleSuffix}'
   params: {
     environment: environment
     location: location
@@ -65,7 +83,7 @@ module network 'modules/network.bicep' = {
 
 // ── 2. Monitoring (Log Analytics must exist before AKS) ───────────────────
 module monitoring 'modules/monitoring.bicep' = {
-  name: 'monitoring'
+  name: 'monitoring${moduleSuffix}'
   params: {
     environment: environment
     location: location
@@ -74,7 +92,7 @@ module monitoring 'modules/monitoring.bicep' = {
 
 // ── 3. Container Registry (must exist before AKS for role assignment) ─────
 module acr 'modules/acr.bicep' = {
-  name: 'acr'
+  name: 'acr${moduleSuffix}'
   params: {
     environment: environment
     location: location
@@ -84,7 +102,7 @@ module acr 'modules/acr.bicep' = {
 
 // ── 4. AKS (depends on network, monitoring, ACR) ──────────────────────────
 module aks 'modules/aks.bicep' = {
-  name: 'aks'
+  name: 'aks${moduleSuffix}'
   params: {
     environment: environment
     location: location
@@ -98,7 +116,7 @@ module aks 'modules/aks.bicep' = {
 
 // ── 5. Key Vault (depends on AKS for workload identity federation) ─────────
 module keyvault 'modules/keyvault.bicep' = {
-  name: 'keyvault'
+  name: 'keyvault${moduleSuffix}'
   params: {
     environment: environment
     location: location
@@ -109,10 +127,12 @@ module keyvault 'modules/keyvault.bicep' = {
 
 // ── 6. Database ────────────────────────────────────────────────────────────
 module database 'modules/database.bicep' = {
-  name: 'database'
+  name: 'database${moduleSuffix}'
   params: {
     environment: environment
-    location: location
+    serverName: resolvedPostgresServerName
+    usePrivateNetwork: postgresUsePrivateNetwork
+    location: postgresLocation
     adminPassword: postgresAdminPassword
     postgresSkuName: postgresSkuName
     postgresSkuTier: postgresSkuTier
@@ -123,7 +143,7 @@ module database 'modules/database.bicep' = {
 
 // ── 7. Redis ───────────────────────────────────────────────────────────────
 module redis 'modules/redis.bicep' = {
-  name: 'redis'
+  name: 'redis${moduleSuffix}'
   params: {
     environment: environment
     location: location
@@ -135,7 +155,7 @@ module redis 'modules/redis.bicep' = {
 
 // ── 8. Blob Storage ────────────────────────────────────────────────────────
 module storage 'modules/storage.bicep' = {
-  name: 'storage'
+  name: 'storage${moduleSuffix}'
   params: {
     environment: environment
     location: location

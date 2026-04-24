@@ -41,6 +41,10 @@ import { AppController } from './app.controller';
         database: configService.get<string>('DB_DATABASE', 'sbms'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         synchronize: false,
+        ssl:
+          configService.get<string>('DB_SSL', 'false') === 'true'
+            ? { rejectUnauthorized: false }
+            : false,
       }),
       inject: [ConfigService],
     }),

@@ -8,6 +8,7 @@ This document is the architectural index for the SBTM v1 target state. It separa
 
 ## Related Documents
 
+- [ArchitectureDiagrams.md](ArchitectureDiagrams.md) — **360° visual entry point** (high-level, detailed, network, DevOps, data-flow, ER) as Mermaid + SVG.
 - [SystemArchitecture.md](SystemArchitecture.md)
 - [DataArchitecture.md](DataArchitecture.md)
 - [IntegrationArchitecture.md](IntegrationArchitecture.md)
