@@ -42,6 +42,16 @@ patches:
     target:
       kind: Deployment
       labelSelector: app in (api-gateway,gps-tracking,emergency-alerts,student-presence,student-management,compliance-management,video-service,notification-service)
+  # Demo: allow CORS from local dev frontends (ports may shift if default is in use)
+  - patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: CORS_ORIGINS
+          value: "http://localhost:5173,http://localhost:5174,http://localhost:5175,http://localhost:5176"
+    target:
+      kind: Deployment
+      name: api-gateway
   # Demo: inject Postgres connection settings (TypeORM services use individual DB_* vars)
   - patch: |-
       - op: add
@@ -136,6 +146,18 @@ patches:
     target:
       kind: ServiceAccount
       name: sbtm-workload-sa
+  # Demo: inject static /etc/hosts entry for PostgreSQL hostname to bypass
+  # cluster DNS issues after AKS stop/start (EAI_AGAIN workaround).
+  - patch: |-
+      - op: add
+        path: /spec/template/spec/hostAliases
+        value:
+          - ip: "52.173.111.92"
+            hostnames:
+              - "sbtm-pg-demo-centralus.postgres.database.azure.com"
+    target:
+      kind: Deployment
+      labelSelector: app in (api-gateway,emergency-alerts,student-presence,student-management,compliance-management,video-service,notification-service)
   # Demo: remove Ingress + ClusterIssuer (placeholder DNS rejected by ACME).
   - patch: |-
       $patch: delete
