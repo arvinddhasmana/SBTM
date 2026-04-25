@@ -12,6 +12,7 @@ This document merges all SBTM developer documentation into one file for convenie
 
 1. [Driver App -- Development Guide](#1-driver-app----development-guide) _(source: `docs/dev/driver-app-development.md`)_
 2. [Local Development & Testing Guide](#2-local-development--testing-guide) _(source: `docs/dev/local_dev_testing_guide.md`)_
+3. [Cloud Debugging Guide](cloud_debugging_guide.md) — debugging Azure-deployed `demo` / `production` (separate file; not inlined)
 
 ---
 

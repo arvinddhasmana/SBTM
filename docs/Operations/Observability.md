@@ -4,6 +4,12 @@
 - Last reviewed: 2026-03-30
 - Primary use: Operational monitoring expectations for health, metrics, logs, and traces
 
+> **Hands-on debugging recipes** (Application Insights KQL queries, distributed
+> trace walking, `kubectl logs` / `describe` / `exec`, port-forward, mirrord) are
+> in [`docs/dev/cloud_debugging_guide.md`](../dev/cloud_debugging_guide.md).
+> This document defines _what_ to monitor; the cloud debugging guide defines
+> _how_ to investigate when a signal goes red.
+
 ## Goals
 
 - Detect broken safety-critical workflows quickly.

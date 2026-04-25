@@ -60,6 +60,16 @@ param storageSkuName string = 'Standard_LRS'
 @description('ACR SKU')
 param acrSkuName string = 'Basic'
 
+@description('Static Web Apps SKU for admin + parent portals: Free (demo) or Standard (production)')
+@allowed(['Free', 'Standard'])
+param staticWebAppSku string = 'Free'
+
+@description('Public custom domain (e.g. sbtm.ca). Empty string disables custom-domain wiring and DNS zone creation.')
+param customDomain string = 'sbtm.ca'
+
+@description('Create and manage the Azure DNS zone for customDomain inside this resource group. Set false if DNS is hosted elsewhere.')
+param manageDnsZone bool = true
+
 @description('Set to true if the target subscription is an Azure Dev/Test subscription. Adds the dev-test-eligible tag and stamps the deployment so cost reports can identify Dev/Test billing. Eligibility is set at the subscription level, not on individual resources — see docs/Deployment/CostAnalysis.md.')
 param isDevTestSubscription bool = false
 
@@ -163,6 +173,26 @@ module storage 'modules/storage.bicep' = {
   }
 }
 
+// ── 9. Static Web Apps (admin + parent portals) ───────────────────────────
+module staticWebApps 'modules/static-web-app.bicep' = {
+  name: 'staticWebApps${moduleSuffix}'
+  params: {
+    environment: environment
+    staticWebAppSku: staticWebAppSku
+    tags: commonTags
+  }
+}
+
+// ── 10. DNS zone for custom domain (optional) ─────────────────────────────
+module dnsZone 'modules/dns.bicep' = {
+  name: 'dnsZone${moduleSuffix}'
+  params: {
+    zoneName: customDomain
+    manageDnsZone: manageDnsZone
+    tags: commonTags
+  }
+}
+
 // ── Outputs ────────────────────────────────────────────────────────────────
 @description('AKS cluster name — use with: az aks get-credentials --name <clusterName>')
 output aksClusterName string = aks.outputs.clusterName
@@ -190,3 +220,21 @@ output storageAccountName string = storage.outputs.accountName
 
 @description('Application Insights connection string — add to Key Vault as sbtm-appinsights-connection-string')
 output appInsightsConnectionString string = monitoring.outputs.appInsightsConnectionString
+
+@description('Admin portal Static Web App resource name')
+output adminPortalName string = staticWebApps.outputs.adminPortalName
+
+@description('Admin portal default *.azurestaticapps.net hostname')
+output adminPortalDefaultHostname string = staticWebApps.outputs.adminPortalDefaultHostname
+
+@description('Parent portal Static Web App resource name')
+output parentPortalName string = staticWebApps.outputs.parentPortalName
+
+@description('Parent portal default *.azurestaticapps.net hostname')
+output parentPortalDefaultHostname string = staticWebApps.outputs.parentPortalDefaultHostname
+
+@description('Custom domain (sbtm.ca) — empty when customDomain is unset')
+output customDomain string = customDomain
+
+@description('Azure DNS zone name servers — delegate the domain to these at the registrar')
+output dnsNameServers array = dnsZone.outputs.nameServers

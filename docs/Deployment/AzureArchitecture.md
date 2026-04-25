@@ -12,7 +12,8 @@ SBTM is deployed on Azure Kubernetes Service (AKS) using managed PaaS for statef
 
 - **AKS for compute**: Standard tier cluster with 2+ Standard_D2s_v3 nodes; scale horizontally by adding nodes.
 - **Managed PaaS for state**: PostgreSQL Flexible Server (PostGIS), Azure Cache for Redis, Azure Blob Storage — no stateful workloads in-cluster except OSRM.
-- **Single public entry point**: NGINX Ingress exposes only the API Gateway. Frontend apps served via Azure Static Web Apps (CDN, free tier).
+- **Single public entry point**: NGINX Ingress on AKS exposes only the API Gateway at `https://api.sbtm.ca`. Frontends (admin + parent) are served from Azure Static Web Apps at `https://admin.sbtm.ca` and `https://parent.sbtm.ca` — see [CustomDomainSetup.md](CustomDomainSetup.md).
+- **DNS**: `sbtm.ca` is hosted in an Azure DNS zone in the same resource group; the registrar delegates to Azure name servers (one-time manual step printed by `bootstrap.sh`).
 - **Zero-secret images**: All secrets via Azure Key Vault + CSI driver. No secrets in env files, ConfigMaps, or image layers.
 - **Cloud-agnostic K8s manifests**: `infra/k8s/` base + Kustomize overlays work on any Kubernetes distribution.
 

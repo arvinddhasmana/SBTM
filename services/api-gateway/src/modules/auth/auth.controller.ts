@@ -32,13 +32,16 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ) {
     const result = await this.authService.login(loginDto);
-    const isProduction =
-      this.configService.get<string>('NODE_ENV') === 'production';
+    const nodeEnv = this.configService.get<string>('NODE_ENV');
+    const isLocalDev = nodeEnv === 'development' || nodeEnv === 'test';
 
+    // For deployed environments (demo/staging/production) the SPA is hosted on
+    // a different origin (Static Web App) than the API, so the auth cookie
+    // must be SameSite=None + Secure to be sent cross-site by the browser.
     res.cookie(COOKIE_NAME, result.accessToken, {
       httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? 'strict' : 'lax',
+      secure: !isLocalDev,
+      sameSite: isLocalDev ? 'lax' : 'none',
       maxAge: COOKIE_MAX_AGE_MS,
       path: '/',
     });

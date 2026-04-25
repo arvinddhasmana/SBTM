@@ -51,15 +51,17 @@ SBTM has **two Azure environments**, each isolated in its own resource group:
 
 ## 2. Local Workstation Tools
 
-| Tool        | Min version | Install                                                     |
-| ----------- | ----------- | ----------------------------------------------------------- |
-| `az` CLI    | 2.60+       | https://aka.ms/azcli                                        |
-| `kubectl`   | 1.28+       | https://kubernetes.io/docs/tasks/tools/                     |
-| `kustomize` | 5.0+        | https://kubectl.docs.kubernetes.io/installation/kustomize/  |
-| `helm`      | 3.13+       | https://helm.sh/docs/intro/install/                         |
-| `psql`      | 15+         | `apt install postgresql-client` / `brew install postgresql` |
-| `jq`        | any         | `apt install jq` / `brew install jq`                        |
-| `bicep`     | 0.24+       | bundled with `az` CLI; verify `az bicep version`            |
+| Tool        | Min version       | Install                                                                   |
+| ----------- | ----------------- | ------------------------------------------------------------------------- |
+| `az` CLI    | 2.60+             | https://aka.ms/azcli                                                      |
+| `kubectl`   | 1.28+             | https://kubernetes.io/docs/tasks/tools/                                   |
+| `kustomize` | 5.0+              | https://kubectl.docs.kubernetes.io/installation/kustomize/                |
+| `helm`      | 3.13+             | https://helm.sh/docs/intro/install/                                       |
+| `psql`      | 15+               | `apt install postgresql-client` / `brew install postgresql`               |
+| `jq`        | any               | `apt install jq` / `brew install jq`                                      |
+| `bicep`     | 0.24+             | bundled with `az` CLI; verify `az bicep version`                          |
+| `swa` CLI   | 1.x               | `npm i -g @azure/static-web-apps-cli` (used by step 11 of `bootstrap.sh`) |
+| Node + pnpm | Node 20+, pnpm 9+ | required to build the admin and parent web bundles                        |
 
 Run `bash scripts/azure/preflight-check.sh demo` to verify all of the above.
 
@@ -101,6 +103,9 @@ Go to **Settings → Secrets and variables → Actions → New repository secret
 - [ ] `az account show --query name` matches the target subscription name
 - [ ] Strong PostgreSQL admin password generated and exported: `export POSTGRES_ADMIN_PASSWORD='...'` (16+ chars, mixed case, digits, symbols)
 - [ ] DNS for `api.demo.sbtm.example.com` (demo) or `api.sbtm.example.com` (production) is ready to be CNAMEd to the ingress IP after provisioning
+- [ ] You own a public domain (e.g. `sbtm.ca`) and have access to its registrar to update the four NS records (one-time delegation to Azure DNS — see [CustomDomainSetup.md](CustomDomainSetup.md))
+- [ ] **Map tile provider key**: export `MAPTILER_KEY=<key>` (free tier at <https://cloud.maptiler.com/account/keys/>) before running bootstrap. Without this, the SPA portals build successfully but live/planner maps will be blocked by the OpenStreetMap volunteer-tile-server usage policy. The key is baked in at build time as `VITE_MAPTILER_KEY` and is treated as a public client-side key (restrict it by HTTP referrer in MapTiler's dashboard).
+- [ ] After bootstrap completes, run `bash scripts/azure/verify-portals.sh demo` — expect all checks PASS
 - [ ] `bash scripts/azure/preflight-check.sh demo` (or `production`) passes with no `✗` rows
 
 ---
@@ -252,9 +257,26 @@ bash scripts/azure/cost-stop.sh demo
 # Resume:
 bash scripts/azure/cost-start.sh demo
 
-# Full delete (zero monthly cost):
+# Full delete of application RG (zero monthly cost; DNS RG sbtm-dns-rg is preserved):
 bash scripts/azure/teardown-azure.sh demo
 ```
+
+### Recreate after teardown
+
+```bash
+POSTGRES_ADMIN_PASSWORD='<value>' MAPTILER_KEY='<value>' \
+  bash scripts/azure/bootstrap.sh demo eastus
+```
+
+The `sbtm-dns-rg` resource group (containing the public `sbtm.ca` zone) is **never deleted by `teardown-azure.sh`**. The four NS records you pasted at the registrar stay valid forever — no re-paste needed on rebuild. `bootstrap.sh` detects the existing zone and reuses it.
+
+To completely remove the DNS zone too (forces NS re-paste at registrar on the next bootstrap):
+
+```bash
+az group delete --name sbtm-dns-rg --yes
+```
+
+> **Resource-location note:** `sbtm-pg-demo-centralus` lives in `sbtm-demo-rg` but runs in **Central US** because eastus has no Postgres Flex quota — handled automatically by bootstrap. It is **not stray** and is removed by teardown along with the rest of the RG. The teardown script ends with a subscription-wide sweep that prints any lingering `sbtm-*` resources outside `sbtm-dns-rg` so leaks are visible immediately.
 
 ---
 

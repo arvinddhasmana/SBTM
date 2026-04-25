@@ -17,6 +17,7 @@ vi.mock('socket.io-client', () => ({
       disconnect: vi.fn(() => {
         mockSocketInstance.connected = false;
       }),
+      io: { on: vi.fn() },
       _handlers: {} as Record<string, ((...args: any[]) => void)[]>,
       _emit(event: string, ...args: any[]) {
         const handlers = mockSocketInstance._handlers[event] || [];
@@ -47,7 +48,7 @@ describe('AlertsWebSocket', () => {
       expect(mockIo).toHaveBeenCalledWith(
         'http://test:3003/alerts',
         expect.objectContaining({
-          transports: ['websocket'],
+          path: '/ws/alerts',
           reconnection: true,
         }),
       );

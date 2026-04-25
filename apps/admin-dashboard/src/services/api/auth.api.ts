@@ -1,5 +1,5 @@
 import type { User } from '../../types';
-import { apiClient } from './api-client';
+import { apiClient, AUTH_TOKEN_KEY } from './api-client';
 
 interface LoginResponse {
   user: User;
@@ -21,6 +21,7 @@ interface GatewayUser {
 
 interface GatewayLoginResponse {
   user: GatewayUser;
+  accessToken?: string;
 }
 
 export const authApi = {
@@ -29,6 +30,9 @@ export const authApi = {
       email,
       password,
     });
+    if (response.data.accessToken) {
+      localStorage.setItem(AUTH_TOKEN_KEY, response.data.accessToken);
+    }
     const nameParts = [response.data.user.firstName, response.data.user.lastName].filter(Boolean);
 
     return {
@@ -44,7 +48,11 @@ export const authApi = {
   },
 
   async logout(): Promise<void> {
-    await apiClient.post('/api/v1/auth/logout');
+    try {
+      await apiClient.post('/api/v1/auth/logout');
+    } finally {
+      localStorage.removeItem(AUTH_TOKEN_KEY);
+    }
   },
 
   async me(): Promise<MeResponse> {

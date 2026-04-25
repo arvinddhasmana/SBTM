@@ -2,6 +2,13 @@
 
 Efficient strategies for developing and testing the SBTM system locally. Three modes are available depending on what you're working on.
 
+> **Debugging an issue that only reproduces on Azure (`demo` or `production`)?**
+> See [`cloud_debugging_guide.md`](cloud_debugging_guide.md) — it covers the
+> seven-layer debugging stack (DNS → TLS → ingress → pod → App Insights → DB),
+> standard playbooks for cloud-only failures, and how to use `kubectl
+port-forward` / `mirrord` to attach a local debugger to a real cloud workload
+> without rebuilding the cluster locally.
+
 ---
 
 ## 🎯 Strategy Quick Reference

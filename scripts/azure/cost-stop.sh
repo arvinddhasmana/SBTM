@@ -39,7 +39,7 @@ if ! az group show --name "${RESOURCE_GROUP}" --output none 2>/dev/null; then
   exit 1
 fi
 
-echo "==> [1/4] Stopping AKS cluster: ${AKS_NAME}"
+echo "==> [1/5] Stopping AKS cluster: ${AKS_NAME}"
 AKS_STATE=$(az aks show --resource-group "${RESOURCE_GROUP}" --name "${AKS_NAME}" \
   --query "powerState.code" -o tsv 2>/dev/null || echo "Unknown")
 if [[ "${AKS_STATE}" == "Stopped" ]]; then
@@ -49,7 +49,7 @@ else
   echo "    ✓ AKS stop command issued."
 fi
 
-echo "==> [2/4] Stopping PostgreSQL Flexible Server: ${PG_NAME:-<not found>}"
+echo "==> [2/5] Stopping PostgreSQL Flexible Server: ${PG_NAME:-<not found>}"
 if [[ -z "${PG_NAME}" ]]; then
   echo "    Skipped (server not found)."
 else
@@ -64,7 +64,7 @@ else
   fi
 fi
 
-echo "==> [3/4] Verifying AKS power state (wait up to 3 min)"
+echo "==> [3/5] Verifying AKS power state (wait up to 3 min)"
 WAIT=0
 AKS_FINAL="Unknown"
 while [[ "${WAIT}" -lt 180 ]]; do
@@ -83,7 +83,7 @@ if [[ "${AKS_FINAL}" != "Stopped" ]]; then
   echo "       Check: az aks show --resource-group ${RESOURCE_GROUP} --name ${AKS_NAME} --query powerState.code"
 fi
 
-echo "==> [4/4] Current resource states"
+echo "==> [4/5] Current resource states"
 if [[ -n "${PG_NAME}" ]]; then
   PG_FINAL=$(az postgres flexible-server show --resource-group "${RESOURCE_GROUP}" --name "${PG_NAME}" \
     --query "state" -o tsv 2>/dev/null || echo "unknown")
@@ -92,6 +92,28 @@ else
 fi
 echo "    AKS:        ${AKS_FINAL}"
 echo "    PostgreSQL: ${PG_FINAL} (${PG_NAME:-n/a})"
+
+echo "==> [5/5] Static Web Apps + DNS zone (always-on, cannot be stopped)"
+SWA_LIST=$(az staticwebapp list -g "${RESOURCE_GROUP}" --query "[].{name:name,sku:sku.name,host:defaultHostname}" -o tsv 2>/dev/null || true)
+if [[ -z "${SWA_LIST}" ]]; then
+  echo "    No Static Web Apps found in ${RESOURCE_GROUP}."
+else
+  echo "    Static Web Apps still active (no compute charges on Free tier):"
+  while IFS=$'\t' read -r name sku host; do
+    [[ -z "${name}" ]] && continue
+    if [[ "${sku}" == "Standard" ]]; then
+      echo "      ⚠  ${name} (${sku}, ~\$9/mo) — https://${host}"
+      echo "         Downgrade with: az staticwebapp update -g ${RESOURCE_GROUP} -n ${name} --sku Free"
+    else
+      echo "      ✓  ${name} (${sku}, \$0/mo) — https://${host}"
+    fi
+  done <<< "${SWA_LIST}"
+fi
+DNS_ZONES=$(az network dns zone list -g "${RESOURCE_GROUP}" --query "[].name" -o tsv 2>/dev/null || true)
+if [[ -n "${DNS_ZONES}" ]]; then
+  echo "    DNS zone(s) (~\$0.50/mo each, cannot be paused):"
+  while IFS= read -r zone; do echo "      • ${zone}"; done <<< "${DNS_ZONES}"
+fi
 
 cat <<EOF
 
@@ -109,6 +131,8 @@ cat <<EOF
       - Key Vault           ~\$0.03/10K ops
       - Public IP           ~\$4/mo
       - Log Analytics       ingestion-based
+      - Static Web Apps     \$0/mo (Free) or ~\$9/mo each (Standard)
+      - Azure DNS zone      ~\$0.50/mo + \$0.40 per million queries
 
     Resume:      bash scripts/azure/cost-start.sh ${ENVIRONMENT}
     Full delete: bash scripts/azure/teardown-azure.sh ${ENVIRONMENT}

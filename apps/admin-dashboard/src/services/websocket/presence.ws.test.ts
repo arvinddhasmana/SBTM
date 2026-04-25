@@ -5,6 +5,7 @@ const mockSocket = {
   on: vi.fn(),
   disconnect: vi.fn(),
   connected: false,
+  io: { on: vi.fn() },
 };
 
 // Mock socket.io-client
@@ -30,11 +31,13 @@ describe('PresenceWebSocket', () => {
     it('should create a socket.io connection with the provided URL', () => {
       presenceWs.connect('http://test:3004');
 
-      expect(io).toHaveBeenCalledWith('http://test:3004/ws/presence', {
-        transports: ['websocket'],
-        reconnection: true,
-        reconnectionAttempts: 5,
-      });
+      expect(io).toHaveBeenCalledWith(
+        'http://test:3004/presence',
+        expect.objectContaining({
+          path: '/ws/presence',
+          reconnection: true,
+        }),
+      );
     });
 
     it('should subscribe to presence:updated event', () => {

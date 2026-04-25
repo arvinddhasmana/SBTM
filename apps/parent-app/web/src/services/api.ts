@@ -3,10 +3,32 @@ import type { Child, NotificationPreference } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
+export const AUTH_TOKEN_KEY = 'auth_token';
+
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
 });
+
+// Bearer-token fallback for browsers that block cross-site auth cookies.
+apiClient.interceptors.request.use((config) => {
+  const token = localStorage.getItem(AUTH_TOKEN_KEY);
+  if (token) {
+    config.headers = config.headers ?? {};
+    (config.headers as Record<string, string>).Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error?.response?.status === 401) {
+      localStorage.removeItem(AUTH_TOKEN_KEY);
+    }
+    return Promise.reject(error);
+  },
+);
 
 export interface AuthLoginResponse {
   accessToken: string;
@@ -126,11 +148,18 @@ export const parentApi = {
       email,
       password,
     });
+    if (response.data.accessToken) {
+      localStorage.setItem(AUTH_TOKEN_KEY, response.data.accessToken);
+    }
     return response.data;
   },
 
   async logout(): Promise<void> {
-    await apiClient.post('/api/v1/auth/logout');
+    try {
+      await apiClient.post('/api/v1/auth/logout');
+    } finally {
+      localStorage.removeItem(AUTH_TOKEN_KEY);
+    }
   },
 
   async getChildren(): Promise<Child[]> {

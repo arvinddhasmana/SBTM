@@ -4,6 +4,14 @@
 - Last reviewed: 2026-03-30
 - Primary use: Diagnose common platform failures and degraded workflow states
 
+> **For Azure-deployed environments** (`demo` / `production`), pair this guide
+> with [`docs/dev/cloud_debugging_guide.md`](../dev/cloud_debugging_guide.md),
+> which documents the seven-layer stack (DNS → TLS → ingress → pod → App
+> Insights → DB), `kubectl` / `mirrord` / `kubectl port-forward` workflows, and
+> ready-made playbooks for cloud-only failures such as
+> `ERR_CERT_COMMON_NAME_INVALID`, ingress 502/504, CORS preflight, and KV/secret
+> rotation drift.
+
 ## Triage Order
 
 1. Confirm whether the issue is localized to one UI or affects multiple clients.

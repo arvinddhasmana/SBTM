@@ -8,14 +8,20 @@ This section covers everything required to deploy and operate the SBTM platform 
 
 ## Documents in This Section
 
-| Document                                             | Purpose                                                                                           |
-| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| [DeploymentChecklist.md](DeploymentChecklist.md)     | **Start here.** Prerequisites, GitHub secrets, environment setup, and pre-deploy checklist        |
-| [AzureArchitecture.md](AzureArchitecture.md)         | Azure AKS architecture with C4 diagrams, Azure Well-Architected analysis, and service mapping     |
-| [InfrastructureAsCode.md](InfrastructureAsCode.md)   | Bicep templates (`infra/azure/`), Kustomize overlays (`infra/k8s/`), and tier-change instructions |
-| [AzureCICD.md](AzureCICD.md)                         | GitHub Actions CI/CD pipeline: build → push to ACR → deploy to AKS                                |
-| [MobileStoreDeployment.md](MobileStoreDeployment.md) | EAS Build + Google Play + Apple App Store deployment guide                                        |
-| [CostAnalysis.md](CostAnalysis.md)                   | Azure cost breakdown, Dev/Test pricing, namespace sharing, teardown automation                    |
+| Document                                             | Purpose                                                                                            |
+| ---------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| [DeploymentChecklist.md](DeploymentChecklist.md)     | **Start here.** Prerequisites, GitHub secrets, environment setup, and pre-deploy checklist         |
+| [AzureArchitecture.md](AzureArchitecture.md)         | Azure AKS architecture with C4 diagrams, Azure Well-Architected analysis, and service mapping      |
+| [CustomDomainSetup.md](CustomDomainSetup.md)         | Map `sbtm.ca` to admin/parent portals + API gateway via Azure DNS + Static Web Apps + cert-manager |
+| [InfrastructureAsCode.md](InfrastructureAsCode.md)   | Bicep templates (`infra/azure/`), Kustomize overlays (`infra/k8s/`), and tier-change instructions  |
+| [AzureCICD.md](AzureCICD.md)                         | GitHub Actions CI/CD pipeline: build → push to ACR → deploy to AKS                                 |
+| [MobileStoreDeployment.md](MobileStoreDeployment.md) | EAS Build + Google Play + Apple App Store deployment guide                                         |
+| [CostAnalysis.md](CostAnalysis.md)                   | Azure cost breakdown, Dev/Test pricing, namespace sharing, teardown automation                     |
+
+> **Debugging a deployed environment?** See
+> [`docs/dev/cloud_debugging_guide.md`](../dev/cloud_debugging_guide.md) for the
+> standard practice (seven-layer stack, App Insights KQL, `mirrord`, common
+> failure playbooks).
 
 ## Environment Model
 

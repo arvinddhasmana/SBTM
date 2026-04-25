@@ -6,6 +6,12 @@ coverage
 .turbo
 tmpclaude-*
 
+# TypeScript incremental build artifacts
+*.tsbuildinfo
+
+# Local dev runtime artifacts (from scripts/dev-hybrid.sh)
+.dev-pids/
+
 # Package manager
 package-lock.json
 

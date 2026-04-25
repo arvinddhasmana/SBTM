@@ -7,11 +7,15 @@
 #   2. Ensure Azure login + subscription is selected
 #   3. Prompt for required secrets (POSTGRES_ADMIN_PASSWORD, JWT_SECRET, optional FCM/Twilio)
 #   4. Run preflight-check.sh
-#   5. Run provision-azure.sh   (creates RG, AKS, ACR, Postgres, Redis, Storage, KV, App Insights)
+#   5. Run provision-azure.sh   (creates RG, AKS, ACR, Postgres, Redis, Storage, KV, App Insights,
+#                                Static Web Apps for admin/parent portals, Azure DNS zone)
 #   6. Materialize .env.<env> from .env.<env>.template by querying Azure for FQDNs / keys / conn strings
 #   7. Run setup-keyvault.sh    (seeds Key Vault from .env.<env>)
 #   8. Run setup-db.sh migrate  (+ seed-demo for the demo environment)
 #   9. Run osrm-upload.sh       (uploads OSRM road network to Blob Storage)
+#  10. Wire custom-domain DNS records for admin/parent portals + api in Azure DNS
+#  11. Build admin + parent web bundles and upload via the Azure SWA CLI
+#  12. Re-enable NGINX Ingress + Let's Encrypt for api.sbtm.ca and run verify-portals.sh
 #
 # Usage:
 #   bash scripts/azure/bootstrap.sh [demo|production] [location]
@@ -23,11 +27,41 @@ set -euo pipefail
 
 ENVIRONMENT="${1:-demo}"
 LOCATION="${2:-eastus}"
+shift $(( $# > 2 ? 2 : $# )) 2>/dev/null || true
+
+# Optional flags (after positional args):
+#   --from-step N      Skip steps 1..N-1; run N..12.
+#   --portals-only     Shortcut for "run only the steps needed to (re)deploy the
+#                      admin + parent portals on top of an existing backend":
+#                      runs steps {5, 10, 11, 12}.
+FROM_STEP=1
+PORTALS_ONLY="false"
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --from-step) FROM_STEP="${2:-1}"; shift 2 ;;
+    --from-step=*) FROM_STEP="${1#*=}"; shift ;;
+    --portals-only) PORTALS_ONLY="true"; shift ;;
+    *) echo "WARN: ignoring unknown arg '$1'"; shift ;;
+  esac
+done
 
 if [[ "${ENVIRONMENT}" != "demo" && "${ENVIRONMENT}" != "production" ]]; then
   echo "ERROR: environment must be 'demo' or 'production' (got '${ENVIRONMENT}')"
   exit 1
 fi
+
+# Build the step allow-list.
+if [[ "${PORTALS_ONLY}" == "true" ]]; then
+  STEPS_TO_RUN=" 5 10 11 12 "
+else
+  STEPS_TO_RUN=""
+  for n in 1 2 3 4 5 6 7 8 9 10 11 12; do
+    (( n >= FROM_STEP )) && STEPS_TO_RUN+=" ${n}"
+  done
+  STEPS_TO_RUN="${STEPS_TO_RUN} "
+fi
+
+should_run() { [[ "${STEPS_TO_RUN}" == *" $1 "* ]]; }
 
 if [[ "${ENVIRONMENT}" == "production" ]]; then
   RESOURCE_GROUP="sbtm-rg"
@@ -36,6 +70,10 @@ else
   RESOURCE_GROUP="sbtm-demo-rg"
   IS_DEVTEST="false"
 fi
+
+# Persistent DNS resource group — survives teardown so registrar NS records
+# never need to be re-pasted. Override with DNS_RESOURCE_GROUP env var.
+DNS_RESOURCE_GROUP="${DNS_RESOURCE_GROUP:-sbtm-dns-rg}"
 
 ENV_FILE=".env.${ENVIRONMENT}"
 ENV_TEMPLATE=".env.${ENVIRONMENT}.template"
@@ -137,8 +175,9 @@ ensure_kv_data_plane_access() {
   warn "Key Vault RBAC may still be propagating; Step 7 may need one re-run in a minute"
 }
 
-# ── 1. Prerequisite tools ──────────────────────────────────────────────────────
-hr "Step 1/9 — Install prerequisite tools"
+# ── 1. Prerequisite tools ────────────────────────────────────────────────────────────
+if should_run 1; then
+hr "Step 1/12 — Install prerequisite tools"
 
 install_apt() {
   local pkg="$1"
@@ -198,8 +237,11 @@ install_azcopy
 az bicep version >/dev/null 2>&1 || az bicep install >/dev/null 2>&1 || true
 ok "az bicep present ($(az bicep version 2>/dev/null | head -1 || echo 'installed'))"
 
+fi  # end step 1
+
 # ── 2. Azure login + subscription ──────────────────────────────────────────────
-hr "Step 2/9 — Azure login"
+if should_run 2; then
+hr "Step 2/12 — Azure login"
 if ! az account show --output none 2>/dev/null; then
   step "Running az login (a browser/device-code prompt will appear)"
   az login --use-device-code
@@ -220,8 +262,11 @@ if confirm "Use a different subscription?"; then
   ok "Switched to: $(az account show --query name -o tsv)"
 fi
 
-# ── 3. Collect required secrets ────────────────────────────────────────────────
-hr "Step 3/9 — Collect required secrets"
+fi  # end step 2
+
+# ── 3. Collect required secrets ─────────────────────────────────────────────────────
+if should_run 3; then
+hr "Step 3/12 — Collect required secrets"
 echo "  Environment:    ${ENVIRONMENT}"
 echo "  Resource group: ${RESOURCE_GROUP}"
 echo "  Location:       ${LOCATION}"
@@ -253,22 +298,51 @@ prompt_secret FCM_SERVER_KEY      "Firebase Cloud Messaging server key" yes
 prompt_secret TWILIO_AUTH_TOKEN   "Twilio Auth Token"                   yes
 prompt_secret TWILIO_ACCOUNT_SID  "Twilio Account SID"                  yes
 
-# ── 4. Preflight ───────────────────────────────────────────────────────────────
-hr "Step 4/9 — Preflight check"
+fi  # end step 3
+
+# ── 4. Preflight ─────────────────────────────────────────────────────────────────
+if should_run 4; then
+hr "Step 4/12 — Preflight check"
 bash scripts/azure/preflight-check.sh "${ENVIRONMENT}" || \
   warn "preflight reported warnings/errors above — review before continuing"
 if ! confirm "Continue with provisioning?"; then
   die "Aborted by user after preflight"
 fi
 
-# ── 5. Provision Azure ────────────────────────────────────────────────────────
-hr "Step 5/9 — Provision Azure resources"
+fi  # end step 4
+
+# ── 5. Provision Azure ────────────────────────────────────────────────────────────
+if should_run 5; then
+# Auto-fetch the Postgres admin password from Key Vault if we are jumping into
+# step 5 without having run step 3 (e.g. --portals-only resume).
+if [[ -z "${POSTGRES_ADMIN_PASSWORD:-}" ]]; then
+  KV_LOOKUP=$(az keyvault list -g "${RESOURCE_GROUP}" --query "[0].name" -o tsv 2>/dev/null || true)
+  if [[ -n "${KV_LOOKUP}" ]]; then
+    for secret_name in sbtm-db-password postgres-admin-password db-password; do
+      POSTGRES_ADMIN_PASSWORD=$(az keyvault secret show --vault-name "${KV_LOOKUP}" --name "${secret_name}" --query value -o tsv 2>/dev/null || true)
+      if [[ -n "${POSTGRES_ADMIN_PASSWORD}" ]]; then
+        export POSTGRES_ADMIN_PASSWORD
+        echo "  ✓ Recovered POSTGRES_ADMIN_PASSWORD from Key Vault ${KV_LOOKUP} (secret: ${secret_name})"
+        break
+      fi
+    done
+  fi
+  if [[ -z "${POSTGRES_ADMIN_PASSWORD:-}" ]]; then
+    echo "  ✗ POSTGRES_ADMIN_PASSWORD not set and could not be recovered from Key Vault." >&2
+    echo "     Export it manually: export POSTGRES_ADMIN_PASSWORD='<value>'" >&2
+    exit 1
+  fi
+fi
+hr "Step 5/12 — Provision Azure resources"
 # provision-azure.sh will skip Key Vault seeding because ${ENV_FILE} doesn't
 # exist yet — that's expected; we seed it explicitly in step 7.
 bash scripts/azure/provision-azure.sh "${ENVIRONMENT}" "${LOCATION}" "${IS_DEVTEST}"
 
+fi  # end step 5
+
 # ── 6. Materialize .env.<env> from Azure outputs ──────────────────────────────
-hr "Step 6/9 — Build ${ENV_FILE} from Azure resource outputs"
+if should_run 6; then
+hr "Step 6/12 — Build ${ENV_FILE} from Azure resource outputs"
 
 [[ -f "${ENV_TEMPLATE}" ]] || die "${ENV_TEMPLATE} not found; cannot scaffold ${ENV_FILE}"
 
@@ -369,8 +443,11 @@ write_env
 chmod 600 "${ENV_FILE}"
 ok "Wrote ${ENV_FILE} (chmod 600)"
 
-# ── 7. Seed Key Vault ─────────────────────────────────────────────────────────
-hr "Step 7/9 — Seed Azure Key Vault"
+fi  # end step 6
+
+# ── 7. Seed Key Vault ─────────────────────────────────────────────────────────────
+if should_run 7; then
+hr "Step 7/12 — Seed Azure Key Vault"
 KV_NAME=$(az keyvault list -g "${RESOURCE_GROUP}" --query "[0].name" -o tsv)
 [[ -n "${KV_NAME}" ]] || die "No Key Vault found in ${RESOURCE_GROUP}"
 ok "Key Vault: ${KV_NAME}"
@@ -395,8 +472,11 @@ else
 fi
 rm -f "${KV_SEED_LOG}"
 
-# ── 8. Database migration + seed ──────────────────────────────────────────────
-hr "Step 8/9 — Database migration"
+fi  # end step 7
+
+# ── 8. Database migration + seed ──────────────────────────────────────────────────────
+if should_run 8; then
+hr "Step 8/12 — Database migration"
 # Allow-list required PostgreSQL extensions on Azure Flexible Server
 PG_SERVER_NAME=$(az postgres flexible-server list -g "${RESOURCE_GROUP}" --query "[0].name" -o tsv 2>/dev/null || true)
 if [[ -n "${PG_SERVER_NAME}" ]]; then
@@ -431,8 +511,11 @@ else
   warn "    bash scripts/azure/db-jumpbox.sh ${ENVIRONMENT} migrate"
 fi
 
-# ── 9. OSRM upload ─────────────────────────────────────────────────────────────
-hr "Step 9/9 — Upload OSRM road network"
+fi  # end step 8
+
+# ── 9. OSRM upload ───────────────────────────────────────────────────────────────────
+if should_run 9; then
+hr "Step 9/12 — Upload OSRM road network"
 if [[ -d infra/osrm-data ]] && compgen -G "infra/osrm-data/*" >/dev/null; then
   ENV_FILE="${ENV_FILE}" bash scripts/azure/osrm-upload.sh || \
     warn "osrm-upload.sh failed — run later: ENV_FILE=${ENV_FILE} bash scripts/azure/osrm-upload.sh"
@@ -441,11 +524,233 @@ else
   warn "Generate routing data first (see scripts/setup-osrm.sh), then re-run osrm-upload.sh"
 fi
 
+fi  # end step 9
+
+# ── 10. Static Web App custom-domain DNS records ──────────────────────────────
+# Provisions Azure DNS records that bind admin.<domain> and parent.<domain> to
+# their respective SWA default hostnames, plus _dnsauth TXT records used by
+# the SWA dns-txt-token validation flow.
+
+if should_run 10; then
+hr "Step 10/12 — Wire custom-domain DNS records for portals"
+
+CUSTOM_DOMAIN=$(jq -r '.parameters.customDomain.value // ""' "infra/azure/parameters.${ENVIRONMENT}.json")
+MANAGE_DNS_ZONE=$(jq -r '.parameters.manageDnsZone.value // false' "infra/azure/parameters.${ENVIRONMENT}.json")
+ADMIN_SWA_NAME="sbtm-admin-${ENVIRONMENT}"
+PARENT_SWA_NAME="sbtm-parent-${ENVIRONMENT}"
+ADMIN_DEFAULT_HOST=""
+PARENT_DEFAULT_HOST=""
+DNS_NAME_SERVERS=""
+
+if az staticwebapp show -g "${RESOURCE_GROUP}" -n "${ADMIN_SWA_NAME}" --output none 2>/dev/null; then
+  ADMIN_DEFAULT_HOST=$(az staticwebapp show -g "${RESOURCE_GROUP}" -n "${ADMIN_SWA_NAME}" --query defaultHostname -o tsv)
+  ok "Admin SWA: ${ADMIN_SWA_NAME} → ${ADMIN_DEFAULT_HOST}"
+else
+  warn "Admin Static Web App ${ADMIN_SWA_NAME} not found — provisioning may have failed"
+fi
+if az staticwebapp show -g "${RESOURCE_GROUP}" -n "${PARENT_SWA_NAME}" --output none 2>/dev/null; then
+  PARENT_DEFAULT_HOST=$(az staticwebapp show -g "${RESOURCE_GROUP}" -n "${PARENT_SWA_NAME}" --query defaultHostname -o tsv)
+  ok "Parent SWA: ${PARENT_SWA_NAME} → ${PARENT_DEFAULT_HOST}"
+else
+  warn "Parent Static Web App ${PARENT_SWA_NAME} not found — provisioning may have failed"
+fi
+
+bind_swa_custom_domain() {
+  # $1 = SWA resource name, $2 = subdomain (admin/parent), $3 = default hostname
+  local swa="$1"; local sub="$2"; local default_host="$3"
+  local fqdn="${sub}.${CUSTOM_DOMAIN}"
+
+  # 1. CNAME <sub>.<domain> → <default_host>
+  step "Upserting CNAME ${fqdn} → ${default_host}"
+  az network dns record-set cname set-record \
+    -g "${DNS_RESOURCE_GROUP}" -z "${CUSTOM_DOMAIN}" -n "${sub}" \
+    --cname "${default_host}" --ttl 300 --output none
+  ok "CNAME ${fqdn} ready"
+
+  # 2. Register hostname with the SWA using dns-txt-token validation. This
+  #    surfaces a validationToken which we then write as a TXT record on
+  #    _dnsauth.<sub>.
+  step "Registering ${fqdn} on Static Web App ${swa}"
+  if az staticwebapp hostname show -g "${RESOURCE_GROUP}" -n "${swa}" --hostname "${fqdn}" --output none 2>/dev/null; then
+    ok "${fqdn} already bound to ${swa}"
+    return
+  fi
+  # Initiate validation (idempotent, may print a token to capture).
+  # Use --no-wait so we don't block on Azure's DNS validation, which cannot
+  # complete until NS delegation is done at the registrar.
+  local token=""
+  token=$(az staticwebapp hostname set \
+    -g "${RESOURCE_GROUP}" -n "${swa}" \
+    --hostname "${fqdn}" --validation-method dns-txt-token --no-wait \
+    --query validationToken -o tsv 2>/dev/null || true)
+  if [[ -z "${token}" ]]; then
+    # --no-wait may not echo the token; query the hostname resource directly
+    sleep 5
+    token=$(az staticwebapp hostname show \
+      -g "${RESOURCE_GROUP}" -n "${swa}" --hostname "${fqdn}" \
+      --query validationToken -o tsv 2>/dev/null || true)
+  fi
+  if [[ -n "${token}" ]]; then
+    step "Writing _dnsauth.${sub} TXT record"
+    az network dns record-set txt add-record \
+      -g "${DNS_RESOURCE_GROUP}" -z "${CUSTOM_DOMAIN}" -n "_dnsauth.${sub}" \
+      --value "${token}" --ttl 300 --output none 2>/dev/null || true
+    ok "_dnsauth.${sub}.${CUSTOM_DOMAIN} TXT record set (token: ${token:0:8}…)"
+  else
+    warn "No validationToken yet for ${fqdn}; check 'az staticwebapp hostname show' after NS delegation"
+  fi
+}
+
+if [[ -n "${CUSTOM_DOMAIN}" ]]; then
+  # Ensure persistent DNS RG + zone exist (idempotent; zone is preserved across
+  # teardown of ${RESOURCE_GROUP} so registrar NS records stay stable).
+  if ! az group show -n "${DNS_RESOURCE_GROUP}" --output none 2>/dev/null; then
+    step "Creating persistent DNS resource group ${DNS_RESOURCE_GROUP}"
+    az group create -n "${DNS_RESOURCE_GROUP}" -l "${LOCATION}" \
+      --tags purpose=persistent-dns project=sbtm --output none
+    ok "DNS RG ${DNS_RESOURCE_GROUP} ready"
+  fi
+  if ! az network dns zone show -g "${DNS_RESOURCE_GROUP}" -n "${CUSTOM_DOMAIN}" --output none 2>/dev/null; then
+    step "Creating DNS zone ${CUSTOM_DOMAIN} in ${DNS_RESOURCE_GROUP}"
+    az network dns zone create -g "${DNS_RESOURCE_GROUP}" -n "${CUSTOM_DOMAIN}" --output none
+    ok "DNS zone ${CUSTOM_DOMAIN} created (paste new NS records at registrar — see summary)"
+  fi
+  DNS_NAME_SERVERS=$(az network dns zone show -g "${DNS_RESOURCE_GROUP}" -n "${CUSTOM_DOMAIN}" --query nameServers -o tsv | paste -sd ' ')
+  ok "DNS zone ${CUSTOM_DOMAIN} present in ${DNS_RESOURCE_GROUP}"
+  [[ -n "${ADMIN_DEFAULT_HOST}" ]]  && bind_swa_custom_domain "${ADMIN_SWA_NAME}"  "admin"  "${ADMIN_DEFAULT_HOST}"
+  [[ -n "${PARENT_DEFAULT_HOST}" ]] && bind_swa_custom_domain "${PARENT_SWA_NAME}" "parent" "${PARENT_DEFAULT_HOST}"
+else
+  warn "customDomain is empty — skipping DNS automation"
+  warn "See docs/Deployment/CustomDomainSetup.md for manual steps"
+fi
+
+fi  # end step 10
+
+# ── 11. Build & deploy admin + parent portals via SWA CLI ────────────────────
+if should_run 11; then
+# Re-derive CUSTOM_DOMAIN/MANAGE_DNS_ZONE if we skipped step 10.
+CUSTOM_DOMAIN="${CUSTOM_DOMAIN:-$(jq -r '.parameters.customDomain.value // ""' "infra/azure/parameters.${ENVIRONMENT}.json")}"
+ADMIN_SWA_NAME="${ADMIN_SWA_NAME:-sbtm-admin-${ENVIRONMENT}}"
+PARENT_SWA_NAME="${PARENT_SWA_NAME:-sbtm-parent-${ENVIRONMENT}}"
+hr "Step 11/12 — Build and deploy admin + parent portals"
+
+if ! command -v swa >/dev/null 2>&1; then
+  step "Installing @azure/static-web-apps-cli globally (npm)"
+  npm install -g @azure/static-web-apps-cli >/dev/null 2>&1 || \
+    warn "Could not install swa CLI globally — try: sudo npm install -g @azure/static-web-apps-cli"
+fi
+ok "swa CLI: $(swa --version 2>/dev/null || echo 'not installed — portal upload will be skipped')"
+
+API_BASE_URL="https://api.${CUSTOM_DOMAIN}"
+[[ -z "${CUSTOM_DOMAIN}" ]] && API_BASE_URL=""
+
+# Map tile provider key (MapTiler). Required for production map tiles — public
+# OSM tile servers block traffic from busy sites per their usage policy.
+# Set MAPTILER_KEY in the environment (or in parameters.<env>.json future field)
+# to enable; otherwise the build still succeeds but maps will fail to load.
+MAPTILER_KEY="${MAPTILER_KEY:-$(jq -r '.parameters.mapTilerKey.value // ""' "infra/azure/parameters.${ENVIRONMENT}.json" 2>/dev/null || echo "")}"
+if [[ -z "${MAPTILER_KEY}" ]]; then
+  warn "MAPTILER_KEY not set — map tiles will be blocked in production. Get a free key at https://cloud.maptiler.com/account/keys/ and re-run with MAPTILER_KEY=<key>"
+fi
+
+deploy_portal() {
+  # $1 = friendly name, $2 = working dir, $3 = SWA resource name
+  local label="$1"; local dir="$2"; local swa="$3"
+  step "Building ${label} (${dir})"
+  if [[ ! -d "${dir}" ]]; then
+    warn "${dir} not found — skipping ${label}"
+    return
+  fi
+  ( cd "${dir}" && VITE_API_URL="${API_BASE_URL}" VITE_MAPTILER_KEY="${MAPTILER_KEY}" pnpm install --frozen-lockfile >/dev/null 2>&1 || true )
+  if ! ( cd "${dir}" && VITE_API_URL="${API_BASE_URL}" VITE_MAPTILER_KEY="${MAPTILER_KEY}" pnpm run build ); then
+    warn "Build failed for ${label} — skipping deploy"
+    return
+  fi
+  ok "${label} build complete"
+  if ! command -v swa >/dev/null 2>&1; then
+    warn "swa CLI missing — cannot deploy ${label}; install it and re-run Step 11"
+    return
+  fi
+  step "Fetching deployment token for ${swa}"
+  local token=""
+  token=$(az staticwebapp secrets list -g "${RESOURCE_GROUP}" -n "${swa}" \
+    --query properties.apiKey -o tsv 2>/dev/null || true)
+  if [[ -z "${token}" ]]; then
+    warn "Could not retrieve deployment token for ${swa}; skipping ${label}"
+    return
+  fi
+  step "Deploying ${label} via swa CLI"
+  ( cd "${dir}" && swa deploy ./dist --deployment-token "${token}" --env production >/dev/null )
+  ok "${label} deployed"
+}
+
+deploy_portal "admin portal"  "apps/admin-dashboard" "${ADMIN_SWA_NAME}"
+deploy_portal "parent portal" "apps/parent-app/web"  "${PARENT_SWA_NAME}"
+
+fi  # end step 11
+
+# ── 12. Re-enable API ingress for api.<domain> + run verify-portals ───────────
+if should_run 12; then
+CUSTOM_DOMAIN="${CUSTOM_DOMAIN:-$(jq -r '.parameters.customDomain.value // ""' "infra/azure/parameters.${ENVIRONMENT}.json")}"
+hr "Step 12/12 — Apply Ingress for api.${CUSTOM_DOMAIN:-<domain>} and verify"
+
+if [[ -n "${CUSTOM_DOMAIN}" ]]; then
+  step "Applying demo overlay (kustomize) so the api.sbtm.ca ingress + ClusterIssuer are created"
+  kubectl apply -k "infra/k8s/overlays/${ENVIRONMENT}" >/dev/null 2>&1 || \
+    warn "kubectl apply failed; review with: kubectl apply -k infra/k8s/overlays/${ENVIRONMENT}"
+
+  step "Waiting for ingress LoadBalancer to receive an external IP (timeout 5 min)"
+  LB_IP=""
+  for _ in {1..30}; do
+    LB_IP=$(kubectl get svc -A -o jsonpath='{range .items[?(@.spec.type=="LoadBalancer")]}{.status.loadBalancer.ingress[0].ip}{"\n"}{end}' 2>/dev/null \
+      | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$' | head -1)
+    [[ -n "${LB_IP}" ]] && break
+    sleep 10
+  done
+  if [[ -n "${LB_IP}" ]]; then
+    ok "Ingress LoadBalancer IP: ${LB_IP}"
+    step "Upserting A record api.${CUSTOM_DOMAIN} → ${LB_IP}"
+    az network dns record-set a delete -g "${DNS_RESOURCE_GROUP}" -z "${CUSTOM_DOMAIN}" -n api --yes --output none 2>/dev/null || true
+    az network dns record-set a add-record \
+      -g "${DNS_RESOURCE_GROUP}" -z "${CUSTOM_DOMAIN}" -n api \
+      --ipv4-address "${LB_IP}" --ttl 300 --output none
+    ok "A record api.${CUSTOM_DOMAIN} → ${LB_IP} ready"
+  else
+    warn "No ingress LoadBalancer IP yet; create A record manually once it appears"
+  fi
+else
+  warn "Custom domain unset — skipping ingress wiring"
+fi
+
+step "Running verify-portals.sh"
+if bash scripts/azure/verify-portals.sh "${ENVIRONMENT}"; then
+  ok "Portal verification passed"
+else
+  warn "Portal verification reported issues; see output above. DNS/TLS may still be propagating."
+fi
+
+fi  # end step 12
+
 # ── Done ──────────────────────────────────────────────────────────────────────
 hr "Bootstrap complete for environment: ${ENVIRONMENT}"
+# Make sure summary variables exist even when steps that set them were skipped.
+KV_NAME="${KV_NAME:-$(az keyvault list -g "${RESOURCE_GROUP}" --query "[0].name" -o tsv 2>/dev/null || true)}"
+PG_FQDN="${PG_FQDN:-$(az postgres flexible-server list -g "${RESOURCE_GROUP}" --query "[0].fullyQualifiedDomainName" -o tsv 2>/dev/null || true)}"
+REDIS_HOST="${REDIS_HOST:-$(az redis list -g "${RESOURCE_GROUP}" --query "[0].hostName" -o tsv 2>/dev/null || true)}"
+STORAGE_NAME="${STORAGE_NAME:-$(az storage account list -g "${RESOURCE_GROUP}" --query "[0].name" -o tsv 2>/dev/null || true)}"
+AI_NAME="${AI_NAME:-$(az resource list -g "${RESOURCE_GROUP}" --resource-type "Microsoft.Insights/components" --query "[0].name" -o tsv 2>/dev/null || true)}"
+CUSTOM_DOMAIN="${CUSTOM_DOMAIN:-$(jq -r '.parameters.customDomain.value // ""' "infra/azure/parameters.${ENVIRONMENT}.json" 2>/dev/null || true)}"
+ADMIN_DEFAULT_HOST="${ADMIN_DEFAULT_HOST:-$(az staticwebapp show -g "${RESOURCE_GROUP}" -n "sbtm-admin-${ENVIRONMENT}" --query defaultHostname -o tsv 2>/dev/null || true)}"
+PARENT_DEFAULT_HOST="${PARENT_DEFAULT_HOST:-$(az staticwebapp show -g "${RESOURCE_GROUP}" -n "sbtm-parent-${ENVIRONMENT}" --query defaultHostname -o tsv 2>/dev/null || true)}"
+LB_IP="${LB_IP:-$(kubectl get svc -A -o jsonpath='{range .items[?(@.spec.type=="LoadBalancer")]}{.status.loadBalancer.ingress[0].ip}{"\n"}{end}' 2>/dev/null | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$' | head -1 || true)}"
+if [[ -z "${DNS_NAME_SERVERS:-}" && -n "${CUSTOM_DOMAIN}" ]]; then
+  DNS_NAME_SERVERS=$(az network dns zone show -g "${DNS_RESOURCE_GROUP}" -n "${CUSTOM_DOMAIN}" --query nameServers -o tsv 2>/dev/null | paste -sd ' ' || true)
+fi
+DNS_NAME_SERVERS="${DNS_NAME_SERVERS:-}"
 cat <<EOF
 
   Resource group:   ${RESOURCE_GROUP}
+  DNS RG (persist): ${DNS_RESOURCE_GROUP}   (survives teardown — NS stays stable)
   Location:         ${LOCATION}
   Env file:         ${ENV_FILE} (chmod 600, gitignored)
   Key Vault:        ${KV_NAME}
@@ -454,9 +759,19 @@ cat <<EOF
   Storage:          ${STORAGE_NAME:-<n/a>}
   App Insights:     ${AI_NAME:-<n/a>}
 
+  Frontends (Azure Static Web Apps):
+    Admin portal:   https://admin.${CUSTOM_DOMAIN:-<domain>}   (default: ${ADMIN_DEFAULT_HOST:-<n/a>})
+    Parent portal:  https://parent.${CUSTOM_DOMAIN:-<domain>}  (default: ${PARENT_DEFAULT_HOST:-<n/a>})
+    API gateway:    https://api.${CUSTOM_DOMAIN:-<domain>}     (LB: ${LB_IP:-<pending>})
+
+  DNS delegation — paste these NS records at your domain registrar for ${CUSTOM_DOMAIN:-<domain>}
+  (one-time only; the zone lives in persistent RG ${DNS_RESOURCE_GROUP} and is NOT touched by teardown):
+$(if [[ -n "${DNS_NAME_SERVERS}" ]]; then for ns in ${DNS_NAME_SERVERS}; do echo "    ${ns}"; done; else echo "    (DNS zone not present)"; fi)
+
   Next:
     kubectl get nodes
     kubectl apply -k infra/k8s/overlays/${ENVIRONMENT}
+    bash scripts/azure/verify-portals.sh ${ENVIRONMENT}
 
   Cost controls:
     bash scripts/azure/cost-stop.sh  ${ENVIRONMENT}     # pause without losing data

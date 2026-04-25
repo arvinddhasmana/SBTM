@@ -96,6 +96,16 @@ if [[ "${PG_FINAL}" != "Ready" ]]; then
   echo "    ⚠  PostgreSQL did not reach Ready state within 5 minutes. Check the portal."
 fi
 
+# ── Static Web Apps quick reachability check ─────────────────────────────────
+echo ""
+echo "==> [6/6] Verifying Static Web Apps + API portal reachability"
+if [[ -x scripts/azure/verify-portals.sh ]]; then
+  QUICK=1 bash scripts/azure/verify-portals.sh "${ENVIRONMENT}" || \
+    echo "  ⚠  verify-portals.sh reported issues (DNS/TLS may still be propagating)"
+else
+  echo "  scripts/azure/verify-portals.sh not found — skipping portal checks"
+fi
+
 cat <<EOF
 
 ==> ${ENVIRONMENT} resumed.

@@ -64,7 +64,46 @@ graph TD
 
 This is the **primary recommended approach** for setting up the demo environment. It ensures a clean, consistent state every time.
 
-### Reset and Seed
+### Cloud demo (Azure)
+
+The fully Azure-hosted demo lives at:
+
+- Admin: https://admin.sbtm.ca
+- Parent: https://parent.sbtm.ca
+- API: https://api.sbtm.ca
+
+Provision and deploy with one command:
+
+```bash
+bash scripts/azure/bootstrap.sh demo eastus
+bash scripts/azure/verify-portals.sh demo   # confirm all checks pass
+```
+
+Cost controls:
+
+```bash
+bash scripts/azure/cost-stop.sh  demo   # pause AKS + Postgres (~$30/mo residual; SWA Free stays $0)
+bash scripts/azure/cost-start.sh demo   # resume + auto-verify portals
+bash scripts/azure/teardown-azure.sh demo  # delete app RG (sbtm-demo-rg). DNS zone in sbtm-dns-rg is preserved.
+```
+
+### Recreate after teardown
+
+```bash
+POSTGRES_ADMIN_PASSWORD='<value>' MAPTILER_KEY='<value>' \
+  bash scripts/azure/bootstrap.sh demo eastus
+```
+
+The persistent `sbtm-dns-rg` resource group (containing the `sbtm.ca` zone) is **never** deleted by `teardown-azure.sh`, so the four NS records at your domain registrar stay valid forever — no re-paste needed on rebuild. Bootstrap detects the existing zone and reuses it.
+
+> Resource-location notes:
+>
+> - `sbtm-pg-demo-centralus` lives in `sbtm-demo-rg` but runs in **Central US** because eastus has no Postgres Flex quota — handled automatically by `bootstrap.sh`. It is **not stray**; teardown removes it with the rest of the RG.
+> - The post-delete sweep in `teardown-azure.sh` scans the entire subscription for any leftover `sbtm-*` resources outside `sbtm-dns-rg` and prints them, so you'll always know if anything leaks.
+
+See [docs/Deployment/CustomDomainSetup.md](../Deployment/CustomDomainSetup.md) for the one-time NS delegation at your registrar.
+
+### Local Docker reset and seed
 
 ```bash
 # From repo root - this will reset everything

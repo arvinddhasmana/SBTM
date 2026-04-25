@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import { Maximize2, Minimize2, MousePointer2 } from 'lucide-react';
 import { parseWktPoint } from '../../utils/geo';
+import { getTileLayerConfig } from '../../lib/mapTiles';
 import type { PlannerStop, MapInteractionMode } from '../../hooks/useRoutePlanner';
 import type { Route } from '../../types';
 
@@ -199,8 +200,11 @@ const PlannerMap: React.FC<PlannerMapProps> = ({
       zoomControl: true,
     }).setView(DEFAULT_CENTER, DEFAULT_ZOOM);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors',
+    const tile = getTileLayerConfig();
+    L.tileLayer(tile.url, {
+      attribution: tile.attribution,
+      subdomains: tile.subdomains,
+      maxZoom: tile.maxZoom,
     }).addTo(mapInstanceRef.current);
 
     // Click handler for adding stops

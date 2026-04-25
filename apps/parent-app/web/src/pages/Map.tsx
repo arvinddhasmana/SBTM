@@ -9,6 +9,7 @@ import { queryKeys } from '../services/query-keys';
 import { useAlerts } from '../hooks/useAlerts';
 import { useGpsLocation } from '../hooks/useGpsLocation';
 import { decodePolyline } from '../utils/polyline';
+import { getTileLayerConfig } from '../lib/mapTiles';
 import type { BusLocationUpdate, Child } from '../types';
 import { ArrowLeft, Navigation, RotateCcw } from 'lucide-react';
 
@@ -507,8 +508,10 @@ const MapPage: React.FC = () => {
         zoomControl={false}
       >
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution={getTileLayerConfig().attribution}
+          url={getTileLayerConfig().url}
+          subdomains={getTileLayerConfig().subdomains}
+          maxZoom={getTileLayerConfig().maxZoom}
         />
 
         {/* Capture map instance into ref — mirrors Admin Dashboard mapInstanceRef pattern */}

@@ -159,20 +159,38 @@ if [[ -n "${RUNNING_DEPLOYMENTS}" ]]; then
 fi
 
 # If any matching server already exists, pin both name and location for idempotency.
-EXISTING_PG_NAME=$(az resource list \
-  --resource-group "${RESOURCE_GROUP}" \
-  --resource-type "Microsoft.DBforPostgreSQL/flexibleServers" \
-  --query "[?starts_with(name, '${PG_SERVER_BASE_NAME}')][0].name" -o tsv 2>/dev/null || true)
-if [[ -n "${EXISTING_PG_NAME}" ]]; then
-  EXISTING_PG_LOCATION=$(az resource show \
+# Notes:
+#   * Use `az postgres flexible-server list` rather than the generic `az resource list`
+#     because the latter is occasionally stale.
+#   * The JMESPath form `[?filter][0].name` does NOT return the first matching item's
+#     name (it indexes into the inner projection and yields empty for our shape).
+#     The correct form is `[?filter] | [0].name`.
+#   * Allow operators to override via the POSTGRES_SERVER_NAME env var.
+EXISTING_PG_NAME="${POSTGRES_SERVER_NAME:-}"
+EXISTING_PG_LOCATION=""
+if [[ -z "${EXISTING_PG_NAME}" ]]; then
+  EXISTING_PG_NAME=$(az postgres flexible-server list \
     --resource-group "${RESOURCE_GROUP}" \
-    --resource-type "Microsoft.DBforPostgreSQL/flexibleServers" \
+    --query "[?starts_with(name, '${PG_SERVER_BASE_NAME}')] | [0].name" \
+    -o tsv 2>/dev/null || true)
+fi
+if [[ -n "${EXISTING_PG_NAME}" ]]; then
+  EXISTING_PG_LOCATION=$(az postgres flexible-server show \
+    --resource-group "${RESOURCE_GROUP}" \
     --name "${EXISTING_PG_NAME}" \
     --query location -o tsv 2>/dev/null || true)
+  # `flexible-server show` returns the display name (e.g. "Central US") but
+  # Bicep / ARM expect the canonical region slug (e.g. "centralus"). Normalize.
+  if [[ -n "${EXISTING_PG_LOCATION}" ]]; then
+    EXISTING_PG_LOCATION=$(echo "${EXISTING_PG_LOCATION}" | tr '[:upper:]' '[:lower:]' | tr -d ' ')
+  fi
   if [[ -n "${EXISTING_PG_LOCATION}" ]]; then
     PG_SERVER_NAME="${EXISTING_PG_NAME}"
     POSTGRES_LOCATION="${EXISTING_PG_LOCATION}"
-    echo "    Detected existing ${PG_SERVER_NAME} in ${POSTGRES_LOCATION}; pinning postgresLocation"
+    echo "    Detected existing ${PG_SERVER_NAME} in ${POSTGRES_LOCATION}; pinning postgresLocation/postgresServerName"
+  else
+    echo "    ⚠ Found PG server name '${EXISTING_PG_NAME}' but could not read its location; falling back to defaults"
+    EXISTING_PG_NAME=""
   fi
 fi
 

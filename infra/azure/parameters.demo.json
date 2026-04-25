@@ -14,6 +14,9 @@
     "redisSkuCapacity": { "value": 0 },
     "storageSkuName": { "value": "Standard_LRS" },
     "acrSkuName": { "value": "Basic" },
+    "staticWebAppSku": { "value": "Free" },
+    "customDomain": { "value": "sbtm.ca" },
+    "manageDnsZone": { "value": false },
     "isDevTestSubscription": { "value": false }
   }
 }

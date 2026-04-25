@@ -25,6 +25,26 @@ spec:
     - host: api.sbtm.example.com # Replace with actual domain
       http:
         paths:
+          # Socket.IO endpoint for emergency-alerts (server uses path
+          # `/ws/alerts`). Routed directly to the service so the WebSocket
+          # upgrade and namespace multiplexing don't have to traverse the
+          # api-gateway.
+          - path: /ws/alerts
+            pathType: Prefix
+            backend:
+              service:
+                name: emergency-alerts
+                port:
+                  number: 80
+          # Socket.IO endpoint for student-presence (server uses path
+          # `/ws/presence`).
+          - path: /ws/presence
+            pathType: Prefix
+            backend:
+              service:
+                name: student-presence
+                port:
+                  number: 80
           - path: /
             pathType: Prefix
             backend:

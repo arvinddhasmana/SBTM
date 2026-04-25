@@ -46,6 +46,20 @@ SERVICE_COMMANDS=(
     "notification-service:pnpm run start:dev"
 )
 
+# Per-service local-dev PORT (matches docker-compose.yml + admin-dashboard
+# Vite env defaults). Several services default to the same internal port in
+# their main.ts, so we MUST inject distinct PORTs to avoid collisions.
+SERVICE_PORTS=(
+    "api-gateway:3001"
+    "gps-tracking:3002"
+    "emergency-alerts:3003"
+    "student-presence:3004"
+    "video-service:3005"
+    "student-management:3006"
+    "compliance-management:3007"
+    "notification-service:3008"
+)
+
 INFRA_ONLY=false
 NO_DASHBOARD=false
 SELECTED_SERVICES=()
@@ -90,6 +104,19 @@ get_service_cmd() {
         fi
     done
     echo "pnpm run start:dev"
+}
+
+get_service_port() {
+    local svc=$1
+    for entry in "${SERVICE_PORTS[@]}"; do
+        local name="${entry%%:*}"
+        local port="${entry#*:}"
+        if [[ "$name" == "$svc" ]]; then
+            echo "$port"
+            return
+        fi
+    done
+    echo ""
 }
 
 echo ""
@@ -162,6 +189,7 @@ for svc in "${SELECTED_SERVICES[@]}"; do
     fi
 
     cmd=$(get_service_cmd "$svc")
+    port=$(get_service_port "$svc")
     log_file="$LOG_DIR/${svc}.log"
     pid_file="$PID_DIR/${svc}.pid"
 
@@ -175,11 +203,34 @@ for svc in "${SELECTED_SERVICES[@]}"; do
         rm -f "$pid_file"
     fi
 
-    # Start service in background
-    (cd "$svc_dir" && $cmd > "$log_file" 2>&1 &
+    # Start service in background. PORT is injected so each service binds to
+    # a distinct port (several services share the same default in main.ts).
+    # DB_* / REDIS_* point at the docker-compose infra brought up in step 2.
+    (cd "$svc_dir" && \
+        PORT="$port" \
+        DB_HOST=localhost \
+        DB_PORT=5433 \
+        DB_USERNAME=postgres \
+        DB_PASSWORD=mysecretpassword \
+        DB_DATABASE=sbms \
+        DATABASE_URL="postgresql://postgres:mysecretpassword@localhost:5433/sbms" \
+        REDIS_HOST=localhost \
+        REDIS_PORT=6379 \
+        JWT_SECRET="${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}" \
+        JWT_EXPIRATION="${JWT_EXPIRATION:-24h}" \
+        CORS_ORIGINS="${CORS_ORIGINS:-http://localhost:5173,http://localhost:5174}" \
+        GPS_SERVICE_URL=http://localhost:3002 \
+        ALERTS_SERVICE_URL=http://localhost:3003 \
+        PRESENCE_SERVICE_URL=http://localhost:3004 \
+        VIDEO_SERVICE_URL=http://localhost:3005 \
+        STUDENT_SERVICE_URL=http://localhost:3006 \
+        COMPLIANCE_SERVICE_URL=http://localhost:3007 \
+        NOTIFICATION_SERVICE_URL=http://localhost:3008 \
+        OSRM_BASE_URL=http://localhost:5000 \
+        $cmd > "$log_file" 2>&1 &
      echo $! > "$pid_file")
 
-    echo -e "  ${GREEN}✓${NC} $svc ${DIM}(PID: $(cat "$pid_file"), log: .dev-logs/${svc}.log)${NC}"
+    echo -e "  ${GREEN}✓${NC} $svc ${DIM}(port: ${port:-default}, PID: $(cat "$pid_file"), log: .dev-logs/${svc}.log)${NC}"
 done
 
 # Start admin dashboard if not disabled

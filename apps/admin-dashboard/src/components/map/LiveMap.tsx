@@ -4,6 +4,7 @@ import { Maximize2, Minimize2, RotateCcw, Users } from 'lucide-react';
 import type { LiveLocation, Route } from '../../types';
 import { getStatusColorClass } from '../../utils/formatters';
 import { parseWktPoint } from '../../utils/geo';
+import { getTileLayerConfig } from '../../lib/mapTiles';
 
 interface LiveMapProps {
   locations: LiveLocation[];
@@ -86,9 +87,12 @@ const LiveMap: React.FC<LiveMapProps> = ({
     // Initialize map
     mapInstanceRef.current = L.map(mapRef.current).setView([45.392, -75.713], 12);
 
-    // Add tile layer
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors',
+    // Add tile layer (provider configured in src/lib/mapTiles.ts)
+    const tile = getTileLayerConfig();
+    L.tileLayer(tile.url, {
+      attribution: tile.attribution,
+      subdomains: tile.subdomains,
+      maxZoom: tile.maxZoom,
     }).addTo(mapInstanceRef.current);
 
     return () => {

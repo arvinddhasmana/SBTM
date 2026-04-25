@@ -77,7 +77,21 @@ Example routes for St. Bernadette:
 
 **Total: 60 routes** (10 per school x 6 schools)
 
-## Portal URLs (Docker)
+## Portal URLs
+
+### Cloud demo (Azure Static Web Apps)
+
+After `bash scripts/azure/bootstrap.sh demo eastus` and DNS delegation:
+
+- Admin Dashboard: https://admin.sbtm.ca
+- Parent Portal: https://parent.sbtm.ca
+- API Gateway: https://api.sbtm.ca
+
+Verify with: `bash scripts/azure/verify-portals.sh demo`
+
+See [docs/Deployment/CustomDomainSetup.md](../Deployment/CustomDomainSetup.md) for the one-time NS delegation step.
+
+### Local Docker
 
 - Admin Dashboard: http://localhost:5173
 - Parent Portal: http://localhost:5174
