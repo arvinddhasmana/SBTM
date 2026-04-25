@@ -115,7 +115,7 @@ Go to **Settings → Secrets and variables → Actions → New repository secret
 ### Option A — Single-command bootstrap (steps 5, 6, 7 in one go)
 
 ```bash
-bash scripts/azure/bootstrap.sh demo eastus              # demo  → sbtm-demo-rg, B1ms/D2s_v3 SKUs
+bash scripts/azure/bootstrap.sh demo eastus              # demo  → sbtm-demo-rg, B1ms/B2as_v2 SKUs
 bash scripts/azure/bootstrap.sh production canadacentral # prod  → sbtm-rg
 ```
 

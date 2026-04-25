@@ -114,22 +114,32 @@ echo ""
 echo "==> vCPU quota (advisory)"
 if [[ -n "${SUB_ID}" ]]; then
   LOCATION="${LOCATION:-eastus}"
-  # Check standardDSv3Family specifically (used by AKS node SKU Standard_D2s_v3 / D4s_v3)
+  # Pick the VM family that matches the env's aksNodeSize (demo=B2as_v2 → Bsv2 family,
+  # production=D4s_v3 → DSv3 family). Falls back to DSv3 if param file is unreadable.
+  AKS_NODE_SIZE=$(jq -r '.parameters.aksNodeSize.value // ""' "infra/azure/parameters.${ENVIRONMENT}.json" 2>/dev/null || true)
+  case "${AKS_NODE_SIZE}" in
+    Standard_B*as_v2|Standard_B*s_v2)  VM_FAMILY="standardBsv2Family" ;;
+    Standard_B*)                        VM_FAMILY="standardBSFamily" ;;
+    Standard_D*s_v3|Standard_D*as_v3)   VM_FAMILY="standardDSv3Family" ;;
+    Standard_D*s_v4|Standard_D*as_v4)   VM_FAMILY="standardDSv4Family" ;;
+    Standard_D*s_v5|Standard_D*as_v5)   VM_FAMILY="standardDSv5Family" ;;
+    *)                                   VM_FAMILY="standardDSv3Family" ;;
+  esac
   FAMILY_QUOTA=$(az vm list-usage --location "${LOCATION}" \
-    --query "[?name.value=='standardDSv3Family'].{current:currentValue,limit:limit}" \
+    --query "[?name.value=='${VM_FAMILY}'].{current:currentValue,limit:limit}" \
     -o json 2>/dev/null || echo '[]')
   if [[ "${FAMILY_QUOTA}" != "[]" ]] && [[ "${FAMILY_QUOTA}" != "null" ]]; then
     CURRENT=$(echo "${FAMILY_QUOTA}" | jq -r '.[0].current // 0')
     LIMIT=$(echo "${FAMILY_QUOTA}"   | jq -r '.[0].limit  // 0')
-    NEEDED=$([[ "${ENVIRONMENT}" == "production" ]] && echo "16" || echo "8")
+    NEEDED=$([[ "${ENVIRONMENT}" == "production" ]] && echo "16" || echo "4")
     AVAILABLE=$(( LIMIT - CURRENT ))
     if [[ "${AVAILABLE}" -ge "${NEEDED}" ]]; then
-      ok "standardDSv3Family in ${LOCATION}: ${CURRENT} used / ${LIMIT} limit (${AVAILABLE} available, need ${NEEDED})"
+      ok "${VM_FAMILY} in ${LOCATION}: ${CURRENT} used / ${LIMIT} limit (${AVAILABLE} available, need ${NEEDED})"
     else
-      warn "standardDSv3Family in ${LOCATION}: only ${AVAILABLE} vCPUs available, need ${NEEDED} — request quota increase"
+      warn "${VM_FAMILY} in ${LOCATION}: only ${AVAILABLE} vCPUs available, need ${NEEDED} — request quota increase"
     fi
   else
-    warn "Could not retrieve vCPU quota for standardDSv3Family in ${LOCATION}"
+    warn "Could not retrieve vCPU quota for ${VM_FAMILY} in ${LOCATION}"
   fi
 fi
 

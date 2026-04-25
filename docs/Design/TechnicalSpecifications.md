@@ -46,17 +46,17 @@ This document describes the target v1 technical baseline. It should be read with
 
 When deploying to Azure AKS, local infrastructure components map to the following managed services. See [`docs/Deployment/AzureArchitecture.md`](../Deployment/AzureArchitecture.md) for full details.
 
-| Local Component         | Azure Service                           | Demo SKU                          | Notes                                                    |
-| ----------------------- | --------------------------------------- | --------------------------------- | -------------------------------------------------------- |
-| PostgreSQL container    | Azure DB for PostgreSQL Flexible Server | B2ms, 32GB                        | PostGIS extension supported; private endpoint in VNET    |
-| Redis container         | Azure Cache for Redis                   | Basic C0 (250MB)                  | Standard C1 for production (persistence + replica)       |
-| MinIO / local storage   | Azure Blob Storage                      | LRS Hot tier                      | S3-compatible SDK; no code changes needed beyond env var |
-| Docker Compose services | Azure Kubernetes Service (AKS)          | Standard tier, 2× Standard_D2s_v3 | Kustomize manifests in `infra/k8s/`                      |
-| NGINX (local)           | NGINX Ingress Controller + cert-manager | Free (in-cluster)                 | Let's Encrypt TLS; single public IP                      |
-| Jaeger (local)          | Azure Monitor + Application Insights    | Pay-per-GB                        | OpenTelemetry → App Insights OTLP endpoint               |
-| `.env` secrets          | Azure Key Vault + CSI driver            | Standard tier                     | SecretProviderClass mounts secrets as pod volumes        |
-| Docker Hub images       | Azure Container Registry (ACR)          | Basic SKU                         | Integrated with AKS via managed identity pull            |
-| Static file serving     | Azure Static Web Apps                   | Free tier                         | CDN-backed; zero-ops; Admin Dashboard + Parent Portal    |
+| Local Component         | Azure Service                           | Demo SKU                                                     | Notes                                                    |
+| ----------------------- | --------------------------------------- | ------------------------------------------------------------ | -------------------------------------------------------- |
+| PostgreSQL container    | Azure DB for PostgreSQL Flexible Server | B1ms (demo) / GP D4s_v3 (prod), 32GB / 256GB                 | PostGIS extension supported; private endpoint in VNET    |
+| Redis container         | Azure Cache for Redis                   | Basic C0 (250MB)                                             | Standard C1 for production (persistence + replica)       |
+| MinIO / local storage   | Azure Blob Storage                      | LRS Hot tier                                                 | S3-compatible SDK; no code changes needed beyond env var |
+| Docker Compose services | Azure Kubernetes Service (AKS)          | Standard tier, 1× Standard_B2as_v2 (demo) / 3× D4s_v3 (prod) | Kustomize manifests in `infra/k8s/`                      |
+| NGINX (local)           | NGINX Ingress Controller + cert-manager | Free (in-cluster)                                            | Let's Encrypt TLS; single public IP                      |
+| Jaeger (local)          | Azure Monitor + Application Insights    | Pay-per-GB                                                   | OpenTelemetry → App Insights OTLP endpoint               |
+| `.env` secrets          | Azure Key Vault + CSI driver            | Standard tier                                                | SecretProviderClass mounts secrets as pod volumes        |
+| Docker Hub images       | Azure Container Registry (ACR)          | Basic SKU                                                    | Integrated with AKS via managed identity pull            |
+| Static file serving     | Azure Static Web Apps                   | Free tier                                                    | CDN-backed; zero-ops; Admin Dashboard + Parent Portal    |
 
 ---
 

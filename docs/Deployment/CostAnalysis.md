@@ -21,21 +21,21 @@ SBTM uses **only two Azure environments** — Demo and Production — each in it
 
 Suitable for: client presentations, proof-of-concept validation, developer testing, low-traffic pilots.
 
-| Azure Service                    | SKU                                         | Est. Cost/month    |
-| -------------------------------- | ------------------------------------------- | ------------------ |
-| AKS cluster (control plane)      | Free tier (Standard tier disabled for demo) | $0                 |
-| AKS system node pool             | 1× Standard_D2s_v3 (2 vCPU, 8GB RAM)        | ~$70               |
-| AKS app node pool                | 1× Standard_D2s_v3                          | ~$70               |
-| Azure DB for PostgreSQL Flexible | B2ms, 32GB storage                          | ~$50               |
-| Azure Cache for Redis            | Basic C0 (250MB)                            | ~$16               |
-| Azure Blob Storage               | LRS, Hot tier, ~50GB                        | ~$2                |
-| Azure Container Registry         | Basic                                       | ~$5                |
-| Azure Key Vault                  | Standard (10K operations)                   | ~$3                |
-| Azure Monitor + App Insights     | ~5GB logs/month                             | ~$8                |
-| Public IP (ingress)              | Standard                                    | ~$4                |
-| Static Web Apps (admin + parent) | Free × 2                                    | $0                 |
-| Azure DNS public zone (sbtm.ca)  | 1 zone, low query volume                    | ~$0.50             |
-| **Total**                        |                                             | **~$228.50/month** |
+| Azure Service                                               | SKU                                                  | Est. Cost/month    |
+| ----------------------------------------------------------- | ---------------------------------------------------- | ------------------ |
+| AKS cluster (control plane)                                 | Free tier (Standard tier disabled for demo)          | $0                 |
+| AKS system node pool                                        | 1× Standard_B2as_v2 (2 vCPU, 8GB RAM, AMD burstable) | ~$42               |
+| Azure DB for PostgreSQL Flexible                            | Standard_B1ms (1 vCPU, 2GB), 32GB storage            | ~$28               |
+| Azure Cache for Redis                                       | Basic C0 (250MB)                                     | ~$16               |
+| Azure Blob Storage                                          | LRS, Hot tier, ~50GB                                 | ~$2                |
+| Azure Container Registry                                    | Basic                                                | ~$5                |
+| Azure Key Vault                                             | Standard (10K operations)                            | ~$3                |
+| Azure Monitor + App Insights                                | ~5GB logs/month                                      | ~$8                |
+| Public IP (ingress)                                         | Standard                                             | ~$4                |
+| Static Web Apps (admin + parent)                            | Free × 2                                             | $0                 |
+| Azure DNS public zone (sbtm.ca)                             | 1 zone, low query volume                             | ~$0.50             |
+| **Total (24×7)**                                            |                                                      | **~$108.50/month** |
+| **Total with `cost-stop.sh` between sessions (~10h/wk on)** |                                                      | **~$10–15/month**  |
 
 ---
 

@@ -14,7 +14,7 @@ This document describes how the platform is deployed in local environments and t
 | ---------------- | ------------------------------ | --------------------------------------- | ------------------------------------------------------------ |
 | Orchestration    | Docker Compose                 | AKS cluster — staging namespace         | AKS cluster — production namespace (multi-replica)           |
 | Gateway exposure | Local port mapping             | NGINX Ingress + Let's Encrypt TLS       | NGINX Ingress + Let's Encrypt TLS (+ Azure Front Door WAF)   |
-| Database         | Shared PostgreSQL container    | Azure DB for PostgreSQL Flexible (B2ms) | Azure DB for PostgreSQL Flexible (GP tier) with HA + backups |
+| Database         | Shared PostgreSQL container    | Azure DB for PostgreSQL Flexible (B1ms) | Azure DB for PostgreSQL Flexible (GP tier) with HA + backups |
 | Queue and cache  | Redis container                | Azure Cache for Redis (Basic C0)        | Azure Cache for Redis (Standard C1) with AOF persistence     |
 | Object storage   | Local or MinIO                 | Azure Blob Storage (LRS)                | Azure Blob Storage (ZRS) with lifecycle rules and encryption |
 | Client delivery  | Local Vite or static container | Azure Static Web Apps (free tier)       | Azure Static Web Apps (Standard) with custom domain          |

@@ -76,8 +76,8 @@ All sizing is parameterised. There are two ways to change a tier:
 {
   "parameters": {
     "aksNodeCount":      { "value": 2 },
-    "aksNodeSize":       { "value": "Standard_D2s_v3" },   ← change here for cheaper/larger AKS
-    "postgresSkuName":   { "value": "Standard_B2ms" },     ← change here for PG
+    "aksNodeSize":       { "value": "Standard_B2as_v2" }, ← change here for cheaper/larger AKS
+    "postgresSkuName":   { "value": "Standard_B1ms" },    ← change here for PG
     "postgresSkuTier":   { "value": "Burstable" },
     "postgresStorageGB": { "value": 32 },
     "redisSkuName":      { "value": "Basic" },
@@ -100,20 +100,20 @@ az deployment group create \
 
 ### Parameter Reference
 
-| Parameter               | Demo Value        | Prod Value        | Description                                                                                                              |
-| ----------------------- | ----------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `environment`           | `demo`            | `production`      | Suffix for resource names; sets K8s namespace                                                                            |
-| `location`              | `eastus`          | `canadacentral`   | Azure region                                                                                                             |
-| `aksNodeCount`          | `2`               | `3`               | Initial app node pool count                                                                                              |
-| `aksNodeSize`           | `Standard_D2s_v3` | `Standard_D4s_v3` | Node VM SKU                                                                                                              |
-| `postgresSkuName`       | `Standard_B2ms`   | `Standard_D4s_v3` | PostgreSQL SKU                                                                                                           |
-| `postgresSkuTier`       | `Burstable`       | `GeneralPurpose`  | PostgreSQL tier                                                                                                          |
-| `postgresStorageGB`     | `32`              | `256`             | PostgreSQL storage                                                                                                       |
-| `redisSkuName`          | `Basic`           | `Standard`        | Redis SKU                                                                                                                |
-| `redisSkuCapacity`      | `0`               | `1`               | Redis capacity (C0=0, C1=1, C2=2)                                                                                        |
-| `storageSkuName`        | `Standard_LRS`    | `Standard_ZRS`    | Blob redundancy                                                                                                          |
-| `acrSkuName`            | `Basic`           | `Standard`        | Container Registry SKU                                                                                                   |
-| `isDevTestSubscription` | `false`           | `false`           | Tags resources for Dev/Test cost reporting (see [CostAnalysis.md](CostAnalysis.md#azure-devtest-pricing-40-vm-discount)) |
+| Parameter               | Demo Value         | Prod Value        | Description                                                                                                              |
+| ----------------------- | ------------------ | ----------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `environment`           | `demo`             | `production`      | Suffix for resource names; sets K8s namespace                                                                            |
+| `location`              | `eastus`           | `canadacentral`   | Azure region                                                                                                             |
+| `aksNodeCount`          | `2`                | `3`               | Initial app node pool count                                                                                              |
+| `aksNodeSize`           | `Standard_B2as_v2` | `Standard_D4s_v3` | Node VM SKU                                                                                                              |
+| `postgresSkuName`       | `Standard_B1ms`    | `Standard_D4s_v3` | PostgreSQL SKU                                                                                                           |
+| `postgresSkuTier`       | `Burstable`        | `GeneralPurpose`  | PostgreSQL tier                                                                                                          |
+| `postgresStorageGB`     | `32`               | `256`             | PostgreSQL storage                                                                                                       |
+| `redisSkuName`          | `Basic`            | `Standard`        | Redis SKU                                                                                                                |
+| `redisSkuCapacity`      | `0`                | `1`               | Redis capacity (C0=0, C1=1, C2=2)                                                                                        |
+| `storageSkuName`        | `Standard_LRS`     | `Standard_ZRS`    | Blob redundancy                                                                                                          |
+| `acrSkuName`            | `Basic`            | `Standard`        | Container Registry SKU                                                                                                   |
+| `isDevTestSubscription` | `false`            | `false`           | Tags resources for Dev/Test cost reporting (see [CostAnalysis.md](CostAnalysis.md#azure-devtest-pricing-40-vm-discount)) |
 
 ### Common Tier-Change Recipes
 
