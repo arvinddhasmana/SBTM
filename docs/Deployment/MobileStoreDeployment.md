@@ -117,6 +117,39 @@ eas build --platform all --profile production
 bash scripts/mobile-build.sh [android|ios|all]
 ```
 
+### Demo / Sideload Builds (Preview Profile)
+
+Use the `preview` profile when you need an installable `.apk` for demos, QA testing, or sideloading directly onto an Android device. **Do not use `production` for this** — it produces a `.aab` that can only be installed via Google Play, and it auto-increments `versionCode` on every run.
+
+|                               | `preview`                     | `production`             |
+| ----------------------------- | ----------------------------- | ------------------------ |
+| Output format                 | `.apk` (installable directly) | `.aab` (Play Store only) |
+| Distribution                  | Internal (sideload / QR)      | Google Play Store        |
+| Auto-increments `versionCode` | No                            | Yes                      |
+| Keystore managed by           | EAS                           | EAS                      |
+
+```bash
+# From project root — demo/sideload APK
+bash scripts/mobile-build.sh android --profile preview
+
+# Or directly via EAS
+cd apps/driver-app
+eas build --platform android --profile preview --non-interactive
+```
+
+Once the build finishes, EAS prints a QR code and an install URL:
+
+```
+https://expo.dev/accounts/<account>/projects/sbtm-driver-app/builds/<build-id>
+```
+
+**On the Android device:**
+
+1. Open the build URL (or scan the QR code).
+2. Tap **Install** — this downloads the `.apk`.
+3. If prompted, enable **"Install unknown apps"** for your browser.
+4. Grant Location, Bluetooth, and Notification permissions when the app first opens.
+
 ---
 
 ## Store Submission
