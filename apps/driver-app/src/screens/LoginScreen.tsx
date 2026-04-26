@@ -12,6 +12,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import axios from 'axios';
 import { useDriverStore } from '../store/useDriverStore';
 
 const GLASS_BG = 'rgba(15,23,42,0.82)';
@@ -33,8 +34,21 @@ export default function LoginScreen() {
     setIsLoading(true);
     try {
       await login(email, password);
-    } catch (error: any) {
-      Alert.alert('Login Failed', error.message || 'Unknown error');
+    } catch (error: unknown) {
+      const isNetworkError = axios.isAxiosError(error) && !error.response;
+      if (isNetworkError) {
+        Alert.alert(
+          'Cannot Reach Server',
+          'Backend services are not reachable. Please check your network connection or contact your administrator.',
+        );
+      } else {
+        const message = axios.isAxiosError(error)
+          ? (error.response?.data?.message ?? error.message)
+          : error instanceof Error
+            ? error.message
+            : 'Unknown error';
+        Alert.alert('Login Failed', message);
+      }
     } finally {
       setIsLoading(false);
     }

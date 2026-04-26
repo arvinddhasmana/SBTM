@@ -139,6 +139,24 @@ eas build --platform android --profile preview
 # Download the APK from the URL printed at the end
 ```
 
+> **Native API keys (Google Maps).** Standalone Android builds need a Google
+> Maps SDK key in `AndroidManifest.xml`. The driver app reads it from the
+> EAS-hosted secret `GOOGLE_MAPS_ANDROID_API_KEY` via `app.config.js` — no
+> action is needed unless the key is rotated. To rotate:
+>
+> ```bash
+> # Issue a fresh key in Google Cloud Console (restrict by package
+> # com.sbtm.driver + EAS keystore SHA-1, scope to Maps SDK for Android),
+> # then update the EAS secret:
+> eas env:update --scope project --name GOOGLE_MAPS_ANDROID_API_KEY \
+>   --value "<new-key>" --visibility secret \
+>   --environment preview --environment production
+> # Then rebuild.
+> ```
+>
+> Without this key the APK crashes the moment a `MapView` is mounted with
+> `IllegalStateException: API key not found`.
+
 #### Option B: Local build (requires Android SDK + JDK 17)
 
 ```bash

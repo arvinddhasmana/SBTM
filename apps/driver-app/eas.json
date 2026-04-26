@@ -22,6 +22,9 @@
       },
       "ios": {
         "simulator": true
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://451f-76-71-3-21.ngrok-free.app/api/v1"
       }
     },
     "production": {
@@ -31,6 +34,9 @@
       },
       "ios": {
         "simulator": false
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://api.sbtm.example.com/api/v1"
       }
     }
   },

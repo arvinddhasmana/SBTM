@@ -437,11 +437,14 @@ npx tsc --noEmit
 
 ## Environment Variables
 
-All variables are prefixed `EXPO_PUBLIC_` so Expo injects them into the JS bundle at build time.
+Variables prefixed `EXPO_PUBLIC_` are inlined into the JS bundle at build time.
+Native-only secrets (e.g. the Google Maps key) are **not** prefixed and are
+resolved by `app.config.js` from EAS-hosted secrets.
 
-| Variable              | Required | Description                                              |
-| --------------------- | -------- | -------------------------------------------------------- |
-| `EXPO_PUBLIC_API_URL` | Yes      | Full base URL of the API Gateway **including `/api/v1`** |
+| Variable                      | Required                 | Scope                     | Description                                                                                                                                                                                                                                                                               |
+| ----------------------------- | ------------------------ | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `EXPO_PUBLIC_API_URL`         | Yes                      | Public (JS bundle)        | Full base URL of the API Gateway **including `/api/v1`**                                                                                                                                                                                                                                  |
+| `GOOGLE_MAPS_ANDROID_API_KEY` | Yes (Android standalone) | Native (Android manifest) | Google Maps SDK key. Stored as an EAS secret (project scope, `visibility=secret`) and injected into `AndroidManifest.xml` at build time via `app.config.js`. Not required for Expo Go. Restricted to package `com.sbtm.driver` + EAS keystore SHA-1 fingerprints in Google Cloud Console. |
 
 ### URL patterns by target
 

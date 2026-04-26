@@ -10,10 +10,12 @@ import {
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import axios from 'axios';
 import { useDriverStore } from './src/store/useDriverStore';
 import { AuthService } from './src/services/auth.service';
 import { setOnUnauthorized } from './src/services/api.service';
 import { ConnectivityService } from './src/services/connectivity.service';
+import BackendBanner from './src/components/BackendBanner';
 
 import LoginScreen from './src/screens/LoginScreen';
 import RouteSelectScreen from './src/screens/RouteSelectScreen';
@@ -29,6 +31,7 @@ export default function App() {
   const logout = useDriverStore((state) => state.logout);
   const setOffline = useDriverStore((state) => state.setOffline);
   const [isRestoring, setIsRestoring] = useState(true);
+  const [backendUnreachable, setBackendUnreachable] = useState(false);
 
   const [fontsLoaded] = useFonts({
     Inter_400Regular,
@@ -46,10 +49,19 @@ export default function App() {
           // Token exists – fetch the driver profile to validate it
           const driver = await AuthService.restoreSession();
           useDriverStore.setState({ driver, isAuthenticated: true });
+          setBackendUnreachable(false);
         }
-      } catch {
-        // Token invalid or expired – stay on login screen
-        await AuthService.logout();
+      } catch (error) {
+        const isNetworkError = axios.isAxiosError(error) && !error.response;
+        if (isNetworkError) {
+          // Backend is down — keep the token so the user can retry when it comes back.
+          // Show a banner so they know why the app can't auto-login.
+          setBackendUnreachable(true);
+        } else {
+          // Auth error (401, invalid token, etc.) — clear stale credentials.
+          await AuthService.logout();
+          setBackendUnreachable(false);
+        }
       } finally {
         setIsRestoring(false);
       }
@@ -65,7 +77,12 @@ export default function App() {
 
   // Monitor network connectivity and flush offline queues on reconnect
   useEffect(() => {
-    ConnectivityService.startMonitoring(setOffline);
+    ConnectivityService.startMonitoring((isOffline) => {
+      setOffline(isOffline);
+      // When connectivity returns, clear the backend-unreachable banner —
+      // the user's next login attempt will confirm whether the backend is back.
+      if (!isOffline) setBackendUnreachable(false);
+    });
     return () => ConnectivityService.stopMonitoring();
   }, [setOffline]);
 
@@ -94,6 +111,7 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
+      <BackendBanner visible={backendUnreachable} />
       <NavigationContainer>
         <Stack.Navigator screenOptions={screenOptions}>
           {!isAuthenticated ? (

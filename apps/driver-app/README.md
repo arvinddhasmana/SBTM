@@ -29,8 +29,10 @@ Mobile companion for school bus drivers in the SBTM ecosystem.
 apps/driver-app/
 ├── index.ts                       # App entry (registerRootComponent)
 ├── App.tsx                        # Root: auth restore, nav tree, connectivity
-├── app.json                       # Expo config, permissions, plugins
-├── .env                           # Local config (not committed)
+├── app.json                       # Expo static config, permissions, plugins
+├── app.config.js                  # Dynamic config: injects secrets (Maps API key)
+├── eas.json                       # EAS build profiles (development/preview/production)
+├── .env                           # Local env vars (not committed)
 ├── .env.example                   # Template — copy to .env to start
 └── src/
     ├── screens/
@@ -150,11 +152,59 @@ npx tsc --noEmit
 
 ## Environment Variables
 
-| Variable              | Required | Description                                    |
-| --------------------- | -------- | ---------------------------------------------- |
-| `EXPO_PUBLIC_API_URL` | Yes      | API Gateway URL **including `/api/v1`** suffix |
+| Variable                      | Required                 | Scope                     | Description                                                                                                                                                                                             |
+| ----------------------------- | ------------------------ | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `EXPO_PUBLIC_API_URL`         | Yes                      | Public (JS)               | API Gateway URL **including `/api/v1`** suffix. Inlined into the JS bundle at build time.                                                                                                               |
+| `GOOGLE_MAPS_ANDROID_API_KEY` | Yes (Android standalone) | Native (Android manifest) | Google Maps SDK key used by `react-native-maps`. Read by `app.config.js` and written into `AndroidManifest.xml` as `com.google.android.geo.API_KEY`. **Not needed for Expo Go** (it ships its own key). |
 
-Common values:
+### How the value is chosen per build
+
+The driver app uses **a single env var** (`EXPO_PUBLIC_API_URL`) and selects its
+value based on the EAS build profile (`apps/driver-app/eas.json`).
+
+| Build profile | Command                                                    | Source of `EXPO_PUBLIC_API_URL`                          | Source of `GOOGLE_MAPS_ANDROID_API_KEY` |
+| ------------- | ---------------------------------------------------------- | -------------------------------------------------------- | --------------------------------------- |
+| `development` | `pnpm exec expo start` / `eas build --profile development` | Local `apps/driver-app/.env` (gitignored, dev-only)      | Local `.env` (Expo Go ignores it)       |
+| `preview`     | `eas build --profile preview`                              | `eas.json` → `build.preview.env` (Azure demo deployment) | EAS-hosted secret (visibility=Secret)   |
+| `production`  | `eas build --profile production`                           | `eas.json` → `build.production.env` (Azure production)   | EAS-hosted secret (visibility=Secret)   |
+
+Cloud builds (`preview`, `production`) **ignore** your local `.env` — they read
+the API URL from `eas.json` and the Maps key from EAS-hosted secrets. To change
+a deployed backend URL, edit `eas.json` and rebuild that profile.
+
+### Google Maps API key (Android)
+
+The `react-native-maps` MapView crashes at construction time on standalone
+Android builds if no Google Maps API key is wired into the manifest. We solve
+this with two pieces:
+
+1. **EAS-hosted secret** (`GOOGLE_MAPS_ANDROID_API_KEY`, project scope, visibility=Secret) — created once with:
+   ```bash
+   eas env:create --scope project --name GOOGLE_MAPS_ANDROID_API_KEY \
+     --value "<key>" --visibility secret \
+     --environment development --environment preview --environment production
+   ```
+2. **`app.config.js`** — reads `process.env.GOOGLE_MAPS_ANDROID_API_KEY` and writes it into `expo.android.config.googleMaps.apiKey` so EAS injects it into `AndroidManifest.xml`.
+
+The key is **restricted in Google Cloud Console** by:
+
+- Application restrictions: Android apps → package `com.sbtm.driver` + the EAS keystore SHA-1 fingerprints (preview + production)
+- API restrictions: Maps SDK for Android only
+
+So even if the key is extracted from the APK it's unusable from any other app or platform. Rotate by regenerating the key in Google Cloud Console and re-running `eas env:create` (or `eas env:update`).
+
+To see the SHA-1 fingerprints for the restriction list:
+
+```bash
+cd apps/driver-app
+eas credentials --platform android   # → preview/production → Keystore → View certificate fingerprint
+```
+
+> **Note:** Expo inlines `EXPO_PUBLIC_*` variables into the JS bundle at build
+> time. Changing the URL requires a fresh `eas build`; you cannot swap it on a
+> running APK. See https://docs.expo.dev/guides/environment-variables/.
+
+### Local dev values
 
 ```bash
 # Android emulator
