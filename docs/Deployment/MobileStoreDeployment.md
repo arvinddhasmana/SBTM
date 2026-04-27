@@ -77,7 +77,7 @@ The production profile in `apps/driver-app/eas.json` is fully configured for sto
 
 ```bash
 # Install EAS CLI
-npm install -g eas-cli
+pnpm add -g eas-cli
 
 # Login to Expo
 eas login

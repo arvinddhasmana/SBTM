@@ -635,9 +635,9 @@ PARENT_SWA_NAME="${PARENT_SWA_NAME:-sbtm-parent-${ENVIRONMENT}}"
 hr "Step 11/12 — Build and deploy admin + parent portals"
 
 if ! command -v swa >/dev/null 2>&1; then
-  step "Installing @azure/static-web-apps-cli globally (npm)"
-  npm install -g @azure/static-web-apps-cli >/dev/null 2>&1 || \
-    warn "Could not install swa CLI globally — try: sudo npm install -g @azure/static-web-apps-cli"
+  step "Installing @azure/static-web-apps-cli globally (pnpm)"
+  pnpm add -g @azure/static-web-apps-cli >/dev/null 2>&1 || \
+    warn "Could not install swa CLI globally — try: sudo pnpm add -g @azure/static-web-apps-cli"
 fi
 ok "swa CLI: $(swa --version 2>/dev/null || echo 'not installed — portal upload will be skipped')"
 

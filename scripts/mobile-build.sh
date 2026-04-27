@@ -36,7 +36,7 @@ if [[ ! -d "${APP_DIR}" ]]; then
 fi
 
 if ! command -v eas &> /dev/null; then
-  echo "ERROR: eas-cli not installed. Run: npm install -g eas-cli"
+  echo "ERROR: eas-cli not installed. Run: pnpm add -g eas-cli"
   exit 1
 fi
 

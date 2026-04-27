@@ -186,7 +186,7 @@ border: 1px solid rgba(255, 255, 255, 0.1)
 ### Prerequisites
 
 - Node.js 20+
-- Expo CLI: `npm install -g expo-cli eas-cli`
+- Expo CLI: `pnpm add -g expo-cli eas-cli`
 - Android Studio (for Android emulator) OR Xcode (for iOS simulator)
 - Physical device with Expo Go app (recommended)
 
@@ -249,7 +249,7 @@ pnpm test
 pnpm test -- --coverage
 
 # TypeScript check
-npx tsc --noEmit
+pnpm exec tsc --noEmit
 ```
 
 ## 🧪 Testing
@@ -258,16 +258,16 @@ npx tsc --noEmit
 
 ```bash
 # Run all tests
-npm test
+pnpm test
 
 # Run tests in watch mode
-npm test -- --watch
+pnpm test -- --watch
 
 # Run tests with coverage
-npm test -- --coverage
+pnpm test -- --coverage
 
 # Run specific test file
-npm test AuthService.test.ts
+pnpm test AuthService.test.ts
 ```
 
 ### Test Structure
@@ -303,19 +303,19 @@ The app supports web via `react-native-web` and includes Playwright E2E tests:
 
 ```bash
 # Install Playwright browsers (first time only)
-npx playwright install
+pnpm exec playwright install
 
 # Run E2E tests (starts web server automatically)
-npm run test:e2e
+pnpm run test:e2e
 
 # Run with UI mode for interactive debugging
-npm run test:e2e:ui
+pnpm run test:e2e:ui
 
 # Run in headed mode (see browser)
-npm run test:e2e:headed
+pnpm run test:e2e:headed
 
 # View test report
-npm run test:e2e:report
+pnpm run test:e2e:report
 ```
 
 **E2E Test Coverage:**

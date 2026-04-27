@@ -128,7 +128,7 @@ Complete axios mock with:
 ```yaml
 - Checkout code
 - Setup Node.js 20 with pnpm
-- Install dependencies (npm ci)
+- Install dependencies (pnpm install --frozen-lockfile)
 - Run TypeScript type checking
 - Run Jest tests with coverage
 - Upload coverage to Codecov
@@ -161,7 +161,7 @@ Complete axios mock with:
 ```yaml
 1. Setup Environment
    - Node.js 20
-   - npm install
+   - pnpm install --frozen-lockfile
    - Install EAS CLI globally
 
 2. EAS Authentication
@@ -337,19 +337,19 @@ Absence reporting functionality:
 
 ```bash
 # Run all E2E tests (auto-starts Expo web)
-npm run test:e2e
+pnpm run test:e2e
 
 # Interactive UI mode (great for debugging)
-npm run test:e2e:ui
+pnpm run test:e2e:ui
 
 # Headed mode (see browser)
-npm run test:e2e:headed
+pnpm run test:e2e:headed
 
 # View HTML report
-npm run test:e2e:report
+pnpm run test:e2e:report
 
 # Install browsers (first time only)
-npx playwright install
+pnpm exec playwright install
 ```
 
 ### E2E Test Metrics
@@ -387,29 +387,29 @@ npx playwright install
 ### Running Tests
 ```bash
 # All tests
-npm test
+pnpm test
 
 # With coverage
-npm test -- --coverage
+pnpm test -- --coverage
 
 # Watch mode
-npm test -- --watch
+pnpm test -- --watch
 
 # Specific file
-npm test AuthService.test.ts
+pnpm test AuthService.test.ts
 
 # Update snapshots
-npm test -- -u
+pnpm test -- -u
 ```
 
 ### Type Checking
 ```bash
-npx tsc --noEmit
+pnpm exec tsc --noEmit
 ```
 
 ### Linting
 ```bash
-npx expo lint
+pnpm exec expo lint
 ```
 
 ## 🚀 Deployment Pipeline
