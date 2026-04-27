@@ -70,6 +70,9 @@ param customDomain string = 'sbtm.ca'
 @description('Create and manage the Azure DNS zone for customDomain inside this resource group. Set false if DNS is hosted elsewhere.')
 param manageDnsZone bool = true
 
+@description('Optional Key Vault name suffix (e.g. "-cc") to avoid collisions with soft-deleted vaults of the same base name.')
+param kvNameSuffix string = ''
+
 @description('Set to true if the target subscription is an Azure Dev/Test subscription. Adds the dev-test-eligible tag and stamps the deployment so cost reports can identify Dev/Test billing. Eligibility is set at the subscription level, not on individual resources — see docs/Deployment/CostAnalysis.md.')
 param isDevTestSubscription bool = false
 
@@ -132,6 +135,7 @@ module keyvault 'modules/keyvault.bicep' = {
     location: location
     aksKubeletObjectId: aks.outputs.kubeletIdentityObjectId
     aksOidcIssuerUrl: aks.outputs.oidcIssuerUrl
+    kvNameSuffix: kvNameSuffix
   }
 }
 
@@ -148,6 +152,7 @@ module database 'modules/database.bicep' = {
     postgresSkuTier: postgresSkuTier
     postgresStorageGB: postgresStorageGB
     servicesSubnetId: network.outputs.servicesSubnetId
+    vnetIdForDnsLink: network.outputs.vnetId
   }
 }
 
@@ -174,14 +179,10 @@ module storage 'modules/storage.bicep' = {
 }
 
 // ── 9. Static Web Apps (admin + parent portals) ───────────────────────────
-module staticWebApps 'modules/static-web-app.bicep' = {
-  name: 'staticWebApps${moduleSuffix}'
-  params: {
-    environment: environment
-    staticWebAppSku: staticWebAppSku
-    tags: commonTags
-  }
-}
+// Static Web Apps are now provisioned by scripts/azure/bootstrap.sh into the
+// persistent SWA resource group (default: sbtm-dns-rg) so their default
+// *.azurestaticapps.net hostnames + custom-domain bindings + cert validations
+// survive teardown. Free tier = $0/mo. See bootstrap.sh `ensure_persistent_swa`.
 
 // ── 10. DNS zone for custom domain (optional) ─────────────────────────────
 module dnsZone 'modules/dns.bicep' = {
@@ -221,17 +222,9 @@ output storageAccountName string = storage.outputs.accountName
 @description('Application Insights connection string — add to Key Vault as sbtm-appinsights-connection-string')
 output appInsightsConnectionString string = monitoring.outputs.appInsightsConnectionString
 
-@description('Admin portal Static Web App resource name')
-output adminPortalName string = staticWebApps.outputs.adminPortalName
-
-@description('Admin portal default *.azurestaticapps.net hostname')
-output adminPortalDefaultHostname string = staticWebApps.outputs.adminPortalDefaultHostname
-
-@description('Parent portal Static Web App resource name')
-output parentPortalName string = staticWebApps.outputs.parentPortalName
-
-@description('Parent portal default *.azurestaticapps.net hostname')
-output parentPortalDefaultHostname string = staticWebApps.outputs.parentPortalDefaultHostname
+// Static Web App outputs are emitted by bootstrap.sh after `ensure_persistent_swa`
+// (see ${SWA_RESOURCE_GROUP}). They are no longer Bicep outputs since SWAs
+// live in a different (persistent) resource group than this stack.
 
 @description('Custom domain (sbtm.ca) — empty when customDomain is unset')
 output customDomain string = customDomain

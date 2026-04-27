@@ -63,8 +63,16 @@ echo "==> Capturing Key Vault name(s) for purge after RG delete"
 KV_NAMES=$(az keyvault list --resource-group "${RESOURCE_GROUP}" --query "[].name" -o tsv || true)
 
 # ── Pre-delete cleanup of SWA custom-domain bindings + DNS records ──────────
-echo "==> Cleaning up Static Web App custom-domain bindings"
+# Note: As of the persistent-SWA refactor, Static Web Apps live in
+# ${SWA_RESOURCE_GROUP:-${DNS_RESOURCE_GROUP}} (default: sbtm-dns-rg) and are
+# preserved across teardowns — Free tier = $0/mo, hostnames + bindings + cert
+# validations stay valid forever. This block only runs as a defensive sweep in
+# case stale SWAs from older bootstraps are still parked in ${RESOURCE_GROUP}.
+echo "==> Cleaning up Static Web App custom-domain bindings (defensive sweep in ${RESOURCE_GROUP} only)"
 SWA_NAMES=$(az staticwebapp list -g "${RESOURCE_GROUP}" --query "[].name" -o tsv 2>/dev/null || true)
+if [[ -z "${SWA_NAMES}" ]]; then
+  echo "    No Static Web Apps in ${RESOURCE_GROUP} — persistent SWAs in ${SWA_RESOURCE_GROUP:-${DNS_RESOURCE_GROUP}} will be preserved."
+fi
 for SWA in ${SWA_NAMES}; do
   HOSTS=$(az staticwebapp hostname list -g "${RESOURCE_GROUP}" -n "${SWA}" --query "[?!contains(name, 'azurestaticapps.net')].name" -o tsv 2>/dev/null || true)
   for H in ${HOSTS}; do
@@ -73,16 +81,18 @@ for SWA in ${SWA_NAMES}; do
   done
 done
 
-echo "==> Cleaning up Azure DNS records in persistent zone (admin/parent/api + _dnsauth TXT)"
+echo "==> Cleaning up Azure DNS records in persistent zone (api only — admin/parent stay)"
 echo "    DNS RG ${DNS_RESOURCE_GROUP} itself is preserved — NS records stay stable."
+echo "    admin/parent CNAMEs + _dnsauth TXT preserved — they point to persistent SWAs."
 DNS_ZONES=$(az network dns zone list -g "${DNS_RESOURCE_GROUP}" --query "[].name" -o tsv 2>/dev/null || true)
 for ZONE in ${DNS_ZONES}; do
-  for SUB in admin parent api; do
-    az network dns record-set cname delete -g "${DNS_RESOURCE_GROUP}" -z "${ZONE}" -n "${SUB}" --yes --output none 2>/dev/null || true
-    az network dns record-set a     delete -g "${DNS_RESOURCE_GROUP}" -z "${ZONE}" -n "${SUB}" --yes --output none 2>/dev/null || true
-    az network dns record-set txt   delete -g "${DNS_RESOURCE_GROUP}" -z "${ZONE}" -n "_dnsauth.${SUB}" --yes --output none 2>/dev/null || true
-  done
-  echo "    Cleared admin/parent/api records from zone ${ZONE} (zone preserved)"
+  # api.* records are tied to the AKS ingress LB IP which changes every rebuild,
+  # so they must be cleared. admin/parent records bind to persistent SWAs and
+  # are reused as-is.
+  az network dns record-set cname delete -g "${DNS_RESOURCE_GROUP}" -z "${ZONE}" -n "api" --yes --output none 2>/dev/null || true
+  az network dns record-set a     delete -g "${DNS_RESOURCE_GROUP}" -z "${ZONE}" -n "api" --yes --output none 2>/dev/null || true
+  az network dns record-set txt   delete -g "${DNS_RESOURCE_GROUP}" -z "${ZONE}" -n "_dnsauth.api" --yes --output none 2>/dev/null || true
+  echo "    Cleared api records from zone ${ZONE} (admin/parent/_dnsauth preserved)"
 done
 
 echo "==> Deleting resource group ${RESOURCE_GROUP} (no-wait)"

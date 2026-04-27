@@ -119,6 +119,7 @@ if [[ -n "${SUB_ID}" ]]; then
   AKS_NODE_SIZE=$(jq -r '.parameters.aksNodeSize.value // ""' "infra/azure/parameters.${ENVIRONMENT}.json" 2>/dev/null || true)
   case "${AKS_NODE_SIZE}" in
     Standard_B*as_v2|Standard_B*s_v2)  VM_FAMILY="standardBsv2Family" ;;
+    Standard_B*ms|Standard_B*s)         VM_FAMILY="standardBSFamily" ;;
     Standard_B*)                        VM_FAMILY="standardBSFamily" ;;
     Standard_D*s_v3|Standard_D*as_v3)   VM_FAMILY="standardDSv3Family" ;;
     Standard_D*s_v4|Standard_D*as_v4)   VM_FAMILY="standardDSv4Family" ;;

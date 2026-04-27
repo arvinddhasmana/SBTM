@@ -64,10 +64,10 @@ patches:
   - patch: |-
       - op: replace
         path: /spec/rules/0/host
-        value: api.sbtm.example.com
+        value: api.sbtm.ca
       - op: replace
         path: /spec/tls/0/hosts/0
-        value: api.sbtm.example.com
+        value: api.sbtm.ca
     target:
       kind: Ingress
       name: sbtm-ingress

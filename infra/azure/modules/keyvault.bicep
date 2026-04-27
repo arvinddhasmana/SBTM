@@ -12,10 +12,13 @@ param aksKubeletObjectId string
 @description('AKS cluster OIDC issuer URL for workload identity federation')
 param aksOidcIssuerUrl string
 
+@description('Optional suffix appended to the Key Vault name (e.g. "-cc") to avoid collisions with soft-deleted vaults of the same base name.')
+param kvNameSuffix string = ''
+
 resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
-  name: 'sbtm-kv-${environment}'
+  name: 'sbtm-kv-${environment}${kvNameSuffix}'
   location: location
-  properties: {
+  properties: union({
     sku: {
       family: 'A'
       name: 'standard'
@@ -24,12 +27,16 @@ resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
     enableRbacAuthorization: true
     enableSoftDelete: true
     softDeleteRetentionInDays: 7
-    enablePurgeProtection: true
     networkAcls: {
       defaultAction: 'Allow' // Restrict to VNET for production
       bypass: 'AzureServices'
     }
-  }
+  // Purge protection is required for production (compliance / accidental-delete
+  // protection) but actively harmful for ephemeral demo environments because it
+  // locks the vault name globally for 7 days after deletion, blocking redeploys.
+  // Azure rejects an explicit `enablePurgeProtection: false`, so we OMIT the
+  // property entirely for non-production via a conditional union.
+  }, environment == 'production' ? { enablePurgeProtection: true } : {})
 }
 
 // User-assigned managed identity for AKS pods to read Key Vault secrets

@@ -315,8 +315,102 @@ Admin user: disabled (use managed identity pull)
 
 ---
 
+## Endpoint Reference
+
+All names and hostnames are deterministic from the Bicep templates in `infra/azure/modules/`.
+PaaS resources (PostgreSQL, Redis) have **private endpoints only** — they are not reachable from the public internet.
+The public-facing NGINX Ingress and Azure Static Web Apps are the only externally accessible surfaces.
+
+### Public endpoints
+
+| Resource          | Demo                             | Production                       | Notes                                                                                                                                                |
+| ----------------- | -------------------------------- | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Admin Portal**  | `https://admin.sbtm.ca`          | `https://admin.sbtm.ca`          | Azure SWA `sbtm-admin-demo` / `sbtm-admin-production`. Also reachable via the default SWA hostname until the custom domain is validated — see below. |
+| **Parent Portal** | `https://parent.sbtm.ca`         | `https://parent.sbtm.ca`         | Azure SWA `sbtm-parent-demo` / `sbtm-parent-production`.                                                                                             |
+| **API Gateway**   | `https://api.sbtm.ca` (port 443) | `https://api.sbtm.ca` (port 443) | NGINX Ingress on AKS (LoadBalancer IP → cert-manager TLS).                                                                                           |
+
+Default Azure Static Web App hostnames (usable before custom domain validation or when `sbtm.ca` DNS is not yet delegated):
+
+| Portal | Demo default hostname                                  |
+| ------ | ------------------------------------------------------ |
+| Admin  | `https://yellow-beach-0c42c9f10.7.azurestaticapps.net` |
+| Parent | `https://zealous-dune-08c612410.7.azurestaticapps.net` |
+
+> Production SWA default hostnames are emitted as `adminPortalDefaultHostname` / `parentPortalDefaultHostname` in the Bicep deployment outputs and are known only after first deploy: `az deployment group show -g sbtm-rg -n main --query "properties.outputs"`.
+
+### Ingress routing (all environments, K8s namespace scoped per env)
+
+All traffic enters via the NGINX Ingress at `https://api.sbtm.ca`. The Ingress routes by path to internal ClusterIP services:
+
+| Path                  | Backend K8s service | Port |
+| --------------------- | ------------------- | ---- |
+| `/ws/alerts`          | `emergency-alerts`  | 80   |
+| `/ws/presence`        | `student-presence`  | 80   |
+| `/` (everything else) | `api-gateway`       | 80   |
+
+### Internal K8s services (cluster-internal only, not publicly accessible)
+
+| Service               | K8s service name        | Container port |
+| --------------------- | ----------------------- | -------------- |
+| API Gateway           | `api-gateway`           | 3000           |
+| GPS Tracking          | `gps-tracking`          | 3001           |
+| Emergency Alerts      | `emergency-alerts`      | 3002           |
+| Student Presence      | `student-presence`      | 3003           |
+| Student Management    | `student-management`    | 3004           |
+| Compliance Management | `compliance-management` | 3005           |
+| Video Service         | `video-service`         | 3006           |
+| Notification Service  | `notification-service`  | 3007           |
+| OSRM (routing engine) | `osrm`                  | 5000           |
+
+All services are exposed inside the cluster on ClusterIP port 80 → container port shown above. Services talk to each other via DNS: `http://<service-name>` (e.g. `http://gps-tracking`).
+
+K8s namespaces: `sbtm-demo` (Demo) · `sbtm-production` (Production).
+
+### Azure PaaS — private endpoints (internal to AKS VNET, not internet-accessible)
+
+| Resource                   | Demo                                       | Production                                       | Port       |
+| -------------------------- | ------------------------------------------ | ------------------------------------------------ | ---------- |
+| PostgreSQL Flexible Server | `sbtm-pg-demo.postgres.database.azure.com` | `sbtm-pg-production.postgres.database.azure.com` | 5432       |
+| Redis Cache                | `sbtm-redis-demo.redis.cache.windows.net`  | `sbtm-redis-production.redis.cache.windows.net`  | 6380 (TLS) |
+
+### Azure PaaS — management / SDK endpoints
+
+| Resource           | Demo                                          | Production                                          |
+| ------------------ | --------------------------------------------- | --------------------------------------------------- |
+| Key Vault          | `https://sbtm-kv-demo.vault.azure.net/`       | `https://sbtm-kv-production.vault.azure.net/`       |
+| Blob Storage       | `https://sbtmblobdemo.blob.core.windows.net/` | `https://sbtmblobproduction.blob.core.windows.net/` |
+| Container Registry | `sbtmacrdemo.azurecr.io`                      | `sbtmacrproduction.azurecr.io`                      |
+
+### Azure monitoring portals (Azure Portal navigation)
+
+| Resource                          | Resource name (Portal → search) | Region         |
+| --------------------------------- | ------------------------------- | -------------- |
+| Application Insights (Demo)       | `sbtm-appinsights-demo`         | East US        |
+| Application Insights (Production) | `sbtm-appinsights-production`   | Canada Central |
+| Log Analytics (Demo)              | `sbtm-logs-demo`                | East US        |
+| Log Analytics (Production)        | `sbtm-logs-production`          | Canada Central |
+
+Application Insights portal: [portal.azure.com](https://portal.azure.com) → search the resource name above → Overview → "Application dashboard".
+
+### Retrieving all outputs after a Bicep deploy
+
+```bash
+# Demo
+az deployment group show -g sbtm-demo-rg -n main \
+  --query "properties.outputs" -o table
+
+# Production
+az deployment group show -g sbtm-rg -n main \
+  --query "properties.outputs" -o table
+```
+
+Outputs include: `aksClusterName`, `acrLoginServer`, `keyVaultUri`, `postgresFqdn`, `redisHostname`, `storageAccountName`, `adminPortalDefaultHostname`, `parentPortalDefaultHostname`.
+
+---
+
 ## Related Documents
 
+- [CustomDomainSetup.md](CustomDomainSetup.md) — DNS delegation, TLS provisioning, domain registration steps
 - [InfrastructureAsCode.md](InfrastructureAsCode.md) — Bicep templates and Kustomize manifests
 - [AzureCICD.md](AzureCICD.md) — GitHub Actions CI/CD pipeline
 - [CostAnalysis.md](CostAnalysis.md) — Detailed cost breakdown and scaling guidance

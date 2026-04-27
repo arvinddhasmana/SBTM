@@ -104,7 +104,7 @@ patches:
         path: /spec/template/spec/containers/0/env/-
         value:
           name: DB_HOST
-          value: sbtm-pg-demo-centralus.postgres.database.azure.com
+          value: sbtm-pg-demo.postgres.database.azure.com
       - op: add
         path: /spec/template/spec/containers/0/env/-
         value:
@@ -165,10 +165,10 @@ patches:
   - patch: |-
       - op: replace
         path: /spec/parameters/keyvaultName
-        value: sbtm-kv-demo
+        value: sbtm-kv-demo-temp
       - op: replace
         path: /spec/parameters/clientID
-        value: a712cbea-4d44-49a7-94e5-ed744b66a8d4
+        value: a0ebbdad-c178-41f9-8c08-f46a6d3da046
       - op: replace
         path: /spec/parameters/tenantId
         value: b13ceef6-6c21-40a4-ad1c-bbaac66921c2
@@ -185,25 +185,13 @@ patches:
   - patch: |-
       - op: replace
         path: /metadata/annotations/azure.workload.identity~1client-id
-        value: a712cbea-4d44-49a7-94e5-ed744b66a8d4
+        value: a0ebbdad-c178-41f9-8c08-f46a6d3da046
       - op: replace
         path: /metadata/annotations/azure.workload.identity~1tenant-id
         value: b13ceef6-6c21-40a4-ad1c-bbaac66921c2
     target:
       kind: ServiceAccount
       name: sbtm-workload-sa
-  # Demo: inject static /etc/hosts entry for PostgreSQL hostname to bypass
-  # cluster DNS issues after AKS stop/start (EAI_AGAIN workaround).
-  - patch: |-
-      - op: add
-        path: /spec/template/spec/hostAliases
-        value:
-          - ip: "52.173.111.92"
-            hostnames:
-              - "sbtm-pg-demo-centralus.postgres.database.azure.com"
-    target:
-      kind: Deployment
-      labelSelector: app in (api-gateway,emergency-alerts,student-presence,student-management,compliance-management,video-service,notification-service)
   # Demo: bind ingress to api.sbtm.ca + Let's Encrypt cert via cert-manager.
   # The base ingress uses placeholder host api.sbtm.example.com — patch it
   # to the real domain. The deployed A record (api.sbtm.ca → LB IP) is set

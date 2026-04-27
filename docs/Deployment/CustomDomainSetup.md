@@ -92,9 +92,32 @@ Once delegation is complete:
 
 ### `Validating` stuck on a custom domain
 
-- Confirm the `_dnsauth.<sub>` TXT record matches the validation token shown in
-  `az staticwebapp hostname show -g sbtm-demo-rg -n sbtm-admin-demo --hostname admin.sbtm.ca`.
-- Check propagation with `dig +short TXT _dnsauth.admin.sbtm.ca`.
+Azure occasionally caches a failed lookup against an older/missing TXT token.
+`bootstrap.sh` step 10 now auto-detects this state and recreates the binding to
+force a fresh token, then refreshes the `_dnsauth.<sub>` TXT record. To trigger
+the same fix manually:
+
+```bash
+SUB=admin   # or parent
+SWA="sbtm-${SUB}-demo"
+az staticwebapp hostname delete -g sbtm-demo-rg -n "$SWA" --hostname "${SUB}.sbtm.ca" --yes
+sleep 5
+az staticwebapp hostname set    -g sbtm-demo-rg -n "$SWA" --hostname "${SUB}.sbtm.ca" \
+  --validation-method dns-txt-token --no-wait
+sleep 20
+TOK=$(az staticwebapp hostname show -g sbtm-demo-rg -n "$SWA" --hostname "${SUB}.sbtm.ca" --query validationToken -o tsv)
+az network dns record-set txt delete -g sbtm-dns-rg -z sbtm.ca -n "_dnsauth.${SUB}" --yes
+az network dns record-set txt create -g sbtm-dns-rg -z sbtm.ca -n "_dnsauth.${SUB}" --ttl 60
+az network dns record-set txt add-record -g sbtm-dns-rg -z sbtm.ca -n "_dnsauth.${SUB}" --value "$TOK"
+```
+
+Then verify public DNS sees the new token (DoH bypasses local resolver caches):
+
+```bash
+curl -s "https://dns.google/resolve?name=_dnsauth.${SUB}.sbtm.ca&type=TXT" | jq .Answer
+```
+
+Validation typically completes within 5–15 min after the new TXT is public.
 
 ### `api.sbtm.ca` returns 404 / connection refused
 

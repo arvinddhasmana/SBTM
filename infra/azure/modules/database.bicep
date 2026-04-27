@@ -28,6 +28,9 @@ param postgresStorageGB int = 32
 @description('Services subnet ID for private endpoint')
 param servicesSubnetId string
 
+@description('Virtual network ID to link to the Postgres private DNS zone (so AKS pods can resolve the FQDN). Empty string = skip link.')
+param vnetIdForDnsLink string = ''
+
 @description('Use delegated subnet + private DNS for PostgreSQL networking')
 param usePrivateNetwork bool = true
 
@@ -82,6 +85,20 @@ resource postgresConfig 'Microsoft.DBforPostgreSQL/flexibleServers/configuration
 resource privateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = if (usePrivateNetwork) {
   name: 'sbtm-pg-${environment}.private.postgres.database.azure.com'
   location: 'global'
+}
+
+// Link the private DNS zone to the AKS VNet so pods can resolve the Postgres FQDN.
+// Without this link, kubectl-run psql jobs fail with NXDOMAIN.
+resource privateDnsZoneVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = if (usePrivateNetwork && !empty(vnetIdForDnsLink)) {
+  parent: privateDnsZone
+  name: 'aks-link'
+  location: 'global'
+  properties: {
+    registrationEnabled: false
+    virtualNetwork: {
+      id: vnetIdForDnsLink
+    }
+  }
 }
 
 resource postgresFirewallAllowAzure 'Microsoft.DBforPostgreSQL/flexibleServers/firewallRules@2023-06-01-preview' = if (!usePrivateNetwork) {

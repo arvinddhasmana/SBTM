@@ -48,6 +48,21 @@ TWILIO_ACCOUNT_SID="$(read_env_value TWILIO_ACCOUNT_SID)"
 AZURE_STORAGE_CONNECTION_STRING="$(read_env_value AZURE_STORAGE_CONNECTION_STRING)"
 APPLICATIONINSIGHTS_CONNECTION_STRING="$(read_env_value APPLICATIONINSIGHTS_CONNECTION_STRING)"
 
+# Derive DB_HOST/DB_PORT/DB_USER/DB_NAME from DATABASE_URL so services that
+# read individual values (TypeORM config in app.module.ts) can connect.
+# Format: postgresql://<user>:<pwd>@<host>:<port>/<db>?<query>
+DB_HOST=""
+DB_PORT="5432"
+DB_USER=""
+DB_NAME=""
+if [[ -n "${DATABASE_URL}" ]]; then
+  DB_USER=$(printf '%s' "${DATABASE_URL}" | sed -nE 's#^postgres(ql)?://([^:]+):.*#\2#p')
+  DB_HOST=$(printf '%s' "${DATABASE_URL}" | sed -nE 's#^postgres(ql)?://[^@]+@([^:/]+).*#\2#p')
+  DB_PORT_RAW=$(printf '%s' "${DATABASE_URL}" | sed -nE 's#^postgres(ql)?://[^@]+@[^:/]+:([0-9]+)/.*#\2#p')
+  [[ -n "${DB_PORT_RAW}" ]] && DB_PORT="${DB_PORT_RAW}"
+  DB_NAME=$(printf '%s' "${DATABASE_URL}" | sed -nE 's#^postgres(ql)?://[^@]+@[^/]+/([^?]+).*#\2#p')
+fi
+
 # ── Strength check for critical secrets ───────────────────────────────────────
 if [[ -n "${JWT_SECRET:-}" ]] && [[ "${#JWT_SECRET}" -lt 32 ]]; then
   echo "ERROR: JWT_SECRET is too short (${#JWT_SECRET} chars). Use at least 32 random characters."
@@ -62,11 +77,21 @@ fi
 set_secret() {
   local name="$1"
   local value="$2"
+  local optional="${3:-no}"
   if [[ -z "${value}" ]]; then
-    echo "  SKIP  ${name} (empty value)"
-    return
+    if [[ "${optional}" == "yes" ]]; then
+      # Seed a placeholder so the CSI Secrets Store mount succeeds even when
+      # the integration is disabled. Services should treat 'disabled-demo' as
+      # "feature off".
+      value="disabled-demo"
+      echo "  SET   ${name} (placeholder: feature disabled)"
+    else
+      echo "  SKIP  ${name} (empty value)"
+      return
+    fi
+  else
+    echo "  SET   ${name}"
   fi
-  echo "  SET   ${name}"
   az keyvault secret set \
     --vault-name "${KV_NAME}" \
     --name "${name}" \
@@ -89,10 +114,17 @@ set_secret "sbtm-db-password"                 "${DB_PASSWORD:-}"
 set_secret "sbtm-database-url"                "${DATABASE_URL:-}"
 set_secret "sbtm-redis-connection-string"     "${REDIS_URL:-}"
 
-# Notification secrets
-set_secret "sbtm-fcm-server-key"              "${FCM_SERVER_KEY:-}"
-set_secret "sbtm-twilio-auth-token"           "${TWILIO_AUTH_TOKEN:-}"
-set_secret "sbtm-twilio-account-sid"          "${TWILIO_ACCOUNT_SID:-}"
+# Individual DB connection components (services that read DB_HOST/DB_PORT/DB_USER/DB_NAME)
+set_secret "sbtm-db-host"                     "${DB_HOST:-}"
+set_secret "sbtm-db-port"                     "${DB_PORT:-5432}"
+set_secret "sbtm-db-user"                     "${DB_USER:-sbtmadmin}"
+set_secret "sbtm-db-name"                     "${DB_NAME:-sbms}"
+
+# Notification secrets (optional integrations — placeholder seeded if empty so
+# the CSI Secrets Store mount succeeds without FCM/Twilio credentials)
+set_secret "sbtm-fcm-server-key"              "${FCM_SERVER_KEY:-}"          yes
+set_secret "sbtm-twilio-auth-token"           "${TWILIO_AUTH_TOKEN:-}"       yes
+set_secret "sbtm-twilio-account-sid"          "${TWILIO_ACCOUNT_SID:-}"      yes
 
 # Storage
 set_secret "sbtm-blob-connection-string"      "${AZURE_STORAGE_CONNECTION_STRING:-}"

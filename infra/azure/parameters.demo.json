@@ -3,9 +3,9 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "environment": { "value": "demo" },
-    "location": { "value": "eastus" },
+    "location": { "value": "canadacentral" },
     "aksNodeCount": { "value": 1 },
-    "aksNodeSize": { "value": "Standard_B2as_v2" },
+    "aksNodeSize": { "value": "Standard_D2s_v3" },
     "postgresSkuName": { "value": "Standard_B1ms" },
     "postgresSkuTier": { "value": "Burstable" },
     "postgresStorageGB": { "value": 32 },
@@ -17,6 +17,7 @@
     "staticWebAppSku": { "value": "Free" },
     "customDomain": { "value": "sbtm.ca" },
     "manageDnsZone": { "value": false },
+    "kvNameSuffix": { "value": "-temp" },
     "isDevTestSubscription": { "value": false }
   }
 }

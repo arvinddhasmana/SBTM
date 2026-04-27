@@ -141,8 +141,8 @@ for RP in "${REQUIRED_RPS[@]}"; do
 done
 
 echo "==> [2/7] Deploying Bicep templates (environment: ${ENVIRONMENT}, devTest: ${IS_DEVTEST})"
-# Default PostgreSQL region to eastus2 unless explicitly overridden.
-POSTGRES_LOCATION="${POSTGRES_LOCATION:-eastus2}"
+# Default PostgreSQL region to the same region as AKS unless explicitly overridden.
+POSTGRES_LOCATION="${POSTGRES_LOCATION:-${LOCATION}}"
 DEPLOY_ERR_LOG=$(mktemp)
 PG_SERVER_BASE_NAME="sbtm-pg-${ENVIRONMENT}"
 PG_SERVER_NAME="${PG_SERVER_BASE_NAME}"

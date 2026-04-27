@@ -26,7 +26,9 @@
 set -euo pipefail
 
 ENVIRONMENT="${1:-demo}"
-LOCATION="${2:-eastus}"
+# Default location is resolved after we cd to REPO_ROOT (a few lines down) so
+# this works regardless of caller's pwd. Override with $2 to force a region.
+LOCATION_ARG="${2:-}"
 shift $(( $# > 2 ? 2 : $# )) 2>/dev/null || true
 
 # Optional flags (after positional args):
@@ -75,10 +77,26 @@ fi
 # never need to be re-pasted. Override with DNS_RESOURCE_GROUP env var.
 DNS_RESOURCE_GROUP="${DNS_RESOURCE_GROUP:-sbtm-dns-rg}"
 
+# Persistent SWA resource group — Static Web Apps live here permanently
+# (Free tier = $0/mo) so default *.azurestaticapps.net hostnames + custom-domain
+# bindings + cert validations all survive teardown. No more re-binding /
+# re-validating after each rebuild. Override with SWA_RESOURCE_GROUP env var.
+SWA_RESOURCE_GROUP="${SWA_RESOURCE_GROUP:-${DNS_RESOURCE_GROUP}}"
+# SWA region (SWAs serve via global CDN — region only governs control plane).
+SWA_LOCATION="${SWA_LOCATION:-centralus}"
+
 ENV_FILE=".env.${ENVIRONMENT}"
 ENV_TEMPLATE=".env.${ENVIRONMENT}.template"
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "${REPO_ROOT}"
+
+# Resolve LOCATION from parameters.<env>.json (canadacentral by default for demo)
+# unless the caller explicitly passed a 2nd positional arg.
+if [[ -n "${LOCATION_ARG}" ]]; then
+  LOCATION="${LOCATION_ARG}"
+else
+  LOCATION=$(jq -r '.parameters.location.value // "canadacentral"' "infra/azure/parameters.${ENVIRONMENT}.json" 2>/dev/null || echo "canadacentral")
+fi
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
 hr()   { echo ""; echo "════════════════════════════════════════════════════════════════"; echo "  $*"; echo "════════════════════════════════════════════════════════════════"; }
@@ -125,13 +143,16 @@ confirm() {
 ensure_kv_data_plane_access() {
   local kv_name="$1"
   local kv_id=""
-  local assignee=""
+  local me_oid=""
+  local me_upn=""
 
   kv_id=$(az keyvault show --name "${kv_name}" --query id -o tsv 2>/dev/null || true)
-  assignee=$(az account show --query user.name -o tsv 2>/dev/null || true)
+  # Use object-id (works for personal MS accounts, guests, and AAD users alike).
+  me_oid=$(az ad signed-in-user show --query id -o tsv 2>/dev/null || true)
+  me_upn=$(az account show --query user.name -o tsv 2>/dev/null || true)
 
-  if [[ -z "${kv_id}" || -z "${assignee}" ]]; then
-    warn "Could not resolve Key Vault scope or current identity; skipping auto-RBAC fix"
+  if [[ -z "${kv_id}" || -z "${me_oid}" ]]; then
+    warn "Could not resolve Key Vault scope or current identity object-id; skipping auto-RBAC fix"
     return
   fi
 
@@ -140,21 +161,22 @@ ensure_kv_data_plane_access() {
     return
   fi
 
-  warn "Current identity lacks Key Vault secret permissions; ensuring RBAC role assignment"
+  warn "Current identity (${me_upn:-${me_oid}}) lacks Key Vault secret permissions; ensuring RBAC role assignment"
   local existing_roles=""
   existing_roles=$(az role assignment list \
-    --assignee "${assignee}" \
+    --assignee "${me_oid}" \
     --scope "${kv_id}" \
     --query "[?roleDefinitionName=='Key Vault Secrets Officer' || roleDefinitionName=='Key Vault Administrator'].roleDefinitionName" \
     -o tsv 2>/dev/null || true)
 
   if [[ -z "${existing_roles}" ]]; then
     if az role assignment create \
-      --assignee "${assignee}" \
+      --assignee-object-id "${me_oid}" \
+      --assignee-principal-type User \
       --role "Key Vault Secrets Officer" \
       --scope "${kv_id}" \
       --output none >/dev/null 2>&1; then
-      ok "Assigned 'Key Vault Secrets Officer' to ${assignee}"
+      ok "Assigned 'Key Vault Secrets Officer' to ${me_upn:-${me_oid}}"
     else
       warn "Could not auto-assign Key Vault role. Ensure your identity has 'Key Vault Secrets Officer' on ${kv_name}."
       return
@@ -542,17 +564,50 @@ ADMIN_DEFAULT_HOST=""
 PARENT_DEFAULT_HOST=""
 DNS_NAME_SERVERS=""
 
-if az staticwebapp show -g "${RESOURCE_GROUP}" -n "${ADMIN_SWA_NAME}" --output none 2>/dev/null; then
-  ADMIN_DEFAULT_HOST=$(az staticwebapp show -g "${RESOURCE_GROUP}" -n "${ADMIN_SWA_NAME}" --query defaultHostname -o tsv)
-  ok "Admin SWA: ${ADMIN_SWA_NAME} → ${ADMIN_DEFAULT_HOST}"
-else
-  warn "Admin Static Web App ${ADMIN_SWA_NAME} not found — provisioning may have failed"
+# Ensure persistent RG for SWAs exists (idempotent; same as DNS RG by default).
+if ! az group show -n "${SWA_RESOURCE_GROUP}" --output none 2>/dev/null; then
+  step "Creating persistent SWA resource group ${SWA_RESOURCE_GROUP}"
+  az group create -n "${SWA_RESOURCE_GROUP}" -l "${LOCATION}" \
+    --tags purpose=persistent-swa project=sbtm --output none
+  ok "SWA RG ${SWA_RESOURCE_GROUP} ready"
 fi
-if az staticwebapp show -g "${RESOURCE_GROUP}" -n "${PARENT_SWA_NAME}" --output none 2>/dev/null; then
-  PARENT_DEFAULT_HOST=$(az staticwebapp show -g "${RESOURCE_GROUP}" -n "${PARENT_SWA_NAME}" --query defaultHostname -o tsv)
-  ok "Parent SWA: ${PARENT_SWA_NAME} → ${PARENT_DEFAULT_HOST}"
+
+ensure_persistent_swa() {
+  # $1 = swa name. Creates Free-tier SWA in SWA_RESOURCE_GROUP if missing,
+  # otherwise reuses (preserves default hostname + cert + bindings).
+  local swa="$1"
+  if az staticwebapp show -g "${SWA_RESOURCE_GROUP}" -n "${swa}" --output none 2>/dev/null; then
+    return 0
+  fi
+  # Migration: if a stale SWA exists in the env RG (from older bootstraps),
+  # remove it so we get a clean create in the persistent RG. Then teardown will
+  # never need to touch SWAs again.
+  if az staticwebapp show -g "${RESOURCE_GROUP}" -n "${swa}" --output none 2>/dev/null; then
+    warn "Found stale ${swa} in ${RESOURCE_GROUP} — deleting before recreating in ${SWA_RESOURCE_GROUP}"
+    az staticwebapp delete -g "${RESOURCE_GROUP}" -n "${swa}" --yes --output none 2>/dev/null || true
+  fi
+  step "Creating Static Web App ${swa} in ${SWA_RESOURCE_GROUP} (Free tier)"
+  az staticwebapp create -g "${SWA_RESOURCE_GROUP}" -n "${swa}" \
+    -l "${SWA_LOCATION}" --sku Free \
+    --tags purpose=persistent-swa project=sbtm environment="${ENVIRONMENT}" \
+    --output none
+  ok "${swa} created"
+}
+
+ensure_persistent_swa "${ADMIN_SWA_NAME}"
+ensure_persistent_swa "${PARENT_SWA_NAME}"
+
+if az staticwebapp show -g "${SWA_RESOURCE_GROUP}" -n "${ADMIN_SWA_NAME}" --output none 2>/dev/null; then
+  ADMIN_DEFAULT_HOST=$(az staticwebapp show -g "${SWA_RESOURCE_GROUP}" -n "${ADMIN_SWA_NAME}" --query defaultHostname -o tsv)
+  ok "Admin SWA: ${ADMIN_SWA_NAME} (${SWA_RESOURCE_GROUP}) → ${ADMIN_DEFAULT_HOST}"
 else
-  warn "Parent Static Web App ${PARENT_SWA_NAME} not found — provisioning may have failed"
+  warn "Admin Static Web App ${ADMIN_SWA_NAME} not found in ${SWA_RESOURCE_GROUP}"
+fi
+if az staticwebapp show -g "${SWA_RESOURCE_GROUP}" -n "${PARENT_SWA_NAME}" --output none 2>/dev/null; then
+  PARENT_DEFAULT_HOST=$(az staticwebapp show -g "${SWA_RESOURCE_GROUP}" -n "${PARENT_SWA_NAME}" --query defaultHostname -o tsv)
+  ok "Parent SWA: ${PARENT_SWA_NAME} (${SWA_RESOURCE_GROUP}) → ${PARENT_DEFAULT_HOST}"
+else
+  warn "Parent Static Web App ${PARENT_SWA_NAME} not found in ${SWA_RESOURCE_GROUP}"
 fi
 
 bind_swa_custom_domain() {
@@ -571,30 +626,47 @@ bind_swa_custom_domain() {
   #    surfaces a validationToken which we then write as a TXT record on
   #    _dnsauth.<sub>.
   step "Registering ${fqdn} on Static Web App ${swa}"
-  if az staticwebapp hostname show -g "${RESOURCE_GROUP}" -n "${swa}" --hostname "${fqdn}" --output none 2>/dev/null; then
-    ok "${fqdn} already bound to ${swa}"
+  local existing_status=""
+  existing_status=$(az staticwebapp hostname show -g "${SWA_RESOURCE_GROUP}" -n "${swa}" --hostname "${fqdn}" --query status -o tsv 2>/dev/null || true)
+  if [[ "${existing_status}" == "Ready" ]]; then
+    ok "${fqdn} already bound to ${swa} (Ready) — persistent SWA, no rebind needed"
     return
+  fi
+  if [[ "${existing_status}" == "Validating" ]]; then
+    # Stuck in Validating usually means Azure cached a failed lookup against an
+    # older/missing TXT token. Force a fresh token by deleting and re-adding the
+    # binding, then refresh the TXT record.
+    warn "${fqdn} stuck in Validating — recreating binding to force fresh token"
+    az staticwebapp hostname delete -g "${SWA_RESOURCE_GROUP}" -n "${swa}" --hostname "${fqdn}" --yes --output none 2>/dev/null || true
+    sleep 5
   fi
   # Initiate validation (idempotent, may print a token to capture).
   # Use --no-wait so we don't block on Azure's DNS validation, which cannot
   # complete until NS delegation is done at the registrar.
-  local token=""
-  token=$(az staticwebapp hostname set \
-    -g "${RESOURCE_GROUP}" -n "${swa}" \
+  az staticwebapp hostname set \
+    -g "${SWA_RESOURCE_GROUP}" -n "${swa}" \
     --hostname "${fqdn}" --validation-method dns-txt-token --no-wait \
-    --query validationToken -o tsv 2>/dev/null || true)
-  if [[ -z "${token}" ]]; then
-    # --no-wait may not echo the token; query the hostname resource directly
-    sleep 5
+    --output none 2>/dev/null || true
+  # Token isn't always returned synchronously; poll the hostname resource.
+  local token=""
+  for _ in {1..12}; do
     token=$(az staticwebapp hostname show \
-      -g "${RESOURCE_GROUP}" -n "${swa}" --hostname "${fqdn}" \
+      -g "${SWA_RESOURCE_GROUP}" -n "${swa}" --hostname "${fqdn}" \
       --query validationToken -o tsv 2>/dev/null || true)
-  fi
+    [[ -n "${token}" ]] && break
+    sleep 5
+  done
   if [[ -n "${token}" ]]; then
-    step "Writing _dnsauth.${sub} TXT record"
+    step "Refreshing _dnsauth.${sub} TXT record (delete + add to clear stale tokens)"
+    az network dns record-set txt delete \
+      -g "${DNS_RESOURCE_GROUP}" -z "${CUSTOM_DOMAIN}" -n "_dnsauth.${sub}" \
+      --yes --output none 2>/dev/null || true
+    az network dns record-set txt create \
+      -g "${DNS_RESOURCE_GROUP}" -z "${CUSTOM_DOMAIN}" -n "_dnsauth.${sub}" \
+      --ttl 60 --output none 2>/dev/null || true
     az network dns record-set txt add-record \
       -g "${DNS_RESOURCE_GROUP}" -z "${CUSTOM_DOMAIN}" -n "_dnsauth.${sub}" \
-      --value "${token}" --ttl 300 --output none 2>/dev/null || true
+      --value "${token}" --output none 2>/dev/null || true
     ok "_dnsauth.${sub}.${CUSTOM_DOMAIN} TXT record set (token: ${token:0:8}…)"
   else
     warn "No validationToken yet for ${fqdn}; check 'az staticwebapp hostname show' after NS delegation"
@@ -673,7 +745,7 @@ deploy_portal() {
   fi
   step "Fetching deployment token for ${swa}"
   local token=""
-  token=$(az staticwebapp secrets list -g "${RESOURCE_GROUP}" -n "${swa}" \
+  token=$(az staticwebapp secrets list -g "${SWA_RESOURCE_GROUP}" -n "${swa}" \
     --query properties.apiKey -o tsv 2>/dev/null || true)
   if [[ -z "${token}" ]]; then
     warn "Could not retrieve deployment token for ${swa}; skipping ${label}"
@@ -692,7 +764,48 @@ fi  # end step 11
 # ── 12. Re-enable API ingress for api.<domain> + run verify-portals ───────────
 if should_run 12; then
 CUSTOM_DOMAIN="${CUSTOM_DOMAIN:-$(jq -r '.parameters.customDomain.value // ""' "infra/azure/parameters.${ENVIRONMENT}.json")}"
-hr "Step 12/12 — Apply Ingress for api.${CUSTOM_DOMAIN:-<domain>} and verify"
+hr "Step 12/12 — Build images, deploy workloads, wire ingress, verify"
+
+# 12a. Build & push container images (server-side ACR build, no local Docker).
+step "Building and pushing all service container images via ACR"
+bash scripts/azure/build-images.sh "${ENVIRONMENT}" || \
+  warn "Some image builds failed — pods will stay in ImagePullBackOff until rebuilt"
+
+# 12b. Patch the kustomize overlay with the LIVE workload-identity client ID and
+# Key Vault name so we never carry a stale value across teardowns.
+step "Syncing workload-identity clientID + Key Vault name into kustomize overlay"
+WI_NAME="sbtm-workload-identity-${ENVIRONMENT}"
+LIVE_WI_CLIENTID=$(az identity show -g "${RESOURCE_GROUP}" -n "${WI_NAME}" --query clientId -o tsv 2>/dev/null || true)
+LIVE_KV_NAME=$(az keyvault list -g "${RESOURCE_GROUP}" --query "[0].name" -o tsv 2>/dev/null || true)
+LIVE_TENANT_ID=$(az account show --query tenantId -o tsv 2>/dev/null || true)
+OVERLAY_KFILE="infra/k8s/overlays/${ENVIRONMENT}/kustomization.yaml"
+if [[ -n "${LIVE_WI_CLIENTID}" && -f "${OVERLAY_KFILE}" ]]; then
+  python3 - "${OVERLAY_KFILE}" "${LIVE_WI_CLIENTID}" "${LIVE_TENANT_ID}" "${LIVE_KV_NAME}" <<'PY'
+import re, sys
+path, client_id, tenant_id, kv_name = sys.argv[1:5]
+with open(path) as f:
+    txt = f.read()
+def patch_path(json_path, new_value):
+    global txt
+    if not new_value:
+        return
+    pat = re.compile(
+        r"(path:\s*" + re.escape(json_path) + r"\s*\n\s*value:\s*).+",
+        re.MULTILINE,
+    )
+    txt = pat.sub(lambda m: m.group(1) + new_value, txt)
+patch_path("/spec/parameters/keyvaultName", kv_name)
+patch_path("/spec/parameters/clientID", client_id)
+patch_path("/spec/parameters/tenantId", tenant_id)
+patch_path("/metadata/annotations/azure.workload.identity~1client-id", client_id)
+patch_path("/metadata/annotations/azure.workload.identity~1tenant-id", tenant_id)
+with open(path, "w") as f:
+    f.write(txt)
+PY
+  ok "Overlay synced: clientID=${LIVE_WI_CLIENTID}, keyvault=${LIVE_KV_NAME}"
+else
+  warn "Could not auto-patch overlay (UAMI ${WI_NAME} not found); kubectl apply may use stale values"
+fi
 
 if [[ -n "${CUSTOM_DOMAIN}" ]]; then
   step "Applying demo overlay (kustomize) so the api.sbtm.ca ingress + ClusterIssuer are created"
@@ -722,6 +835,16 @@ else
   warn "Custom domain unset — skipping ingress wiring"
 fi
 
+step "Restarting workload deployments to pick up freshly built images / patched WI clientID"
+NS="sbtm-${ENVIRONMENT}"
+DEPLOYS=$(kubectl -n "${NS}" get deploy -o name 2>/dev/null || true)
+if [[ -n "${DEPLOYS}" ]]; then
+  echo "${DEPLOYS}" | xargs -r -I{} kubectl -n "${NS}" rollout restart {} >/dev/null 2>&1 && \
+    ok "Restarted $(echo "${DEPLOYS}" | wc -l) deployment(s) in namespace ${NS}"
+else
+  warn "rollout restart skipped (namespace ${NS} has no deployments yet)"
+fi
+
 step "Running verify-portals.sh"
 if bash scripts/azure/verify-portals.sh "${ENVIRONMENT}"; then
   ok "Portal verification passed"
@@ -740,8 +863,8 @@ REDIS_HOST="${REDIS_HOST:-$(az redis list -g "${RESOURCE_GROUP}" --query "[0].ho
 STORAGE_NAME="${STORAGE_NAME:-$(az storage account list -g "${RESOURCE_GROUP}" --query "[0].name" -o tsv 2>/dev/null || true)}"
 AI_NAME="${AI_NAME:-$(az resource list -g "${RESOURCE_GROUP}" --resource-type "Microsoft.Insights/components" --query "[0].name" -o tsv 2>/dev/null || true)}"
 CUSTOM_DOMAIN="${CUSTOM_DOMAIN:-$(jq -r '.parameters.customDomain.value // ""' "infra/azure/parameters.${ENVIRONMENT}.json" 2>/dev/null || true)}"
-ADMIN_DEFAULT_HOST="${ADMIN_DEFAULT_HOST:-$(az staticwebapp show -g "${RESOURCE_GROUP}" -n "sbtm-admin-${ENVIRONMENT}" --query defaultHostname -o tsv 2>/dev/null || true)}"
-PARENT_DEFAULT_HOST="${PARENT_DEFAULT_HOST:-$(az staticwebapp show -g "${RESOURCE_GROUP}" -n "sbtm-parent-${ENVIRONMENT}" --query defaultHostname -o tsv 2>/dev/null || true)}"
+ADMIN_DEFAULT_HOST="${ADMIN_DEFAULT_HOST:-$(az staticwebapp show -g "${SWA_RESOURCE_GROUP}" -n "sbtm-admin-${ENVIRONMENT}" --query defaultHostname -o tsv 2>/dev/null || true)}"
+PARENT_DEFAULT_HOST="${PARENT_DEFAULT_HOST:-$(az staticwebapp show -g "${SWA_RESOURCE_GROUP}" -n "sbtm-parent-${ENVIRONMENT}" --query defaultHostname -o tsv 2>/dev/null || true)}"
 LB_IP="${LB_IP:-$(kubectl get svc -A -o jsonpath='{range .items[?(@.spec.type=="LoadBalancer")]}{.status.loadBalancer.ingress[0].ip}{"\n"}{end}' 2>/dev/null | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$' | head -1 || true)}"
 if [[ -z "${DNS_NAME_SERVERS:-}" && -n "${CUSTOM_DOMAIN}" ]]; then
   DNS_NAME_SERVERS=$(az network dns zone show -g "${DNS_RESOURCE_GROUP}" -n "${CUSTOM_DOMAIN}" --query nameServers -o tsv 2>/dev/null | paste -sd ' ' || true)
