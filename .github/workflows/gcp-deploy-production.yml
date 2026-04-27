@@ -1,0 +1,116 @@
+name: Deploy to GCP Production
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Release tag to deploy'
+        required: true
+        type: string
+
+jobs:
+  deploy-gcp-production:
+    name: Deploy to GKE Production
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      id-token: write
+      contents: read
+      deployments: write
+
+    environment:
+      name: gcp-production
+      url: https://api.gcp.sbtm.example.com/health
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.release_tag || github.event.release.tag_name }}
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Setup GCloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Get GKE credentials
+        run: |
+          gcloud container clusters get-credentials ${{ secrets.GKE_PROD_CLUSTER_NAME }} \
+            --region=${{ secrets.GCP_REGION }} \
+            --project=${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Pre-deployment Cloud SQL backup
+        run: |
+          gcloud sql backups create \
+            --instance=${{ secrets.CLOUDSQL_INSTANCE_NAME }} \
+            --project=${{ secrets.GCP_PROJECT_ID }} \
+            --description="Pre-deployment backup for ${{ inputs.release_tag || github.event.release.tag_name }}"
+
+      - name: Set release image tag
+        id: tag
+        run: echo "tag=${{ inputs.release_tag || github.event.release.tag_name }}" >> "$GITHUB_OUTPUT"
+
+      - name: Update image tags in GCP production overlay
+        run: |
+          REGISTRY="${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/sbtm-production-docker"
+          cd infra/k8s/overlays/gcp-production
+          for svc in api-gateway gps-tracking emergency-alerts student-presence student-management compliance-management video-service notification-service; do
+            kustomize edit set image \
+              "REGISTRY_PLACEHOLDER/sbtm/${svc}=${REGISTRY}/${svc}:${{ steps.tag.outputs.tag }}"
+          done
+          # Update project ID in secretstore
+          sed -i "s/PROJECT_ID/${{ secrets.GCP_PROJECT_ID }}/g" secretstore-gcp.yaml
+          sed -i "s/us-central1/${{ secrets.GCP_REGION }}/g" secretstore-gcp.yaml
+          sed -i "s/sbtm-production-gke/${{ secrets.GKE_PROD_CLUSTER_NAME }}/g" secretstore-gcp.yaml
+          cd -
+
+      - name: Apply GCP production overlay
+        run: kubectl apply -k infra/k8s/overlays/gcp-production
+
+      - name: Wait for rollout
+        id: rollout
+        run: kubectl rollout status deployment -n sbtm-production-gcp --timeout=600s
+
+      - name: Smoke test
+        id: smoke
+        run: |
+          INGRESS_IP=$(kubectl get ingress sbtm-ingress -n sbtm-production-gcp -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+          if [ -n "$INGRESS_IP" ]; then
+            curl --fail --retry 5 --retry-delay 15 \
+              -H "Host: api.gcp.sbtm.example.com" \
+              "http://${INGRESS_IP}/health" | jq .
+          else
+            echo "Using DNS endpoint"
+            curl --fail --retry 5 --retry-delay 15 \
+              https://api.gcp.sbtm.example.com/health | jq .
+          fi
+
+      - name: Rollback on failure
+        if: failure() && steps.rollout.outcome == 'failure'
+        run: |
+          echo "==> Rolling back all deployments in sbtm-production-gcp"
+          kubectl rollout undo deployment -n sbtm-production-gcp --all
+          kubectl rollout status deployment -n sbtm-production-gcp --timeout=300s
+
+      - name: Pod status summary
+        if: always()
+        run: kubectl get pods -n sbtm-production-gcp
+
+      - name: Create deployment comment
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.repos.createDeploymentStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              deployment_id: context.payload.deployment?.id,
+              state: 'success',
+              environment_url: 'https://api.gcp.sbtm.example.com/health',
+              description: 'GCP Production deployment ${{ steps.tag.outputs.tag }} succeeded'
+            });

@@ -1,0 +1,19 @@
+# GCP-specific files to ignore
+
+# Terraform
+infra/gcp/.terraform/
+infra/gcp/.terraform.lock.hcl
+infra/gcp/terraform.tfstate
+infra/gcp/terraform.tfstate.backup
+infra/gcp/tfplan
+infra/gcp/backend.tf
+infra/gcp/outputs.json
+
+# GCP Service Account Keys (NEVER COMMIT!)
+terraform-sa-key.json
+*-sa-key.json
+*.json.key
+
+# Terraform variables with secrets
+infra/gcp/*.auto.tfvars
+infra/gcp/**/secrets.tfvars

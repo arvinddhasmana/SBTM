@@ -1,0 +1,12 @@
+variable "project_id" { type = string }
+variable "region" { type = string }
+variable "environment" { type = string }
+variable "resource_prefix" { type = string }
+variable "labels" { type = map(string) }
+variable "network_id" { type = string }
+variable "database_version" { type = string }
+variable "database_tier" { type = string }
+variable "database_disk_size" { type = number }
+variable "database_high_availability" { type = bool }
+variable "database_backup_enabled" { type = bool }
+variable "database_point_in_time_recovery" { type = bool }

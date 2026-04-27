@@ -1,0 +1,86 @@
+name: Build and Push Images to GCP
+
+on:
+  workflow_call:
+    inputs:
+      sha_tag:
+        description: 'Image tag (e.g. sha-abc1234)'
+        required: true
+        type: string
+      environment:
+        description: 'Target environment'
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      sha_tag:
+        description: 'Image tag override (defaults to sha-<commit>)'
+        required: false
+        type: string
+      environment:
+        description: 'Target environment'
+        required: true
+        type: choice
+        options:
+          - demo
+          - production
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  build-images:
+    name: Build & Push to Artifact Registry
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      id-token: write
+      contents: read
+
+    strategy:
+      matrix:
+        service:
+          - { name: api-gateway, context: services/api-gateway }
+          - { name: gps-tracking, context: services/gps-tracking }
+          - { name: emergency-alerts, context: services/emergency-alerts }
+          - { name: student-presence, context: services/student-presence }
+          - { name: student-management, context: services/student-management }
+          - { name: compliance-management, context: services/compliance-management }
+          - { name: video-service, context: services/video-service }
+          - { name: notification-service, context: services/notification-service }
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Setup GCloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ secrets.GCP_REGION }}-docker.pkg.dev
+
+      - name: Set image tag
+        id: tag
+        run: |
+          SHA_TAG="${{ inputs.sha_tag }}"
+          if [[ -z "${SHA_TAG}" ]]; then
+            SHA_TAG="sha-$(git rev-parse --short HEAD)"
+          fi
+          echo "tag=${SHA_TAG}" >> "$GITHUB_OUTPUT"
+          echo "image=${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/sbtm-${{ inputs.environment }}-docker/${{ matrix.service.name }}" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push ${{ matrix.service.name }}
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ matrix.service.context }}
+          push: true
+          tags: |
+            ${{ steps.tag.outputs.image }}:${{ steps.tag.outputs.tag }}
+            ${{ steps.tag.outputs.image }}:latest
+          cache-from: type=registry,ref=${{ steps.tag.outputs.image }}:latest
+          cache-to: type=inline

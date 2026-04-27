@@ -1,0 +1,85 @@
+name: Deploy to GCP Demo
+
+on:
+  workflow_run:
+    workflows: [Build and Push Images to GCP]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy-gcp-demo:
+    name: Deploy to GKE Demo
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    permissions:
+      id-token: write
+      contents: read
+
+    environment:
+      name: gcp-demo
+      url: https://api.demo-gcp.sbtm.example.com/health
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Setup GCloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Get GKE credentials
+        run: |
+          gcloud container clusters get-credentials ${{ secrets.GKE_DEMO_CLUSTER_NAME }} \
+            --region=${{ secrets.GCP_REGION }} \
+            --project=${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Set image tag from triggering workflow
+        id: tag
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            SHA_TAG="latest"
+          else
+            SHA_TAG="sha-$(echo '${{ github.event.workflow_run.head_sha }}' | cut -c1-7)"
+          fi
+          echo "tag=${SHA_TAG}" >> "$GITHUB_OUTPUT"
+
+      - name: Update image tags in GCP demo overlay
+        run: |
+          REGISTRY="${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/sbtm-demo-docker"
+          cd infra/k8s/overlays/gcp-demo
+          for svc in api-gateway gps-tracking emergency-alerts student-presence student-management compliance-management video-service notification-service; do
+            kustomize edit set image \
+              "REGISTRY_PLACEHOLDER/sbtm/${svc}=${REGISTRY}/${svc}:${{ steps.tag.outputs.tag }}"
+          done
+          # Update project ID in secretstore
+          sed -i "s/PROJECT_ID/${{ secrets.GCP_PROJECT_ID }}/g" secretstore-gcp.yaml
+          sed -i "s/us-central1/${{ secrets.GCP_REGION }}/g" secretstore-gcp.yaml
+          sed -i "s/sbtm-demo-gke/${{ secrets.GKE_DEMO_CLUSTER_NAME }}/g" secretstore-gcp.yaml
+          cd -
+
+      - name: Apply GCP demo overlay
+        run: kubectl apply -k infra/k8s/overlays/gcp-demo
+
+      - name: Wait for rollout
+        run: kubectl rollout status deployment -n sbtm-demo-gcp --timeout=300s
+
+      - name: Smoke test
+        run: |
+          INGRESS_IP=$(kubectl get ingress sbtm-ingress -n sbtm-demo-gcp -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+          if [ -n "$INGRESS_IP" ]; then
+            curl --fail --retry 5 --retry-delay 10 \
+              -H "Host: api.demo-gcp.sbtm.example.com" \
+              "http://${INGRESS_IP}/health" | jq . || echo "Health check failed but continuing"
+          else
+            echo "Ingress IP not yet assigned"
+          fi
+
+      - name: Pod status summary
+        if: always()
+        run: kubectl get pods -n sbtm-demo-gcp
