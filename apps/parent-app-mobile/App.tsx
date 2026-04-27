@@ -1,0 +1,133 @@
+import React, { useEffect, useState } from 'react';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { StatusBar } from 'expo-status-bar';
+import { Alert } from 'react-native';
+
+import { AuthService } from './src/services/AuthService';
+import { ConnectivityService } from './src/services/ConnectivityService';
+import { NotificationService } from './src/services/NotificationService';
+import { useParentStore } from './src/store/useParentStore';
+
+// Screens
+import LoginScreen from './src/screens/LoginScreen';
+import DashboardScreen from './src/screens/DashboardScreen';
+import MapScreen from './src/screens/MapScreen';
+import NotificationsScreen from './src/screens/NotificationsScreen';
+import AbsenceReportScreen from './src/screens/AbsenceReportScreen';
+import SettingsScreen from './src/screens/SettingsScreen';
+
+import { RootStackParamList } from './src/types';
+
+const Stack = createNativeStackNavigator<RootStackParamList>();
+
+export default function App() {
+  const [isInitializing, setIsInitializing] = useState(true);
+  const { isAuthenticated, setUser, setOffline, logout } = useParentStore();
+
+  useEffect(() => {
+    initializeApp();
+  }, []);
+
+  const initializeApp = async () => {
+    try {
+      // Set up unauthorized handler
+      AuthService.setOnUnauthorized(() => {
+        Alert.alert(
+          'Session Expired',
+          'Your session has expired. Please log in again.',
+          [{ text: 'OK', onPress: () => logout() }]
+        );
+      });
+
+      // Restore session
+      const user = await AuthService.restoreSession();
+      if (user) {
+        setUser(user);
+      }
+
+      // Initialize connectivity monitoring
+      ConnectivityService.startMonitoring((isOffline) => {
+        setOffline(isOffline);
+        if (isOffline) {
+          Alert.alert(
+            'Connection Lost',
+            'You are currently offline. Some features may be unavailable.'
+          );
+        }
+      });
+
+      // Initialize notifications (will fail gracefully if FCM not configured)
+      if (isAuthenticated) {
+        await NotificationService.initialize();
+      }
+    } catch (error) {
+      console.error('App initialization error:', error);
+    } finally {
+      setIsInitializing(false);
+    }
+  };
+
+  if (isInitializing) {
+    // TODO: Replace with splash screen component
+    return null;
+  }
+
+  return (
+    <SafeAreaProvider>
+      <NavigationContainer>
+        <Stack.Navigator
+          screenOptions={{
+            headerStyle: {
+              backgroundColor: '#1e293b',
+            },
+            headerTintColor: '#fff',
+            headerTitleStyle: {
+              fontWeight: '600',
+            },
+          }}
+        >
+          {!isAuthenticated ? (
+            // Unauthenticated Stack
+            <Stack.Screen
+              name="Login"
+              component={LoginScreen}
+              options={{ headerShown: false }}
+            />
+          ) : (
+            // Authenticated Stack
+            <>
+              <Stack.Screen
+                name="Dashboard"
+                component={DashboardScreen}
+                options={{ title: 'My Children' }}
+              />
+              <Stack.Screen
+                name="Map"
+                component={MapScreen}
+                options={{ title: 'Track Bus' }}
+              />
+              <Stack.Screen
+                name="Notifications"
+                component={NotificationsScreen}
+                options={{ title: 'Notifications' }}
+              />
+              <Stack.Screen
+                name="AbsenceReport"
+                component={AbsenceReportScreen}
+                options={{ title: 'Report Absence' }}
+              />
+              <Stack.Screen
+                name="Settings"
+                component={SettingsScreen}
+                options={{ title: 'Settings' }}
+              />
+            </>
+          )}
+        </Stack.Navigator>
+      </NavigationContainer>
+      <StatusBar style="light" />
+    </SafeAreaProvider>
+  );
+}
