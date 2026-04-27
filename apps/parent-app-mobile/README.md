@@ -4,7 +4,7 @@ Native mobile application for parents to track their children's school bus journ
 
 ## 🎯 Features
 
-### Implemented (Phase 1-4)
+### Implemented (Phase 1-5)
 - ✅ **Authentication**: Secure login with JWT tokens
 - ✅ **Dashboard**: View all children with real-time status
 - ✅ **Live Tracking**: GPS map showing bus location and route
@@ -12,9 +12,9 @@ Native mobile application for parents to track their children's school bus journ
 - ✅ **Absence Reporting**: Report child absence with route selection
 - ✅ **Settings**: Manage notification preferences
 - ✅ **Offline Support**: Basic connectivity monitoring
+- ✅ **Glassmorphic UI Components**: Reusable component library with animations
 
 ### In Progress
-- ⏳ **Glassmorphic UI Components**: Enhanced visual design
 - ⏳ **Push Notifications**: FCM integration (placeholder implemented)
 - ⏳ **Enhanced Map Features**: SSE streaming, geofencing
 
@@ -37,6 +37,13 @@ Native mobile application for parents to track their children's school bus journ
 apps/parent-app-mobile/
 ├── App.tsx                 # Root component with navigation
 ├── src/
+│   ├── components/         # Reusable UI components
+│   │   ├── GlassCard.tsx
+│   │   ├── GlassButton.tsx
+│   │   ├── GlassModal.tsx
+│   │   ├── LoadingSpinner.tsx
+│   │   ├── StatusBadge.tsx
+│   │   └── index.ts
 │   ├── screens/            # Screen components
 │   │   ├── LoginScreen.tsx
 │   │   ├── DashboardScreen.tsx
@@ -54,15 +61,124 @@ apps/parent-app-mobile/
 │   │   └── useParentStore.ts
 │   ├── types/              # TypeScript definitions
 │   │   └── index.ts
-│   ├── components/         # Reusable UI components (coming)
-│   ├── hooks/              # Custom React hooks (coming)
-│   ├── utils/              # Utility functions (coming)
-│   └── constants/          # App constants (coming)
 ├── assets/                 # Images, fonts, etc.
 ├── __mocks__/              # Jest mocks
 ├── app.json                # Expo configuration
 ├── eas.json                # EAS Build configuration
 └── package.json            # Dependencies
+```
+
+## 🎨 Component Library
+
+### Glassmorphic UI Components
+
+All screens use a consistent glassmorphic design system with reusable components:
+
+#### GlassCard
+Glassmorphic container with backdrop blur effect.
+```tsx
+import { GlassCard } from '../components';
+
+<GlassCard variant="default | elevated | alert | success" style={styles.card}>
+  {children}
+</GlassCard>
+```
+
+**Variants:**
+- `default`: Standard glass effect with subtle border
+- `elevated`: Darker gradient for layered appearance
+- `alert`: Red tinted for warnings/errors
+- `success`: Green tinted for success states
+
+#### GlassButton
+Interactive button with press animations and loading state.
+```tsx
+import { GlassButton } from '../components';
+
+<GlassButton
+  title="Click Me"
+  onPress={handlePress}
+  variant="primary | secondary | danger | ghost"
+  disabled={false}
+  loading={isLoading}
+  style={styles.button}
+/>
+```
+
+**Features:**
+- Spring animation on press
+- Built-in loading spinner
+- Auto-disabled during loading
+- Multiple color variants
+
+#### StatusBadge
+Color-coded status indicator with comprehensive variant system.
+```tsx
+import { StatusBadge } from '../components';
+
+<StatusBadge
+  label="On Bus"
+  variant="on_bus | at_school | at_home | success | warning | danger"
+  size="small | medium | large"
+/>
+```
+
+**Variants:**
+- Child status: `on_bus`, `at_school`, `at_home`, `unknown`
+- Generic: `success`, `warning`, `danger`, `info`, `neutral`
+
+#### LoadingSpinner
+Animated gradient spinner with pulsing effect.
+```tsx
+import { LoadingSpinner } from '../components';
+
+<LoadingSpinner size="small | medium | large" color="#6366f1" />
+```
+
+**Features:**
+- Gradient color animation
+- Pulse scale animation
+- Customizable size and color
+
+#### GlassModal
+Modal overlay with backdrop blur and slide-in animation.
+```tsx
+import { GlassModal } from '../components';
+
+<GlassModal
+  visible={isVisible}
+  onClose={() => setVisible(false)}
+  title="Modal Title"
+  showCloseButton={true}
+>
+  {modalContent}
+</GlassModal>
+```
+
+**Features:**
+- Backdrop blur effect
+- Slide-up animation
+- Auto-dismiss on backdrop tap
+- Scrollable content
+
+### Design System
+
+**Colors:**
+```typescript
+Primary: #6366f1 (Indigo)
+Success: #10b981 (Emerald)
+Warning: #f59e0b (Amber)
+Danger: #ef4444 (Red)
+Background: #1e293b (Slate-800)
+Text: #fff (White)
+Muted: #94a3b8 (Slate-400)
+```
+
+**Glassmorphic Effect:**
+```css
+background: rgba(30, 41, 59, 0.6)
+backdrop-filter: blur(10px)
+border: 1px solid rgba(255, 255, 255, 0.1)
 ```
 
 ## 🚀 Getting Started
