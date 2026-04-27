@@ -1,0 +1,65 @@
+{
+  "expo": {
+    "name": "SBTM Parent",
+    "slug": "sbtm-parent-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": false,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#6366f1"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.sbtm.parent",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "SBTM Parent needs your location to show your child's bus on the map.",
+        "UIBackgroundModes": ["remote-notification"]
+      }
+    },
+    "android": {
+      "package": "com.sbtm.parent",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#6366f1"
+      },
+      "edgeToEdgeEnabled": false,
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.VIBRATE"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "SBTM Parent needs location access to show your child's bus on the map."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#6366f1",
+          "sounds": ["./assets/notification.wav"]
+        }
+      ],
+      "expo-secure-store"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "PLACEHOLDER-PARENT-APP-PROJECT-ID"
+      }
+    },
+    "owner": "arvinddhasmana"
+  }
+}
