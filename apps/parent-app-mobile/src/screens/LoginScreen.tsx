@@ -3,15 +3,14 @@ import {
   View,
   Text,
   TextInput,
-  TouchableOpacity,
   StyleSheet,
   Alert,
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
 import { useParentStore } from '../store/useParentStore';
 import { NotificationService } from '../services/NotificationService';
+import { GlassCard, GlassButton } from '../components';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -59,11 +58,11 @@ export default function LoginScreen() {
         </View>
 
         {/* Login Form */}
-        <View style={styles.form}>
+        <GlassCard style={styles.formCard}>
           <TextInput
             style={styles.input}
             placeholder="Email"
-            placeholderTextColor="#999"
+            placeholderTextColor="#64748b"
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
@@ -74,7 +73,7 @@ export default function LoginScreen() {
           <TextInput
             style={styles.input}
             placeholder="Password"
-            placeholderTextColor="#999"
+            placeholderTextColor="#64748b"
             value={password}
             onChangeText={setPassword}
             secureTextEntry
@@ -82,23 +81,20 @@ export default function LoginScreen() {
             onSubmitEditing={handleLogin}
           />
 
-          <TouchableOpacity
-            style={[styles.button, isLoading && styles.buttonDisabled]}
+          <GlassButton
+            title="Log In"
             onPress={handleLogin}
+            variant="primary"
             disabled={isLoading}
-          >
-            {isLoading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.buttonText}>Log In</Text>
-            )}
-          </TouchableOpacity>
+            loading={isLoading}
+            style={styles.loginButton}
+          />
 
           {/* Demo Credentials Hint */}
           <Text style={styles.hint}>
             Demo: parent1@sbtm.demo / Admin123!
           </Text>
-        </View>
+        </GlassCard>
       </View>
     </KeyboardAvoidingView>
   );
@@ -107,7 +103,7 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#1e293b',
   },
   content: {
     flex: 1,
@@ -126,6 +122,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 20,
+    shadowColor: '#6366f1',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.5,
+    shadowRadius: 12,
+    elevation: 8,
   },
   logoText: {
     fontSize: 40,
@@ -133,46 +134,34 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#fff',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#666',
+    color: '#94a3b8',
   },
-  form: {
+  formCard: {
     width: '100%',
+    padding: 24,
   },
   input: {
     height: 50,
+    backgroundColor: 'rgba(15, 23, 42, 0.8)',
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
     borderRadius: 8,
     paddingHorizontal: 15,
     fontSize: 16,
-    backgroundColor: '#fff',
-    marginBottom: 15,
-    color: '#333',
-  },
-  button: {
-    height: 50,
-    backgroundColor: '#6366f1',
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 10,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonText: {
     color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
+    marginBottom: 15,
+  },
+  loginButton: {
+    marginTop: 10,
   },
   hint: {
     textAlign: 'center',
-    color: '#999',
+    color: '#64748b',
     fontSize: 13,
     marginTop: 20,
   },

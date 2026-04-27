@@ -4,16 +4,15 @@ import {
   Text,
   StyleSheet,
   TextInput,
-  TouchableOpacity,
   ScrollView,
   Alert,
-  ActivityIndicator,
   Platform,
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { useParentStore } from '../store/useParentStore';
 import { ParentApiService } from '../services/ParentApiService';
 import { AbsenceReport } from '../types';
+import { GlassCard, GlassButton } from '../components';
 
 export default function AbsenceReportScreen() {
   const { children } = useParentStore();
@@ -101,92 +100,91 @@ export default function AbsenceReportScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>Report an Absence</Text>
-      <Text style={styles.subtitle}>
-        Let the driver and school know your child will not be riding the bus.
-      </Text>
+      <GlassCard style={styles.formCard}>
+        <Text style={styles.title}>Report an Absence</Text>
+        <Text style={styles.subtitle}>
+          Let the driver and school know your child will not be riding the bus.
+        </Text>
 
-      {/* Child Selector */}
-      <View style={styles.formGroup}>
-        <Text style={styles.label}>Child</Text>
-        <View style={styles.pickerContainer}>
-          <Picker
-            selectedValue={selectedChildId}
-            onValueChange={setSelectedChildId}
-            style={styles.picker}
-            dropdownIconColor="#fff"
-          >
-            {children.map((child) => (
-              <Picker.Item
-                key={child.id}
-                label={`${child.firstName} ${child.lastName}`}
-                value={child.id}
-              />
-            ))}
-          </Picker>
+        {/* Child Selector */}
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Child</Text>
+          <View style={styles.pickerContainer}>
+            <Picker
+              selectedValue={selectedChildId}
+              onValueChange={setSelectedChildId}
+              style={styles.picker}
+              dropdownIconColor="#fff"
+            >
+              {children.map((child) => (
+                <Picker.Item
+                  key={child.id}
+                  label={`${child.firstName} ${child.lastName}`}
+                  value={child.id}
+                />
+              ))}
+            </Picker>
+          </View>
         </View>
-      </View>
 
-      {/* Date Input */}
-      <View style={styles.formGroup}>
-        <Text style={styles.label}>Date (YYYY-MM-DD)</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="2026-05-01"
-          placeholderTextColor="#64748b"
-          value={tripDate}
-          onChangeText={setTripDate}
-          editable={!isSubmitting}
-        />
-        <Text style={styles.hint}>Format: YYYY-MM-DD, minimum today</Text>
-      </View>
-
-      {/* Route Type Selector */}
-      <View style={styles.formGroup}>
-        <Text style={styles.label}>Route</Text>
-        <View style={styles.pickerContainer}>
-          <Picker
-            selectedValue={routeType}
-            onValueChange={(value) => setRouteType(value as 'AM' | 'PM' | 'BOTH')}
-            style={styles.picker}
-            dropdownIconColor="#fff"
-          >
-            <Picker.Item label="Morning route only (AM)" value="AM" />
-            <Picker.Item label="Afternoon route only (PM)" value="PM" />
-            <Picker.Item label="Full day (both routes)" value="BOTH" />
-          </Picker>
+        {/* Date Input */}
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Date (YYYY-MM-DD)</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="2026-05-01"
+            placeholderTextColor="#64748b"
+            value={tripDate}
+            onChangeText={setTripDate}
+            editable={!isSubmitting}
+          />
+          <Text style={styles.hint}>Format: YYYY-MM-DD, minimum today</Text>
         </View>
-      </View>
 
-      {/* Notes */}
-      <View style={styles.formGroup}>
-        <Text style={styles.label}>Notes (Optional)</Text>
-        <TextInput
-          style={[styles.input, styles.textArea]}
-          placeholder="Additional information..."
-          placeholderTextColor="#64748b"
-          value={notes}
-          onChangeText={setNotes}
-          multiline
-          numberOfLines={4}
-          maxLength={500}
-          editable={!isSubmitting}
+        {/* Route Type Selector */}
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Route</Text>
+          <View style={styles.pickerContainer}>
+            <Picker
+              selectedValue={routeType}
+              onValueChange={(value) => setRouteType(value as 'AM' | 'PM' | 'BOTH')}
+              style={styles.picker}
+              dropdownIconColor="#fff"
+            >
+              <Picker.Item label="Morning route only (AM)" value="AM" />
+              <Picker.Item label="Afternoon route only (PM)" value="PM" />
+              <Picker.Item label="Full day (both routes)" value="BOTH" />
+            </Picker>
+          </View>
+        </View>
+
+        {/* Notes */}
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Notes (Optional)</Text>
+          <TextInput
+            style={[styles.input, styles.textArea]}
+            placeholder="Additional information..."
+            placeholderTextColor="#64748b"
+            value={notes}
+            onChangeText={setNotes}
+            multiline
+            numberOfLines={4}
+            maxLength={500}
+            editable={!isSubmitting}
+          />
+          <Text style={styles.hint}>{notes.length}/500 characters</Text>
+        </View>
+
+        {/* Submit Button */}
+        <GlassButton
+          title="Submit Report"
+          onPress={handleSubmit}
+          variant="primary"
+          disabled={isSubmitting}
+          loading={isSubmitting}
+          style={styles.submitButton}
         />
-        <Text style={styles.hint}>{notes.length}/500 characters</Text>
-      </View>
-
-      {/* Submit Button */}
-      <TouchableOpacity
-        style={[styles.button, isSubmitting && styles.buttonDisabled]}
-        onPress={handleSubmit}
-        disabled={isSubmitting}
-      >
-        {isSubmitting ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.buttonText}>Submit Report</Text>
-        )}
-      </TouchableOpacity>
+      </GlassCard>
     </ScrollView>
   );
 }
@@ -204,6 +202,9 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   content: {
+    padding: 20,
+  },
+  formCard: {
     padding: 20,
   },
   title: {
@@ -256,20 +257,8 @@ const styles = StyleSheet.create({
     color: '#64748b',
     marginTop: 4,
   },
-  button: {
-    backgroundColor: '#6366f1',
-    borderRadius: 8,
-    paddingVertical: 15,
-    alignItems: 'center',
+  submitButton: {
     marginTop: 10,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
   },
   emptyText: {
     color: '#94a3b8',

@@ -5,10 +5,10 @@ import {
   StyleSheet,
   FlatList,
   RefreshControl,
-  ActivityIndicator,
 } from 'react-native';
 import { ParentApiService } from '../services/ParentApiService';
 import { Alert } from '../types';
+import { GlassCard, LoadingSpinner, StatusBadge } from '../components';
 
 export default function NotificationsScreen() {
   const [alerts, setAlerts] = useState<Alert[]>([]);
@@ -39,59 +39,47 @@ export default function NotificationsScreen() {
     }
   }, []);
 
-  const getEventTypeColor = (eventType: string) => {
+  const getEventTypeBadgeVariant = (eventType: string) => {
     switch (eventType) {
       case 'PANIC_BUTTON':
-        return '#ef4444';
-      case 'LATE_ARRIVAL':
-        return '#f59e0b';
-      case 'ROUTE_DEVIATION':
-        return '#f97316';
       case 'INCIDENT':
-        return '#ec4899';
+        return 'danger';
+      case 'LATE_ARRIVAL':
+      case 'ROUTE_DEVIATION':
+        return 'warning';
       default:
-        return '#64748b';
+        return 'neutral';
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusBadgeVariant = (status: string) => {
     switch (status) {
       case 'ACTIVE':
-        return '#ec4899';
+        return 'danger';
       case 'RESOLVED':
-        return '#10b981';
+        return 'success';
       default:
-        return '#64748b';
+        return 'neutral';
     }
   };
 
   const renderAlert = ({ item }: { item: Alert }) => {
     return (
-      <View
-        style={[
-          styles.card,
-          item.status === 'ACTIVE' && styles.cardActive,
-        ]}
+      <GlassCard
+        variant={item.status === 'ACTIVE' ? 'alert' : 'default'}
+        style={styles.card}
       >
         <View style={styles.cardHeader}>
-          <View
-            style={[
-              styles.eventTypeBadge,
-              { backgroundColor: getEventTypeColor(item.eventType) },
-            ]}
-          >
-            <Text style={styles.eventTypeText}>
-              {item.eventType.replace('_', ' ')}
-            </Text>
-          </View>
-          <View
-            style={[
-              styles.statusBadge,
-              { backgroundColor: getStatusColor(item.status) },
-            ]}
-          >
-            <Text style={styles.statusText}>{item.status}</Text>
-          </View>
+          <StatusBadge
+            label={item.eventType.replace('_', ' ')}
+            variant={getEventTypeBadgeVariant(item.eventType)}
+            size="small"
+          />
+          <StatusBadge
+            label={item.status}
+            variant={getStatusBadgeVariant(item.status)}
+            size="small"
+          />
         </View>
 
         <Text style={styles.description}>{item.description}</Text>
@@ -103,14 +91,14 @@ export default function NotificationsScreen() {
             {new Date(item.timestamp).toLocaleString()}
           </Text>
         </View>
-      </View>
+      </GlassCard>
     );
   };
 
   if (isLoading) {
     return (
       <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#6366f1" />
+        <LoadingSpinner size="large" />
         <Text style={styles.loadingText}>Loading notifications...</Text>
       </View>
     );
@@ -164,43 +152,12 @@ const styles = StyleSheet.create({
     padding: 15,
   },
   card: {
-    backgroundColor: 'rgba(30, 41, 59, 0.6)',
-    borderRadius: 16,
-    padding: 15,
     marginBottom: 15,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  cardActive: {
-    borderColor: '#ec4899',
-    borderWidth: 2,
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 12,
-  },
-  eventTypeBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-  },
-  eventTypeText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  statusBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-  },
-  statusText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '600',
   },
   description: {
     color: '#fff',
