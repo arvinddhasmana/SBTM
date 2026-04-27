@@ -1,12 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ActivityIndicator,
-} from 'react-native';
-import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import MapView, { Marker, Polyline } from 'react-native-maps';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import { useParentStore } from '../store/useParentStore';
@@ -21,9 +15,7 @@ export default function MapScreen() {
   const { children } = useParentStore();
   const mapRef = useRef<MapView>(null);
 
-  const [child, setChild] = useState(() =>
-    children.find((c) => c.id === route.params.childId)
-  );
+  const [child, setChild] = useState(() => children.find((c) => c.id === route.params.childId));
   const [busLocation, setBusLocation] = useState<BusLocationUpdate | null>(null);
   const [routeDetails, setRouteDetails] = useState<Route | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -116,7 +108,6 @@ export default function MapScreen() {
       <MapView
         ref={mapRef}
         style={styles.map}
-        provider={PROVIDER_GOOGLE}
         initialRegion={{
           latitude: 45.4215,
           longitude: -75.6972,
@@ -149,10 +140,7 @@ export default function MapScreen() {
             description={`Stop #${stop.sequence}`}
           >
             <View
-              style={[
-                styles.stopMarker,
-                stop.id === child.stopId && styles.stopMarkerHighlight,
-              ]}
+              style={[styles.stopMarker, stop.id === child.stopId && styles.stopMarkerHighlight]}
             >
               <Text style={styles.stopMarkerText}>{stop.sequence}</Text>
             </View>
@@ -184,9 +172,7 @@ export default function MapScreen() {
           <>
             <Text style={styles.statusLive}>● Live</Text>
             {busLocation.eta && (
-              <Text style={styles.eta}>
-                ETA: {Math.round(busLocation.eta / 60)} min
-              </Text>
+              <Text style={styles.eta}>ETA: {Math.round(busLocation.eta / 60)} min</Text>
             )}
           </>
         ) : (

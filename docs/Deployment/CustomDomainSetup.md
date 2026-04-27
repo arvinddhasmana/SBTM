@@ -144,7 +144,7 @@ this automatically; for production check
 
 Plain `https://sbtm.ca` is intentionally unbound (Static Web Apps do not
 support apex ALIAS records cheaply). To redirect the apex to the parent portal,
-add a `staticwebapp.config.json` rewrite under `apps/parent-app/web/public/` and
+add a `staticwebapp.config.json` rewrite under `apps/parent-dashboard/web/public/` and
 bind `sbtm.ca` as a custom domain on the parent SWA in a follow-up change.
 
 ## Future: GitHub Actions auto-deploy

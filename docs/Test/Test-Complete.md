@@ -470,7 +470,7 @@ npx playwright show-report apps/admin-dashboard/playwright-report
 - No documented contract tests for event payloads between services
 - No documented authorization regression suite for cross-tenant access
 - No documented mobile BLE verification flow
-- No Playwright E2E tests for the parent portal (`apps/parent-app`)
+- No Playwright E2E tests for the parent portal (`apps/parent-dashboard`)
 - No performance/load benchmarks for GPS ingest throughput
 
 ## 11. Integration Focus By Upgrade Phase

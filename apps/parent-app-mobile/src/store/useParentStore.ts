@@ -103,7 +103,7 @@ export const useParentStore = create<ParentStore>((set, get) => ({
       });
 
       const alerts = await ParentApiService.getActiveAlerts(routeIds);
-      set({ activeAlerts: alerts, isLoadingAlerts: false });
+      set({ activeAlerts: Array.isArray(alerts) ? alerts : [], isLoadingAlerts: false });
     } catch (error) {
       console.error('Failed to refresh alerts:', error);
       set({ isLoadingAlerts: false });

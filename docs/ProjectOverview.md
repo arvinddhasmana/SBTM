@@ -17,9 +17,9 @@ This document consolidates all README.md files from across the SBTM (School Bus 
 
 3. [apps/admin-dashboard/README.md](#3-appsadmin-dashboardreadmemd)
 4. [apps/driver-app/README.md](#4-appsdriver-appreadmemd)
-5. [apps/parent-app/README.md](#5-appsparent-appreadmemd)
-6. [apps/parent-app/web/README.md](#6-appsparent-appwebreadmemd)
-7. [apps/parent-app/mobile/README.md](#7-appsparent-appmobilereadmemd)
+5. [apps/parent-dashboard/README.md](#5-appsparent-appreadmemd)
+6. [apps/parent-dashboard/web/README.md](#6-appsparent-appwebreadmemd)
+7. [apps/parent-dashboard/mobile/README.md](#7-appsparent-appmobilereadmemd)
 
 ### Services
 
@@ -62,11 +62,11 @@ The project is built as a monorepo containing multiple microservices and fronten
 
 ### Frontend Applications
 
-| Application                                    | Path                    | Description                                  | Tech Stack            |
-| ---------------------------------------------- | ----------------------- | -------------------------------------------- | --------------------- |
-| **[Admin Dashboard](../apps/admin-dashboard)** | `/apps/admin-dashboard` | Command center for fleet & route management  | React, Vite, Tailwind |
-| **[Driver App](../apps/driver-app)**           | `/apps/driver-app`      | Mobile app for navigation & presence logging | React Native, Expo    |
-| **[Parent App](../apps/parent-app)**           | `/apps/parent-app`      | Web portal for tracking children             | React, Vite           |
+| Application                                    | Path                     | Description                                  | Tech Stack            |
+| ---------------------------------------------- | ------------------------ | -------------------------------------------- | --------------------- |
+| **[Admin Dashboard](../apps/admin-dashboard)** | `/apps/admin-dashboard`  | Command center for fleet & route management  | React, Vite, Tailwind |
+| **[Driver App](../apps/driver-app)**           | `/apps/driver-app`       | Mobile app for navigation & presence logging | React Native, Expo    |
+| **[Parent App](../apps/parent-dashboard)**     | `/apps/parent-dashboard` | Web portal for tracking children             | React, Vite           |
 
 ### Cloud Backend & Microservices
 
@@ -583,11 +583,11 @@ EXPO_PUBLIC_API_URL=https://xxxx.ngrok-free.app/api/v1
 
 <!-- ======================================================================== -->
 
-## 5. apps/parent-app/README.md
+## 5. apps/parent-dashboard/README.md
 
 <!-- ======================================================================== -->
 
-> **Source:** `apps/parent-app/README.md`
+> **Source:** `apps/parent-dashboard/README.md`
 
 # Parent App
 
@@ -677,11 +677,11 @@ UNLICENSED - Private project
 
 <!-- ======================================================================== -->
 
-## 6. apps/parent-app/web/README.md
+## 6. apps/parent-dashboard/web/README.md
 
 <!-- ======================================================================== -->
 
-> **Source:** `apps/parent-app/web/README.md`
+> **Source:** `apps/parent-dashboard/web/README.md`
 
 # React + TypeScript + Vite
 
@@ -761,11 +761,11 @@ export default defineConfig([
 
 <!-- ======================================================================== -->
 
-## 7. apps/parent-app/mobile/README.md
+## 7. apps/parent-dashboard/mobile/README.md
 
 <!-- ======================================================================== -->
 
-> **Source:** `apps/parent-app/mobile/README.md`
+> **Source:** `apps/parent-dashboard/mobile/README.md`
 
 # Parent App - Mobile
 

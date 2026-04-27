@@ -160,7 +160,7 @@ wait_for_service "Redis" "docker exec \$(docker compose -f $PROJECT_ROOT/docker-
 
 # OSRM may not always be available (requires map data setup)
 if docker compose -f "$PROJECT_ROOT/docker-compose.yml" ps -q osrm &>/dev/null 2>&1; then
-    wait_for_service "OSRM" "curl -sf http://localhost:5000/health" || true
+    wait_for_service "OSRM" "curl -s http://localhost:5000/nearest/v1/driving/0,0 | grep -q code" || true
 fi
 
 echo ""

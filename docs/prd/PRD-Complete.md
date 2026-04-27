@@ -1307,7 +1307,7 @@ This document covers 5 medium-effort improvements identified during the codebase
 | D    | Add `/auth/logout` endpoint that clears the cookie                                                        | `services/api-gateway/src/modules/auth/auth.controller.ts`                                                |
 | E    | Update JwtStrategy to extract token from cookie (fallback to Authorization header for service-to-service) | `services/api-gateway/src/modules/auth/strategies/jwt.strategy.ts`                                        |
 | F    | Admin dashboard: add `withCredentials: true` to axios, remove `localStorage.setItem('auth_token')`        | `apps/admin-dashboard/src/services/api/api-client.ts`, `apps/admin-dashboard/src/context/AuthContext.tsx` |
-| G    | Parent app: same as F                                                                                     | `apps/parent-app/web/src/services/api.ts`, `apps/parent-app/web/src/context/AuthContext.tsx`              |
+| G    | Parent app: same as F                                                                                     | `apps/parent-dashboard/web/src/services/api.ts`, `apps/parent-dashboard/web/src/context/AuthContext.tsx`  |
 
 ### Cookie Configuration
 
@@ -1378,15 +1378,15 @@ res.cookie('access_token', accessToken, {
 
 ### Steps
 
-| Step | Change                                                         | Files                                                                   |
-| ---- | -------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| A    | Add `@tanstack/react-query` + `@tanstack/react-query-devtools` | `apps/admin-dashboard/package.json`, `apps/parent-app/web/package.json` |
-| B    | Create `QueryClientProvider` wrapper                           | Each app's entry point (`main.tsx` or `App.tsx`)                        |
-| C    | Create query key factory                                       | `src/services/query-keys.ts` in each app                                |
-| D    | Convert API service files to return fetcher functions          | `src/services/api/*.ts`                                                 |
-| E    | Replace `useEffect` + `useState` patterns with `useQuery`      | Dashboard.tsx, presence pages, etc.                                     |
-| F    | Replace manual POST/PATCH calls with `useMutation`             | Form submission components                                              |
-| G    | Replace `setInterval` polling with `refetchInterval` option    | Dashboard.tsx (currently 10s polling)                                   |
+| Step | Change                                                         | Files                                                                         |
+| ---- | -------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| A    | Add `@tanstack/react-query` + `@tanstack/react-query-devtools` | `apps/admin-dashboard/package.json`, `apps/parent-dashboard/web/package.json` |
+| B    | Create `QueryClientProvider` wrapper                           | Each app's entry point (`main.tsx` or `App.tsx`)                              |
+| C    | Create query key factory                                       | `src/services/query-keys.ts` in each app                                      |
+| D    | Convert API service files to return fetcher functions          | `src/services/api/*.ts`                                                       |
+| E    | Replace `useEffect` + `useState` patterns with `useQuery`      | Dashboard.tsx, presence pages, etc.                                           |
+| F    | Replace manual POST/PATCH calls with `useMutation`             | Form submission components                                                    |
+| G    | Replace `setInterval` polling with `refetchInterval` option    | Dashboard.tsx (currently 10s polling)                                         |
 
 ### Target Architecture
 

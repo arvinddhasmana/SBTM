@@ -757,7 +757,7 @@ deploy_portal() {
 }
 
 deploy_portal "admin portal"  "apps/admin-dashboard" "${ADMIN_SWA_NAME}"
-deploy_portal "parent portal" "apps/parent-app/web"  "${PARENT_SWA_NAME}"
+deploy_portal "parent portal" "apps/parent-dashboard/web"  "${PARENT_SWA_NAME}"
 
 fi  # end step 11
 

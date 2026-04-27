@@ -204,7 +204,7 @@ pnpm install
 pnpm run dev
 
 # Parent Portal (new terminal)
-cd apps/parent-app/web
+cd apps/parent-dashboard/web
 pnpm install
 pnpm run dev
 ```

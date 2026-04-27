@@ -1,9 +1,0 @@
-{
-  "name": "parent-app",
-  "version": "0.0.0",
-  "private": true,
-  "scripts": {
-    "build": "echo 'parent-app: see web/ and mobile/ sub-packages'",
-    "test": "echo 'parent-app: see web/ and mobile/ sub-packages'"
-  }
-}

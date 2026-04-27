@@ -19,11 +19,11 @@ The project is built as a monorepo containing multiple microservices and fronten
 
 ### 📱 Frontend Applications
 
-| Application                                   | Path                    | Description                                  | Tech Stack            |
-| --------------------------------------------- | ----------------------- | -------------------------------------------- | --------------------- |
-| **[Admin Dashboard](./apps/admin-dashboard)** | `/apps/admin-dashboard` | Command center for fleet & route management  | React, Vite, Tailwind |
-| **[Driver App](./apps/driver-app)**           | `/apps/driver-app`      | Mobile app for navigation & presence logging | React Native, Expo    |
-| **[Parent App](./apps/parent-app)**           | `/apps/parent-app`      | Web portal for tracking children             | React, Vite           |
+| Application                                   | Path                     | Description                                  | Tech Stack            |
+| --------------------------------------------- | ------------------------ | -------------------------------------------- | --------------------- |
+| **[Admin Dashboard](./apps/admin-dashboard)** | `/apps/admin-dashboard`  | Command center for fleet & route management  | React, Vite, Tailwind |
+| **[Driver App](./apps/driver-app)**           | `/apps/driver-app`       | Mobile app for navigation & presence logging | React Native, Expo    |
+| **[Parent App](./apps/parent-dashboard)**     | `/apps/parent-dashboard` | Web portal for tracking children             | React, Vite           |
 
 ### ☁️ Cloud Backend & Microservices
 

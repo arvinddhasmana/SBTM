@@ -55,6 +55,6 @@ services:
     deploy:
       replicas: 0
 
-  parent-app:
+  parent-dashboard:
     deploy:
       replicas: 0

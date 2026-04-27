@@ -221,9 +221,9 @@ services:
       redis:
         condition: service_healthy
 
-  parent-app:
+  parent-dashboard:
     build:
-      context: ./apps/parent-app/web
+      context: ./apps/parent-dashboard/web
       dockerfile: Dockerfile
     ports:
       - '3000:80'

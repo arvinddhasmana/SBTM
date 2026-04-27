@@ -7,7 +7,7 @@ COPY package.json pnpm-workspace.yaml pnpm-lock.yaml tsconfig.base.json ./
 
 COPY libs/common/package.json                    ./libs/common/
 COPY apps/admin-dashboard/package.json           ./apps/admin-dashboard/
-COPY apps/parent-app/web/package.json            ./apps/parent-app/web/
+COPY apps/parent-dashboard/web/package.json            ./apps/parent-dashboard/web/
 COPY services/api-gateway/package.json           ./services/api-gateway/
 COPY services/compliance-management/package.json ./services/compliance-management/
 COPY services/emergency-alerts/package.json      ./services/emergency-alerts/

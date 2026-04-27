@@ -278,7 +278,7 @@ These are **opt-in** — keep your everyday loop on Compose / Hybrid mode.
 ## 6. Why the web portals are hosted on Static Web Apps, not as containers on AKS
 
 Both portals are client-side React SPAs (`apps/admin-dashboard` and
-`apps/parent-app/web`). For SPAs, **Azure Static Web Apps** is a strictly better
+`apps/parent-dashboard/web`). For SPAs, **Azure Static Web Apps** is a strictly better
 fit than running an `nginx` container on AKS:
 
 | Concern                   | Static Web Apps (current)               | nginx pod on AKS                                           |

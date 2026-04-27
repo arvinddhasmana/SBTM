@@ -2708,7 +2708,7 @@ _Source: `sdlc_guidelines/08_tech_specific/react_vite.md`_
 
 ## Purpose
 
-Define frontend development standards for SBTM's React applications: the admin dashboard (`apps/admin-dashboard`) and the parent web app (`apps/parent-app/web`). Both use React 19 with Vite as the build tool.
+Define frontend development standards for SBTM's React applications: the admin dashboard (`apps/admin-dashboard`) and the parent web app (`apps/parent-dashboard/web`). Both use React 19 with Vite as the build tool.
 
 ## Technology Stack
 

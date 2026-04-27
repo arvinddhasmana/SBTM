@@ -14,7 +14,7 @@ Implemented with live gateway integration.
 
 ## Location
 
-- `apps/parent-app/web`
+- `apps/parent-dashboard/web`
 
 ## Runtime
 
@@ -49,4 +49,4 @@ Implemented with live gateway integration.
 
 ## Mobile App
 
-- `apps/parent-app/mobile` contains a Flutter scaffold only.
+- `apps/parent-dashboard/mobile` contains a Flutter scaffold only.

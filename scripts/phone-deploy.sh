@@ -104,7 +104,7 @@ main() {
 
     # ── Step 2: Optionally start web dashboards ────────────────────
     log "Starting admin dashboard and parent portal..."
-    docker compose up -d admin-dashboard parent-app 2>/dev/null || true
+    docker compose up -d admin-dashboard parent-dashboard 2>/dev/null || true
 
     # ── Step 3: Set up tunnel / get URL ────────────────────────────
     local API_URL=""

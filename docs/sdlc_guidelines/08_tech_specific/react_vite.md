@@ -6,19 +6,19 @@
 
 ## Purpose
 
-Define frontend development standards for SBTM's React applications: the admin dashboard (`apps/admin-dashboard`) and the parent web app (`apps/parent-app/web`). Both use React 19 with Vite as the build tool.
+Define frontend development standards for SBTM's React applications: the admin dashboard (`apps/admin-dashboard`) and the parent web app (`apps/parent-dashboard/web`). Both use React 19 with Vite as the build tool.
 
 ## Technology Stack
 
-| Layer | Technology |
-|---|---|
-| Framework | React 19 |
-| Build tool | Vite |
-| Styling | Tailwind CSS |
+| Layer            | Technology                                            |
+| ---------------- | ----------------------------------------------------- |
+| Framework        | React 19                                              |
+| Build tool       | Vite                                                  |
+| Styling          | Tailwind CSS                                          |
 | State management | React hooks + context (escalate to Zustand if needed) |
-| HTTP client | Fetch API or Axios |
-| Real-time | Socket.IO client |
-| Type checking | TypeScript (strict mode) |
+| HTTP client      | Fetch API or Axios                                    |
+| Real-time        | Socket.IO client                                      |
+| Type checking    | TypeScript (strict mode)                              |
 
 ## Project Structure
 
@@ -63,12 +63,12 @@ export function DashboardPage() {
 
 ## State Management
 
-| State Type | Approach |
-|---|---|
-| Server state (API data) | Custom hooks with fetch + local state, or React Query |
-| UI state (modals, tabs) | Component-local `useState` |
-| Shared app state (auth, theme) | React Context |
-| Complex shared state | Zustand (only if Context becomes unwieldy) |
+| State Type                     | Approach                                              |
+| ------------------------------ | ----------------------------------------------------- |
+| Server state (API data)        | Custom hooks with fetch + local state, or React Query |
+| UI state (modals, tabs)        | Component-local `useState`                            |
+| Shared app state (auth, theme) | React Context                                         |
+| Complex shared state           | Zustand (only if Context becomes unwieldy)            |
 
 ## API Integration
 
@@ -86,6 +86,7 @@ export async function getActiveRoutes(schoolId: string): Promise<Route[]> {
 ```
 
 Rules:
+
 - Centralize API calls in `services/` — components never call `fetch` directly.
 - Handle errors consistently (toast notifications for user-facing errors).
 - Include the JWT token from the auth context in all API calls.
@@ -103,7 +104,9 @@ export function useGpsUpdates(routeId: string) {
 
   useEffect(() => {
     socket.on(`location:${routeId}`, setLocation);
-    return () => { socket.off(`location:${routeId}`, setLocation); };
+    return () => {
+      socket.off(`location:${routeId}`, setLocation);
+    };
   }, [socket, routeId]);
 
   return location;

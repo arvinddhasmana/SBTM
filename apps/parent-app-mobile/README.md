@@ -5,6 +5,7 @@ Native mobile application for parents to track their children's school bus journ
 ## 🎯 Features
 
 ### Implemented (Phase 1-5)
+
 - ✅ **Authentication**: Secure login with JWT tokens
 - ✅ **Dashboard**: View all children with real-time status
 - ✅ **Live Tracking**: GPS map showing bus location and route
@@ -15,21 +16,22 @@ Native mobile application for parents to track their children's school bus journ
 - ✅ **Glassmorphic UI Components**: Reusable component library with animations
 
 ### In Progress
+
 - ⏳ **Push Notifications**: FCM integration (placeholder implemented)
 - ⏳ **Enhanced Map Features**: SSE streaming, geofencing
 
 ## 🏗️ Tech Stack
 
-| Component | Technology |
-|-----------|------------|
-| Framework | React Native 0.81 + Expo SDK 54 |
-| State Management | Zustand |
-| Navigation | React Navigation 7 (native stack) |
-| HTTP Client | Axios with JWT interceptor |
-| Maps | react-native-maps |
-| Storage | expo-secure-store |
+| Component          | Technology                           |
+| ------------------ | ------------------------------------ |
+| Framework          | React Native 0.81 + Expo SDK 54      |
+| State Management   | Zustand                              |
+| Navigation         | React Navigation 7 (native stack)    |
+| HTTP Client        | Axios with JWT interceptor           |
+| Maps               | react-native-maps                    |
+| Storage            | expo-secure-store                    |
 | Push Notifications | expo-notifications (FCM placeholder) |
-| Testing | Jest + React Native Testing Library |
+| Testing            | Jest + React Native Testing Library  |
 
 ## 📁 Project Structure
 
@@ -75,23 +77,28 @@ apps/parent-app-mobile/
 All screens use a consistent glassmorphic design system with reusable components:
 
 #### GlassCard
+
 Glassmorphic container with backdrop blur effect.
+
 ```tsx
 import { GlassCard } from '../components';
 
 <GlassCard variant="default | elevated | alert | success" style={styles.card}>
   {children}
-</GlassCard>
+</GlassCard>;
 ```
 
 **Variants:**
+
 - `default`: Standard glass effect with subtle border
 - `elevated`: Darker gradient for layered appearance
 - `alert`: Red tinted for warnings/errors
 - `success`: Green tinted for success states
 
 #### GlassButton
+
 Interactive button with press animations and loading state.
+
 ```tsx
 import { GlassButton } from '../components';
 
@@ -102,17 +109,20 @@ import { GlassButton } from '../components';
   disabled={false}
   loading={isLoading}
   style={styles.button}
-/>
+/>;
 ```
 
 **Features:**
+
 - Spring animation on press
 - Built-in loading spinner
 - Auto-disabled during loading
 - Multiple color variants
 
 #### StatusBadge
+
 Color-coded status indicator with comprehensive variant system.
+
 ```tsx
 import { StatusBadge } from '../components';
 
@@ -120,28 +130,34 @@ import { StatusBadge } from '../components';
   label="On Bus"
   variant="on_bus | at_school | at_home | success | warning | danger"
   size="small | medium | large"
-/>
+/>;
 ```
 
 **Variants:**
+
 - Child status: `on_bus`, `at_school`, `at_home`, `unknown`
 - Generic: `success`, `warning`, `danger`, `info`, `neutral`
 
 #### LoadingSpinner
+
 Animated gradient spinner with pulsing effect.
+
 ```tsx
 import { LoadingSpinner } from '../components';
 
-<LoadingSpinner size="small | medium | large" color="#6366f1" />
+<LoadingSpinner size="small | medium | large" color="#6366f1" />;
 ```
 
 **Features:**
+
 - Gradient color animation
 - Pulse scale animation
 - Customizable size and color
 
 #### GlassModal
+
 Modal overlay with backdrop blur and slide-in animation.
+
 ```tsx
 import { GlassModal } from '../components';
 
@@ -152,10 +168,11 @@ import { GlassModal } from '../components';
   showCloseButton={true}
 >
   {modalContent}
-</GlassModal>
+</GlassModal>;
 ```
 
 **Features:**
+
 - Backdrop blur effect
 - Slide-up animation
 - Auto-dismiss on backdrop tap
@@ -164,6 +181,7 @@ import { GlassModal } from '../components';
 ### Design System
 
 **Colors:**
+
 ```typescript
 Primary: #6366f1 (Indigo)
 Success: #10b981 (Emerald)
@@ -175,6 +193,7 @@ Muted: #94a3b8 (Slate-400)
 ```
 
 **Glassmorphic Effect:**
+
 ```css
 background: rgba(30, 41, 59, 0.6)
 backdrop-filter: blur(10px)
@@ -193,11 +212,13 @@ border: 1px solid rgba(255, 255, 255, 0.1)
 ### Installation
 
 1. **From the repository root:**
+
    ```bash
    pnpm install
    ```
 
 2. **Copy environment configuration:**
+
    ```bash
    cp apps/parent-app-mobile/.env.example apps/parent-app-mobile/.env
    ```
@@ -210,12 +231,14 @@ border: 1px solid rgba(255, 255, 255, 0.1)
 ### Running the App
 
 **Start Metro bundler:**
+
 ```bash
 cd apps/parent-app-mobile
 pnpm start
 ```
 
 **Run on specific platforms:**
+
 ```bash
 pnpm run android    # Android emulator
 pnpm run ios        # iOS simulator
@@ -223,6 +246,7 @@ pnpm run web        # Web browser (limited features)
 ```
 
 **Run on physical device:**
+
 1. Install Expo Go from App Store / Play Store
 2. Scan the QR code shown in terminal
 3. App will load on your device
@@ -319,6 +343,7 @@ pnpm run test:e2e:report
 ```
 
 **E2E Test Coverage:**
+
 - Authentication flows (login, logout, session persistence)
 - Dashboard and children tracking
 - Absence reporting form
@@ -326,6 +351,7 @@ pnpm run test:e2e:report
 - Form validation
 
 **Test Files:**
+
 ```
 apps/parent-app-mobile/
 ├── e2e/
@@ -339,16 +365,19 @@ apps/parent-app-mobile/
 ### Testing Patterns
 
 **Service Tests**:
+
 - Mock external dependencies (axios, SecureStore)
 - Test success and error scenarios
 - Verify correct API calls and data transformations
 
 **Store Tests**:
+
 - Use `@testing-library/react-native`'s `renderHook`
 - Test state mutations and side effects
 - Verify loading states and error handling
 
 **Component Tests**:
+
 - Test rendering and user interactions
 - Verify prop handling and variants
 - Test accessibility features
@@ -356,6 +385,7 @@ apps/parent-app-mobile/
 ### CI/CD Testing
 
 Tests run automatically on:
+
 - Push to `mobile/parent-app/**` branches
 - Pull requests to main/master
 - Pre-deployment validation
@@ -364,18 +394,20 @@ See `.github/workflows/parent-app-ci.yml` for CI configuration.
 
 ## 🔑 Demo Credentials
 
-| Role | Email | Password |
-|------|-------|----------|
+| Role   | Email             | Password  |
+| ------ | ----------------- | --------- |
 | Parent | parent1@sbtm.demo | Admin123! |
 
 ## 📱 Building for Production
 
 ### Android APK (Preview/Testing)
+
 ```bash
 eas build --platform android --profile preview
 ```
 
 ### Production Builds
+
 ```bash
 # Android AAB
 eas build --platform android --profile production
@@ -388,10 +420,10 @@ eas build --platform ios --profile production
 
 ### Environment Variables
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `EXPO_PUBLIC_API_URL` | Yes | API Gateway URL including `/api/v1` suffix |
-| `GOOGLE_MAPS_ANDROID_API_KEY` | Android only | Google Maps SDK key (managed by EAS) |
+| Variable                      | Required     | Description                                |
+| ----------------------------- | ------------ | ------------------------------------------ |
+| `EXPO_PUBLIC_API_URL`         | Yes          | API Gateway URL including `/api/v1` suffix |
+| `GOOGLE_MAPS_ANDROID_API_KEY` | Android only | Google Maps SDK key (managed by EAS)       |
 
 ### EAS Build Profiles
 
@@ -402,20 +434,24 @@ eas build --platform ios --profile production
 ## 🚧 Placeholders & Known Limitations
 
 ### FCM Push Notifications
+
 **Status**: Placeholder implemented
 
 **What's needed:**
+
 1. Firebase project setup
 2. `google-services.json` (Android) and `GoogleService-Info.plist` (iOS)
 3. Backend FCM server key configuration
 4. Update `app.json` with Firebase config
 
 **Current behavior:**
+
 - Uses Expo push tokens (works for testing)
 - Device token registration fails gracefully
 - Local notifications work for testing
 
 ### Missing Features
+
 1. **Biometric Authentication**: Not yet implemented
 2. **SSE Live Streaming**: Currently using polling (5s interval)
 3. **Geofencing**: Not implemented
@@ -431,13 +467,16 @@ eas build --platform ios --profile production
 ## 🤝 Development Notes
 
 ### Following Driver App Patterns
+
 This app mirrors the Driver App architecture for consistency:
+
 - Same service layer structure
 - Same authentication flow
 - Same state management approach
 - Same build and deployment processes
 
 ### API Endpoints Used
+
 - `POST /auth/login` - Authentication
 - `GET /parent/children` - Fetch children list
 - `GET /routes/:id/live-location` - Bus GPS location
@@ -455,13 +494,14 @@ UNLICENSED - Private project
 
 ## 🔗 Related Apps
 
-- **Parent Web Portal**: `/apps/parent-app/web` - Web version with same features
+- **Parent Web Portal**: `/apps/parent-dashboard/web` - Web version with same features
 - **Driver App**: `/apps/driver-app` - Mobile app for bus drivers
 - **Admin Dashboard**: `/apps/admin-dashboard` - Fleet management portal
 
 ---
 
 **Need Help?**
+
 - Check documentation in `/docs` folder
 - Review similar patterns in `/apps/driver-app`
 - Contact the development team

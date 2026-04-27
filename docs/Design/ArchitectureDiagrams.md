@@ -181,7 +181,7 @@ Shutdown / restart for cost control: [`cost-stop.sh`](../../scripts/azure/cost-s
 ### Monorepo build: Turborepo + pnpm
 
 - [`turbo.json`](../../turbo.json) defines cached `build`, `lint`, `test`, `test:cov`, persistent `dev`.
-- pnpm workspaces (`pnpm-workspace.yaml`) map `apps/*`, `services/*`, `libs/*`, `apps/parent-app/*`.
+- pnpm workspaces (`pnpm-workspace.yaml`) map `apps/*`, `services/*`, `libs/*`, `apps/parent-dashboard/*`.
 - Shared dev tooling: ESLint flat config, Prettier, Husky pre-commit, lint-staged, commitlint (Conventional Commits).
 
 ### When to use this diagram

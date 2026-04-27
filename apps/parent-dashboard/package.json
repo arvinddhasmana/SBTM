@@ -1,0 +1,9 @@
+{
+  "name": "parent-dashboard",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "build": "echo 'parent-dashboard: see web/ and mobile/ sub-packages'",
+    "test": "echo 'parent-dashboard: see web/ and mobile/ sub-packages'"
+  }
+}
