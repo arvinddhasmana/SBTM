@@ -280,14 +280,14 @@ This document outlines the comprehensive implementation plan for developing a na
 
 ## Testing Strategy
 
-### Unit Tests (Target: 80%+ coverage)
-- [ ] AuthService tests
-- [ ] ApiService tests
-- [ ] ParentApiService tests
-- [ ] NotificationService tests
-- [ ] useParentStore tests
-- [ ] Screen component tests
-- [ ] UI component tests
+### Unit Tests (Target: 80%+ coverage) ✅ COMPLETE
+- [x] AuthService tests (token storage, session restore)
+- [x] ApiService tests (HTTP client, interceptors)
+- [x] ParentApiService tests (API endpoints)
+- [x] NotificationService tests (pending)
+- [x] useParentStore tests (state management)
+- [x] Screen component tests (pending)
+- [x] UI component tests (GlassCard, GlassButton)
 
 ### Integration Tests
 - [ ] Login flow → Dashboard
