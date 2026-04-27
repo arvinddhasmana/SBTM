@@ -1,0 +1,241 @@
+# SBTM Parent Mobile App
+
+Native mobile application for parents to track their children's school bus journey in real-time.
+
+## 🎯 Features
+
+### Implemented (Phase 1-4)
+- ✅ **Authentication**: Secure login with JWT tokens
+- ✅ **Dashboard**: View all children with real-time status
+- ✅ **Live Tracking**: GPS map showing bus location and route
+- ✅ **Notifications**: Alert history and notification preferences
+- ✅ **Absence Reporting**: Report child absence with route selection
+- ✅ **Settings**: Manage notification preferences
+- ✅ **Offline Support**: Basic connectivity monitoring
+
+### In Progress
+- ⏳ **Glassmorphic UI Components**: Enhanced visual design
+- ⏳ **Push Notifications**: FCM integration (placeholder implemented)
+- ⏳ **Enhanced Map Features**: SSE streaming, geofencing
+
+## 🏗️ Tech Stack
+
+| Component | Technology |
+|-----------|------------|
+| Framework | React Native 0.81 + Expo SDK 54 |
+| State Management | Zustand |
+| Navigation | React Navigation 7 (native stack) |
+| HTTP Client | Axios with JWT interceptor |
+| Maps | react-native-maps |
+| Storage | expo-secure-store |
+| Push Notifications | expo-notifications (FCM placeholder) |
+| Testing | Jest + React Native Testing Library |
+
+## 📁 Project Structure
+
+```
+apps/parent-app-mobile/
+├── App.tsx                 # Root component with navigation
+├── src/
+│   ├── screens/            # Screen components
+│   │   ├── LoginScreen.tsx
+│   │   ├── DashboardScreen.tsx
+│   │   ├── MapScreen.tsx
+│   │   ├── NotificationsScreen.tsx
+│   │   ├── AbsenceReportScreen.tsx
+│   │   └── SettingsScreen.tsx
+│   ├── services/           # API and service layer
+│   │   ├── AuthService.ts
+│   │   ├── ApiService.ts
+│   │   ├── ParentApiService.ts
+│   │   ├── NotificationService.ts (FCM placeholder)
+│   │   └── ConnectivityService.ts
+│   ├── store/              # Zustand store
+│   │   └── useParentStore.ts
+│   ├── types/              # TypeScript definitions
+│   │   └── index.ts
+│   ├── components/         # Reusable UI components (coming)
+│   ├── hooks/              # Custom React hooks (coming)
+│   ├── utils/              # Utility functions (coming)
+│   └── constants/          # App constants (coming)
+├── assets/                 # Images, fonts, etc.
+├── __mocks__/              # Jest mocks
+├── app.json                # Expo configuration
+├── eas.json                # EAS Build configuration
+└── package.json            # Dependencies
+```
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js 20+
+- Expo CLI: `npm install -g expo-cli eas-cli`
+- Android Studio (for Android emulator) OR Xcode (for iOS simulator)
+- Physical device with Expo Go app (recommended)
+
+### Installation
+
+1. **From the repository root:**
+   ```bash
+   pnpm install
+   ```
+
+2. **Copy environment configuration:**
+   ```bash
+   cp apps/parent-app-mobile/.env.example apps/parent-app-mobile/.env
+   ```
+
+3. **Update `.env` with your API URL:**
+   - Android emulator: `http://10.0.2.2:3001/api/v1`
+   - Physical device on same WiFi: `http://192.168.x.x:3001/api/v1`
+   - WSL2 / ngrok: `https://xxxx.ngrok-free.app/api/v1`
+
+### Running the App
+
+**Start Metro bundler:**
+```bash
+cd apps/parent-app-mobile
+pnpm start
+```
+
+**Run on specific platforms:**
+```bash
+pnpm run android    # Android emulator
+pnpm run ios        # iOS simulator
+pnpm run web        # Web browser (limited features)
+```
+
+**Run on physical device:**
+1. Install Expo Go from App Store / Play Store
+2. Scan the QR code shown in terminal
+3. App will load on your device
+
+### Backend Setup
+
+The app requires the SBTM backend services running:
+
+```bash
+# From repository root
+docker compose up -d
+
+# Seed database (first time only)
+docker compose exec -T postgres psql -U postgres -d sbms < scripts/init-db.sql
+```
+
+## 🧪 Testing
+
+```bash
+# Run unit tests
+pnpm test
+
+# Run tests with coverage
+pnpm test -- --coverage
+
+# TypeScript check
+npx tsc --noEmit
+```
+
+## 🔑 Demo Credentials
+
+| Role | Email | Password |
+|------|-------|----------|
+| Parent | parent1@sbtm.demo | Admin123! |
+
+## 📱 Building for Production
+
+### Android APK (Preview/Testing)
+```bash
+eas build --platform android --profile preview
+```
+
+### Production Builds
+```bash
+# Android AAB
+eas build --platform android --profile production
+
+# iOS IPA (requires Apple Developer account)
+eas build --platform ios --profile production
+```
+
+## 🔧 Configuration
+
+### Environment Variables
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `EXPO_PUBLIC_API_URL` | Yes | API Gateway URL including `/api/v1` suffix |
+| `GOOGLE_MAPS_ANDROID_API_KEY` | Android only | Google Maps SDK key (managed by EAS) |
+
+### EAS Build Profiles
+
+- **development**: Dev client for local development
+- **preview**: APK for testing/distribution without store
+- **production**: Store-ready builds (AAB/IPA)
+
+## 🚧 Placeholders & Known Limitations
+
+### FCM Push Notifications
+**Status**: Placeholder implemented
+
+**What's needed:**
+1. Firebase project setup
+2. `google-services.json` (Android) and `GoogleService-Info.plist` (iOS)
+3. Backend FCM server key configuration
+4. Update `app.json` with Firebase config
+
+**Current behavior:**
+- Uses Expo push tokens (works for testing)
+- Device token registration fails gracefully
+- Local notifications work for testing
+
+### Missing Features
+1. **Biometric Authentication**: Not yet implemented
+2. **SSE Live Streaming**: Currently using polling (5s interval)
+3. **Geofencing**: Not implemented
+4. **Widgets**: Not implemented
+5. **Sentry Crash Reporting**: Placeholder, needs project setup
+
+## 📚 Documentation
+
+- [Implementation Plan](/docs/prd/ParentApp/ImplementationPlan.md)
+- [Parent Portal UI Design](/docs/UiDesign/ParentPortal.md) - Web version reference
+- [Driver App Development](/docs/dev/driver-app-development.md) - Similar architecture
+
+## 🤝 Development Notes
+
+### Following Driver App Patterns
+This app mirrors the Driver App architecture for consistency:
+- Same service layer structure
+- Same authentication flow
+- Same state management approach
+- Same build and deployment processes
+
+### API Endpoints Used
+- `POST /auth/login` - Authentication
+- `GET /parent/children` - Fetch children list
+- `GET /routes/:id/live-location` - Bus GPS location
+- `GET /routes/:id` - Route details (stops, polyline)
+- `GET /parent/alerts` - Active alerts
+- `GET /parent/alerts/history` - Alert history
+- `GET /parent/notification-preferences` - Get preferences
+- `PUT /parent/notification-preferences` - Update preferences
+- `POST /parent/absence-reports` - Report absence
+- `POST /parent/device-tokens` - Register for push (placeholder)
+
+## 📝 License
+
+UNLICENSED - Private project
+
+## 🔗 Related Apps
+
+- **Parent Web Portal**: `/apps/parent-app/web` - Web version with same features
+- **Driver App**: `/apps/driver-app` - Mobile app for bus drivers
+- **Admin Dashboard**: `/apps/admin-dashboard` - Fleet management portal
+
+---
+
+**Need Help?**
+- Check documentation in `/docs` folder
+- Review similar patterns in `/apps/driver-app`
+- Contact the development team
