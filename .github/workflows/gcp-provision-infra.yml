@@ -1,0 +1,106 @@
+name: Provision GCP Infrastructure
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        type: choice
+        options:
+          - demo
+          - production
+      terraform_action:
+        description: 'Terraform action'
+        required: true
+        type: choice
+        options:
+          - plan
+          - apply
+          - destroy
+
+jobs:
+  provision:
+    name: Provision GCP Infrastructure
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      id-token: write
+      contents: read
+
+    environment:
+      name: gcp-${{ inputs.environment }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.0
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Setup GCloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Terraform Init
+        working-directory: infra/gcp
+        run: |
+          cat > backend.tf <<EOF
+          terraform {
+            backend "gcs" {
+              bucket = "${{ secrets.GCP_TFSTATE_BUCKET }}"
+              prefix = "sbtm/${{ inputs.environment }}"
+            }
+          }
+          EOF
+          terraform init
+
+      - name: Terraform Validate
+        working-directory: infra/gcp
+        run: terraform validate
+
+      - name: Terraform Plan
+        if: inputs.terraform_action == 'plan' || inputs.terraform_action == 'apply'
+        working-directory: infra/gcp
+        run: |
+          terraform plan \
+            -var-file="environments/${{ inputs.environment }}.tfvars" \
+            -var="project_id=${{ secrets.GCP_PROJECT_ID }}" \
+            -out=tfplan
+
+      - name: Terraform Apply
+        if: inputs.terraform_action == 'apply'
+        working-directory: infra/gcp
+        run: terraform apply -auto-approve tfplan
+
+      - name: Terraform Destroy
+        if: inputs.terraform_action == 'destroy'
+        working-directory: infra/gcp
+        run: |
+          terraform destroy \
+            -var-file="environments/${{ inputs.environment }}.tfvars" \
+            -var="project_id=${{ secrets.GCP_PROJECT_ID }}" \
+            -auto-approve
+
+      - name: Get Terraform Outputs
+        if: inputs.terraform_action == 'apply'
+        working-directory: infra/gcp
+        run: terraform output -json > outputs.json
+
+      - name: Summary
+        if: inputs.terraform_action == 'apply'
+        run: |
+          echo "### GCP Infrastructure Provisioned" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Environment:** ${{ inputs.environment }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Project:** ${{ secrets.GCP_PROJECT_ID }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Region:** ${{ secrets.GCP_REGION }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Next steps:" >> "$GITHUB_STEP_SUMMARY"
+          echo "1. Get GKE credentials: \`gcloud container clusters get-credentials <cluster-name> --region ${{ secrets.GCP_REGION }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "2. Deploy services: Run the 'Deploy to GCP' workflow" >> "$GITHUB_STEP_SUMMARY"

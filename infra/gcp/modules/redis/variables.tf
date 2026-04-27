@@ -1,0 +1,9 @@
+variable "project_id" { type = string }
+variable "region" { type = string }
+variable "environment" { type = string }
+variable "resource_prefix" { type = string }
+variable "labels" { type = map(string) }
+variable "network_id" { type = string }
+variable "redis_memory_size" { type = number }
+variable "redis_tier" { type = string }
+variable "redis_version" { type = string }

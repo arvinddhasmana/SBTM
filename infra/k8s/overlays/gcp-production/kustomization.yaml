@@ -1,0 +1,103 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: sbtm-production-gcp
+
+resources:
+  - ../../base/namespace.yaml
+  - ./secretstore-gcp.yaml
+  - ../../base/api-gateway/deployment.yaml
+  - ../../base/api-gateway/service.yaml
+  - ../../base/api-gateway/hpa.yaml
+  - ../../base/gps-tracking/deployment.yaml
+  - ../../base/gps-tracking/service.yaml
+  - ../../base/gps-tracking/hpa.yaml
+  - ../../base/emergency-alerts/deployment.yaml
+  - ../../base/emergency-alerts/service.yaml
+  - ../../base/emergency-alerts/hpa.yaml
+  - ../../base/student-presence/deployment.yaml
+  - ../../base/student-presence/service.yaml
+  - ../../base/student-management/deployment.yaml
+  - ../../base/student-management/service.yaml
+  - ../../base/compliance-management/deployment.yaml
+  - ../../base/compliance-management/service.yaml
+  - ../../base/video-service/deployment.yaml
+  - ../../base/video-service/service.yaml
+  - ../../base/notification-service/deployment.yaml
+  - ../../base/notification-service/service.yaml
+  - ../../base/osrm/deployment.yaml
+  - ../../base/osrm/service.yaml
+  - ./ingress.yaml
+
+patches:
+  # Production: 3 replicas for most deployments
+  - patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 3
+    target:
+      kind: Deployment
+      labelSelector: 'app in (api-gateway,gps-tracking,emergency-alerts)'
+
+  # Production: 2 replicas for other services
+  - patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 2
+    target:
+      kind: Deployment
+      labelSelector: 'app in (student-presence,student-management,compliance-management,video-service,notification-service)'
+
+  # Production: info log level
+  - patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: LOG_LEVEL
+          value: info
+      - op: replace
+        path: /spec/template/spec/containers/0/env/1/value
+        value: production
+    target:
+      kind: Deployment
+      labelSelector: 'app in (api-gateway,gps-tracking,emergency-alerts,student-presence,student-management,compliance-management,video-service,notification-service)'
+
+  # Update namespace in namespace.yaml
+  - patch: |-
+      - op: replace
+        path: /metadata/name
+        value: sbtm-production-gcp
+    target:
+      kind: Namespace
+
+commonLabels:
+  environment: production
+  cloud-provider: gcp
+
+images:
+  # Replace with your GCP Artifact Registry URL
+  # Format: REGION-docker.pkg.dev/PROJECT_ID/sbtm-production-docker/SERVICE:TAG
+  - name: REGISTRY_PLACEHOLDER/sbtm/api-gateway
+    newName: us-central1-docker.pkg.dev/PROJECT_ID/sbtm-production-docker/api-gateway
+    newTag: v1.0.0
+  - name: REGISTRY_PLACEHOLDER/sbtm/gps-tracking
+    newName: us-central1-docker.pkg.dev/PROJECT_ID/sbtm-production-docker/gps-tracking
+    newTag: v1.0.0
+  - name: REGISTRY_PLACEHOLDER/sbtm/emergency-alerts
+    newName: us-central1-docker.pkg.dev/PROJECT_ID/sbtm-production-docker/emergency-alerts
+    newTag: v1.0.0
+  - name: REGISTRY_PLACEHOLDER/sbtm/student-presence
+    newName: us-central1-docker.pkg.dev/PROJECT_ID/sbtm-production-docker/student-presence
+    newTag: v1.0.0
+  - name: REGISTRY_PLACEHOLDER/sbtm/student-management
+    newName: us-central1-docker.pkg.dev/PROJECT_ID/sbtm-production-docker/student-management
+    newTag: v1.0.0
+  - name: REGISTRY_PLACEHOLDER/sbtm/compliance-management
+    newName: us-central1-docker.pkg.dev/PROJECT_ID/sbtm-production-docker/compliance-management
+    newTag: v1.0.0
+  - name: REGISTRY_PLACEHOLDER/sbtm/video-service
+    newName: us-central1-docker.pkg.dev/PROJECT_ID/sbtm-production-docker/video-service
+    newTag: v1.0.0
+  - name: REGISTRY_PLACEHOLDER/sbtm/notification-service
+    newName: us-central1-docker.pkg.dev/PROJECT_ID/sbtm-production-docker/notification-service
+    newTag: v1.0.0
