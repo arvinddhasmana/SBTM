@@ -297,6 +297,45 @@ apps/parent-app-mobile/
 - **Components**: 70%+ coverage
 - **Overall**: 70%+ coverage
 
+### E2E Browser Testing (Web Version)
+
+The app supports web via `react-native-web` and includes Playwright E2E tests:
+
+```bash
+# Install Playwright browsers (first time only)
+npx playwright install
+
+# Run E2E tests (starts web server automatically)
+npm run test:e2e
+
+# Run with UI mode for interactive debugging
+npm run test:e2e:ui
+
+# Run in headed mode (see browser)
+npm run test:e2e:headed
+
+# View test report
+npm run test:e2e:report
+```
+
+**E2E Test Coverage:**
+- Authentication flows (login, logout, session persistence)
+- Dashboard and children tracking
+- Absence reporting form
+- Navigation and routing
+- Form validation
+
+**Test Files:**
+```
+apps/parent-app-mobile/
+├── e2e/
+│   ├── fixtures.ts           # Test utilities and mock data
+│   ├── auth.spec.ts          # Authentication E2E tests
+│   ├── dashboard.spec.ts     # Dashboard E2E tests
+│   └── absence.spec.ts       # Absence reporting E2E tests
+└── playwright.config.ts      # Playwright configuration
+```
+
 ### Testing Patterns
 
 **Service Tests**:
