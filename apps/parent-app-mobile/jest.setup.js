@@ -73,18 +73,25 @@ jest.mock('react-native-maps', () => {
 });
 
 // Mock LinearGradient
-jest.mock('expo-linear-gradient', () => ({
-  LinearGradient: 'LinearGradient',
-}));
+jest.mock('expo-linear-gradient', () => {
+  const { View } = require('react-native');
+  return {
+    LinearGradient: View,
+  };
+});
 
 // Mock BlurView
-jest.mock('expo-blur', () => ({
-  BlurView: 'BlurView',
-}));
+jest.mock('expo-blur', () => {
+  const { View } = require('react-native');
+  return {
+    BlurView: View,
+  };
+});
 
 // Mock Picker
-jest.mock('@react-native-picker/picker', () => ({
-  Picker: {
-    Item: 'Picker.Item',
-  },
-}));
+jest.mock('@react-native-picker/picker', () => {
+  const { View } = require('react-native');
+  return {
+    Picker: View,
+  };
+});

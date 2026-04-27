@@ -1,6 +1,6 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
-import { GlassCard } from './GlassCard';
+import GlassCard from './GlassCard';
 import { Text } from 'react-native';
 
 describe('GlassCard', () => {
