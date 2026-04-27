@@ -82,6 +82,7 @@ export default function GlassButton({
         disabled={disabled || loading}
         activeOpacity={0.8}
         style={[styles.container, { borderColor: getBorderColor() }]}
+        testID="glass-button"
       >
         <LinearGradient
           colors={getGradientColors()}

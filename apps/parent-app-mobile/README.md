@@ -252,6 +252,77 @@ pnpm test -- --coverage
 npx tsc --noEmit
 ```
 
+## 🧪 Testing
+
+### Running Tests
+
+```bash
+# Run all tests
+npm test
+
+# Run tests in watch mode
+npm test -- --watch
+
+# Run tests with coverage
+npm test -- --coverage
+
+# Run specific test file
+npm test AuthService.test.ts
+```
+
+### Test Structure
+
+```
+apps/parent-app-mobile/
+├── src/
+│   ├── services/
+│   │   ├── AuthService.test.ts        # Authentication tests
+│   │   ├── ApiService.test.ts         # HTTP client tests
+│   │   └── ParentApiService.test.ts   # API endpoint tests
+│   ├── store/
+│   │   └── useParentStore.test.ts     # State management tests
+│   └── components/
+│       ├── GlassCard.test.tsx         # Card component tests
+│       └── GlassButton.test.tsx       # Button component tests
+├── jest.config.js                      # Jest configuration
+├── jest.setup.js                       # Test setup & mocks
+└── __mocks__/
+    └── axios.js                        # Axios mock
+```
+
+### Test Coverage Goals
+
+- **Services**: 80%+ coverage
+- **Store**: 80%+ coverage
+- **Components**: 70%+ coverage
+- **Overall**: 70%+ coverage
+
+### Testing Patterns
+
+**Service Tests**:
+- Mock external dependencies (axios, SecureStore)
+- Test success and error scenarios
+- Verify correct API calls and data transformations
+
+**Store Tests**:
+- Use `@testing-library/react-native`'s `renderHook`
+- Test state mutations and side effects
+- Verify loading states and error handling
+
+**Component Tests**:
+- Test rendering and user interactions
+- Verify prop handling and variants
+- Test accessibility features
+
+### CI/CD Testing
+
+Tests run automatically on:
+- Push to `mobile/parent-app/**` branches
+- Pull requests to main/master
+- Pre-deployment validation
+
+See `.github/workflows/parent-app-ci.yml` for CI configuration.
+
 ## 🔑 Demo Credentials
 
 | Role | Email | Password |
