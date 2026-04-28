@@ -8,7 +8,10 @@ import { Subject, Observable } from 'rxjs';
   // `/socket.io` path).
   path: '/ws/alerts',
   cors: {
-    origin: '*',
+    origin: process.env.CORS_ORIGINS?.split(',').map((o) => o.trim()) || [
+      'http://localhost:3000',
+      'http://localhost:5173',
+    ],
   },
   namespace: '/alerts',
 })

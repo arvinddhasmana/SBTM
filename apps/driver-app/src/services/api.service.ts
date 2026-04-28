@@ -1,11 +1,16 @@
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
+import { API_REQUEST_TIMEOUT_MS } from '../config/constants';
 
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://10.0.2.2:3001/api/v1';
+const BASE_URL = (() => {
+  const url = process.env.EXPO_PUBLIC_API_URL;
+  if (!url) throw new Error('EXPO_PUBLIC_API_URL is not set. Add it to your .env file.');
+  return url;
+})();
 
 const api = axios.create({
   baseURL: BASE_URL,
-  timeout: 15000,
+  timeout: API_REQUEST_TIMEOUT_MS,
 });
 
 // Attach JWT to every outgoing request

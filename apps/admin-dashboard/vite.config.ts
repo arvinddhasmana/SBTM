@@ -7,8 +7,8 @@ import path from 'path';
 //
 // Local dev WebSocket setup (only needed if running services on localhost):
 //   export VITE_API_URL=http://localhost:3001                # api-gateway
-//   export VITE_ALERTS_WS_URL=http://localhost:3002          # emergency-alerts
-//   export VITE_PRESENCE_WS_URL=http://localhost:3003        # student-presence
+//   export VITE_ALERTS_WS_URL=http://localhost:3003          # emergency-alerts
+//   export VITE_PRESENCE_WS_URL=http://localhost:3004        # student-presence
 //   export VITE_MAPTILER_KEY=<your-key>
 //   pnpm dev
 //

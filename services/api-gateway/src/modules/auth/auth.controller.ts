@@ -16,7 +16,8 @@ import { LoginDto } from './dto/login.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 const COOKIE_NAME = 'access_token';
-const COOKIE_MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24 hours
+const COOKIE_MAX_AGE_MS =
+  parseInt(process.env.COOKIE_MAX_AGE_HOURS ?? '24', 10) * 60 * 60 * 1000;
 
 @Controller('auth')
 export class AuthController {

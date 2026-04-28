@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { parentApi, type ActiveAlert } from '../services/api';
 import { queryKeys } from '../services/query-keys';
+import { API_BASE_URL } from '../config';
 
 /**
  * Monitors for active emergency alerts on the given route(s).
@@ -65,7 +66,7 @@ export function useAlerts(routeId: string | string[] | undefined) {
   useEffect(() => {
     if (routeIds.length === 0) return;
 
-    const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+    const apiBase = API_BASE_URL;
 
     if (typeof EventSource !== 'undefined') {
       const url = `${apiBase}/api/v1/parent/alerts/stream`;

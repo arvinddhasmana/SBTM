@@ -1,6 +1,10 @@
 export default () => ({
   port: parseInt(process.env.PORT || '3001', 10),
-  jwtSecret: process.env.JWT_SECRET || 'dev_secret',
+  jwtSecret: (() => {
+    const secret = process.env.JWT_SECRET;
+    if (!secret) throw new Error('JWT_SECRET environment variable is required');
+    return secret;
+  })(),
   gpsServiceUrl: process.env.GPS_SERVICE_URL || 'http://localhost:3002',
   alertsServiceUrl: process.env.ALERTS_SERVICE_URL || 'http://localhost:3003',
   presenceServiceUrl:

@@ -43,10 +43,8 @@ export class AlertsGatewayService {
     private readonly httpClient: HttpClientService,
     private readonly configService: ConfigService,
   ) {
-    this.alertsServiceUrl = this.configService.get<string>(
-      'ALERTS_SERVICE_URL',
-      'http://localhost:3003',
-    );
+    this.alertsServiceUrl =
+      this.configService.getOrThrow<string>('ALERTS_SERVICE_URL');
   }
 
   async getAllAlerts(schoolId?: string): Promise<AlertDto[]> {

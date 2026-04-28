@@ -67,9 +67,8 @@ export class DriverGatewayService {
     private readonly configService: ConfigService,
     private readonly dataSource: DataSource,
   ) {
-    this.presenceServiceUrl = this.configService.get<string>(
+    this.presenceServiceUrl = this.configService.getOrThrow<string>(
       'PRESENCE_SERVICE_URL',
-      'http://localhost:3004',
     );
   }
 

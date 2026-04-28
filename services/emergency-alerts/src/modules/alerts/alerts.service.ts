@@ -28,9 +28,18 @@ import { AlertClassifierService } from './alert-classifier.service';
 import { AlertTier } from './entities/emergency-alert.entity';
 
 /** Delay constants for the escalation timer chain (milliseconds). */
-const CONFIRMATION_TIMEOUT_MS = 120_000; // 2 minutes
-const BOARD_ESCALATION_MS = 300_000; // 5 minutes
-const OSTA_ESCALATION_MS = 900_000; // 15 minutes
+const CONFIRMATION_TIMEOUT_MS = parseInt(
+  process.env.ALERT_CONFIRMATION_TIMEOUT_MS ?? '120000',
+  10,
+); // default 2 minutes
+const BOARD_ESCALATION_MS = parseInt(
+  process.env.ALERT_BOARD_ESCALATION_MS ?? '300000',
+  10,
+); // default 5 minutes
+const OSTA_ESCALATION_MS = parseInt(
+  process.env.ALERT_OSTA_ESCALATION_MS ?? '900000',
+  10,
+); // default 15 minutes
 
 /** Shape returned by findForRoute — used by the parent-app API endpoint. */
 export interface RouteAlertView {

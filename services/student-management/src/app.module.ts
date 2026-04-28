@@ -29,9 +29,9 @@ import { AppController } from './app.controller';
       useFactory: (configService: ConfigService) => ({
         type: 'postgres',
         host: configService.get<string>('DB_HOST', 'localhost'),
-        port: configService.get<number>('DB_PORT', 5433),
+        port: configService.get<number>('DB_PORT', 5432),
         username: configService.get<string>('DB_USERNAME', 'postgres'),
-        password: configService.get<string>('DB_PASSWORD', 'mysecretpassword'),
+        password: configService.getOrThrow<string>('DB_PASSWORD'),
         database: configService.get<string>('DB_DATABASE', 'sbms'),
         entities: [Student],
         synchronize: false,

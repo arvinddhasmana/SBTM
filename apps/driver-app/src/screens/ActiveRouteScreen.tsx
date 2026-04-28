@@ -102,13 +102,13 @@ export default function ActiveRouteScreen({ navigation }: any) {
     }
   }, []);
 
-  // Default region
-  const [region, setRegion] = useState({
-    latitude: 45.3506,
-    longitude: -75.7934,
-    latitudeDelta: 0.05,
-    longitudeDelta: 0.05,
-  });
+  // Default region — null until first GPS fix; map will center on route once GPS resolves
+  const [region, setRegion] = useState<{
+    latitude: number;
+    longitude: number;
+    latitudeDelta: number;
+    longitudeDelta: number;
+  } | null>(null);
 
   // Decode route polyline
   const routePath: LatLng[] = useMemo(() => {
@@ -195,7 +195,12 @@ export default function ActiveRouteScreen({ navigation }: any) {
       const current = await GPSService.getCurrentLocation();
       const lat = current.coords.latitude;
       const lng = current.coords.longitude;
-      setRegion({ ...region, latitude: lat, longitude: lng });
+      setRegion({
+        latitude: lat,
+        longitude: lng,
+        latitudeDelta: region?.latitudeDelta ?? 0.05,
+        longitudeDelta: region?.longitudeDelta ?? 0.05,
+      });
       setCurrentLocation({
         latitude: lat,
         longitude: lng,
@@ -393,7 +398,7 @@ export default function ActiveRouteScreen({ navigation }: any) {
       <MapView
         ref={mapRef}
         style={styles.map}
-        region={region}
+        region={region ?? undefined}
         showsUserLocation={false}
         followsUserLocation={false}
         customMapStyle={isNightMode ? DARK_MAP_STYLE : undefined}

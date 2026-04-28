@@ -67,9 +67,8 @@ export class ParentGatewayService {
     @InjectRepository(Route)
     private readonly routeRepository: Repository<Route>,
   ) {
-    this.studentServiceUrl = this.configService.get<string>(
+    this.studentServiceUrl = this.configService.getOrThrow<string>(
       'STUDENT_SERVICE_URL',
-      'http://localhost:3006',
     );
   }
 
@@ -258,7 +257,7 @@ export class ParentGatewayService {
   }
 
   async getNotificationsForParent(user: ParentUser): Promise<unknown[]> {
-    const alertsUrl = `${this.configService.get<string>('ALERTS_SERVICE_URL', 'http://localhost:3003')}/api/v1/notifications`;
+    const alertsUrl = `${this.configService.getOrThrow<string>('ALERTS_SERVICE_URL')}/api/v1/notifications`;
     const params: Record<string, string> = { parentUserId: user.id };
     if (user.schoolId) {
       params.schoolId = user.schoolId;
@@ -278,10 +277,8 @@ export class ParentGatewayService {
     const subject = new Subject<MessageEvent>();
     this.alertSubjects.add(subject);
 
-    const alertsServiceUrl = this.configService.get<string>(
-      'ALERTS_SERVICE_URL',
-      'http://localhost:3003',
-    );
+    const alertsServiceUrl =
+      this.configService.getOrThrow<string>('ALERTS_SERVICE_URL');
     const url = `${alertsServiceUrl}/api/v1/alerts/stream`;
     this.proxySSE(url, subject);
 

@@ -1,5 +1,7 @@
 import { type Page } from '@playwright/test';
 
+const E2E_API_URL = process.env.E2E_API_URL ?? 'http://localhost:3001';
+
 /**
  * Passwords for admin test users (all share the same password in the demo seed).
  * Used by loginAs to perform a real backend login and obtain the access_token cookie.
@@ -112,7 +114,7 @@ export async function loginAs(page: Page, role: TestRole): Promise<void> {
   // Obtain a real access_token cookie so backend API calls are authorised.
   const password = ADMIN_PASSWORDS[role];
   if (password) {
-    await page.request.post('http://localhost:3001/api/v1/auth/login', {
+    await page.request.post(`${E2E_API_URL}/api/v1/auth/login`, {
       data: { email: TEST_USERS[role].email, password },
     });
   }
@@ -172,7 +174,7 @@ export async function startRouteForE2E(
   vehicleId: string,
 ): Promise<void> {
   // Login as driver to get a valid token
-  const loginRes = await page.request.post('http://localhost:3001/api/v1/auth/login', {
+  const loginRes = await page.request.post(`${E2E_API_URL}/api/v1/auth/login`, {
     data: { email: TEST_USERS.DRIVER.email, password: 'Admin123!' },
   });
   const cookies = loginRes.headers()['set-cookie'] || '';
@@ -190,7 +192,7 @@ export async function startRouteForE2E(
 
   if (token) {
     await page.request
-      .post('http://localhost:3001/api/v1/routes/lifecycle-events', {
+      .post(`${E2E_API_URL}/api/v1/routes/lifecycle-events`, {
         data: {
           routeId,
           vehicleId,
@@ -226,7 +228,7 @@ export async function createTestAlert(
   page: Page,
   options: { eventType?: string; routeId?: string; vehicleId?: string } = {},
 ): Promise<string | undefined> {
-  const loginRes = await page.request.post('http://localhost:3001/api/v1/auth/login', {
+  const loginRes = await page.request.post(`${E2E_API_URL}/api/v1/auth/login`, {
     data: { email: TEST_USERS.DRIVER.email, password: 'Admin123!' },
   });
   const cookies = loginRes.headers()['set-cookie'] || '';
@@ -243,7 +245,7 @@ export async function createTestAlert(
 
   if (!token) return undefined;
 
-  const res = await page.request.post('http://localhost:3001/api/v1/emergency-events', {
+  const res = await page.request.post(`${E2E_API_URL}/api/v1/emergency-events`, {
     data: {
       vehicleId: options.vehicleId || 'BUS-STBERN-01',
       routeId: options.routeId || 'ROUTE-STBERN-R01-AM',
@@ -282,7 +284,7 @@ export async function sendGpsLocation(
   if (!token) return false;
 
   const res = await page.request
-    .post('http://localhost:3001/api/v1/routes/locations', {
+    .post(`${E2E_API_URL}/api/v1/routes/locations`, {
       data: {
         vehicleId: options.vehicleId || 'BUS-STBERN-01',
         routeId: options.routeId || 'ROUTE-STBERN-R01-AM',
@@ -310,7 +312,7 @@ export async function completeRouteForE2E(
   const token = await getDriverToken(page);
   if (token) {
     await page.request
-      .post('http://localhost:3001/api/v1/routes/lifecycle-events', {
+      .post(`${E2E_API_URL}/api/v1/routes/lifecycle-events`, {
         data: {
           routeId,
           vehicleId,
@@ -327,7 +329,7 @@ export async function completeRouteForE2E(
 
 /** Internal helper: obtain a driver JWT token. */
 async function getDriverToken(page: Page): Promise<string | undefined> {
-  const loginRes = await page.request.post('http://localhost:3001/api/v1/auth/login', {
+  const loginRes = await page.request.post(`${E2E_API_URL}/api/v1/auth/login`, {
     data: { email: TEST_USERS.DRIVER.email, password: 'Admin123!' },
   });
   const cookies = loginRes.headers()['set-cookie'] || '';

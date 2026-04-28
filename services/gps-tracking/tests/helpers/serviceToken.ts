@@ -5,11 +5,12 @@ import jwt from 'jsonwebtoken';
  * Used by unit and integration tests to authenticate requests against routes
  * protected by internalServiceAuthMiddleware.
  */
-export function makeServiceToken(
-    secret = process.env.INTERNAL_SERVICE_SECRET ?? 'dev_internal_secret',
-): string {
-    return jwt.sign({ sub: 'test-service' }, secret, {
-        issuer: 'sbtm-internal',
-        expiresIn: '5m',
-    });
+export function makeServiceToken(secret = process.env.INTERNAL_SERVICE_SECRET): string {
+  if (!secret) {
+    throw new Error('INTERNAL_SERVICE_SECRET environment variable is required for tests');
+  }
+  return jwt.sign({ sub: 'test-service' }, secret, {
+    issuer: 'sbtm-internal',
+    expiresIn: '5m',
+  });
 }

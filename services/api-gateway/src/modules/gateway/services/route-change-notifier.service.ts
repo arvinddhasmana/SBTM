@@ -13,9 +13,8 @@ export class RouteChangeNotifierService {
     private readonly configService: ConfigService,
     private readonly dataSource: DataSource,
   ) {
-    this.notificationServiceUrl = this.configService.get<string>(
+    this.notificationServiceUrl = this.configService.getOrThrow<string>(
       'NOTIFICATION_SERVICE_URL',
-      'http://localhost:3008',
     );
   }
 

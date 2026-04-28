@@ -21,3 +21,4 @@ export {
 // Config
 export { bootstrapApp, type BootstrapOptions } from './config/bootstrap';
 export { initTracing, shutdownTracing } from './config/tracing';
+export { createRedisConnectionOptions } from './config/redis.config';

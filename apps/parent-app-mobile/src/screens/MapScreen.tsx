@@ -6,6 +6,7 @@ import type { RouteProp } from '@react-navigation/native';
 import { useParentStore } from '../store/useParentStore';
 import { ParentApiService } from '../services/ParentApiService';
 import { BusLocationUpdate, Route, RootStackParamList } from '../types';
+import { BUS_LOCATION_POLL_MS } from '../config/constants';
 
 type MapScreenRouteProp = RouteProp<RootStackParamList, 'Map'>;
 
@@ -24,7 +25,7 @@ export default function MapScreen() {
     loadMapData();
 
     // Poll for location updates every 5 seconds
-    const interval = setInterval(fetchBusLocation, 5000);
+    const interval = setInterval(fetchBusLocation, BUS_LOCATION_POLL_MS);
 
     return () => clearInterval(interval);
   }, []);

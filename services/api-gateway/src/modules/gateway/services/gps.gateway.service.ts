@@ -303,9 +303,6 @@ export class GpsGatewayService {
       stopsByRoute.set(stop.routeId, list);
     }
 
-    const demoSchoolId =
-      user.schoolId || 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c';
-
     return activeRoutes.map((r) => {
       const schedule =
         typeof r.schedule === 'string' ? JSON.parse(r.schedule) : r.schedule;
@@ -327,7 +324,7 @@ export class GpsGatewayService {
       return {
         id: r.id,
         name: r.name,
-        schoolId: r.schoolId || demoSchoolId,
+        schoolId: r.schoolId || user.schoolId,
         schoolName: r.schoolName || 'Unknown School',
         schoolLat: r.schoolLat || undefined,
         schoolLng: r.schoolLng || undefined,
@@ -347,9 +344,6 @@ export class GpsGatewayService {
     user: RequestUser,
   ): Promise<any> {
     this.checkRouteAccess(routeId, user);
-
-    const demoSchoolId =
-      user.schoolId || 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c';
 
     const routes = (await this.dataSource.query(
       `SELECT r.id, r.name, r."vehicleId" as "vehicleId", r.schedule, r.polyline,
@@ -395,7 +389,7 @@ export class GpsGatewayService {
     return {
       id: r.id,
       name: r.name,
-      schoolId: r.schoolId || demoSchoolId,
+      schoolId: r.schoolId || user.schoolId,
       schoolName: r.schoolName || 'Unknown School',
       schoolLat: r.schoolLat || undefined,
       schoolLng: r.schoolLng || undefined,

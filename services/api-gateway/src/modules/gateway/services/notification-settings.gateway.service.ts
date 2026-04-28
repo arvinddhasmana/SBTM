@@ -30,9 +30,8 @@ export class NotificationSettingsGatewayService {
     private readonly httpClient: HttpClientService,
     private readonly configService: ConfigService,
   ) {
-    this.notificationServiceUrl = this.configService.get<string>(
+    this.notificationServiceUrl = this.configService.getOrThrow<string>(
       'NOTIFICATION_SERVICE_URL',
-      'http://localhost:3008',
     );
   }
 

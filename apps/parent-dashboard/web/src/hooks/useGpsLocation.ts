@@ -4,6 +4,7 @@ import { parentApi } from '../services/api';
 import { queryKeys } from '../services/query-keys';
 import type { BusLocationUpdate } from '../types';
 import type { GpsLocationEvent } from './useGpsLocation.types';
+import { API_BASE_URL } from '../config';
 
 /**
  * Monitors GPS location for a single route via SSE (push) with a REST polling
@@ -60,7 +61,7 @@ export function useGpsLocation(routeId: string | undefined): {
   useEffect(() => {
     if (!routeId) return;
 
-    const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+    const apiBase = API_BASE_URL;
 
     if (typeof EventSource === 'undefined') return; // SSR / test guard
 

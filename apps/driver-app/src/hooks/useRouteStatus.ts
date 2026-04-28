@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { AlertService } from '../services/alert.service';
+import { ROUTE_STATUS_POLL_MS } from '../config/constants';
 
 export type RouteStatus = 'normal' | 'delay' | 'emergency';
 
@@ -51,7 +52,7 @@ export function useRouteStatus(routeId: string | undefined): {
 
   useEffect(() => {
     poll();
-    const interval = setInterval(poll, 30000);
+    const interval = setInterval(poll, ROUTE_STATUS_POLL_MS);
     return () => clearInterval(interval);
   }, [poll]);
 

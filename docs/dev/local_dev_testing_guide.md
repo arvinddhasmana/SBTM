@@ -105,12 +105,30 @@ Key settings for Hybrid mode:
 ./scripts/dev-stop.sh --keep-infra  # Keep Docker running
 ```
 
-### Running Simulation Data
+### Local Frontend Development
 
-To populate real-time GPS data on the map:
+Use this only when you are actively developing UI locally:
 
 ```bash
-./scripts/simulate-demo.sh
+# Admin Dashboard
+cd apps/admin-dashboard
+pnpm install
+pnpm run dev
+
+# Parent Portal (new terminal)
+cd apps/parent-dashboard/web
+pnpm install
+pnpm run dev
+```
+
+Set `VITE_API_URL` to `http://localhost:3001` for both.
+
+### Schema and Seed data Data
+
+Drop and create schema and populate seed data to start with:
+
+```bash
+./scripts/init-db.sh
 ```
 
 ---
@@ -204,6 +222,117 @@ npx playwright show-report apps/admin-dashboard/playwright-report
 
 ```bash
 cd apps/admin-dashboard && npx tsc --noEmit
+```
+
+---
+
+## 🔎 End-to-End Validation via `dev-hybrid` + Seeded Demo DB
+
+Use this checklist to confirm a freshly started Hybrid environment is fully functional after a code change, infra tweak, or hardcoded-value cleanup. Every command is read-only against the seeded demo DB and uses synthetic seed identities only — never paste real student/guardian data.
+
+### 0. Start clean
+
+```bash
+# Hard cleanup of any prior dev session (kills orphan watchers + frees ports)
+./scripts/dev-stop.sh
+for p in 3001 3002 3003 3004 3005 3006 3007 3008 5173 5174 5175; do
+  pids=$(lsof -ti :$p 2>/dev/null) && [ -n "$pids" ] && kill -9 $pids
+done
+rm -f .dev-pids/*.pid
+
+# Launch the full stack (8 services + admin :5173 + parent :5174)
+./scripts/dev-hybrid.sh
+```
+
+### 1. Service health (read log files, not the watcher TTY)
+
+```bash
+for s in api-gateway gps-tracking emergency-alerts student-presence \
+         student-management compliance-management notification-service video-service; do
+  log=.dev-logs/${s}.log
+  ok=$(grep -aE "is running|Listening on|listening on|GPS Tracking Service running" "$log" | tail -1)
+  err=$(grep -aE "ERROR|Error:|EADDRINUSE" "$log" | tail -1)
+  if [ -n "$ok" ]; then echo "OK   $s"; else echo "FAIL $s :: ${err:-no startup}"; fi
+done
+curl -s -o /dev/null -w "admin  :: %{http_code}\n" http://localhost:5173/
+curl -s -o /dev/null -w "parent :: %{http_code}\n" http://localhost:5174/
+```
+
+Expect 8 `OK` lines plus `200` for both dashboards.
+
+### 2. Seeded DB sanity
+
+```bash
+PGPASSWORD=mysecretpassword psql -h localhost -p 5433 -U postgres -d sbms \
+  -c "SELECT email, role FROM users LIMIT 5;"
+```
+
+If empty, run `./scripts/reset-demo-db.sh` (or `psql -f scripts/seed-demo.sql`) before continuing.
+
+### 3. CORS preflight from each dashboard origin
+
+```bash
+for origin in http://localhost:5173 http://localhost:5174 http://localhost:5175; do
+  echo "=== $origin ==="
+  curl -s -o /dev/null -D - -X OPTIONS \
+    -H "Origin: $origin" \
+    -H "Access-Control-Request-Method: POST" \
+    -H "Access-Control-Request-Headers: content-type" \
+    http://localhost:3001/api/v1/auth/login | grep -iE "HTTP|access-control-allow-origin"
+done
+```
+
+Expect `HTTP/1.1 204` and `Access-Control-Allow-Origin: <origin>` for each.
+
+### 4. Auth + protected endpoint round-trip
+
+```bash
+LOGIN=$(curl -s -H "Content-Type: application/json" \
+  -d '{"email":"super.admin@sbtm.demo","password":"Admin123!"}' \
+  http://localhost:3001/api/v1/auth/login)
+TOKEN=$(echo "$LOGIN" | python3 -c "import sys,json;print(json.load(sys.stdin).get('accessToken',''))")
+[ -n "$TOKEN" ] && echo "login OK" || { echo "login FAILED: $LOGIN"; exit 1; }
+
+curl -s -o /dev/null -w "presence/events :: HTTP %{http_code}\n" \
+  -H "Authorization: Bearer $TOKEN" \
+  "http://localhost:3001/api/v1/presence/events?limit=100"
+```
+
+Expect `login OK` and `HTTP 200`. A 500 here typically means the api-gateway
+cannot mint an internal service JWT — check that `INTERNAL_SERVICE_SECRET` is
+exported to every downstream service in [`scripts/dev-hybrid.sh`](../../scripts/dev-hybrid.sh).
+
+### 5. WebSocket / SSE handshakes
+
+```bash
+# Direct against the standalone gateways (admin dashboard targets these via
+# VITE_ALERTS_WS_URL / VITE_PRESENCE_WS_URL — the api-gateway does NOT proxy WS)
+curl -s -o /dev/null -w "alerts   :3003 :: HTTP %{http_code}\n" \
+  -H "Origin: http://localhost:5173" \
+  "http://localhost:3003/ws/alerts/?EIO=4&transport=polling"
+curl -s -o /dev/null -w "presence :3004 :: HTTP %{http_code}\n" \
+  -H "Origin: http://localhost:5173" \
+  "http://localhost:3004/ws/presence/?EIO=4&transport=polling"
+```
+
+Both must return `HTTP 200`. A non-200 here means the gateway is rejecting the
+origin — verify `CORS_ORIGINS` includes the dashboard origin.
+
+### 6. Package-level test pass on touched code
+
+For each package whose source you changed, run its own validation cycle (per
+the agent's Phase 5):
+
+```bash
+cd <package> && pnpm run lint && pnpm run build && pnpm run test
+```
+
+Do not rely on root workspace scripts — they are placeholders.
+
+### 7. Tear down
+
+```bash
+./scripts/dev-stop.sh
 ```
 
 ---

@@ -4,9 +4,9 @@ import { Stop } from '../types';
 import { distanceToPolyline, haversineMeters } from '../utils/geo';
 import { NavigationService } from '../services/navigation.service';
 import { decodePolyline } from '../utils/polyline';
+import { REROUTE_INTERVAL_MS } from '../config/constants';
 
 const DIVERSION_THRESHOLD_METERS = 50;
-const REROUTE_INTERVAL_MS = 10000;
 
 export function useDynamicReroute(
   currentLocation: { latitude: number; longitude: number } | null,

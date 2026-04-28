@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { ActiveAlert } from '../services/api';
+import { API_BASE_URL } from '../config';
 
 const RECONNECT_DELAY_MS = 5_000;
 
@@ -24,7 +25,7 @@ export function useAlertStream(routeIds: string[]): {
       esRef.current.close();
     }
 
-    const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+    const apiBase = API_BASE_URL;
     // Cookies are sent automatically via withCredentials
     const url = `${apiBase}/api/v1/parent/alerts/stream`;
     const es = new EventSource(url, { withCredentials: true });

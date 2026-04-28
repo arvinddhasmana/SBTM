@@ -21,7 +21,10 @@ interface InviterUser {
   boardId?: string;
 }
 
-const INVITATION_EXPIRY_HOURS = 72;
+const INVITATION_EXPIRY_HOURS = parseInt(
+  process.env.INVITATION_EXPIRY_HOURS ?? '72',
+  10,
+);
 
 @Injectable()
 export class ProvisioningService {

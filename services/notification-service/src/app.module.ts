@@ -11,6 +11,7 @@ import { ChannelsModule } from './modules/channels/channels.module';
 import { RouterModule } from './modules/router/router.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { createRedisConnectionOptions } from '@sbtm/common';
 
 @Module({
   imports: [
@@ -35,7 +36,7 @@ import { AppService } from './app.service';
         host: configService.get<string>('DB_HOST', 'localhost'),
         port: configService.get<number>('DB_PORT', 5433),
         username: configService.get<string>('DB_USERNAME', 'postgres'),
-        password: configService.get<string>('DB_PASSWORD', 'mysecretpassword'),
+        password: configService.getOrThrow<string>('DB_PASSWORD'),
         database: configService.get<string>('DB_DATABASE', 'sbms'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         synchronize: false,
@@ -49,10 +50,7 @@ import { AppService } from './app.service';
     BullModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
-        connection: {
-          host: configService.get('REDIS_HOST', 'localhost'),
-          port: configService.get('REDIS_PORT', 6379),
-        },
+        connection: createRedisConnectionOptions(configService),
       }),
       inject: [ConfigService],
     }),

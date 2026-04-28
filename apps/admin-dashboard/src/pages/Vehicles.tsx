@@ -5,9 +5,11 @@ import { fleetApi } from '../services/api/fleet.api';
 import { queryKeys } from '../services/query-keys';
 import { Plus, Edit2, Trash2, Bus } from 'lucide-react';
 import type { Vehicle, VehicleStatus } from '../types';
+import { useAuth } from '../context/AuthContext';
 
 const Vehicles: React.FC = () => {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
   const [formData, setFormData] = useState({ licensePlate: '', status: 'ACTIVE' as VehicleStatus });
@@ -34,8 +36,7 @@ const Vehicles: React.FC = () => {
       if (editingVehicle) {
         await fleetApi.updateVehicle(editingVehicle.id, formData);
       } else {
-        // Hardcoding schoolId for demonstration as context isn't fully available
-        await fleetApi.createVehicle({ ...formData, schoolId: 's1' });
+        await fleetApi.createVehicle({ ...formData, schoolId: user?.schoolId ?? '' });
       }
       queryClient.invalidateQueries({ queryKey: queryKeys.vehicles.all });
       setIsModalOpen(false);

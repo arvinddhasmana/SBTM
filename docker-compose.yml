@@ -4,9 +4,9 @@ services:
   postgres:
     image: postgis/postgis:15-3.3-alpine
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: mysecretpassword
-      POSTGRES_DB: sbms
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+      POSTGRES_DB: ${DB_DATABASE:-sbms}
     ports:
       - '5433:5432'
     volumes:
@@ -39,14 +39,14 @@ services:
       - PORT=3001
       - DB_HOST=postgres
       - DB_PORT=5432
-      - DB_USERNAME=postgres
-      - DB_PASSWORD=mysecretpassword
-      - DB_DATABASE=sbms
-      - JWT_SECRET=your-super-secret-jwt-key-change-in-production
-      - JWT_EXPIRATION=24h
-      - RATE_LIMIT_TTL=60000
-      - RATE_LIMIT_MAX=100
-      - HTTP_TIMEOUT=10000
+      - DB_USERNAME=${DB_USERNAME:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:?DB_PASSWORD is required}
+      - DB_DATABASE=${DB_DATABASE:-sbms}
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET is required}
+      - JWT_EXPIRATION=${JWT_EXPIRATION:-24h}
+      - RATE_LIMIT_TTL=${RATE_LIMIT_TTL:-60000}
+      - RATE_LIMIT_MAX=${RATE_LIMIT_MAX:-100}
+      - HTTP_TIMEOUT=${HTTP_TIMEOUT:-10000}
       - GPS_SERVICE_URL=http://gps-tracking:3002
       - ALERTS_SERVICE_URL=http://emergency-alerts:3003
       - PRESENCE_SERVICE_URL=http://student-presence:3004
@@ -54,7 +54,7 @@ services:
       - STUDENT_SERVICE_URL=http://student-management:3006
       - COMPLIANCE_SERVICE_URL=http://compliance-management:3007
       - NOTIFICATION_SERVICE_URL=http://notification-service:3008
-      - CORS_ORIGINS=http://localhost:3000,http://localhost:5173,http://localhost:5174
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000,http://localhost:5173,http://localhost:5174}
       - OSRM_BASE_URL=http://osrm:5000
       - REDIS_HOST=redis
       - REDIS_PORT=6379
@@ -73,10 +73,11 @@ services:
     ports:
       - '3002:3002'
     environment:
-      - DATABASE_URL=postgresql://postgres:mysecretpassword@postgres:5432/sbms
+      - DATABASE_URL=postgresql://${DB_USERNAME:-postgres}:${DB_PASSWORD:?DB_PASSWORD is required}@postgres:5432/${DB_DATABASE:-sbms}
       - PORT=3002
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - INTERNAL_SERVICE_SECRET=${INTERNAL_SERVICE_SECRET:?INTERNAL_SERVICE_SECRET is required}
     depends_on:
       postgres:
         condition: service_healthy
@@ -92,12 +93,13 @@ services:
     environment:
       - DB_HOST=postgres
       - DB_PORT=5432
-      - DB_USERNAME=postgres
-      - DB_PASSWORD=mysecretpassword
-      - DB_DATABASE=sbms
+      - DB_USERNAME=${DB_USERNAME:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:?DB_PASSWORD is required}
+      - DB_DATABASE=${DB_DATABASE:-sbms}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - PORT=3003
+      - INTERNAL_SERVICE_SECRET=${INTERNAL_SERVICE_SECRET:?INTERNAL_SERVICE_SECRET is required}
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
     depends_on:
       postgres:
@@ -116,9 +118,9 @@ services:
       - PORT=3004
       - DB_HOST=postgres
       - DB_PORT=5432
-      - DB_USERNAME=postgres
-      - DB_PASSWORD=mysecretpassword
-      - DB_DATABASE=sbms
+      - DB_USERNAME=${DB_USERNAME:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:?DB_PASSWORD is required}
+      - DB_DATABASE=${DB_DATABASE:-sbms}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
@@ -137,9 +139,9 @@ services:
     environment:
       - DB_HOST=postgres
       - DB_PORT=5432
-      - DB_USERNAME=postgres
-      - DB_PASSWORD=mysecretpassword
-      - DB_DATABASE=sbms
+      - DB_USERNAME=${DB_USERNAME:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:?DB_PASSWORD is required}
+      - DB_DATABASE=${DB_DATABASE:-sbms}
       - STORAGE_TYPE=local
       - PORT=3005
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
@@ -158,9 +160,9 @@ services:
       - PORT=3006
       - DB_HOST=postgres
       - DB_PORT=5432
-      - DB_USERNAME=postgres
-      - DB_PASSWORD=mysecretpassword
-      - DB_DATABASE=sbms
+      - DB_USERNAME=${DB_USERNAME:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:?DB_PASSWORD is required}
+      - DB_DATABASE=${DB_DATABASE:-sbms}
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
     depends_on:
       postgres:
@@ -188,9 +190,9 @@ services:
       - PORT=3007
       - DB_HOST=postgres
       - DB_PORT=5432
-      - DB_USERNAME=postgres
-      - DB_PASSWORD=mysecretpassword
-      - DB_DATABASE=sbms
+      - DB_USERNAME=${DB_USERNAME:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:?DB_PASSWORD is required}
+      - DB_DATABASE=${DB_DATABASE:-sbms}
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
     depends_on:
       postgres:
@@ -205,15 +207,15 @@ services:
     environment:
       - DB_HOST=postgres
       - DB_PORT=5432
-      - DB_USERNAME=postgres
-      - DB_PASSWORD=mysecretpassword
-      - DB_DATABASE=sbms
+      - DB_USERNAME=${DB_USERNAME:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:?DB_PASSWORD is required}
+      - DB_DATABASE=${DB_DATABASE:-sbms}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - PORT=3008
-      - FCM_DRY_RUN=true
-      - EMAIL_DRY_RUN=true
-      - SMS_DRY_RUN=true
+      - FCM_DRY_RUN=${FCM_DRY_RUN:-true}
+      - EMAIL_DRY_RUN=${EMAIL_DRY_RUN:-true}
+      - SMS_DRY_RUN=${SMS_DRY_RUN:-true}
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
     depends_on:
       postgres:

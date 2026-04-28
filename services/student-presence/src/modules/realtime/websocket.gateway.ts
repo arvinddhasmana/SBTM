@@ -10,7 +10,10 @@ import { Logger } from '@nestjs/common';
   path: '/ws/presence',
   namespace: '/presence',
   cors: {
-    origin: '*',
+    origin: process.env.CORS_ORIGINS?.split(',').map((o) => o.trim()) || [
+      'http://localhost:3000',
+      'http://localhost:5173',
+    ],
   },
 })
 export class WebsocketGateway {

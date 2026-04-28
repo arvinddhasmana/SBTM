@@ -236,6 +236,18 @@ Repeat until the changed package builds cleanly and its relevant tests pass.
 
 Do not declare the work complete unless the affected package validation has succeeded or you have explicitly documented why a required check could not run.
 
+#### Operational stability rules for long-running dev processes
+
+When you bring up `./scripts/dev-hybrid.sh`, `pnpm run start:dev`, `pnpm exec vite`, `docker compose up`, or any other long-running watcher during validation, you MUST follow these rules. Violating them has previously caused the editor to lose its WSL/remote terminal session (mis-classified as "connection failure") because backgrounded watchers kept writing to a sync shell while subsequent probe commands ran on the same TTY, triggering an automatic Ctrl+C from the runtime.
+
+- **Always launch long-running processes in their own dedicated async terminal.** Never `&`-background a watcher inside a `mode=sync` shell. Capture the returned terminal id and leave it alone for the rest of the validation.
+- **Never chain `sleep` after a `&`-backgrounded job in the same sync command.** That pattern reliably triggers a false "waiting for input" classification.
+- **Health checks read log files only.** Use `grep`/`tail` on `.dev-logs/<service>.log` (or the equivalent for your stack). Do not attach to, scroll, or share the watcher's TTY for any probe work.
+- **Run all probes (curl, psql, jest, kubectl, etc.) in separate sync terminals,** independent of the long-running terminal.
+- **Hard-clean before every restart.** Stop prior watchers (`./scripts/dev-stop.sh`), free every dev port (`for p in 3001 3002 3003 3004 3005 3006 3007 3008 5173 5174 5175; do lsof -ti :$p | xargs -r kill -9; done`), remove stale `.dev-pids/*.pid`, and confirm `pgrep -af 'nest start|vite|tsx'` is empty before relaunching.
+- **Inspect health from logs, not the watcher's stdout.** Example pattern: `for s in api-gateway emergency-alerts student-presence; do grep -aE 'is running|Listening' .dev-logs/${s}.log | tail -1; done`.
+- If a watcher exits unexpectedly, inspect its log, fix the root cause (e.g. missing env var producing `getOrThrow` failure), and only then relaunch — do not loop blindly.
+
 ---
 
 ### Phase 6 - Pre-PR Checklist

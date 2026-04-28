@@ -15,9 +15,8 @@ export class ComplianceGatewayService {
     private readonly configService: ConfigService,
     private readonly httpClient: HttpClientService,
   ) {
-    this.serviceUrl = this.configService.get<string>(
+    this.serviceUrl = this.configService.getOrThrow<string>(
       'COMPLIANCE_SERVICE_URL',
-      'http://localhost:3007',
     );
   }
 

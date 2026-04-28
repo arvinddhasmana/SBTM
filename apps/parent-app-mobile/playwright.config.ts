@@ -24,14 +24,12 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
 
   // Reporter configuration
-  reporter: process.env.CI
-    ? [['html'], ['github']]
-    : [['html'], ['list']],
+  reporter: process.env.CI ? [['html'], ['github']] : [['html'], ['list']],
 
   // Shared settings for all projects
   use: {
     // Base URL for the app (Expo web default port)
-    baseURL: 'http://localhost:8081',
+    baseURL: process.env.E2E_BASE_URL ?? 'http://localhost:8081',
 
     // Collect trace when retrying the failed test
     trace: 'on-first-retry',
@@ -75,7 +73,7 @@ export default defineConfig({
   // Run local dev server before starting tests
   webServer: {
     command: 'npm run web',
-    url: 'http://localhost:8081',
+    url: process.env.E2E_BASE_URL ?? 'http://localhost:8081',
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000, // 2 minutes for Expo to start
   },

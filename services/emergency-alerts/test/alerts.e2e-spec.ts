@@ -15,7 +15,8 @@ describe('AlertsController (e2e)', () => {
     process.env.DB_PORT = process.env.DB_PORT || '5433';
     process.env.REDIS_HOST = process.env.REDIS_HOST || 'localhost';
     process.env.REDIS_PORT = process.env.REDIS_PORT || '6379';
-    process.env.INTERNAL_SERVICE_SECRET = 'dev_internal_secret';
+    process.env.INTERNAL_SERVICE_SECRET =
+      process.env.INTERNAL_SERVICE_SECRET || 'dev_internal_secret';
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
@@ -24,10 +25,11 @@ describe('AlertsController (e2e)', () => {
     app = moduleFixture.createNestApplication();
     jwtService = moduleFixture.get<JwtService>(JwtService);
 
-    // Generate valid internal service token
+    // Generate valid internal service token using the configured secret
+    const secret = process.env.INTERNAL_SERVICE_SECRET!;
     internalToken = jwtService.sign(
       { sub: 'test-gateway', iss: 'sbtm-internal' },
-      { secret: 'dev_internal_secret' },
+      { secret },
     );
 
     await app.init();

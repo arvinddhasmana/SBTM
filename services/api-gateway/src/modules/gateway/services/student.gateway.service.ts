@@ -13,9 +13,8 @@ export class StudentGatewayService {
     private readonly configService: ConfigService,
     private readonly dataSource: DataSource,
   ) {
-    this.studentServiceUrl = this.configService.get<string>(
+    this.studentServiceUrl = this.configService.getOrThrow<string>(
       'STUDENT_SERVICE_URL',
-      'http://localhost:3006',
     );
   }
 

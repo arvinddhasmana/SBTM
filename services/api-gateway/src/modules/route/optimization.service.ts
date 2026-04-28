@@ -123,6 +123,7 @@ export interface SnapToRoadResult {
 export class OptimizationService {
   private readonly logger = new Logger(OptimizationService.name);
   private readonly osrmBaseUrl: string;
+  private static readonly OSRM_REQUEST_TIMEOUT_MS = 8_000;
 
   constructor(private readonly configService: ConfigService) {
     this.osrmBaseUrl = this.configService.get<string>(
@@ -157,7 +158,7 @@ export class OptimizationService {
           overview: 'full',
           geometries: 'polyline',
         },
-        timeout: 8000,
+        timeout: OptimizationService.OSRM_REQUEST_TIMEOUT_MS,
       });
 
       if (response.data.code !== 'Ok' || !response.data.routes?.length) {
@@ -254,7 +255,7 @@ export class OptimizationService {
         source: 'first',
         roundtrip: false,
       },
-      timeout: 8000,
+      timeout: OptimizationService.OSRM_REQUEST_TIMEOUT_MS,
     });
 
     if (response.data.code !== 'Ok' || !response.data.routes.length) {

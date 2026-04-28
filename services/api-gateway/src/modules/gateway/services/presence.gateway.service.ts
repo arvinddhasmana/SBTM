@@ -11,9 +11,8 @@ export class PresenceGatewayService {
     private readonly httpClient: HttpClientService,
     private readonly configService: ConfigService,
   ) {
-    this.presenceServiceUrl = this.configService.get<string>(
+    this.presenceServiceUrl = this.configService.getOrThrow<string>(
       'PRESENCE_SERVICE_URL',
-      'http://localhost:3004',
     );
   }
 

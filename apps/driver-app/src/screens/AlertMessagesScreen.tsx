@@ -16,6 +16,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDriverStore } from '../store/useDriverStore';
 import { AlertService, ActiveAlert, AuditLogEntry } from '../services/alert.service';
+import { ALERT_POLL_INTERVAL_MS } from '../config/constants';
 
 const GLASS_BG = 'rgba(15,23,42,0.82)';
 const GLASS_BORDER = 'rgba(255,255,255,0.12)';
@@ -102,7 +103,7 @@ export default function AlertMessagesScreen() {
 
   useEffect(() => {
     fetchAlerts();
-    const interval = setInterval(fetchAlerts, 15000);
+    const interval = setInterval(fetchAlerts, ALERT_POLL_INTERVAL_MS);
     return () => clearInterval(interval);
   }, [fetchAlerts]);
 

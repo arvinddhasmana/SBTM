@@ -3,6 +3,7 @@ import * as TaskManager from 'expo-task-manager';
 import api from './api.service';
 import { LocationPoint } from '../types';
 import { OfflineQueueService } from './offline-queue.service';
+import { GPS_UPDATE_INTERVAL_MS } from '../config/constants';
 
 const BACKGROUND_LOCATION_TASK = 'sbtm-background-gps';
 
@@ -86,7 +87,7 @@ export const GPSService = {
     if (bgPermission.status === 'granted') {
       await Location.startLocationUpdatesAsync(BACKGROUND_LOCATION_TASK, {
         accuracy: Location.Accuracy.High,
-        timeInterval: 5000,
+        timeInterval: GPS_UPDATE_INTERVAL_MS,
         distanceInterval: 0,
         showsBackgroundLocationIndicator: true,
         foregroundService: {
@@ -103,7 +104,7 @@ export const GPSService = {
     locationSubscription = await Location.watchPositionAsync(
       {
         accuracy: Location.Accuracy.High,
-        timeInterval: 5000,
+        timeInterval: GPS_UPDATE_INTERVAL_MS,
         distanceInterval: 0,
       },
       async (location) => {
