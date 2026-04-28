@@ -218,7 +218,8 @@ for svc in "${SELECTED_SERVICES[@]}"; do
         REDIS_PORT=6379 \
         JWT_SECRET="${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}" \
         JWT_EXPIRATION="${JWT_EXPIRATION:-24h}" \
-        CORS_ORIGINS="${CORS_ORIGINS:-http://localhost:5173,http://localhost:5174}" \
+        INTERNAL_SERVICE_SECRET="${INTERNAL_SERVICE_SECRET:-dev_internal_secret_change_me_in_prod}" \
+        CORS_ORIGINS="${CORS_ORIGINS:-http://localhost:5173,http://localhost:5174,http://localhost:5175}" \
         GPS_SERVICE_URL=http://localhost:3002 \
         ALERTS_SERVICE_URL=http://localhost:3003 \
         PRESENCE_SERVICE_URL=http://localhost:3004 \
@@ -227,6 +228,22 @@ for svc in "${SELECTED_SERVICES[@]}"; do
         COMPLIANCE_SERVICE_URL=http://localhost:3007 \
         NOTIFICATION_SERVICE_URL=http://localhost:3008 \
         OSRM_BASE_URL=http://localhost:5000 \
+        STORAGE_TYPE="${STORAGE_TYPE:-local}" \
+        STORAGE_BASE_URL="${STORAGE_BASE_URL:-http://localhost:3005}" \
+        MINIO_ENDPOINT="${MINIO_ENDPOINT:-localhost}" \
+        MINIO_PORT="${MINIO_PORT:-9000}" \
+        MINIO_USE_SSL="${MINIO_USE_SSL:-false}" \
+        MINIO_ACCESS_KEY="${MINIO_ACCESS_KEY:-dev_minio_access_key}" \
+        MINIO_SECRET_KEY="${MINIO_SECRET_KEY:-dev_minio_secret_key}" \
+        MINIO_BUCKET_NAME="${MINIO_BUCKET_NAME:-videos}" \
+        STORAGE_TYPE="${STORAGE_TYPE:-minio}" \
+        STORAGE_BASE_URL="${STORAGE_BASE_URL:-http://localhost:3005}" \
+        MINIO_ENDPOINT="${MINIO_ENDPOINT:-localhost}" \
+        MINIO_PORT="${MINIO_PORT:-9000}" \
+        MINIO_USE_SSL="${MINIO_USE_SSL:-false}" \
+        MINIO_ACCESS_KEY="${MINIO_ACCESS_KEY:-minioadmin}" \
+        MINIO_SECRET_KEY="${MINIO_SECRET_KEY:-minioadmin}" \
+        MINIO_BUCKET_NAME="${MINIO_BUCKET_NAME:-videos}" \
         $cmd > "$log_file" 2>&1 &
      echo $! > "$pid_file")
 
@@ -246,10 +263,27 @@ if [[ "$NO_DASHBOARD" != "true" ]]; then
         rm -f "$dash_pid"
     fi
 
-    (cd "$PROJECT_ROOT/apps/admin-dashboard" && pnpm exec vite > "$dash_log" 2>&1 &
+    (cd "$PROJECT_ROOT/apps/admin-dashboard" && pnpm exec vite --port 5173 --strictPort > "$dash_log" 2>&1 &
      echo $! > "$dash_pid")
 
     echo -e "  ${GREEN}✓${NC} admin-dashboard ${DIM}(PID: $(cat "$dash_pid"), log: .dev-logs/admin-dashboard.log)${NC}"
+
+    # Start parent dashboard pinned to 5174 (must be in CORS_ORIGINS above)
+    if [[ -d "$PROJECT_ROOT/apps/parent-dashboard/web" ]]; then
+        parent_log="$LOG_DIR/parent-dashboard.log"
+        parent_pid="$PID_DIR/parent-dashboard.pid"
+
+        if [[ -f "$parent_pid" ]]; then
+            old_pid=$(cat "$parent_pid")
+            kill "$old_pid" 2>/dev/null || true
+            rm -f "$parent_pid"
+        fi
+
+        (cd "$PROJECT_ROOT/apps/parent-dashboard/web" && pnpm exec vite --port 5174 --strictPort > "$parent_log" 2>&1 &
+         echo $! > "$parent_pid")
+
+        echo -e "  ${GREEN}✓${NC} parent-dashboard ${DIM}(PID: $(cat "$parent_pid"), log: .dev-logs/parent-dashboard.log)${NC}"
+    fi
 fi
 
 echo ""
@@ -267,8 +301,9 @@ for svc in "${SELECTED_SERVICES[@]}"; do
     echo "  $svc"
 done
 echo ""
-echo -e "${YELLOW}Dashboard:${NC}  http://localhost:5173"
-echo -e "${YELLOW}API:${NC}        http://localhost:3001/api/v1"
+echo -e "${YELLOW}Admin Dashboard:${NC}   http://localhost:5173"
+echo -e "${YELLOW}Parent Dashboard:${NC}  http://localhost:5174"
+echo -e "${YELLOW}API:${NC}               http://localhost:3001/api/v1"
 echo ""
 echo -e "${DIM}Logs: .dev-logs/<service>.log${NC}"
 echo -e "${DIM}Stop: ./scripts/dev-stop.sh${NC}"
