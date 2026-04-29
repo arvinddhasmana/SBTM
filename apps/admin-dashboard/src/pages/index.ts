@@ -18,4 +18,7 @@ export * from './admin/FleetAssignments';
 export { default as AlertConfigDashboard } from './AlertConfigDashboard';
 export { default as EventTypeConfigPage } from './EventTypeConfigPage';
 export { default as EscalationTimingConfigPage } from './EscalationTimingConfigPage';
+export { default as NotificationRoutingConfigPage } from './NotificationRoutingConfigPage';
+export { default as WorkflowConfigPage } from './WorkflowConfigPage';
+export { default as ChangeRequestsPage } from './ChangeRequestsPage';
 export { default as ConfigAuditLogPage } from './ConfigAuditLogPage';

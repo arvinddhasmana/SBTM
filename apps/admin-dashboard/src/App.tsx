@@ -36,6 +36,9 @@ import {
   AlertConfigDashboard,
   EventTypeConfigPage,
   EscalationTimingConfigPage,
+  NotificationRoutingConfigPage,
+  WorkflowConfigPage,
+  ChangeRequestsPage,
   ConfigAuditLogPage,
 } from './pages';
 import './index.css';
@@ -153,6 +156,9 @@ const AppRoutes: React.FC = () => {
         <Route path="/alert-config" element={<AlertConfigDashboard />} />
         <Route path="/alert-config/event-types" element={<EventTypeConfigPage />} />
         <Route path="/alert-config/escalation-timing" element={<EscalationTimingConfigPage />} />
+        <Route path="/alert-config/notification-routing" element={<NotificationRoutingConfigPage />} />
+        <Route path="/alert-config/workflow" element={<WorkflowConfigPage />} />
+        <Route path="/alert-config/change-requests" element={<ChangeRequestsPage />} />
         <Route path="/alert-config/audit" element={<ConfigAuditLogPage />} />
       </Route>
 
