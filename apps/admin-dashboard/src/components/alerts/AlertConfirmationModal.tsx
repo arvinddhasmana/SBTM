@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { X, AlertTriangle, CheckCircle, XCircle, HelpCircle, Clock, Check } from 'lucide-react';
 import type { Alert } from '../../types';
 import { formatEventType } from '../../utils/formatters';
+import { useConfirmationTimeoutMs } from '../../hooks/useEscalationConfig';
 
 interface AlertConfirmationModalProps {
   alert: Alert;
@@ -10,9 +11,6 @@ interface AlertConfirmationModalProps {
   onRequestInfo: (id: string) => Promise<void>;
   onClose: () => void;
 }
-
-/** Confirmation window in milliseconds — must match backend CONFIRMATION_TIMEOUT_MS */
-const CONFIRMATION_WINDOW_MS = 120_000; // 2 minutes
 
 /**
  * AlertConfirmationModal
@@ -23,6 +21,9 @@ const CONFIRMATION_WINDOW_MS = 120_000; // 2 minutes
  *   - Mark as False Alarm (orange)        — suppresses parent notification
  *   - Request More Information (blue)     — logs intent, timer continues
  *
+ * The countdown window is read from the alert-config service so it always
+ * matches the backend escalation scheduler (no hardcoded constants).
+ *
  * When the countdown expires, the modal auto-dismisses (backend auto-escalates independently).
  */
 const AlertConfirmationModal: React.FC<AlertConfirmationModalProps> = ({
@@ -32,11 +33,22 @@ const AlertConfirmationModal: React.FC<AlertConfirmationModalProps> = ({
   onRequestInfo,
   onClose,
 }) => {
-  const [secondsRemaining, setSecondsRemaining] = useState<number>(() => {
+  const confirmationWindowMs = useConfirmationTimeoutMs(alert.tier ?? 'TIER_1');
+  const confirmationWindowSec = Math.floor(confirmationWindowMs / 1000);
+
+  const computeRemaining = useCallback((): number => {
     const createdAt = new Date(alert.createdAt ?? alert.timestamp).getTime();
-    const elapsed = Math.floor((Date.now() - createdAt) / 1000);
-    return Math.max(0, Math.floor(CONFIRMATION_WINDOW_MS / 1000) - elapsed);
-  });
+    // Clamp elapsed >= 0 so future-dated demo data does not extend the timer.
+    const elapsed = Math.max(0, Math.floor((Date.now() - createdAt) / 1000));
+    return Math.max(0, confirmationWindowSec - elapsed);
+  }, [alert.createdAt, alert.timestamp, confirmationWindowSec]);
+
+  const [secondsRemaining, setSecondsRemaining] = useState<number>(computeRemaining);
+
+  // When the configured window arrives (or the alert prop changes), recompute.
+  useEffect(() => {
+    setSecondsRemaining(computeRemaining());
+  }, [computeRemaining]);
 
   const [isActing, setIsActing] = useState(false);
   const [infoRequested, setInfoRequested] = useState(false);
@@ -102,7 +114,7 @@ const AlertConfirmationModal: React.FC<AlertConfirmationModalProps> = ({
     }
   }, [alert.id, onRequestInfo]);
 
-  const timerPct = (secondsRemaining / (CONFIRMATION_WINDOW_MS / 1000)) * 100;
+  const timerPct = confirmationWindowSec > 0 ? (secondsRemaining / confirmationWindowSec) * 100 : 0;
   const timerColor =
     secondsRemaining > 60
       ? 'text-green-400'

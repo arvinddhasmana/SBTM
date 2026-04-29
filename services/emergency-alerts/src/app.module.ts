@@ -7,6 +7,7 @@ import { LoggerModule } from 'nestjs-pino';
 import { AlertsModule } from './modules/alerts/alerts.module';
 import { RealtimeModule } from './modules/realtime/realtime.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { ConfigModule as AlertConfigModule } from './modules/config/config.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { createRedisConnectionOptions } from '@sbtm/common';
@@ -53,6 +54,7 @@ import { createRedisConnectionOptions } from '@sbtm/common';
       }),
       inject: [ConfigService],
     }),
+    AlertConfigModule,
     AlertsModule,
     RealtimeModule,
     NotificationsModule,

@@ -17,6 +17,7 @@ import {
   UserCog,
   CalendarOff,
   Truck,
+  Sliders,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import type { UserRole } from '../../types';
@@ -94,6 +95,12 @@ const navItems: NavItem[] = [
     allowedRoles: ['SUPER_ADMIN', 'OSTA_ADMIN', 'BOARD_ADMIN'],
   },
   { path: '/users', icon: <UserCog size={20} />, label: 'Users', allowedRoles: ['SUPER_ADMIN'] },
+  {
+    path: '/alert-config',
+    icon: <Sliders size={20} />,
+    label: 'Alert Config',
+    allowedRoles: ALL_ADMIN_ROLES,
+  },
   {
     path: '/settings',
     icon: <Settings size={20} />,

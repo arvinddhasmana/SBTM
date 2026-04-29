@@ -1,7 +1,16 @@
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import type { ReactElement } from 'react';
 import AlertConfirmationModal from './AlertConfirmationModal';
 import type { Alert } from '../../types';
+
+function renderWithQueryClient(ui: ReactElement) {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false, gcTime: 0, staleTime: 0 } },
+  });
+  return render(<QueryClientProvider client={client}>{ui}</QueryClientProvider>);
+}
 
 describe('AlertConfirmationModal', () => {
   const mockAlert: Alert = {
@@ -36,7 +45,7 @@ describe('AlertConfirmationModal', () => {
   });
 
   const renderModal = () =>
-    render(
+    renderWithQueryClient(
       <AlertConfirmationModal
         alert={mockAlert}
         onConfirm={mockOnConfirm}
@@ -115,7 +124,7 @@ describe('AlertConfirmationModal', () => {
   it('disables buttons while an action is in progress', async () => {
     // Make onConfirm hang to simulate loading state
     const slowConfirm = vi.fn(() => new Promise<void>(() => {}));
-    render(
+    renderWithQueryClient(
       <AlertConfirmationModal
         alert={mockAlert}
         onConfirm={slowConfirm}
@@ -150,7 +159,7 @@ describe('AlertConfirmationModal', () => {
       createdAt: new Date(Date.now() - 3 * 60 * 1000).toISOString(),
     };
 
-    render(
+    renderWithQueryClient(
       <AlertConfirmationModal
         alert={expiredAlert}
         onConfirm={mockOnConfirm}

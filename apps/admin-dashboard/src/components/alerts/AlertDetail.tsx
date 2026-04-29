@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import type { Alert, AlertAuditEntry } from '../../types';
 import { formatTimestamp, formatEventType } from '../../utils/formatters';
+import { useConfirmationTimeoutMs } from '../../hooks/useEscalationConfig';
 
 interface AlertDetailProps {
   alert: Alert;
@@ -96,9 +97,6 @@ function getAuditDotColor(eventType: string): string {
   }
 }
 
-/** Backend confirmation window — 2 minutes */
-const CONFIRMATION_WINDOW_MS = 120_000;
-
 const OVERLAY_SIZE_KEY = 'alert_detail_overlay_size';
 const DEFAULT_OVERLAY_SIZE = { width: 440, height: 600 };
 
@@ -140,14 +138,27 @@ const AlertDetail: React.FC<AlertDetailProps> = ({
   // Persisted size
   const [overlaySize] = useState<{ width: number; height: number }>(readOverlaySize);
 
-  // Auto-escalation countdown for PENDING_CONFIRMATION
+  // Auto-escalation countdown for PENDING_CONFIRMATION — driven by the configured
+  // tier escalation timing so this UI never disagrees with the backend escheduler.
   const isPendingConfirmation = alert.status === 'PENDING_CONFIRMATION';
-  const [secondsRemaining, setSecondsRemaining] = useState<number>(() => {
+  const confirmationWindowMs = useConfirmationTimeoutMs(alert.tier ?? 'TIER_1');
+  const confirmationWindowSec = Math.floor(confirmationWindowMs / 1000);
+
+  const computeRemaining = useCallback((): number => {
     if (!isPendingConfirmation) return 0;
     const createdAt = new Date(alert.createdAt ?? alert.timestamp).getTime();
-    const elapsed = Math.floor((Date.now() - createdAt) / 1000);
-    return Math.max(0, Math.floor(CONFIRMATION_WINDOW_MS / 1000) - elapsed);
-  });
+    // Clamp elapsed >= 0 so demo / future-timestamped data does not produce
+    // a remaining value larger than the configured window.
+    const elapsed = Math.max(0, Math.floor((Date.now() - createdAt) / 1000));
+    return Math.max(0, confirmationWindowSec - elapsed);
+  }, [isPendingConfirmation, alert.createdAt, alert.timestamp, confirmationWindowSec]);
+
+  const [secondsRemaining, setSecondsRemaining] = useState<number>(computeRemaining);
+
+  // Recompute when the tier-config response arrives or the alert changes.
+  useEffect(() => {
+    setSecondsRemaining(computeRemaining());
+  }, [computeRemaining]);
 
   useEffect(() => {
     if (!isPendingConfirmation || secondsRemaining <= 0) return;
@@ -240,7 +251,7 @@ const AlertDetail: React.FC<AlertDetailProps> = ({
   const timerMinutes = Math.floor(secondsRemaining / 60);
   const timerSeconds = secondsRemaining % 60;
   const formattedTime = `${timerMinutes}:${String(timerSeconds).padStart(2, '0')}`;
-  const timerPct = (secondsRemaining / (CONFIRMATION_WINDOW_MS / 1000)) * 100;
+  const timerPct = confirmationWindowSec > 0 ? (secondsRemaining / confirmationWindowSec) * 100 : 0;
   const timerColor =
     secondsRemaining > 60
       ? 'text-green-400'
