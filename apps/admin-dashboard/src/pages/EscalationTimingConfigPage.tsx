@@ -10,9 +10,9 @@ const msToSeconds = (ms: number | null | undefined): string => {
   return String(ms / 1000);
 };
 
-const secondsToMs = (seconds: string): number | null => {
+const secondsToMs = (seconds: string): number | undefined => {
   const num = parseFloat(seconds);
-  return isNaN(num) ? null : num * 1000;
+  return isNaN(num) ? undefined : num * 1000;
 };
 
 export const EscalationTimingConfigPage: React.FC = () => {
@@ -91,10 +91,7 @@ export const EscalationTimingConfigPage: React.FC = () => {
           const currentData = isEditing ? formData : config;
 
           return (
-            <div
-              key={config.tier}
-              className="bg-gray-800 rounded-lg p-6 border border-gray-700"
-            >
+            <div key={config.tier} className="bg-gray-800 rounded-lg p-6 border border-gray-700">
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h3 className="text-xl font-semibold text-white mb-1">
@@ -106,7 +103,8 @@ export const EscalationTimingConfigPage: React.FC = () => {
                     )}
                   </h3>
                   <p className="text-gray-400 text-sm">
-                    {config.tier === 'TIER_1' && 'Safety-critical events requiring immediate attention'}
+                    {config.tier === 'TIER_1' &&
+                      'Safety-critical events requiring immediate attention'}
                     {config.tier === 'TIER_2' && 'Operational events for admin review'}
                     {config.tier === 'TIER_3' && 'Informational events with parent notification'}
                   </p>
@@ -171,7 +169,9 @@ export const EscalationTimingConfigPage: React.FC = () => {
                     </div>
                   )}
                   <p className="text-xs text-gray-500 mt-1">
-                    {config.tier === 'TIER_1' ? 'Time before parents are notified' : 'Not applicable for this tier'}
+                    {config.tier === 'TIER_1'
+                      ? 'Time before parents are notified'
+                      : 'Not applicable for this tier'}
                   </p>
                 </div>
 
@@ -201,7 +201,9 @@ export const EscalationTimingConfigPage: React.FC = () => {
                         : 'Not set'}
                     </div>
                   )}
-                  <p className="text-xs text-gray-500 mt-1">Time before escalating to Board Admin</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Time before escalating to Board Admin
+                  </p>
                 </div>
 
                 {/* OSTA Escalation */}

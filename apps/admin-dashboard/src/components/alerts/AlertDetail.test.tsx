@@ -1,7 +1,16 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import type { ReactElement } from 'react';
 import AlertDetail from './AlertDetail';
 import type { Alert, AlertAuditEntry } from '../../types';
+
+function renderWithQueryClient(ui: ReactElement) {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false, gcTime: 0, staleTime: 0 } },
+  });
+  return render(<QueryClientProvider client={client}>{ui}</QueryClientProvider>);
+}
 
 describe('AlertDetail', () => {
   const baseAlert: Alert = {
@@ -26,7 +35,7 @@ describe('AlertDetail', () => {
   };
 
   it('renders alert details', () => {
-    render(<AlertDetail {...defaultProps} />);
+    renderWithQueryClient(<AlertDetail {...defaultProps} />);
     expect(screen.getByText('Alert Details')).toBeInTheDocument();
     expect(screen.getByText('Test alert description')).toBeInTheDocument();
     expect(screen.getByText('bus-45')).toBeInTheDocument();
@@ -34,18 +43,18 @@ describe('AlertDetail', () => {
   });
 
   it('shows tier badge', () => {
-    render(<AlertDetail {...defaultProps} />);
+    renderWithQueryClient(<AlertDetail {...defaultProps} />);
     expect(screen.getByText('Tier 1 — Safety Critical')).toBeInTheDocument();
   });
 
   describe('ACTIVE alert', () => {
     it('shows Resolve Incident button', () => {
-      render(<AlertDetail {...defaultProps} />);
+      renderWithQueryClient(<AlertDetail {...defaultProps} />);
       expect(screen.getByTestId('btn-resolve-confirmed')).toBeInTheDocument();
     });
 
     it('shows Add Status Update button when handler provided', () => {
-      render(<AlertDetail {...defaultProps} onAddStatusUpdate={vi.fn()} />);
+      renderWithQueryClient(<AlertDetail {...defaultProps} onAddStatusUpdate={vi.fn()} />);
       expect(screen.getByTestId('btn-add-update')).toBeInTheDocument();
     });
   });
@@ -59,25 +68,29 @@ describe('AlertDetail', () => {
     };
 
     it('shows Add Status Update and Resolve Incident buttons', () => {
-      render(<AlertDetail {...defaultProps} alert={confirmedAlert} onAddStatusUpdate={vi.fn()} />);
+      renderWithQueryClient(
+        <AlertDetail {...defaultProps} alert={confirmedAlert} onAddStatusUpdate={vi.fn()} />,
+      );
       expect(screen.getByTestId('btn-add-update')).toBeInTheDocument();
       expect(screen.getByTestId('btn-resolve-confirmed')).toBeInTheDocument();
     });
 
     it('shows confirmed status badge', () => {
-      render(<AlertDetail {...defaultProps} alert={confirmedAlert} />);
+      renderWithQueryClient(<AlertDetail {...defaultProps} alert={confirmedAlert} />);
       expect(screen.getByText('Confirmed')).toBeInTheDocument();
     });
 
     it('opens status update textarea on button click', () => {
-      render(<AlertDetail {...defaultProps} alert={confirmedAlert} onAddStatusUpdate={vi.fn()} />);
+      renderWithQueryClient(
+        <AlertDetail {...defaultProps} alert={confirmedAlert} onAddStatusUpdate={vi.fn()} />,
+      );
       fireEvent.click(screen.getByTestId('btn-add-update'));
       expect(screen.getByTestId('update-notes-input')).toBeInTheDocument();
       expect(screen.getByTestId('submit-update-btn')).toBeInTheDocument();
     });
 
     it('opens resolve textarea on Resolve Incident click', () => {
-      render(<AlertDetail {...defaultProps} alert={confirmedAlert} />);
+      renderWithQueryClient(<AlertDetail {...defaultProps} alert={confirmedAlert} />);
       fireEvent.click(screen.getByTestId('btn-resolve-confirmed'));
       expect(screen.getByTestId('resolve-notes-input')).toBeInTheDocument();
       expect(screen.getByTestId('submit-resolve-btn')).toBeInTheDocument();
@@ -91,7 +104,7 @@ describe('AlertDetail', () => {
     };
 
     it('shows Tier 1 confirmation buttons', () => {
-      render(
+      renderWithQueryClient(
         <AlertDetail
           {...defaultProps}
           alert={pendingAlert}
@@ -113,7 +126,7 @@ describe('AlertDetail', () => {
     };
 
     it('shows only Close button', () => {
-      render(<AlertDetail {...defaultProps} alert={resolvedAlert} />);
+      renderWithQueryClient(<AlertDetail {...defaultProps} alert={resolvedAlert} />);
       expect(screen.getByText('Close')).toBeInTheDocument();
       expect(screen.queryByTestId('btn-add-update')).not.toBeInTheDocument();
       expect(screen.queryByTestId('btn-resolve-confirmed')).not.toBeInTheDocument();
@@ -145,7 +158,7 @@ describe('AlertDetail', () => {
     ];
 
     it('renders audit timeline when provided', () => {
-      render(<AlertDetail {...defaultProps} auditTrail={auditTrail} />);
+      renderWithQueryClient(<AlertDetail {...defaultProps} auditTrail={auditTrail} />);
       expect(screen.getByText('Activity Timeline')).toBeInTheDocument();
       expect(screen.getByText('Created')).toBeInTheDocument();
       expect(screen.getByText('Status Update')).toBeInTheDocument();
@@ -153,7 +166,7 @@ describe('AlertDetail', () => {
     });
 
     it('does not render timeline when empty', () => {
-      render(<AlertDetail {...defaultProps} auditTrail={[]} />);
+      renderWithQueryClient(<AlertDetail {...defaultProps} auditTrail={[]} />);
       expect(screen.queryByText('Activity Timeline')).not.toBeInTheDocument();
     });
   });
