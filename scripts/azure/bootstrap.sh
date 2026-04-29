@@ -822,18 +822,41 @@ if [[ -n "${PERSISTENT_ACR_ID}" ]]; then
       --output none 2>/dev/null || true
     ok "AcrPull granted (idempotent)"
   fi
-  step "Patching overlay images: to use ${PERSISTENT_ACR_NAME}.azurecr.io"
+  step "Patching overlay images: newName to ${PERSISTENT_ACR_NAME}.azurecr.io"
   python3 - "infra/k8s/overlays/${ENVIRONMENT}/kustomization.yaml" "${PERSISTENT_ACR_NAME}" <<'PY'
 import re, sys
 path, acr = sys.argv[1:3]
 with open(path) as f:
     txt = f.read()
-# Replace any sbtmacr<env>.azurecr.io/sbtm/<svc> with the persistent ACR.
-txt = re.sub(r"name:\s*sbtmacr[a-z0-9]+\.azurecr\.io/sbtm/", f"name: {acr}.azurecr.io/sbtm/", txt)
+# Kustomize image mapping: `name:` MUST stay the original sbtmacr<env>.azurecr.io
+# value so it matches the base manifests; `newName:` is the replacement target.
+# Rewrite any newName: sbtmacr*.azurecr.io/sbtm/... to use the persistent ACR.
+txt = re.sub(
+    r"newName:\s*sbtmacr[a-z0-9]+\.azurecr\.io/sbtm/",
+    f"newName: {acr}.azurecr.io/sbtm/",
+    txt,
+)
 with open(path, "w") as f:
     f.write(txt)
 PY
-  ok "Overlay images: pinned to ${PERSISTENT_ACR_NAME}.azurecr.io"
+  ok "Overlay images: newName pinned to ${PERSISTENT_ACR_NAME}.azurecr.io"
+fi
+
+# When persistent ACR is absent, strip newName: lines so kustomize falls back
+# to per-env ACR (the base image name). This keeps the overlay valid in both
+# modes without manual edits.
+if [[ -z "${PERSISTENT_ACR_ID}" ]]; then
+  step "Persistent ACR not found — falling back to per-env ACR (stripping newName:)"
+  python3 - "infra/k8s/overlays/${ENVIRONMENT}/kustomization.yaml" <<'PY'
+import re, sys
+path = sys.argv[1]
+with open(path) as f:
+    txt = f.read()
+txt = re.sub(r"^\s*newName:\s*sbtmacr[a-z0-9]+\.azurecr\.io/sbtm/[A-Za-z0-9-]+\n", "", txt, flags=re.M)
+with open(path, "w") as f:
+    f.write(txt)
+PY
+  ok "Overlay reverted to per-env ACR images"
 fi
 
 # 12b. Patch the kustomize overlay with the LIVE workload-identity client ID and

@@ -437,7 +437,7 @@ Wired through `scripts/azure/bootstrap.sh` step 11 as
 running bootstrap, or rebuild and redeploy the SPAs:
 
 ```bash
-MAPTILER_KEY=<key> bash scripts/azure/bootstrap.sh demo eastus 11
+MAPTILER_KEY=<key> bash scripts/azure/bootstrap.sh demo canadacentral 11
 ```
 
 **Security note**: The MapTiler key is a public client-side key — anyone with a

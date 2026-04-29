@@ -75,7 +75,7 @@ The fully Azure-hosted demo lives at:
 Provision and deploy with one command:
 
 ```bash
-bash scripts/azure/bootstrap.sh demo eastus
+bash scripts/azure/bootstrap.sh demo canadacentral
 bash scripts/azure/verify-portals.sh demo   # confirm all checks pass
 ```
 
@@ -91,7 +91,7 @@ bash scripts/azure/teardown-azure.sh demo  # delete app RG (sbtm-demo-rg). DNS z
 
 ```bash
 POSTGRES_ADMIN_PASSWORD='<value>' MAPTILER_KEY='<value>' \
-  bash scripts/azure/bootstrap.sh demo eastus
+  bash scripts/azure/bootstrap.sh demo canadacentral
 ```
 
 The persistent `sbtm-dns-rg` resource group (containing the `sbtm.ca` zone) is **never** deleted by `teardown-azure.sh`, so the four NS records at your domain registrar stay valid forever — no re-paste needed on rebuild. Bootstrap detects the existing zone and reuses it.

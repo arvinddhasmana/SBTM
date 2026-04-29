@@ -81,7 +81,7 @@ Example routes for St. Bernadette:
 
 ### Cloud demo (Azure Static Web Apps)
 
-After `bash scripts/azure/bootstrap.sh demo eastus` and DNS delegation:
+After `bash scripts/azure/bootstrap.sh demo canadacentral` and DNS delegation:
 
 - Admin Dashboard: https://admin.sbtm.ca
 - Parent Portal: https://parent.sbtm.ca

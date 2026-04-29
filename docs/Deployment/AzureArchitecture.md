@@ -219,10 +219,10 @@ C4Component
 
 ### Cost Optimization
 
-| Tier       | AKS Nodes                        | PostgreSQL                     | Redis       | Est. Cost/month                   |
-| ---------- | -------------------------------- | ------------------------------ | ----------- | --------------------------------- |
-| Demo       | 1× Standard_B2as_v2 (East US)    | B1ms, 32GB                     | Basic C0    | ~$108/mo (~$10–15 with cost-stop) |
-| Production | 3–5× Standard_D4s_v3 (autoscale) | GP_Standard_D4s_v3, 256GB + HA | Standard C2 | ~$900–1,500                       |
+| Tier       | AKS Nodes                            | PostgreSQL                     | Redis       | Est. Cost/month                   |
+| ---------- | ------------------------------------ | ------------------------------ | ----------- | --------------------------------- |
+| Demo       | 1× Standard_B2as_v2 (Canada Central) | B1ms, 32GB                     | Basic C0    | ~$108/mo (~$10–15 with cost-stop) |
+| Production | 3–5× Standard_D4s_v3 (autoscale)     | GP_Standard_D4s_v3, 256GB + HA | Standard C2 | ~$900–1,500                       |
 
 > Pilot rollouts run on either the Demo cluster (in a separate namespace, no extra Azure cost) or on Production with feature-flag gating — see [CostAnalysis.md](CostAnalysis.md#sharing-infrastructure-between-environments-k8s-namespaces).
 

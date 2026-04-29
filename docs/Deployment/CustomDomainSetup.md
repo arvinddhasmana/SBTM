@@ -70,7 +70,7 @@ The demo overlay therefore defaults to the **`letsencrypt-staging`** ClusterIssu
 
 ```bash
 USE_PROD_CERT=true POSTGRES_ADMIN_PASSWORD='...' MAPTILER_KEY='...' \
-  bash scripts/azure/bootstrap.sh demo
+  bash scripts/azure/bootstrap.sh demo canadacentral
 ```
 
 Production environment (`bootstrap.sh production`) always uses `letsencrypt-prod`.

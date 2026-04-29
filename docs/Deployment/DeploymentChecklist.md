@@ -117,8 +117,23 @@ Go to **Settings → Secrets and variables → Actions → New repository secret
 ### Option A — Single-command bootstrap (steps 5, 6, 7 in one go)
 
 ```bash
-bash scripts/azure/bootstrap.sh demo eastus              # demo  → sbtm-demo-rg, B1ms/B2as_v2 SKUs
+bash scripts/azure/bootstrap.sh demo canadacentral       # demo  → sbtm-demo-rg, B2as_v2 SKUs
 bash scripts/azure/bootstrap.sh production canadacentral # prod  → sbtm-rg
+```
+
+> **Region**: `canadacentral` is the canonical region for both demo and production. Earlier docs referenced `eastus` — that region has no Postgres Flexible Server quota in this subscription and is no longer used. The location argument is also auto-read from `infra/azure/parameters.<env>.json` if omitted.
+>
+> **Browser-trusted TLS for demo**: prepend `USE_PROD_CERT=true` to switch the demo overlay from `letsencrypt-staging` (untrusted, no rate limit) to `letsencrypt-prod` (browser-trusted, 5 certs/FQDN/week). Production always uses `letsencrypt-prod`.
+>
+> **Persistent shared resources** (one-time, recommended): run [`scripts/azure/setup-persistent-resources.sh`](../../scripts/azure/setup-persistent-resources.sh) before the first bootstrap to create the persistent IP, ACR, and OSRM storage in `sbtm-dns-rg` — see [CustomDomainSetup.md → Persistent vs ephemeral resources](CustomDomainSetup.md#persistent-vs-ephemeral-resources).
+
+Full example (demo, with browser-trusted cert and persistent resources already in place):
+
+```bash
+USE_PROD_CERT=true \
+  POSTGRES_ADMIN_PASSWORD='<strong-pw>' \
+  MAPTILER_KEY='<key>' \
+  bash scripts/azure/bootstrap.sh demo canadacentral
 ```
 
 The script will:
@@ -267,7 +282,11 @@ bash scripts/azure/teardown-azure.sh demo
 
 ```bash
 POSTGRES_ADMIN_PASSWORD='<value>' MAPTILER_KEY='<value>' \
-  bash scripts/azure/bootstrap.sh demo eastus
+  bash scripts/azure/bootstrap.sh demo canadacentral
+# For a real demo with a browser-trusted cert (uses letsencrypt-prod — watch the
+# 5-cert/FQDN/week rate limit; safe if you rebuild infrequently):
+USE_PROD_CERT=true POSTGRES_ADMIN_PASSWORD='<value>' MAPTILER_KEY='<value>' \
+  bash scripts/azure/bootstrap.sh demo canadacentral
 ```
 
 The `sbtm-dns-rg` resource group (containing the public `sbtm.ca` zone) is **never deleted by `teardown-azure.sh`**. The four NS records you pasted at the registrar stay valid forever — no re-paste needed on rebuild. `bootstrap.sh` detects the existing zone and reuses it.
@@ -278,7 +297,7 @@ To completely remove the DNS zone too (forces NS re-paste at registrar on the ne
 az group delete --name sbtm-dns-rg --yes
 ```
 
-> **Resource-location note:** `sbtm-pg-demo-centralus` lives in `sbtm-demo-rg` but runs in **Central US** because eastus has no Postgres Flex quota — handled automatically by bootstrap. It is **not stray** and is removed by teardown along with the rest of the RG. The teardown script ends with a subscription-wide sweep that prints any lingering `sbtm-*` resources outside `sbtm-dns-rg` so leaks are visible immediately.
+> **Resource-location note:** All SBTM resources (AKS, ACR, Key Vault, Storage, Postgres, Redis) are deployed in **Canada Central**. Earlier deployments used `eastus` for AKS with `centralus` for Postgres (because eastus has no Postgres Flex quota); the consolidated `canadacentral` region eliminates that split. The teardown script ends with a subscription-wide sweep that prints any lingering `sbtm-*` resources outside `sbtm-dns-rg` so leaks are visible immediately.
 
 ---
 

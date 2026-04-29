@@ -192,7 +192,7 @@ patches:
         value: sbtm-kv-demo-temp
       - op: replace
         path: /spec/parameters/clientID
-        value: 77c73937-06fa-4bcd-9b2b-a5571cb6881f
+        value: 2348eb71-bcd5-4c3e-a4d2-6d5e9eda8e23
       - op: replace
         path: /spec/parameters/tenantId
         value: b13ceef6-6c21-40a4-ad1c-bbaac66921c2
@@ -209,7 +209,7 @@ patches:
   - patch: |-
       - op: replace
         path: /metadata/annotations/azure.workload.identity~1client-id
-        value: 77c73937-06fa-4bcd-9b2b-a5571cb6881f
+        value: 2348eb71-bcd5-4c3e-a4d2-6d5e9eda8e23
       - op: replace
         path: /metadata/annotations/azure.workload.identity~1tenant-id
         value: b13ceef6-6c21-40a4-ad1c-bbaac66921c2
@@ -263,20 +263,28 @@ patches:
 
 images:
   - name: sbtmacrdemo.azurecr.io/sbtm/api-gateway
+    newName: sbtmacrshared.azurecr.io/sbtm/api-gateway
     newTag: latest
   - name: sbtmacrdemo.azurecr.io/sbtm/gps-tracking
+    newName: sbtmacrshared.azurecr.io/sbtm/gps-tracking
     newTag: latest
   - name: sbtmacrdemo.azurecr.io/sbtm/emergency-alerts
+    newName: sbtmacrshared.azurecr.io/sbtm/emergency-alerts
     newTag: latest
   - name: sbtmacrdemo.azurecr.io/sbtm/student-presence
+    newName: sbtmacrshared.azurecr.io/sbtm/student-presence
     newTag: latest
   - name: sbtmacrdemo.azurecr.io/sbtm/student-management
+    newName: sbtmacrshared.azurecr.io/sbtm/student-management
     newTag: latest
   - name: sbtmacrdemo.azurecr.io/sbtm/compliance-management
+    newName: sbtmacrshared.azurecr.io/sbtm/compliance-management
     newTag: latest
   - name: sbtmacrdemo.azurecr.io/sbtm/video-service
+    newName: sbtmacrshared.azurecr.io/sbtm/video-service
     newTag: latest
   - name: sbtmacrdemo.azurecr.io/sbtm/notification-service
+    newName: sbtmacrshared.azurecr.io/sbtm/notification-service
     newTag: latest
 labels:
   - includeSelectors: true
