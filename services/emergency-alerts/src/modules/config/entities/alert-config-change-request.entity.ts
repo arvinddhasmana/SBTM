@@ -11,42 +11,42 @@ export class AlertConfigChangeRequest {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'uuid' })
+  @Column({ name: 'requested_by_user_id', type: 'uuid' })
   requestedByUserId: string;
 
-  @Column({ type: 'varchar', length: 50 })
+  @Column({ name: 'requested_by_role', type: 'varchar', length: 50 })
   requestedByRole: string;
 
-  @Column({ type: 'varchar', length: 100 })
+  @Column({ name: 'config_type', type: 'varchar', length: 100 })
   configType: string;
 
-  @Column({ type: 'text' })
+  @Column({ name: 'change_description', type: 'text' })
   changeDescription: string;
 
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ name: 'current_config', type: 'jsonb', nullable: true })
   currentConfig: Record<string, any> | null;
 
-  @Column({ type: 'jsonb' })
+  @Column({ name: 'requested_config', type: 'jsonb' })
   requestedConfig: Record<string, any>;
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ name: 'justification', type: 'text', nullable: true })
   justification: string | null;
 
-  @Column({ type: 'varchar', length: 50, default: 'PENDING' })
+  @Column({ name: 'status', type: 'varchar', length: 50, default: 'PENDING' })
   status: string;
 
-  @Column({ type: 'uuid', nullable: true })
+  @Column({ name: 'reviewed_by_user_id', type: 'uuid', nullable: true })
   reviewedByUserId: string | null;
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ name: 'review_notes', type: 'text', nullable: true })
   reviewNotes: string | null;
 
-  @Column({ type: 'timestamptz', nullable: true })
+  @Column({ name: 'reviewed_at', type: 'timestamptz', nullable: true })
   reviewedAt: Date | null;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 }

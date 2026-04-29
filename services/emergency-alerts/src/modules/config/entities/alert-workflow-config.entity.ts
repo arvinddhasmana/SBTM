@@ -13,30 +13,35 @@ export class AlertWorkflowConfig {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'varchar', length: 50 })
+  @Column({ name: 'action_name', type: 'varchar', length: 50 })
   actionName: string;
 
-  @Column({ type: 'varchar', length: 20 })
+  @Column({ name: 'allowed_for_tier', type: 'varchar', length: 20 })
   allowedForTier: string;
 
-  @Column({ type: 'varchar', length: 50 })
+  @Column({ name: 'allowed_for_status', type: 'varchar', length: 50 })
   allowedForStatus: string;
 
-  @Column({ type: 'varchar', length: 50 })
+  @Column({ name: 'required_role', type: 'varchar', length: 50 })
   requiredRole: string;
 
-  @Column({ type: 'boolean', default: false })
+  @Column({ name: 'requires_notes', type: 'boolean', default: false })
   requiresNotes: boolean;
 
-  @Column({ type: 'varchar', length: 50, nullable: true })
+  @Column({
+    name: 'status_transition',
+    type: 'varchar',
+    length: 50,
+    nullable: true,
+  })
   statusTransition: string | null;
 
-  @Column({ type: 'boolean', default: true })
+  @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive: boolean;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 }

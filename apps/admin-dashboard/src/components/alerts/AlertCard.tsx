@@ -385,16 +385,25 @@ const AlertCard: React.FC<AlertCardProps> = ({
 
           {/* Action button */}
           {onAction && (
-            <button
+            <div
+              role="button"
+              tabIndex={0}
+              aria-label="View details"
               onClick={(e) => {
                 e.stopPropagation();
                 onAction(alert);
               }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.stopPropagation();
+                  onAction(alert);
+                }
+              }}
               title="View details"
-              className="p-1.5 rounded-lg hover:bg-white/10 text-blue-400 hover:text-blue-300 transition-colors opacity-0 group-hover:opacity-100 shrink-0"
+              className="p-1.5 rounded-lg hover:bg-white/10 text-blue-400 hover:text-blue-300 transition-colors opacity-0 group-hover:opacity-100 shrink-0 cursor-pointer"
             >
               <Eye size={14} />
-            </button>
+            </div>
           )}
         </div>
       </button>
@@ -454,16 +463,25 @@ const AlertCard: React.FC<AlertCardProps> = ({
             </div>
             <div className="flex items-center gap-1.5">
               {onAction && (
-                <button
+                <div
+                  role="button"
+                  tabIndex={0}
+                  aria-label="View details"
                   onClick={(e) => {
                     e.stopPropagation();
                     onAction(alert);
                   }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.stopPropagation();
+                      onAction(alert);
+                    }
+                  }}
                   title="View details"
-                  className="p-0.5 rounded hover:bg-white/10 text-blue-400 hover:text-blue-300 transition-colors opacity-0 group-hover:opacity-100"
+                  className="p-0.5 rounded hover:bg-white/10 text-blue-400 hover:text-blue-300 transition-colors opacity-0 group-hover:opacity-100 cursor-pointer"
                 >
                   <Eye size={10} />
-                </button>
+                </div>
               )}
               <span className="text-slate-500 tabular-nums">
                 {new Date(alert.timestamp).toLocaleTimeString([], {

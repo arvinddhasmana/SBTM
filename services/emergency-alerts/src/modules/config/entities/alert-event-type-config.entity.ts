@@ -11,33 +11,33 @@ export class AlertEventTypeConfig {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'varchar', length: 50, unique: true })
+  @Column({ name: 'event_type', type: 'varchar', length: 50, unique: true })
   eventType: string;
 
-  @Column({ type: 'varchar', length: 20 })
+  @Column({ name: 'tier', type: 'varchar', length: 20 })
   tier: string;
 
-  @Column({ type: 'varchar', length: 100 })
+  @Column({ name: 'display_name', type: 'varchar', length: 100 })
   displayName: string;
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ name: 'description', type: 'text', nullable: true })
   description: string | null;
 
-  @Column({ type: 'boolean', default: false })
+  @Column({ name: 'requires_confirmation', type: 'boolean', default: false })
   requiresConfirmation: boolean;
 
-  @Column({ type: 'boolean', default: false })
+  @Column({ name: 'notify_parents', type: 'boolean', default: false })
   notifyParents: boolean;
 
-  @Column({ type: 'boolean', default: false })
+  @Column({ name: 'is_system_default', type: 'boolean', default: false })
   isSystemDefault: boolean;
 
-  @Column({ type: 'boolean', default: true })
+  @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive: boolean;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 }

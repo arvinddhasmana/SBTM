@@ -1,6 +1,12 @@
-import { Injectable, Logger, NotFoundException, OnModuleInit, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  OnModuleInit,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, IsNull } from 'typeorm';
 import {
   AlertEventTypeConfig,
   AlertEscalationConfig,
@@ -10,7 +16,10 @@ import {
   AlertConfigAudit,
   AlertConfigChangeRequest,
 } from './entities';
-import { EmergencyEventType, AlertTier } from '../alerts/entities/emergency-alert.entity';
+import {
+  EmergencyEventType,
+  AlertTier,
+} from '../alerts/entities/emergency-alert.entity';
 
 export interface EscalationTiming {
   confirmationTimeoutMs: number | null;
@@ -118,7 +127,9 @@ export class AlertConfigService implements OnModuleInit {
       });
 
       if (!config) {
-        this.logger.warn(`No configuration found for event type: ${eventType}, defaulting to TIER_2`);
+        this.logger.warn(
+          `No configuration found for event type: ${eventType}, defaulting to TIER_2`,
+        );
         return AlertTier.TIER_2;
       }
 
@@ -147,7 +158,9 @@ export class AlertConfigService implements OnModuleInit {
 
       if (!config) {
         // Return defaults if no configuration found
-        this.logger.warn(`No escalation config found for ${tier}, using hardcoded defaults`);
+        this.logger.warn(
+          `No escalation config found for ${tier}, using hardcoded defaults`,
+        );
         return {
           confirmationTimeoutMs: tier === 'TIER_1' ? 120000 : null,
           boardEscalationMs: tier === 'TIER_1' ? 300000 : null,
@@ -181,7 +194,10 @@ export class AlertConfigService implements OnModuleInit {
   /**
    * Get notification routing for tier and optional event type
    */
-  async getNotificationRouting(tier: string, eventType?: string): Promise<NotificationRoute[]> {
+  async getNotificationRouting(
+    tier: string,
+    eventType?: string,
+  ): Promise<NotificationRoute[]> {
     if (!this.cacheInitialized) {
       await this.loadNotificationRoutingCache();
     }
@@ -192,10 +208,10 @@ export class AlertConfigService implements OnModuleInit {
     if (!routes) {
       // Fallback to database
       const configs = await this.notificationRoutingRepo.find({
-        where: { tier, eventType: eventType || null, isActive: true },
+        where: { tier, eventType: eventType ?? IsNull(), isActive: true },
       });
 
-      const routeValues = configs.map(c => ({
+      const routeValues = configs.map((c) => ({
         recipientRole: c.recipientRole,
         timing: c.notificationTiming,
         channels: c.channels,
@@ -212,7 +228,10 @@ export class AlertConfigService implements OnModuleInit {
   /**
    * Get workflow actions for tier and status
    */
-  async getWorkflowActions(tier: string, status: string): Promise<WorkflowAction[]> {
+  async getWorkflowActions(
+    tier: string,
+    status: string,
+  ): Promise<WorkflowAction[]> {
     if (!this.cacheInitialized) {
       await this.loadWorkflowActionsCache();
     }
@@ -223,10 +242,14 @@ export class AlertConfigService implements OnModuleInit {
     if (!actions) {
       // Fallback to database
       const configs = await this.workflowConfigRepo.find({
-        where: { allowedForTier: tier, allowedForStatus: status, isActive: true },
+        where: {
+          allowedForTier: tier,
+          allowedForStatus: status,
+          isActive: true,
+        },
       });
 
-      const actionValues = configs.map(c => ({
+      const actionValues = configs.map((c) => ({
         actionName: c.actionName,
         requiredRole: c.requiredRole,
         requiresNotes: c.requiresNotes,
@@ -313,7 +336,9 @@ export class AlertConfigService implements OnModuleInit {
     });
 
     await this.configAuditRepo.save(audit);
-    this.logger.log(`Configuration change logged: ${configTable}/${configId} - ${action}`);
+    this.logger.log(
+      `Configuration change logged: ${configTable}/${configId} - ${action}`,
+    );
   }
 
   // Private cache loading methods
@@ -323,11 +348,13 @@ export class AlertConfigService implements OnModuleInit {
       where: { isActive: true },
     });
 
-    configs.forEach(config => {
+    configs.forEach((config) => {
       this.eventTypeCache.set(config.eventType, config.tier as AlertTier);
     });
 
-    this.logger.log(`Loaded ${configs.length} event type configurations into cache`);
+    this.logger.log(
+      `Loaded ${configs.length} event type configurations into cache`,
+    );
   }
 
   private async loadEscalationConfigCache(): Promise<void> {
@@ -335,7 +362,7 @@ export class AlertConfigService implements OnModuleInit {
       where: { isDefault: true, isActive: true },
     });
 
-    configs.forEach(config => {
+    configs.forEach((config) => {
       this.escalationConfigCache.set(config.tier, {
         confirmationTimeoutMs: config.confirmationTimeoutMs,
         boardEscalationMs: config.boardEscalationMs,
@@ -343,7 +370,9 @@ export class AlertConfigService implements OnModuleInit {
       });
     });
 
-    this.logger.log(`Loaded ${configs.length} escalation configurations into cache`);
+    this.logger.log(
+      `Loaded ${configs.length} escalation configurations into cache`,
+    );
   }
 
   private async loadEscalationChainCache(): Promise<void> {
@@ -352,13 +381,15 @@ export class AlertConfigService implements OnModuleInit {
       order: { sequenceOrder: 'ASC' },
     });
 
-    this.escalationChainCache = chains.map(chain => ({
+    this.escalationChainCache = chains.map((chain) => ({
       level: chain.escalationLevel,
       timeThresholdMs: chain.timeThresholdMs,
       channels: chain.notificationChannels || [],
     }));
 
-    this.logger.log(`Loaded ${chains.length} escalation chain steps into cache`);
+    this.logger.log(
+      `Loaded ${chains.length} escalation chain steps into cache`,
+    );
   }
 
   private async loadNotificationRoutingCache(): Promise<void> {
@@ -367,8 +398,10 @@ export class AlertConfigService implements OnModuleInit {
     });
 
     // Group by tier and eventType
-    configs.forEach(config => {
-      const cacheKey = config.eventType ? `${config.tier}:${config.eventType}` : config.tier;
+    configs.forEach((config) => {
+      const cacheKey = config.eventType
+        ? `${config.tier}:${config.eventType}`
+        : config.tier;
 
       const existing = this.notificationRoutingCache.get(cacheKey) || [];
       existing.push({
@@ -381,7 +414,9 @@ export class AlertConfigService implements OnModuleInit {
       this.notificationRoutingCache.set(cacheKey, existing);
     });
 
-    this.logger.log(`Loaded ${configs.length} notification routing rules into cache`);
+    this.logger.log(
+      `Loaded ${configs.length} notification routing rules into cache`,
+    );
   }
 
   private async loadWorkflowActionsCache(): Promise<void> {
@@ -390,7 +425,7 @@ export class AlertConfigService implements OnModuleInit {
     });
 
     // Group by tier and status
-    configs.forEach(config => {
+    configs.forEach((config) => {
       const cacheKey = `${config.allowedForTier}:${config.allowedForStatus}`;
 
       const existing = this.workflowActionsCache.get(cacheKey) || [];
@@ -404,7 +439,9 @@ export class AlertConfigService implements OnModuleInit {
       this.workflowActionsCache.set(cacheKey, existing);
     });
 
-    this.logger.log(`Loaded ${configs.length} workflow action configurations into cache`);
+    this.logger.log(
+      `Loaded ${configs.length} workflow action configurations into cache`,
+    );
   }
 
   // ============================================================================
@@ -424,22 +461,31 @@ export class AlertConfigService implements OnModuleInit {
     });
 
     if (!config) {
-      throw new NotFoundException(`Event type configuration not found: ${eventType}`);
+      throw new NotFoundException(
+        `Event type configuration not found: ${eventType}`,
+      );
     }
 
     return config;
   }
 
-  async createEventTypeConfig(dto: any, actorUserId?: string): Promise<AlertEventTypeConfig> {
+  async createEventTypeConfig(
+    dto: any,
+    actorUserId?: string,
+  ): Promise<AlertEventTypeConfig> {
     const existing = await this.eventTypeConfigRepo.findOne({
       where: { eventType: dto.eventType },
     });
 
     if (existing) {
-      throw new BadRequestException(`Event type configuration already exists: ${dto.eventType}`);
+      throw new BadRequestException(
+        `Event type configuration already exists: ${dto.eventType}`,
+      );
     }
 
-    const config = this.eventTypeConfigRepo.create(dto);
+    const config = this.eventTypeConfigRepo.create(
+      dto as Partial<AlertEventTypeConfig>,
+    );
     const saved = await this.eventTypeConfigRepo.save(config);
 
     await this.logConfigChange(
@@ -456,11 +502,19 @@ export class AlertConfigService implements OnModuleInit {
     return saved;
   }
 
-  async updateEventTypeConfig(eventType: string, dto: any, actorUserId?: string): Promise<AlertEventTypeConfig> {
-    const config = await this.eventTypeConfigRepo.findOne({ where: { eventType } });
+  async updateEventTypeConfig(
+    eventType: string,
+    dto: any,
+    actorUserId?: string,
+  ): Promise<AlertEventTypeConfig> {
+    const config = await this.eventTypeConfigRepo.findOne({
+      where: { eventType },
+    });
 
     if (!config) {
-      throw new NotFoundException(`Event type configuration not found: ${eventType}`);
+      throw new NotFoundException(
+        `Event type configuration not found: ${eventType}`,
+      );
     }
 
     const oldValues = { ...config };
@@ -481,11 +535,18 @@ export class AlertConfigService implements OnModuleInit {
     return saved;
   }
 
-  async deleteEventTypeConfig(eventType: string, actorUserId?: string): Promise<void> {
-    const config = await this.eventTypeConfigRepo.findOne({ where: { eventType } });
+  async deleteEventTypeConfig(
+    eventType: string,
+    actorUserId?: string,
+  ): Promise<void> {
+    const config = await this.eventTypeConfigRepo.findOne({
+      where: { eventType },
+    });
 
     if (!config) {
-      throw new NotFoundException(`Event type configuration not found: ${eventType}`);
+      throw new NotFoundException(
+        `Event type configuration not found: ${eventType}`,
+      );
     }
 
     // Soft delete by setting isActive to false
@@ -522,14 +583,21 @@ export class AlertConfigService implements OnModuleInit {
     });
 
     if (!config) {
-      throw new NotFoundException(`Escalation configuration not found for tier: ${tier}`);
+      throw new NotFoundException(
+        `Escalation configuration not found for tier: ${tier}`,
+      );
     }
 
     return config;
   }
 
-  async createEscalationConfig(dto: any, actorUserId?: string): Promise<AlertEscalationConfig> {
-    const config = this.escalationConfigRepo.create(dto);
+  async createEscalationConfig(
+    dto: any,
+    actorUserId?: string,
+  ): Promise<AlertEscalationConfig> {
+    const config = this.escalationConfigRepo.create(
+      dto as Partial<AlertEscalationConfig>,
+    );
     const saved = await this.escalationConfigRepo.save(config);
 
     await this.logConfigChange(
@@ -546,13 +614,19 @@ export class AlertConfigService implements OnModuleInit {
     return saved;
   }
 
-  async updateEscalationConfig(tier: string, dto: any, actorUserId?: string): Promise<AlertEscalationConfig> {
+  async updateEscalationConfig(
+    tier: string,
+    dto: any,
+    actorUserId?: string,
+  ): Promise<AlertEscalationConfig> {
     const config = await this.escalationConfigRepo.findOne({
       where: { tier, isDefault: true },
     });
 
     if (!config) {
-      throw new NotFoundException(`Escalation configuration not found for tier: ${tier}`);
+      throw new NotFoundException(
+        `Escalation configuration not found for tier: ${tier}`,
+      );
     }
 
     const oldValues = { ...config };
@@ -573,13 +647,18 @@ export class AlertConfigService implements OnModuleInit {
     return saved;
   }
 
-  async deleteEscalationConfig(tier: string, actorUserId?: string): Promise<void> {
+  async deleteEscalationConfig(
+    tier: string,
+    actorUserId?: string,
+  ): Promise<void> {
     const config = await this.escalationConfigRepo.findOne({
       where: { tier, isDefault: true },
     });
 
     if (!config) {
-      throw new NotFoundException(`Escalation configuration not found for tier: ${tier}`);
+      throw new NotFoundException(
+        `Escalation configuration not found for tier: ${tier}`,
+      );
     }
 
     config.isActive = false;
@@ -602,7 +681,10 @@ export class AlertConfigService implements OnModuleInit {
   // CRUD Methods for Notification Routing Configuration
   // ============================================================================
 
-  async getAllNotificationRoutingConfigs(tier?: string, eventType?: string): Promise<NotificationRoutingConfig[]> {
+  async getAllNotificationRoutingConfigs(
+    tier?: string,
+    eventType?: string,
+  ): Promise<NotificationRoutingConfig[]> {
     const where: any = { isActive: true };
     if (tier) where.tier = tier;
     if (eventType) where.eventType = eventType;
@@ -613,20 +695,29 @@ export class AlertConfigService implements OnModuleInit {
     });
   }
 
-  async getNotificationRoutingConfigById(id: string): Promise<NotificationRoutingConfig> {
+  async getNotificationRoutingConfigById(
+    id: string,
+  ): Promise<NotificationRoutingConfig> {
     const config = await this.notificationRoutingRepo.findOne({
       where: { id, isActive: true },
     });
 
     if (!config) {
-      throw new NotFoundException(`Notification routing configuration not found: ${id}`);
+      throw new NotFoundException(
+        `Notification routing configuration not found: ${id}`,
+      );
     }
 
     return config;
   }
 
-  async createNotificationRoutingConfig(dto: any, actorUserId?: string): Promise<NotificationRoutingConfig> {
-    const config = this.notificationRoutingRepo.create(dto);
+  async createNotificationRoutingConfig(
+    dto: any,
+    actorUserId?: string,
+  ): Promise<NotificationRoutingConfig> {
+    const config = this.notificationRoutingRepo.create(
+      dto as Partial<NotificationRoutingConfig>,
+    );
     const saved = await this.notificationRoutingRepo.save(config);
 
     await this.logConfigChange(
@@ -643,11 +734,19 @@ export class AlertConfigService implements OnModuleInit {
     return saved;
   }
 
-  async updateNotificationRoutingConfig(id: string, dto: any, actorUserId?: string): Promise<NotificationRoutingConfig> {
-    const config = await this.notificationRoutingRepo.findOne({ where: { id } });
+  async updateNotificationRoutingConfig(
+    id: string,
+    dto: any,
+    actorUserId?: string,
+  ): Promise<NotificationRoutingConfig> {
+    const config = await this.notificationRoutingRepo.findOne({
+      where: { id },
+    });
 
     if (!config) {
-      throw new NotFoundException(`Notification routing configuration not found: ${id}`);
+      throw new NotFoundException(
+        `Notification routing configuration not found: ${id}`,
+      );
     }
 
     const oldValues = { ...config };
@@ -668,11 +767,18 @@ export class AlertConfigService implements OnModuleInit {
     return saved;
   }
 
-  async deleteNotificationRoutingConfig(id: string, actorUserId?: string): Promise<void> {
-    const config = await this.notificationRoutingRepo.findOne({ where: { id } });
+  async deleteNotificationRoutingConfig(
+    id: string,
+    actorUserId?: string,
+  ): Promise<void> {
+    const config = await this.notificationRoutingRepo.findOne({
+      where: { id },
+    });
 
     if (!config) {
-      throw new NotFoundException(`Notification routing configuration not found: ${id}`);
+      throw new NotFoundException(
+        `Notification routing configuration not found: ${id}`,
+      );
     }
 
     config.isActive = false;
@@ -695,7 +801,10 @@ export class AlertConfigService implements OnModuleInit {
   // CRUD Methods for Workflow Configuration
   // ============================================================================
 
-  async getAllWorkflowConfigs(tier?: string, status?: string): Promise<AlertWorkflowConfig[]> {
+  async getAllWorkflowConfigs(
+    tier?: string,
+    status?: string,
+  ): Promise<AlertWorkflowConfig[]> {
     const where: any = { isActive: true };
     if (tier) where.allowedForTier = tier;
     if (status) where.allowedForStatus = status;
@@ -718,8 +827,13 @@ export class AlertConfigService implements OnModuleInit {
     return config;
   }
 
-  async createWorkflowConfig(dto: any, actorUserId?: string): Promise<AlertWorkflowConfig> {
-    const config = this.workflowConfigRepo.create(dto);
+  async createWorkflowConfig(
+    dto: any,
+    actorUserId?: string,
+  ): Promise<AlertWorkflowConfig> {
+    const config = this.workflowConfigRepo.create(
+      dto as Partial<AlertWorkflowConfig>,
+    );
     const saved = await this.workflowConfigRepo.save(config);
 
     await this.logConfigChange(
@@ -736,7 +850,11 @@ export class AlertConfigService implements OnModuleInit {
     return saved;
   }
 
-  async updateWorkflowConfig(id: string, dto: any, actorUserId?: string): Promise<AlertWorkflowConfig> {
+  async updateWorkflowConfig(
+    id: string,
+    dto: any,
+    actorUserId?: string,
+  ): Promise<AlertWorkflowConfig> {
     const config = await this.workflowConfigRepo.findOne({ where: { id } });
 
     if (!config) {
@@ -788,14 +906,17 @@ export class AlertConfigService implements OnModuleInit {
   // Change Request Methods
   // ============================================================================
 
-  async getChangeRequests(status?: string, requestorId?: string): Promise<AlertConfigChangeRequest[]> {
+  async getChangeRequests(
+    status?: string,
+    requestorId?: string,
+  ): Promise<AlertConfigChangeRequest[]> {
     const where: any = {};
     if (status) where.status = status;
     if (requestorId) where.requestorId = requestorId;
 
     return this.changeRequestRepo.find({
       where,
-      order: { requestedAt: 'DESC' },
+      order: { createdAt: 'DESC' },
     });
   }
 
@@ -815,18 +936,22 @@ export class AlertConfigService implements OnModuleInit {
     requestorRole: string,
     requestorEmail?: string,
   ): Promise<AlertConfigChangeRequest> {
+    // requestorEmail is accepted by the API for future email notifications but is not
+    // persisted (no column on entity). Intentionally unused here.
+    void requestorEmail;
     const request = this.changeRequestRepo.create({
-      ...dto,
-      requestorId,
-      requestorRole,
-      requestorEmail,
+      ...(dto as Partial<AlertConfigChangeRequest>),
+      requestedByUserId: requestorId,
+      requestedByRole: requestorRole,
       status: 'PENDING',
     });
 
     const saved = await this.changeRequestRepo.save(request);
 
     // TODO: Send email notification to Super Admins
-    this.logger.log(`Change request created: ${saved.id} by ${requestorId} (${requestorRole})`);
+    this.logger.log(
+      `Change request created: ${saved.id} by ${requestorId} (${requestorRole})`,
+    );
 
     return saved;
   }
@@ -843,18 +968,22 @@ export class AlertConfigService implements OnModuleInit {
     }
 
     if (request.status !== 'PENDING') {
-      throw new BadRequestException(`Change request is not pending: ${request.status}`);
+      throw new BadRequestException(
+        `Change request is not pending: ${request.status}`,
+      );
     }
 
     request.status = dto.action;
-    request.reviewedBy = reviewerId;
+    request.reviewedByUserId = reviewerId;
     request.reviewedAt = new Date();
-    request.reviewNotes = dto.reviewNotes;
+    request.reviewNotes = dto.reviewNotes ?? null;
 
     const saved = await this.changeRequestRepo.save(request);
 
     // TODO: Send email notification to requestor
-    this.logger.log(`Change request ${dto.action.toLowerCase()}: ${id} by ${reviewerId}`);
+    this.logger.log(
+      `Change request ${dto.action.toLowerCase()}: ${id} by ${reviewerId}`,
+    );
 
     return saved;
   }
@@ -874,7 +1003,7 @@ export class AlertConfigService implements OnModuleInit {
 
     return this.configAuditRepo.find({
       where,
-      order: { changedAt: 'DESC' },
+      order: { createdAt: 'DESC' },
       take: limit,
     });
   }

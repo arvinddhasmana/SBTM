@@ -12,24 +12,24 @@ export class AlertEscalationChain {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'varchar', length: 100 })
+  @Column({ name: 'config_name', type: 'varchar', length: 100 })
   configName: string;
 
-  @Column({ type: 'integer' })
+  @Column({ name: 'sequence_order', type: 'integer' })
   sequenceOrder: number;
 
-  @Column({ type: 'varchar', length: 50 })
+  @Column({ name: 'escalation_level', type: 'varchar', length: 50 })
   escalationLevel: string;
 
-  @Column({ type: 'integer' })
+  @Column({ name: 'time_threshold_ms', type: 'integer' })
   timeThresholdMs: number;
 
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ name: 'notification_channels', type: 'jsonb', nullable: true })
   notificationChannels: string[] | null;
 
-  @Column({ type: 'boolean', default: true })
+  @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive: boolean;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 }

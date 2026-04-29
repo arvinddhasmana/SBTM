@@ -10,30 +10,30 @@ export class AlertConfigAudit {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'varchar', length: 100 })
+  @Column({ name: 'config_table', type: 'varchar', length: 100 })
   configTable: string;
 
-  @Column({ type: 'uuid' })
+  @Column({ name: 'config_id', type: 'uuid' })
   configId: string;
 
-  @Column({ type: 'varchar', length: 50 })
+  @Column({ name: 'action', type: 'varchar', length: 50 })
   action: string;
 
-  @Column({ type: 'uuid' })
+  @Column({ name: 'changed_by_user_id', type: 'uuid' })
   changedByUserId: string;
 
-  @Column({ type: 'varchar', length: 50 })
+  @Column({ name: 'changed_by_role', type: 'varchar', length: 50 })
   changedByRole: string;
 
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ name: 'old_values', type: 'jsonb', nullable: true })
   oldValues: Record<string, any> | null;
 
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ name: 'new_values', type: 'jsonb', nullable: true })
   newValues: Record<string, any> | null;
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ name: 'change_reason', type: 'text', nullable: true })
   changeReason: string | null;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 }

@@ -11,30 +11,30 @@ export class NotificationRoutingConfig {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'varchar', length: 20 })
+  @Column({ name: 'tier', type: 'varchar', length: 20 })
   tier: string;
 
-  @Column({ type: 'varchar', length: 50, nullable: true })
+  @Column({ name: 'event_type', type: 'varchar', length: 50, nullable: true })
   eventType: string | null;
 
-  @Column({ type: 'varchar', length: 50 })
+  @Column({ name: 'recipient_role', type: 'varchar', length: 50 })
   recipientRole: string;
 
-  @Column({ type: 'varchar', length: 50 })
+  @Column({ name: 'notification_timing', type: 'varchar', length: 50 })
   notificationTiming: string;
 
-  @Column({ type: 'jsonb' })
+  @Column({ name: 'channels', type: 'jsonb' })
   channels: string[];
 
-  @Column({ type: 'boolean', default: false })
+  @Column({ name: 'is_mandatory', type: 'boolean', default: false })
   isMandatory: boolean;
 
-  @Column({ type: 'boolean', default: true })
+  @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive: boolean;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 }

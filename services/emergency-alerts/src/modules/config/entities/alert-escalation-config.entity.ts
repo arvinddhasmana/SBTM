@@ -11,30 +11,30 @@ export class AlertEscalationConfig {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'varchar', length: 100, unique: true })
+  @Column({ name: 'config_name', type: 'varchar', length: 100, unique: true })
   configName: string;
 
-  @Column({ type: 'varchar', length: 20 })
+  @Column({ name: 'tier', type: 'varchar', length: 20 })
   tier: string;
 
-  @Column({ type: 'integer', nullable: true })
+  @Column({ name: 'confirmation_timeout_ms', type: 'integer', nullable: true })
   confirmationTimeoutMs: number | null;
 
-  @Column({ type: 'integer', nullable: true })
+  @Column({ name: 'board_escalation_ms', type: 'integer', nullable: true })
   boardEscalationMs: number | null;
 
-  @Column({ type: 'integer', nullable: true })
+  @Column({ name: 'osta_escalation_ms', type: 'integer', nullable: true })
   ostaEscalationMs: number | null;
 
-  @Column({ type: 'boolean', default: false })
+  @Column({ name: 'is_default', type: 'boolean', default: false })
   isDefault: boolean;
 
-  @Column({ type: 'boolean', default: true })
+  @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive: boolean;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 }
