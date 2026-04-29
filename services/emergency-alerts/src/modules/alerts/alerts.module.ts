@@ -10,6 +10,7 @@ import { AlertClassifierService } from './alert-classifier.service';
 import { BullModule } from '@nestjs/bullmq';
 import { RealtimeModule } from '../realtime/realtime.module';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { ConfigModule } from '../config/config.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
     BullModule.registerQueue({
       name: 'notifications',
     }),
+    ConfigModule,
     RealtimeModule,
     NotificationsModule,
   ],

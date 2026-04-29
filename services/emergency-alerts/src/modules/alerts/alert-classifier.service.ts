@@ -1,8 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import {
   AlertTier,
   EmergencyEventType,
 } from './entities/emergency-alert.entity';
+import { AlertConfigService } from '../config/alert-config.service';
 
 /**
  * AlertClassifierService
@@ -10,18 +11,18 @@ import {
  * Classifies incoming emergency events into alert tiers that govern the
  * confirmation and notification workflow.
  *
+ * NOW CONFIGURABLE: Event type to tier mapping is read from database configuration
+ * instead of being hardcoded. Falls back to hardcoded defaults if configuration not found.
+ *
  * Tier 1 — Safety-critical: require School Admin confirmation before parent delivery.
- *   Events: PANIC_BUTTON, MEDICAL, INCIDENT, PANIC_ALERT
- *
  * Tier 2 — Operational: visible to admins only. No parent notification.
- *   Events: ROUTE_DEVIATION, LATE_ARRIVAL, ROUTE_DIVERSION, LATE_DEPARTURE, COMPLIANCE, OTHER
- *
  * Tier 3 — Informational: bypass confirmation, delivered directly to parents.
- *   Events: Handled externally by the presence service (CHILD_BOARDED, CHILD_ALIGHTED).
- *   Returned here as a fallback classification when a future event type maps to it.
  */
 @Injectable()
 export class AlertClassifierService {
+  private readonly logger = new Logger(AlertClassifierService.name);
+
+  // Fallback hardcoded mappings (used if configuration not found)
   private static readonly TIER_1_EVENTS: ReadonlySet<EmergencyEventType> =
     new Set([
       EmergencyEventType.PANIC_BUTTON,
@@ -40,26 +41,48 @@ export class AlertClassifierService {
       EmergencyEventType.OTHER,
     ]);
 
+  constructor(private readonly configService: AlertConfigService) {}
+
   /**
    * Classify an event type into its alert tier.
+   * Uses configuration service with fallback to hardcoded defaults.
    * @returns AlertTier.TIER_1, TIER_2, or TIER_3
    */
-  classify(eventType: EmergencyEventType): AlertTier {
+  async classify(eventType: EmergencyEventType): Promise<AlertTier> {
+    try {
+      // Try to get tier from configuration
+      const tier = await this.configService.getEventTypeTier(eventType);
+      return tier;
+    } catch (error) {
+      this.logger.warn(
+        `Failed to get tier from configuration for ${eventType}, using fallback`,
+        error,
+      );
+      // Fallback to hardcoded classification
+      return this.classifyFallback(eventType);
+    }
+  }
+
+  /**
+   * Fallback classification using hardcoded rules
+   */
+  private classifyFallback(eventType: EmergencyEventType): AlertTier {
     if (AlertClassifierService.TIER_1_EVENTS.has(eventType)) {
       return AlertTier.TIER_1;
     }
     if (AlertClassifierService.TIER_2_EVENTS.has(eventType)) {
       return AlertTier.TIER_2;
     }
-    // Future Tier 3 events (e.g. informational presence events routed here)
     return AlertTier.TIER_3;
   }
 
-  isTier1(eventType: EmergencyEventType): boolean {
-    return AlertClassifierService.TIER_1_EVENTS.has(eventType);
+  async isTier1(eventType: EmergencyEventType): Promise<boolean> {
+    const tier = await this.classify(eventType);
+    return tier === AlertTier.TIER_1;
   }
 
-  isTier2(eventType: EmergencyEventType): boolean {
-    return AlertClassifierService.TIER_2_EVENTS.has(eventType);
+  async isTier2(eventType: EmergencyEventType): Promise<boolean> {
+    const tier = await this.classify(eventType);
+    return tier === AlertTier.TIER_2;
   }
 }

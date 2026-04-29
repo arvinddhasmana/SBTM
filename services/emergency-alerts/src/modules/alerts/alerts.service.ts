@@ -26,20 +26,21 @@ import {
 } from './entities/alert-notification-log.entity';
 import { AlertClassifierService } from './alert-classifier.service';
 import { AlertTier } from './entities/emergency-alert.entity';
+import { AlertConfigService } from '../config/alert-config.service';
 
-/** Delay constants for the escalation timer chain (milliseconds). */
-const CONFIRMATION_TIMEOUT_MS = parseInt(
+/** Fallback delay constants if configuration service unavailable (milliseconds). */
+const FALLBACK_CONFIRMATION_TIMEOUT_MS = parseInt(
   process.env.ALERT_CONFIRMATION_TIMEOUT_MS ?? '120000',
   10,
-); // default 2 minutes
-const BOARD_ESCALATION_MS = parseInt(
+);
+const FALLBACK_BOARD_ESCALATION_MS = parseInt(
   process.env.ALERT_BOARD_ESCALATION_MS ?? '300000',
   10,
-); // default 5 minutes
-const OSTA_ESCALATION_MS = parseInt(
+);
+const FALLBACK_OSTA_ESCALATION_MS = parseInt(
   process.env.ALERT_OSTA_ESCALATION_MS ?? '900000',
   10,
-); // default 15 minutes
+);
 
 /** Shape returned by findForRoute — used by the parent-app API endpoint. */
 export interface RouteAlertView {
@@ -82,10 +83,11 @@ export class AlertsService {
     private wsGateway: WebsocketGateway,
     private notificationsService: NotificationsService,
     private classifierService: AlertClassifierService,
+    private configService: AlertConfigService,
   ) {}
 
   async create(createDto: CreateEmergencyEventDto): Promise<EmergencyAlert> {
-    const tier = this.classifierService.classify(createDto.eventType);
+    const tier = await this.classifierService.classify(createDto.eventType);
 
     const alert = this.alertsRepo.create({
       ...createDto,
@@ -110,35 +112,46 @@ export class AlertsService {
         { escalationLevel: AlertEscalationLevel.SCHOOL },
       );
 
+      // Get escalation timing from configuration (with fallback)
+      const escalationTiming = await this.getEscalationTiming(tier);
+
       // Schedule escalation timer chain (state-guarded in processor).
-      await this.alertsQueue.add(
-        'confirmation-timeout',
-        {
-          alertId: savedAlert.id,
-          routeId: savedAlert.routeId,
-          schoolId: savedAlert.schoolId,
-          eventType: savedAlert.eventType,
-        },
-        { delay: CONFIRMATION_TIMEOUT_MS },
-      );
-      await this.alertsQueue.add(
-        'board-escalation',
-        {
-          alertId: savedAlert.id,
-          routeId: savedAlert.routeId,
-          schoolId: savedAlert.schoolId,
-        },
-        { delay: BOARD_ESCALATION_MS },
-      );
-      await this.alertsQueue.add(
-        'osta-escalation',
-        {
-          alertId: savedAlert.id,
-          routeId: savedAlert.routeId,
-          schoolId: savedAlert.schoolId,
-        },
-        { delay: OSTA_ESCALATION_MS },
-      );
+      if (escalationTiming.confirmationTimeoutMs) {
+        await this.alertsQueue.add(
+          'confirmation-timeout',
+          {
+            alertId: savedAlert.id,
+            routeId: savedAlert.routeId,
+            schoolId: savedAlert.schoolId,
+            eventType: savedAlert.eventType,
+          },
+          { delay: escalationTiming.confirmationTimeoutMs },
+        );
+      }
+
+      if (escalationTiming.boardEscalationMs) {
+        await this.alertsQueue.add(
+          'board-escalation',
+          {
+            alertId: savedAlert.id,
+            routeId: savedAlert.routeId,
+            schoolId: savedAlert.schoolId,
+          },
+          { delay: escalationTiming.boardEscalationMs },
+        );
+      }
+
+      if (escalationTiming.ostaEscalationMs) {
+        await this.alertsQueue.add(
+          'osta-escalation',
+          {
+            alertId: savedAlert.id,
+            routeId: savedAlert.routeId,
+            schoolId: savedAlert.schoolId,
+          },
+          { delay: escalationTiming.ostaEscalationMs },
+        );
+      }
     } else if (tier === AlertTier.TIER_2) {
       // Tier 2: Admin-only alert. No parent notification.
       this.logger.log(
@@ -413,6 +426,31 @@ export class AlertsService {
   // ---------------------------------------------------------------------------
   // Private helpers
   // ---------------------------------------------------------------------------
+
+  /**
+   * Get escalation timing from configuration with fallback to constants
+   */
+  private async getEscalationTiming(tier: string): Promise<{
+    confirmationTimeoutMs: number | null;
+    boardEscalationMs: number | null;
+    ostaEscalationMs: number | null;
+  }> {
+    try {
+      const timing = await this.configService.getEscalationTiming(tier);
+      return timing;
+    } catch (error) {
+      this.logger.warn(
+        `Failed to get escalation timing from configuration for ${tier}, using fallback`,
+        error,
+      );
+      // Return fallback values
+      return {
+        confirmationTimeoutMs: FALLBACK_CONFIRMATION_TIMEOUT_MS,
+        boardEscalationMs: FALLBACK_BOARD_ESCALATION_MS,
+        ostaEscalationMs: FALLBACK_OSTA_ESCALATION_MS,
+      };
+    }
+  }
 
   private async writeAuditLog(
     alertId: string,
