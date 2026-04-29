@@ -25,7 +25,7 @@
   "bus": {
     "vehicleId": "BUS-01",
     "driverId": "driver-001",
-    "driverEmail": "driver1@sbtm.demo"
+    "driverEmail": "driver.stbern@sbtm.demo"
   },
   "parents": [
     {
