@@ -50,7 +50,7 @@ Open Chrome / Edge DevTools (F12):
 > Common cloud-only error: `ERR_CERT_COMMON_NAME_INVALID` on `https://api.sbtm.ca`
 > means DNS is pointing somewhere other than the AKS ingress (often the registrar's
 > parking page because NS delegation isn't done yet — see
-> [CustomDomainSetup.md](../Deployment/CustomDomainSetup.md)).
+> [CustomDomainSetup.md](../Deployment/Azure/CustomDomainSetup.md)).
 
 ### Layer 2 — DNS
 
@@ -320,9 +320,9 @@ swa --version           # Static Web Apps CLI (already used by bootstrap step 11
 ## See also
 
 - [Local Development & Testing Guide](local_dev_testing_guide.md) — laptop-first workflow
-- [Deployment / Custom Domain Setup](../Deployment/CustomDomainSetup.md) — DNS + TLS for `sbtm.ca`
-- [Deployment / Azure Architecture](../Deployment/AzureArchitecture.md) — what is deployed where
-- [Deployment / Deployment Checklist](../Deployment/DeploymentChecklist.md) — pre-deploy gates
+- [Deployment / Custom Domain Setup](../Deployment/Azure/CustomDomainSetup.md) — DNS + TLS for `sbtm.ca`
+- [Deployment / Azure Architecture](../Deployment/Azure/Architecture.md) — what is deployed where
+- [Deployment / Deployment Checklist](../Deployment/Azure/DeploymentChecklist.md) — pre-deploy gates
 - `scripts/azure/verify-portals.sh` — automated end-to-end probe used by `bootstrap.sh` step 12
 
 ---

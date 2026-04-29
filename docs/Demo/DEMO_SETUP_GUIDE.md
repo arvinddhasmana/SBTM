@@ -101,7 +101,7 @@ The persistent `sbtm-dns-rg` resource group (containing the `sbtm.ca` zone) is *
 > - `sbtm-pg-demo-centralus` lives in `sbtm-demo-rg` but runs in **Central US** because eastus has no Postgres Flex quota — handled automatically by `bootstrap.sh`. It is **not stray**; teardown removes it with the rest of the RG.
 > - The post-delete sweep in `teardown-azure.sh` scans the entire subscription for any leftover `sbtm-*` resources outside `sbtm-dns-rg` and prints them, so you'll always know if anything leaks.
 
-See [docs/Deployment/CustomDomainSetup.md](../Deployment/CustomDomainSetup.md) for the one-time NS delegation at your registrar.
+See [docs/Deployment/Azure/CustomDomainSetup.md](../Deployment/Azure/CustomDomainSetup.md) for the one-time NS delegation at your registrar.
 
 ### Local Docker reset and seed
 

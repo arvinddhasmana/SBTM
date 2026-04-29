@@ -89,7 +89,7 @@ After `bash scripts/azure/bootstrap.sh demo canadacentral` and DNS delegation:
 
 Verify with: `bash scripts/azure/verify-portals.sh demo`
 
-See [docs/Deployment/CustomDomainSetup.md](../Deployment/CustomDomainSetup.md) for the one-time NS delegation step.
+See [docs/Deployment/Azure/CustomDomainSetup.md](../Deployment/Azure/CustomDomainSetup.md) for the one-time NS delegation step.
 
 ### Local Docker
 

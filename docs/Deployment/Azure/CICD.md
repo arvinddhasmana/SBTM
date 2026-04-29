@@ -225,4 +225,4 @@ Steps:
 - [DeploymentChecklist.md](DeploymentChecklist.md) — prerequisites before any deployment
 - [InfrastructureAsCode.md](InfrastructureAsCode.md) — Kustomize manifests, Bicep templates, tier-change instructions
 - [CostAnalysis.md](CostAnalysis.md) — Dev/Test pricing, namespace sharing, cost stop/start
-- [AzureArchitecture.md](AzureArchitecture.md) — Azure service overview
+- [Architecture.md](Architecture.md) — Azure service overview

@@ -314,7 +314,7 @@ az group delete --name sbtm-dns-rg --yes
 
 ## Related Documents
 
-- [AzureCICD.md](AzureCICD.md) — workflow definitions and OIDC setup
+- [CICD.md](CICD.md) — workflow definitions and OIDC setup
 - [InfrastructureAsCode.md](InfrastructureAsCode.md) — how to change tier configuration
 - [CostAnalysis.md](CostAnalysis.md) — cost breakdown, Dev/Test pricing, namespace sharing
 - [MobileStoreDeployment.md](MobileStoreDeployment.md) — mobile build & submit

@@ -6,7 +6,7 @@
 
 ## Purpose
 
-This document describes how the platform is deployed in local environments and the target Azure AKS production topology. For the full Azure architecture with C4 diagrams, cost analysis, and IaC guidance see [`docs/Deployment/AzureArchitecture.md`](../Deployment/AzureArchitecture.md).
+This document describes how the platform is deployed in local environments and the target Azure AKS production topology. For the full Azure architecture with C4 diagrams, cost analysis, and IaC guidance see [`docs/Deployment/Azure/Architecture.md`](../Deployment/Azure/Architecture.md).
 
 ## Environment Matrix
 
@@ -143,9 +143,9 @@ flowchart TB
 
 ## Related Documents
 
-- [`docs/Deployment/AzureArchitecture.md`](../Deployment/AzureArchitecture.md) — C4 diagrams, Azure Well-Architected analysis, cost tiers
-- [`docs/Deployment/AzureCICD.md`](../Deployment/AzureCICD.md) — GitHub Actions CI/CD pipeline for AKS
-- [`docs/Deployment/InfrastructureAsCode.md`](../Deployment/InfrastructureAsCode.md) — Bicep templates and Kustomize K8s manifests
+- [`docs/Deployment/Azure/Architecture.md`](../Deployment/Azure/Architecture.md) — C4 diagrams, Azure Well-Architected analysis, cost tiers
+- [`docs/Deployment/Azure/CICD.md`](../Deployment/Azure/CICD.md) — GitHub Actions CI/CD pipeline for AKS
+- [`docs/Deployment/Azure/InfrastructureAsCode.md`](../Deployment/Azure/InfrastructureAsCode.md) — Bicep templates and Kustomize K8s manifests
 - [`docs/Deployment/CostAnalysis.md`](../Deployment/CostAnalysis.md) — Demo, pilot, and production cost tiers
 - [`docs/Operations/DeploymentGuide.md`](../Operations/DeploymentGuide.md) — Step-by-step deployment procedures
 

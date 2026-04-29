@@ -44,7 +44,7 @@ This document describes the target v1 technical baseline. It should be read with
 
 ## 1a. Azure Cloud Service Equivalents
 
-When deploying to Azure AKS, local infrastructure components map to the following managed services. See [`docs/Deployment/AzureArchitecture.md`](../Deployment/AzureArchitecture.md) for full details.
+When deploying to Azure AKS, local infrastructure components map to the following managed services. See [`docs/Deployment/Azure/Architecture.md`](../Deployment/Azure/Architecture.md) for full details.
 
 | Local Component         | Azure Service                           | Demo SKU                                                     | Notes                                                    |
 | ----------------------- | --------------------------------------- | ------------------------------------------------------------ | -------------------------------------------------------- |

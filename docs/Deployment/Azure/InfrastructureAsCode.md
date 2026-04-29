@@ -323,6 +323,6 @@ kubectl logs -n sbtm-demo deployment/osrm
 ## Related Documents
 
 - [DeploymentChecklist.md](DeploymentChecklist.md) — full prerequisites before any provisioning
-- [AzureArchitecture.md](AzureArchitecture.md) — Azure service design and security model
-- [AzureCICD.md](AzureCICD.md) — GitHub Actions pipeline that uses these manifests
+- [Architecture.md](Architecture.md) — Azure service design and security model
+- [CICD.md](CICD.md) — GitHub Actions pipeline that uses these manifests
 - [CostAnalysis.md](CostAnalysis.md) — SKU choices, Dev/Test pricing, namespace sharing

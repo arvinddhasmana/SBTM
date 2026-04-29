@@ -412,6 +412,6 @@ Outputs include: `aksClusterName`, `acrLoginServer`, `keyVaultUri`, `postgresFqd
 
 - [CustomDomainSetup.md](CustomDomainSetup.md) — DNS delegation, TLS provisioning, domain registration steps
 - [InfrastructureAsCode.md](InfrastructureAsCode.md) — Bicep templates and Kustomize manifests
-- [AzureCICD.md](AzureCICD.md) — GitHub Actions CI/CD pipeline
+- [CICD.md](CICD.md) — GitHub Actions CI/CD pipeline
 - [CostAnalysis.md](CostAnalysis.md) — Detailed cost breakdown and scaling guidance
 - [DeploymentArchitecture.md](../Design/DeploymentArchitecture.md) — Environment matrix and topology overview

@@ -125,6 +125,30 @@ dig +short NS sbtm.ca
 # Should list the Azure DNS name servers.
 ```
 
+## Delegating `gcp.sbtm.ca` to Cloud DNS
+
+If SBTM is also deployed to GCP, the `gcp.sbtm.ca` subdomain is delegated from
+this Azure DNS zone to GCP Cloud DNS. The registrar is **not** touched — the
+delegation is a single `NS` record set added inside the `sbtm.ca` zone.
+
+```bash
+# 1. On GCP side — create the Cloud DNS zone (one-time):
+bash scripts/gcp/setup-persistent-resources.sh
+# The script prints four ns-cloud-*.googledomains.com. nameservers.
+
+# 2. On Azure side — add the NS record set (idempotent):
+bash scripts/azure/setup-gcp-delegation.sh \
+    ns-cloud-X1.googledomains.com. \
+    ns-cloud-X2.googledomains.com. \
+    ns-cloud-X3.googledomains.com. \
+    ns-cloud-X4.googledomains.com.
+```
+
+> The `gcp` NS record set is automatically preserved by `teardown-azure.sh`
+> (which only ever clears `api` / `_dnsauth.api`). One-time setup, lifetime
+> reuse. See [`../GCP/CustomDomainSetup.md`](../GCP/CustomDomainSetup.md) for
+> the full GCP-side procedure.
+
 ## TLS provisioning timeline
 
 Once delegation is complete:

@@ -278,7 +278,7 @@ Parent mobile builds are triggered via `.github/workflows/parent-app-build.yml` 
 - Release tag matching `v*.*.*-parent` (or the shared `v*.*.*` pattern)
 - Push to `parent-mobile/**` branch
 
-See [AzureCICD.md](AzureCICD.md) for the full workflow.
+See [Azure/CICD.md](Azure/CICD.md) for the full workflow.
 
 ---
 
@@ -305,5 +305,5 @@ See [AzureCICD.md](AzureCICD.md) for the full workflow.
 
 - [parent-app-mobile-development.md](../dev/parent-app-mobile-development.md) — Local development setup
 - [MobileStoreDeployment.md](MobileStoreDeployment.md) — Driver App store deployment (same EAS workflow)
-- [AzureCICD.md](AzureCICD.md) — CI/CD pipeline including mobile build workflows
-- [AzureArchitecture.md](AzureArchitecture.md) — Backend infrastructure the app connects to
+- [Azure/CICD.md](Azure/CICD.md) — CI/CD pipeline including mobile build workflows
+- [Azure/Architecture.md](Azure/Architecture.md) — Backend infrastructure the app connects to

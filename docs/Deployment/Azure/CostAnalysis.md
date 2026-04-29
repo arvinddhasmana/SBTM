@@ -199,6 +199,6 @@ This shares the **same** AKS nodes, ACR, PostgreSQL (different DB or schema), Re
 
 ## Related Documents
 
-- [AzureArchitecture.md](AzureArchitecture.md) — service configuration details and SKU recommendations
-- [InfrastructureAsCode.md](InfrastructureAsCode.md) — how to change SKUs/tiers
-- [DeploymentChecklist.md](DeploymentChecklist.md) — full prerequisites before any provisioning
+- [Azure/Architecture.md](Azure/Architecture.md) — service configuration details and SKU recommendations
+- [Azure/InfrastructureAsCode.md](Azure/InfrastructureAsCode.md) — how to change SKUs/tiers
+- [Azure/DeploymentChecklist.md](Azure/DeploymentChecklist.md) — full prerequisites before any provisioning

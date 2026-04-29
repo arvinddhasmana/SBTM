@@ -253,7 +253,7 @@ Mobile builds are triggered via `.github/workflows/mobile-build.yml` on:
 - Release tag matching `v*.*.*`
 - Push to `mobile/**` branch (for testing changes)
 
-See [AzureCICD.md](AzureCICD.md) for the full workflow.
+See [Azure/CICD.md](Azure/CICD.md) for the full workflow.
 
 ---
 
@@ -278,6 +278,6 @@ See [AzureCICD.md](AzureCICD.md) for the full workflow.
 
 ## Related Documents
 
-- [AzureCICD.md](AzureCICD.md) — CI/CD pipeline including mobile-build.yml workflow
-- [AzureArchitecture.md](AzureArchitecture.md) — Backend infrastructure the app connects to
+- [Azure/CICD.md](Azure/CICD.md) — CI/CD pipeline including mobile-build.yml workflow
+- [Azure/Architecture.md](Azure/Architecture.md) — Backend infrastructure the app connects to
 - [driver-app-development.md](../dev/driver-app-development.md) — Local development setup for the driver app

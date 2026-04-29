@@ -19,6 +19,7 @@ This guide provides instructions for deploying the School Bus Transport Manageme
 ## Overview
 
 The GCP deployment uses:
+
 - **GKE Autopilot**: Fully managed Kubernetes with auto-scaling and auto-upgrades
 - **Cloud SQL**: Managed PostgreSQL database with automatic backups
 - **Memorystore**: Managed Redis cache
@@ -57,6 +58,7 @@ The GCP deployment uses:
 ### Local Tools
 
 1. **Google Cloud SDK (gcloud)**
+
    ```bash
    # Install gcloud CLI
    curl https://sdk.cloud.google.com | bash
@@ -65,11 +67,13 @@ The GCP deployment uses:
    ```
 
 2. **kubectl**
+
    ```bash
    gcloud components install kubectl
    ```
 
 3. **Terraform** (v1.6.0+)
+
    ```bash
    # macOS
    brew install terraform
@@ -81,6 +85,7 @@ The GCP deployment uses:
    ```
 
 4. **kustomize**
+
    ```bash
    # Install via kubectl
    kubectl kustomize version
@@ -94,6 +99,7 @@ The GCP deployment uses:
 1. **Create a GCP Account**: Visit [cloud.google.com](https://cloud.google.com)
 
 2. **Create a Project**:
+
    ```bash
    gcloud projects create sbtm-demo-<unique-id> --name="SBTM Demo"
    gcloud projects create sbtm-production-<unique-id> --name="SBTM Production"
@@ -105,12 +111,12 @@ The GCP deployment uses:
 
 ### Compute Resources
 
-| Resource | Demo | Production | Purpose |
-|----------|------|------------|---------|
-| GKE Cluster | Autopilot | Autopilot | Kubernetes cluster |
-| Cloud SQL | 1 vCPU, 3.75GB | 2 vCPU, 8GB | PostgreSQL database |
-| Memorystore | 1GB BASIC | 5GB STANDARD_HA | Redis cache |
-| Cloud Storage | STANDARD | STANDARD | Object storage |
+| Resource      | Demo           | Production      | Purpose             |
+| ------------- | -------------- | --------------- | ------------------- |
+| GKE Cluster   | Autopilot      | Autopilot       | Kubernetes cluster  |
+| Cloud SQL     | 1 vCPU, 3.75GB | 2 vCPU, 8GB     | PostgreSQL database |
+| Memorystore   | 1GB BASIC      | 5GB STANDARD_HA | Redis cache         |
+| Cloud Storage | STANDARD       | STANDARD        | Object storage      |
 
 ### Estimated Monthly Cost
 
@@ -133,6 +139,7 @@ bash scripts/gcp/setup-gcp-project.sh sbtm-demo-<your-unique-id>
 ```
 
 This script will:
+
 - Enable required GCP APIs
 - Create Terraform state bucket
 - Create service account for Terraform
@@ -151,6 +158,7 @@ export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/terraform-sa-key.json"
 ### 3. Update Configuration Files
 
 Edit `infra/gcp/environments/demo.tfvars`:
+
 ```hcl
 project_id  = "sbtm-demo-<your-unique-id>"  # Update this
 region      = "us-central1"  # Or your preferred region
@@ -236,6 +244,7 @@ docker push ${REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/sbtm-demo-docker/api-gate
 ### 3. Update Kustomize Overlay
 
 Edit `infra/k8s/overlays/gcp-demo/kustomization.yaml`:
+
 - Replace `PROJECT_ID` with your GCP project ID
 - Replace `us-central1` with your region if different
 
@@ -263,6 +272,7 @@ kubectl get ingress -n sbtm-demo-gcp
 ### 6. Configure DNS
 
 Point your domain to the Ingress IP:
+
 ```
 api.demo-gcp.sbtm.example.com  →  35.1.2.3
 ```
@@ -318,6 +328,7 @@ gcloud iam service-accounts add-iam-policy-binding \
 ### Cloud Operations
 
 Access logs and metrics:
+
 ```bash
 # View logs
 gcloud logging read "resource.type=k8s_container AND resource.labels.namespace_name=sbtm-demo-gcp" --limit 50
@@ -375,6 +386,7 @@ kubectl logs -n sbtm-demo-gcp <pod-name>
 ### Database connection errors
 
 Check Secret Manager secrets:
+
 ```bash
 gcloud secrets list
 gcloud secrets versions access latest --secret=sbtm-demo-database-url
@@ -396,16 +408,16 @@ kubectl get externalsecret -n sbtm-demo-gcp
 
 ## Differences from Azure Deployment
 
-| Feature | Azure | GCP |
-|---------|-------|-----|
-| IaC Tool | Bicep | Terraform |
-| Kubernetes | AKS | GKE Autopilot |
-| Container Registry | ACR | Artifact Registry |
-| Secrets | Key Vault CSI | External Secrets + Secret Manager |
-| Database | PostgreSQL Flexible Server | Cloud SQL |
-| Cache | Azure Cache for Redis | Memorystore |
-| Storage | Blob Storage | Cloud Storage |
-| Monitoring | Azure Monitor | Cloud Operations |
+| Feature            | Azure                      | GCP                               |
+| ------------------ | -------------------------- | --------------------------------- |
+| IaC Tool           | Bicep                      | Terraform                         |
+| Kubernetes         | AKS                        | GKE Autopilot                     |
+| Container Registry | ACR                        | Artifact Registry                 |
+| Secrets            | Key Vault CSI              | External Secrets + Secret Manager |
+| Database           | PostgreSQL Flexible Server | Cloud SQL                         |
+| Cache              | Azure Cache for Redis      | Memorystore                       |
+| Storage            | Blob Storage               | Cloud Storage                     |
+| Monitoring         | Azure Monitor              | Cloud Operations                  |
 
 ## Next Steps
 
@@ -420,6 +432,7 @@ kubectl get externalsecret -n sbtm-demo-gcp
 ## Support
 
 For issues or questions:
+
 - Create an issue in the GitHub repository
 - Consult [GCP Documentation](https://cloud.google.com/docs)
 - Check [GKE Best Practices](https://cloud.google.com/kubernetes-engine/docs/best-practices)

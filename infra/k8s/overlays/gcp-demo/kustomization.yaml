@@ -72,27 +72,27 @@ commonLabels:
 images:
   # Replace with your GCP Artifact Registry URL
   # Format: REGION-docker.pkg.dev/PROJECT_ID/sbtm-demo-docker/SERVICE:TAG
-  - name: REGISTRY_PLACEHOLDER/sbtm/api-gateway
-    newName: us-central1-docker.pkg.dev/PROJECT_ID/sbtm-demo-docker/api-gateway
+  - name: sbtmacrdemo.azurecr.io/sbtm/api-gateway
+    newName: us-central1-docker.pkg.dev/PROJECT_ID/sbtm-shared/api-gateway
     newTag: latest
-  - name: REGISTRY_PLACEHOLDER/sbtm/gps-tracking
-    newName: us-central1-docker.pkg.dev/PROJECT_ID/sbtm-demo-docker/gps-tracking
+  - name: sbtmacrdemo.azurecr.io/sbtm/gps-tracking
+    newName: us-central1-docker.pkg.dev/PROJECT_ID/sbtm-shared/gps-tracking
     newTag: latest
-  - name: REGISTRY_PLACEHOLDER/sbtm/emergency-alerts
-    newName: us-central1-docker.pkg.dev/PROJECT_ID/sbtm-demo-docker/emergency-alerts
+  - name: sbtmacrdemo.azurecr.io/sbtm/emergency-alerts
+    newName: us-central1-docker.pkg.dev/PROJECT_ID/sbtm-shared/emergency-alerts
     newTag: latest
-  - name: REGISTRY_PLACEHOLDER/sbtm/student-presence
-    newName: us-central1-docker.pkg.dev/PROJECT_ID/sbtm-demo-docker/student-presence
+  - name: sbtmacrdemo.azurecr.io/sbtm/student-presence
+    newName: us-central1-docker.pkg.dev/PROJECT_ID/sbtm-shared/student-presence
     newTag: latest
-  - name: REGISTRY_PLACEHOLDER/sbtm/student-management
-    newName: us-central1-docker.pkg.dev/PROJECT_ID/sbtm-demo-docker/student-management
+  - name: sbtmacrdemo.azurecr.io/sbtm/student-management
+    newName: us-central1-docker.pkg.dev/PROJECT_ID/sbtm-shared/student-management
     newTag: latest
-  - name: REGISTRY_PLACEHOLDER/sbtm/compliance-management
-    newName: us-central1-docker.pkg.dev/PROJECT_ID/sbtm-demo-docker/compliance-management
+  - name: sbtmacrdemo.azurecr.io/sbtm/compliance-management
+    newName: us-central1-docker.pkg.dev/PROJECT_ID/sbtm-shared/compliance-management
     newTag: latest
-  - name: REGISTRY_PLACEHOLDER/sbtm/video-service
-    newName: us-central1-docker.pkg.dev/PROJECT_ID/sbtm-demo-docker/video-service
+  - name: sbtmacrdemo.azurecr.io/sbtm/video-service
+    newName: us-central1-docker.pkg.dev/PROJECT_ID/sbtm-shared/video-service
     newTag: latest
-  - name: REGISTRY_PLACEHOLDER/sbtm/notification-service
-    newName: us-central1-docker.pkg.dev/PROJECT_ID/sbtm-demo-docker/notification-service
+  - name: sbtmacrdemo.azurecr.io/sbtm/notification-service
+    newName: us-central1-docker.pkg.dev/PROJECT_ID/sbtm-shared/notification-service
     newTag: latest
