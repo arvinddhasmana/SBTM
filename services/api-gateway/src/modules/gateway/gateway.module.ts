@@ -5,6 +5,7 @@ import { GpsGatewayService } from './services/gps.gateway.service';
 import { GpsSseService } from './services/gps-sse.service';
 import { GpsRouteAccessGuard } from './guards/gps-route-access.guard';
 import { AlertsGatewayService } from './services/alerts.gateway.service';
+import { AlertConfigGatewayService } from './services/alert-config.gateway.service';
 import { PresenceGatewayService } from './services/presence.gateway.service';
 import { VideoGatewayService } from './services/video.gateway.service';
 import { StudentGatewayService } from './services/student.gateway.service';
@@ -19,6 +20,7 @@ import { PdfGeneratorService } from './services/pdf-generator.service';
 import { RouteChangeNotifierService } from './services/route-change-notifier.service';
 import { GpsController } from './controllers/gps.controller';
 import { AlertsController } from './controllers/alerts.controller';
+import { AlertConfigController } from './controllers/alert-config.controller';
 import { PresenceController } from './controllers/presence.controller';
 import { VideoController } from './controllers/video.controller';
 import { StudentController } from './controllers/student.controller';
@@ -50,6 +52,7 @@ import { FleetAssignment } from './entities/fleet-assignment.entity';
   controllers: [
     GpsController,
     AlertsController,
+    AlertConfigController,
     PresenceController,
     VideoController,
     StudentController,
@@ -67,6 +70,7 @@ import { FleetAssignment } from './entities/fleet-assignment.entity';
     GpsSseService,
     GpsRouteAccessGuard,
     AlertsGatewayService,
+    AlertConfigGatewayService,
     PresenceGatewayService,
     VideoGatewayService,
     StudentGatewayService,
@@ -84,6 +88,7 @@ import { FleetAssignment } from './entities/fleet-assignment.entity';
     GpsGatewayService,
     GpsSseService,
     AlertsGatewayService,
+    AlertConfigGatewayService,
     PresenceGatewayService,
     VideoGatewayService,
     StudentGatewayService,
