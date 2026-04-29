@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AlertConfigService } from './alert-config.service';
+import { AlertConfigController } from './alert-config.controller';
 import {
   AlertEventTypeConfig,
   AlertEscalationConfig,
@@ -23,6 +24,7 @@ import {
       AlertConfigChangeRequest,
     ]),
   ],
+  controllers: [AlertConfigController],
   providers: [AlertConfigService],
   exports: [AlertConfigService, TypeOrmModule],
 })

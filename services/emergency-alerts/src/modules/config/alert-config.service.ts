@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, OnModuleInit, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import {
@@ -8,6 +8,7 @@ import {
   NotificationRoutingConfig,
   AlertWorkflowConfig,
   AlertConfigAudit,
+  AlertConfigChangeRequest,
 } from './entities';
 import { EmergencyEventType, AlertTier } from '../alerts/entities/emergency-alert.entity';
 
@@ -70,6 +71,8 @@ export class AlertConfigService implements OnModuleInit {
     private workflowConfigRepo: Repository<AlertWorkflowConfig>,
     @InjectRepository(AlertConfigAudit)
     private configAuditRepo: Repository<AlertConfigAudit>,
+    @InjectRepository(AlertConfigChangeRequest)
+    private changeRequestRepo: Repository<AlertConfigChangeRequest>,
   ) {}
 
   async onModuleInit() {
@@ -402,5 +405,492 @@ export class AlertConfigService implements OnModuleInit {
     });
 
     this.logger.log(`Loaded ${configs.length} workflow action configurations into cache`);
+  }
+
+  // ============================================================================
+  // CRUD Methods for Event Type Configuration
+  // ============================================================================
+
+  async getAllEventTypeConfigs(): Promise<AlertEventTypeConfig[]> {
+    return this.eventTypeConfigRepo.find({
+      where: { isActive: true },
+      order: { eventType: 'ASC' },
+    });
+  }
+
+  async getEventTypeConfig(eventType: string): Promise<AlertEventTypeConfig> {
+    const config = await this.eventTypeConfigRepo.findOne({
+      where: { eventType, isActive: true },
+    });
+
+    if (!config) {
+      throw new NotFoundException(`Event type configuration not found: ${eventType}`);
+    }
+
+    return config;
+  }
+
+  async createEventTypeConfig(dto: any, actorUserId?: string): Promise<AlertEventTypeConfig> {
+    const existing = await this.eventTypeConfigRepo.findOne({
+      where: { eventType: dto.eventType },
+    });
+
+    if (existing) {
+      throw new BadRequestException(`Event type configuration already exists: ${dto.eventType}`);
+    }
+
+    const config = this.eventTypeConfigRepo.create(dto);
+    const saved = await this.eventTypeConfigRepo.save(config);
+
+    await this.logConfigChange(
+      'alert_event_type_config',
+      saved.eventType,
+      'CREATE',
+      actorUserId || 'system',
+      'SUPER_ADMIN',
+      null,
+      { ...dto },
+    );
+
+    await this.invalidateCacheType('eventType');
+    return saved;
+  }
+
+  async updateEventTypeConfig(eventType: string, dto: any, actorUserId?: string): Promise<AlertEventTypeConfig> {
+    const config = await this.eventTypeConfigRepo.findOne({ where: { eventType } });
+
+    if (!config) {
+      throw new NotFoundException(`Event type configuration not found: ${eventType}`);
+    }
+
+    const oldValues = { ...config };
+    Object.assign(config, dto);
+    const saved = await this.eventTypeConfigRepo.save(config);
+
+    await this.logConfigChange(
+      'alert_event_type_config',
+      eventType,
+      'UPDATE',
+      actorUserId || 'system',
+      'SUPER_ADMIN',
+      oldValues,
+      { ...dto },
+    );
+
+    await this.invalidateCacheType('eventType');
+    return saved;
+  }
+
+  async deleteEventTypeConfig(eventType: string, actorUserId?: string): Promise<void> {
+    const config = await this.eventTypeConfigRepo.findOne({ where: { eventType } });
+
+    if (!config) {
+      throw new NotFoundException(`Event type configuration not found: ${eventType}`);
+    }
+
+    // Soft delete by setting isActive to false
+    config.isActive = false;
+    await this.eventTypeConfigRepo.save(config);
+
+    await this.logConfigChange(
+      'alert_event_type_config',
+      eventType,
+      'DELETE',
+      actorUserId || 'system',
+      'SUPER_ADMIN',
+      { isActive: true },
+      { isActive: false },
+    );
+
+    await this.invalidateCacheType('eventType');
+  }
+
+  // ============================================================================
+  // CRUD Methods for Escalation Configuration
+  // ============================================================================
+
+  async getAllEscalationConfigs(): Promise<AlertEscalationConfig[]> {
+    return this.escalationConfigRepo.find({
+      where: { isActive: true },
+      order: { tier: 'ASC' },
+    });
+  }
+
+  async getEscalationConfig(tier: string): Promise<AlertEscalationConfig> {
+    const config = await this.escalationConfigRepo.findOne({
+      where: { tier, isDefault: true, isActive: true },
+    });
+
+    if (!config) {
+      throw new NotFoundException(`Escalation configuration not found for tier: ${tier}`);
+    }
+
+    return config;
+  }
+
+  async createEscalationConfig(dto: any, actorUserId?: string): Promise<AlertEscalationConfig> {
+    const config = this.escalationConfigRepo.create(dto);
+    const saved = await this.escalationConfigRepo.save(config);
+
+    await this.logConfigChange(
+      'alert_escalation_config',
+      saved.id,
+      'CREATE',
+      actorUserId || 'system',
+      'SUPER_ADMIN',
+      null,
+      { ...dto },
+    );
+
+    await this.invalidateCacheType('escalation');
+    return saved;
+  }
+
+  async updateEscalationConfig(tier: string, dto: any, actorUserId?: string): Promise<AlertEscalationConfig> {
+    const config = await this.escalationConfigRepo.findOne({
+      where: { tier, isDefault: true },
+    });
+
+    if (!config) {
+      throw new NotFoundException(`Escalation configuration not found for tier: ${tier}`);
+    }
+
+    const oldValues = { ...config };
+    Object.assign(config, dto);
+    const saved = await this.escalationConfigRepo.save(config);
+
+    await this.logConfigChange(
+      'alert_escalation_config',
+      config.id,
+      'UPDATE',
+      actorUserId || 'system',
+      'SUPER_ADMIN',
+      oldValues,
+      { ...dto },
+    );
+
+    await this.invalidateCacheType('escalation');
+    return saved;
+  }
+
+  async deleteEscalationConfig(tier: string, actorUserId?: string): Promise<void> {
+    const config = await this.escalationConfigRepo.findOne({
+      where: { tier, isDefault: true },
+    });
+
+    if (!config) {
+      throw new NotFoundException(`Escalation configuration not found for tier: ${tier}`);
+    }
+
+    config.isActive = false;
+    await this.escalationConfigRepo.save(config);
+
+    await this.logConfigChange(
+      'alert_escalation_config',
+      config.id,
+      'DELETE',
+      actorUserId || 'system',
+      'SUPER_ADMIN',
+      { isActive: true },
+      { isActive: false },
+    );
+
+    await this.invalidateCacheType('escalation');
+  }
+
+  // ============================================================================
+  // CRUD Methods for Notification Routing Configuration
+  // ============================================================================
+
+  async getAllNotificationRoutingConfigs(tier?: string, eventType?: string): Promise<NotificationRoutingConfig[]> {
+    const where: any = { isActive: true };
+    if (tier) where.tier = tier;
+    if (eventType) where.eventType = eventType;
+
+    return this.notificationRoutingRepo.find({
+      where,
+      order: { tier: 'ASC', recipientRole: 'ASC' },
+    });
+  }
+
+  async getNotificationRoutingConfigById(id: string): Promise<NotificationRoutingConfig> {
+    const config = await this.notificationRoutingRepo.findOne({
+      where: { id, isActive: true },
+    });
+
+    if (!config) {
+      throw new NotFoundException(`Notification routing configuration not found: ${id}`);
+    }
+
+    return config;
+  }
+
+  async createNotificationRoutingConfig(dto: any, actorUserId?: string): Promise<NotificationRoutingConfig> {
+    const config = this.notificationRoutingRepo.create(dto);
+    const saved = await this.notificationRoutingRepo.save(config);
+
+    await this.logConfigChange(
+      'notification_routing_config',
+      saved.id,
+      'CREATE',
+      actorUserId || 'system',
+      'SUPER_ADMIN',
+      null,
+      { ...dto },
+    );
+
+    await this.invalidateCacheType('notificationRouting');
+    return saved;
+  }
+
+  async updateNotificationRoutingConfig(id: string, dto: any, actorUserId?: string): Promise<NotificationRoutingConfig> {
+    const config = await this.notificationRoutingRepo.findOne({ where: { id } });
+
+    if (!config) {
+      throw new NotFoundException(`Notification routing configuration not found: ${id}`);
+    }
+
+    const oldValues = { ...config };
+    Object.assign(config, dto);
+    const saved = await this.notificationRoutingRepo.save(config);
+
+    await this.logConfigChange(
+      'notification_routing_config',
+      id,
+      'UPDATE',
+      actorUserId || 'system',
+      'SUPER_ADMIN',
+      oldValues,
+      { ...dto },
+    );
+
+    await this.invalidateCacheType('notificationRouting');
+    return saved;
+  }
+
+  async deleteNotificationRoutingConfig(id: string, actorUserId?: string): Promise<void> {
+    const config = await this.notificationRoutingRepo.findOne({ where: { id } });
+
+    if (!config) {
+      throw new NotFoundException(`Notification routing configuration not found: ${id}`);
+    }
+
+    config.isActive = false;
+    await this.notificationRoutingRepo.save(config);
+
+    await this.logConfigChange(
+      'notification_routing_config',
+      id,
+      'DELETE',
+      actorUserId || 'system',
+      'SUPER_ADMIN',
+      { isActive: true },
+      { isActive: false },
+    );
+
+    await this.invalidateCacheType('notificationRouting');
+  }
+
+  // ============================================================================
+  // CRUD Methods for Workflow Configuration
+  // ============================================================================
+
+  async getAllWorkflowConfigs(tier?: string, status?: string): Promise<AlertWorkflowConfig[]> {
+    const where: any = { isActive: true };
+    if (tier) where.allowedForTier = tier;
+    if (status) where.allowedForStatus = status;
+
+    return this.workflowConfigRepo.find({
+      where,
+      order: { allowedForTier: 'ASC', actionName: 'ASC' },
+    });
+  }
+
+  async getWorkflowConfigById(id: string): Promise<AlertWorkflowConfig> {
+    const config = await this.workflowConfigRepo.findOne({
+      where: { id, isActive: true },
+    });
+
+    if (!config) {
+      throw new NotFoundException(`Workflow configuration not found: ${id}`);
+    }
+
+    return config;
+  }
+
+  async createWorkflowConfig(dto: any, actorUserId?: string): Promise<AlertWorkflowConfig> {
+    const config = this.workflowConfigRepo.create(dto);
+    const saved = await this.workflowConfigRepo.save(config);
+
+    await this.logConfigChange(
+      'alert_workflow_config',
+      saved.id,
+      'CREATE',
+      actorUserId || 'system',
+      'SUPER_ADMIN',
+      null,
+      { ...dto },
+    );
+
+    await this.invalidateCacheType('workflow');
+    return saved;
+  }
+
+  async updateWorkflowConfig(id: string, dto: any, actorUserId?: string): Promise<AlertWorkflowConfig> {
+    const config = await this.workflowConfigRepo.findOne({ where: { id } });
+
+    if (!config) {
+      throw new NotFoundException(`Workflow configuration not found: ${id}`);
+    }
+
+    const oldValues = { ...config };
+    Object.assign(config, dto);
+    const saved = await this.workflowConfigRepo.save(config);
+
+    await this.logConfigChange(
+      'alert_workflow_config',
+      id,
+      'UPDATE',
+      actorUserId || 'system',
+      'SUPER_ADMIN',
+      oldValues,
+      { ...dto },
+    );
+
+    await this.invalidateCacheType('workflow');
+    return saved;
+  }
+
+  async deleteWorkflowConfig(id: string, actorUserId?: string): Promise<void> {
+    const config = await this.workflowConfigRepo.findOne({ where: { id } });
+
+    if (!config) {
+      throw new NotFoundException(`Workflow configuration not found: ${id}`);
+    }
+
+    config.isActive = false;
+    await this.workflowConfigRepo.save(config);
+
+    await this.logConfigChange(
+      'alert_workflow_config',
+      id,
+      'DELETE',
+      actorUserId || 'system',
+      'SUPER_ADMIN',
+      { isActive: true },
+      { isActive: false },
+    );
+
+    await this.invalidateCacheType('workflow');
+  }
+
+  // ============================================================================
+  // Change Request Methods
+  // ============================================================================
+
+  async getChangeRequests(status?: string, requestorId?: string): Promise<AlertConfigChangeRequest[]> {
+    const where: any = {};
+    if (status) where.status = status;
+    if (requestorId) where.requestorId = requestorId;
+
+    return this.changeRequestRepo.find({
+      where,
+      order: { requestedAt: 'DESC' },
+    });
+  }
+
+  async getChangeRequest(id: string): Promise<AlertConfigChangeRequest> {
+    const request = await this.changeRequestRepo.findOne({ where: { id } });
+
+    if (!request) {
+      throw new NotFoundException(`Change request not found: ${id}`);
+    }
+
+    return request;
+  }
+
+  async createChangeRequest(
+    dto: any,
+    requestorId: string,
+    requestorRole: string,
+    requestorEmail?: string,
+  ): Promise<AlertConfigChangeRequest> {
+    const request = this.changeRequestRepo.create({
+      ...dto,
+      requestorId,
+      requestorRole,
+      requestorEmail,
+      status: 'PENDING',
+    });
+
+    const saved = await this.changeRequestRepo.save(request);
+
+    // TODO: Send email notification to Super Admins
+    this.logger.log(`Change request created: ${saved.id} by ${requestorId} (${requestorRole})`);
+
+    return saved;
+  }
+
+  async reviewChangeRequest(
+    id: string,
+    dto: { action: 'APPROVED' | 'REJECTED'; reviewNotes?: string },
+    reviewerId: string,
+  ): Promise<AlertConfigChangeRequest> {
+    const request = await this.changeRequestRepo.findOne({ where: { id } });
+
+    if (!request) {
+      throw new NotFoundException(`Change request not found: ${id}`);
+    }
+
+    if (request.status !== 'PENDING') {
+      throw new BadRequestException(`Change request is not pending: ${request.status}`);
+    }
+
+    request.status = dto.action;
+    request.reviewedBy = reviewerId;
+    request.reviewedAt = new Date();
+    request.reviewNotes = dto.reviewNotes;
+
+    const saved = await this.changeRequestRepo.save(request);
+
+    // TODO: Send email notification to requestor
+    this.logger.log(`Change request ${dto.action.toLowerCase()}: ${id} by ${reviewerId}`);
+
+    return saved;
+  }
+
+  // ============================================================================
+  // Audit Log Methods
+  // ============================================================================
+
+  async getConfigAuditLog(
+    configType?: string,
+    configKey?: string,
+    limit: number = 100,
+  ): Promise<AlertConfigAudit[]> {
+    const where: any = {};
+    if (configType) where.configTable = configType;
+    if (configKey) where.configId = configKey;
+
+    return this.configAuditRepo.find({
+      where,
+      order: { changedAt: 'DESC' },
+      take: limit,
+    });
+  }
+
+  // ============================================================================
+  // Cache Status Method
+  // ============================================================================
+
+  async getCacheStatus(): Promise<any> {
+    return {
+      initialized: this.cacheInitialized,
+      eventTypeCount: this.eventTypeCache.size,
+      escalationConfigCount: this.escalationConfigCache.size,
+      escalationChainSteps: this.escalationChainCache.length,
+      notificationRoutingCount: this.notificationRoutingCache.size,
+      workflowActionsCount: this.workflowActionsCache.size,
+    };
   }
 }
