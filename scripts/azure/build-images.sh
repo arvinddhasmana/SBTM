@@ -31,10 +31,23 @@ fi
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "${REPO_ROOT}"
 
-ACR_NAME=$(az acr list -g "${RESOURCE_GROUP}" --query "[0].name" -o tsv 2>/dev/null || true)
-if [[ -z "${ACR_NAME}" ]]; then
-  echo "ERROR: No ACR found in ${RESOURCE_GROUP}. Run provision-azure.sh first." >&2
-  exit 1
+# Prefer the persistent ACR (sbtmacrshared in sbtm-dns-rg) when present so
+# images are reused across teardown/rebuild cycles. Falls back to per-env ACR.
+DNS_RESOURCE_GROUP="${DNS_RESOURCE_GROUP:-sbtm-dns-rg}"
+PERSISTENT_ACR_NAME="${PERSISTENT_ACR_NAME:-sbtmacrshared}"
+ACR_NAME=$(az acr show -g "${DNS_RESOURCE_GROUP}" -n "${PERSISTENT_ACR_NAME}" --query name -o tsv 2>/dev/null || true)
+if [[ -n "${ACR_NAME}" ]]; then
+  ACR_RG="${DNS_RESOURCE_GROUP}"
+  echo "==> Using persistent ACR: ${ACR_NAME} (RG ${ACR_RG})"
+else
+  ACR_NAME=$(az acr list -g "${RESOURCE_GROUP}" --query "[0].name" -o tsv 2>/dev/null || true)
+  ACR_RG="${RESOURCE_GROUP}"
+  if [[ -z "${ACR_NAME}" ]]; then
+    echo "ERROR: No ACR found in ${DNS_RESOURCE_GROUP} (persistent) or ${RESOURCE_GROUP} (env)." >&2
+    echo "       Run scripts/azure/setup-persistent-resources.sh OR scripts/azure/provision-azure.sh." >&2
+    exit 1
+  fi
+  echo "==> Using per-environment ACR: ${ACR_NAME} (RG ${ACR_RG})"
 fi
 echo "==> Building images in ACR: ${ACR_NAME}"
 

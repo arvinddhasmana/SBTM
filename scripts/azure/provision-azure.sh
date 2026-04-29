@@ -294,11 +294,51 @@ az aks get-credentials \
 echo "==> [4/7] Installing NGINX Ingress Controller"
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 helm repo update
-helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
-  --namespace ingress-nginx \
-  --create-namespace \
-  --set controller.service.annotations."service\.beta\.kubernetes\.io/azure-load-balancer-health-probe-request-path"=/healthz \
+# Detect persistent static IP in the persistent DNS resource group. If present,
+# bind the LoadBalancer to it so api.<domain> A record never has to change
+# across teardown/rebuild cycles. See scripts/azure/setup-persistent-resources.sh.
+DNS_RESOURCE_GROUP="${DNS_RESOURCE_GROUP:-sbtm-dns-rg}"
+PERSISTENT_IP_NAME="${PERSISTENT_IP_NAME:-sbtm-ingress-ip}"
+PERSISTENT_IP_ADDR=$(az network public-ip show \
+  -g "${DNS_RESOURCE_GROUP}" -n "${PERSISTENT_IP_NAME}" \
+  --query ipAddress -o tsv 2>/dev/null || true)
+
+NGINX_HELM_ARGS=(
+  --namespace ingress-nginx
+  --create-namespace
+  --set controller.service.annotations."service\.beta\.kubernetes\.io/azure-load-balancer-health-probe-request-path"=/healthz
   --wait
+)
+
+if [[ -n "${PERSISTENT_IP_ADDR}" ]]; then
+  echo "    Using persistent static IP ${PERSISTENT_IP_ADDR} (RG ${DNS_RESOURCE_GROUP})"
+  # Grant AKS cluster identity Network Contributor on the persistent IP so the
+  # Azure LoadBalancer controller can attach it. Idempotent.
+  AKS_CLUSTER_NAME=$(az aks list -g "${RESOURCE_GROUP}" --query "[0].name" -o tsv 2>/dev/null || true)
+  if [[ -n "${AKS_CLUSTER_NAME}" ]]; then
+    AKS_PRINCIPAL=$(az aks show -g "${RESOURCE_GROUP}" -n "${AKS_CLUSTER_NAME}" \
+      --query identity.principalId -o tsv 2>/dev/null || true)
+    PIP_ID=$(az network public-ip show -g "${DNS_RESOURCE_GROUP}" -n "${PERSISTENT_IP_NAME}" --query id -o tsv)
+    if [[ -n "${AKS_PRINCIPAL}" && -n "${PIP_ID}" ]]; then
+      az role assignment create \
+        --assignee-object-id "${AKS_PRINCIPAL}" \
+        --assignee-principal-type ServicePrincipal \
+        --role "Network Contributor" \
+        --scope "${PIP_ID}" \
+        --output none 2>/dev/null || true
+      echo "    ✓ Granted AKS cluster identity Network Contributor on the persistent IP"
+    fi
+  fi
+  NGINX_HELM_ARGS+=(
+    --set "controller.service.loadBalancerIP=${PERSISTENT_IP_ADDR}"
+    --set "controller.service.annotations.service\\.beta\\.kubernetes\\.io/azure-load-balancer-resource-group=${DNS_RESOURCE_GROUP}"
+  )
+else
+  echo "    No persistent IP found in ${DNS_RESOURCE_GROUP} — Azure will allocate an ephemeral IP."
+  echo "    To enable: bash scripts/azure/setup-persistent-resources.sh"
+fi
+
+helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx "${NGINX_HELM_ARGS[@]}"
 
 echo "==> [5/7] Installing cert-manager (Let's Encrypt)"
 helm repo add jetstack https://charts.jetstack.io

@@ -105,6 +105,8 @@ Go to **Settings → Secrets and variables → Actions → New repository secret
 - [ ] DNS for `api.demo.sbtm.example.com` (demo) or `api.sbtm.example.com` (production) is ready to be CNAMEd to the ingress IP after provisioning
 - [ ] You own a public domain (e.g. `sbtm.ca`) and have access to its registrar to update the four NS records (one-time delegation to Azure DNS — see [CustomDomainSetup.md](CustomDomainSetup.md))
 - [ ] **Map tile provider key**: export `MAPTILER_KEY=<key>` (free tier at <https://cloud.maptiler.com/account/keys/>) before running bootstrap. Without this, the SPA portals build successfully but live/planner maps will be blocked by the OpenStreetMap volunteer-tile-server usage policy. The key is baked in at build time as `VITE_MAPTILER_KEY` and is treated as a public client-side key (restrict it by HTTP referrer in MapTiler's dashboard).
+- [ ] **Persistent shared resources** (one-time, optional but strongly recommended): run `bash scripts/azure/setup-persistent-resources.sh sbtm.ca canadacentral` to create the persistent static IP (`sbtm-ingress-ip`), shared ACR (`sbtmacrshared`), and persistent OSRM storage account (`sbtmpersist<hash>`) inside `sbtm-dns-rg`. These survive teardown and remove the `ERR_NAME_NOT_RESOLVED` window between rebuild cycles, plus skip OSRM upload (~10 min) and image build (~15 min) on subsequent bootstraps. ~$8.70/month combined. Idempotent — safe to re-run. See [CustomDomainSetup.md → Persistent vs ephemeral resources](CustomDomainSetup.md#persistent-vs-ephemeral-resources).
+- [ ] **TLS issuer choice** (demo only): demo defaults to `letsencrypt-staging` to avoid Let's Encrypt's 5-cert/FQDN/week production rate limit. Set `USE_PROD_CERT=true` before `bootstrap.sh` for a browser-trusted cert during real demos. Production environment always uses `letsencrypt-prod`.
 - [ ] After bootstrap completes, run `bash scripts/azure/verify-portals.sh demo` — expect all checks PASS
 - [ ] `bash scripts/azure/preflight-check.sh demo` (or `production`) passes with no `✗` rows
 
@@ -129,7 +131,7 @@ The script will:
 6. Build `.env.<env>` (chmod 600, gitignored) by querying Azure for FQDN/keys/connection strings.
 7. Run `setup-keyvault.sh` to seed Key Vault.
 8. Run `setup-db.sh migrate` — automatically falls back to `db-migrate-via-aks.sh` if local `psql` cannot reach the private Postgres endpoint.
-9. Run `osrm-upload.sh` (skipped if `infra/osrm-data/` is empty).
+9. Run `osrm-upload.sh` (skipped if `infra/osrm-data/` is empty, **and** skipped automatically when the persistent OSRM storage account in `sbtm-dns-rg` already contains the dataset).
 
 Notes:
 

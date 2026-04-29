@@ -385,6 +385,15 @@ STORAGE_CS=""
 if [[ -n "${STORAGE_NAME}" ]]; then
   STORAGE_CS=$(az storage account show-connection-string -g "${RESOURCE_GROUP}" -n "${STORAGE_NAME}" --query connectionString -o tsv 2>/dev/null || true)
 fi
+# Persistent OSRM storage account in the persistent DNS resource group, if any.
+PERSISTENT_OSRM_SA=$(az storage account list -g "${DNS_RESOURCE_GROUP}" \
+  --query "[?starts_with(name,'sbtmpersist')].name | [0]" -o tsv 2>/dev/null || true)
+OSRM_STORAGE_CS=""
+if [[ -n "${PERSISTENT_OSRM_SA}" ]]; then
+  OSRM_STORAGE_CS=$(az storage account show-connection-string \
+    -g "${DNS_RESOURCE_GROUP}" -n "${PERSISTENT_OSRM_SA}" \
+    --query connectionString -o tsv 2>/dev/null || true)
+fi
 AI_NAME=$(az resource list -g "${RESOURCE_GROUP}" --resource-type "Microsoft.Insights/components" --query "[0].name" -o tsv 2>/dev/null || true)
 AI_CS=""
 if [[ -n "${AI_NAME}" ]]; then
@@ -424,6 +433,7 @@ keys = [
   "TWILIO_AUTH_TOKEN",
   "TWILIO_ACCOUNT_SID",
   "AZURE_STORAGE_CONNECTION_STRING",
+  "OSRM_STORAGE_CONNECTION_STRING",
   "APPLICATIONINSIGHTS_CONNECTION_STRING",
 ]
 values = {k: os.environ.get(k, "") for k in keys}
@@ -459,6 +469,7 @@ FCM_SERVER_KEY="${FCM_SERVER_KEY:-}" \
 TWILIO_AUTH_TOKEN="${TWILIO_AUTH_TOKEN:-}" \
 TWILIO_ACCOUNT_SID="${TWILIO_ACCOUNT_SID:-}" \
 AZURE_STORAGE_CONNECTION_STRING="${STORAGE_CS}" \
+OSRM_STORAGE_CONNECTION_STRING="${OSRM_STORAGE_CS}" \
 APPLICATIONINSIGHTS_CONNECTION_STRING="${AI_CS}" \
 write_env
 
@@ -538,12 +549,32 @@ fi  # end step 8
 # ── 9. OSRM upload ───────────────────────────────────────────────────────────────────
 if should_run 9; then
 hr "Step 9/12 — Upload OSRM road network"
-if [[ -d infra/osrm-data ]] && compgen -G "infra/osrm-data/*" >/dev/null; then
-  ENV_FILE="${ENV_FILE}" bash scripts/azure/osrm-upload.sh || \
-    warn "osrm-upload.sh failed — run later: ENV_FILE=${ENV_FILE} bash scripts/azure/osrm-upload.sh"
-else
-  warn "infra/osrm-data is empty — skipping OSRM upload"
-  warn "Generate routing data first (see scripts/setup-osrm.sh), then re-run osrm-upload.sh"
+# Detect persistent OSRM storage in the persistent DNS resource group; if
+# present and the osrm-data container already has files, skip the slow upload.
+PERSISTENT_OSRM_SA=$(az storage account list -g "${DNS_RESOURCE_GROUP}" \
+  --query "[?starts_with(name,'sbtmpersist')].name | [0]" -o tsv 2>/dev/null || true)
+SKIP_OSRM_UPLOAD="false"
+if [[ -n "${PERSISTENT_OSRM_SA}" ]]; then
+  ok "Found persistent OSRM storage: ${PERSISTENT_OSRM_SA}"
+  PERSIST_KEY=$(az storage account keys list -g "${DNS_RESOURCE_GROUP}" -n "${PERSISTENT_OSRM_SA}" --query "[0].value" -o tsv 2>/dev/null || true)
+  if [[ -n "${PERSIST_KEY}" ]]; then
+    BLOB_COUNT=$(az storage blob list \
+      --account-name "${PERSISTENT_OSRM_SA}" --account-key "${PERSIST_KEY}" \
+      --container-name osrm-data --query "length(@)" -o tsv 2>/dev/null || echo "0")
+    if [[ "${BLOB_COUNT}" -gt 0 ]]; then
+      ok "OSRM container already has ${BLOB_COUNT} blob(s) — skipping upload"
+      SKIP_OSRM_UPLOAD="true"
+    fi
+  fi
+fi
+if [[ "${SKIP_OSRM_UPLOAD}" != "true" ]]; then
+  if [[ -d infra/osrm-data ]] && compgen -G "infra/osrm-data/*" >/dev/null; then
+    ENV_FILE="${ENV_FILE}" bash scripts/azure/osrm-upload.sh || \
+      warn "osrm-upload.sh failed — run later: ENV_FILE=${ENV_FILE} bash scripts/azure/osrm-upload.sh"
+  else
+    warn "infra/osrm-data is empty — skipping OSRM upload"
+    warn "Generate routing data first (see scripts/setup-osrm.sh), then re-run osrm-upload.sh"
+  fi
 fi
 
 fi  # end step 9
@@ -767,9 +798,43 @@ CUSTOM_DOMAIN="${CUSTOM_DOMAIN:-$(jq -r '.parameters.customDomain.value // ""' "
 hr "Step 12/12 — Build images, deploy workloads, wire ingress, verify"
 
 # 12a. Build & push container images (server-side ACR build, no local Docker).
+# Prefer persistent ACR (sbtmacrshared in sbtm-dns-rg) when present so images
+# are reused across teardown/rebuild cycles. build-images.sh handles fallback.
 step "Building and pushing all service container images via ACR"
 bash scripts/azure/build-images.sh "${ENVIRONMENT}" || \
   warn "Some image builds failed — pods will stay in ImagePullBackOff until rebuilt"
+
+# 12a-bis. If the persistent ACR was used, grant AKS kubelet identity AcrPull
+# on it, and rewrite the overlay images: block to point at it.
+PERSISTENT_ACR_NAME="${PERSISTENT_ACR_NAME:-sbtmacrshared}"
+PERSISTENT_ACR_ID=$(az acr show -g "${DNS_RESOURCE_GROUP}" -n "${PERSISTENT_ACR_NAME}" --query id -o tsv 2>/dev/null || true)
+if [[ -n "${PERSISTENT_ACR_ID}" ]]; then
+  step "Granting AKS kubelet identity AcrPull on persistent ACR ${PERSISTENT_ACR_NAME}"
+  AKS_NAME=$(az aks list -g "${RESOURCE_GROUP}" --query "[0].name" -o tsv 2>/dev/null || true)
+  KUBELET_OBJID=$(az aks show -g "${RESOURCE_GROUP}" -n "${AKS_NAME}" \
+    --query identityProfile.kubeletidentity.objectId -o tsv 2>/dev/null || true)
+  if [[ -n "${KUBELET_OBJID}" ]]; then
+    az role assignment create \
+      --assignee-object-id "${KUBELET_OBJID}" \
+      --assignee-principal-type ServicePrincipal \
+      --role "AcrPull" \
+      --scope "${PERSISTENT_ACR_ID}" \
+      --output none 2>/dev/null || true
+    ok "AcrPull granted (idempotent)"
+  fi
+  step "Patching overlay images: to use ${PERSISTENT_ACR_NAME}.azurecr.io"
+  python3 - "infra/k8s/overlays/${ENVIRONMENT}/kustomization.yaml" "${PERSISTENT_ACR_NAME}" <<'PY'
+import re, sys
+path, acr = sys.argv[1:3]
+with open(path) as f:
+    txt = f.read()
+# Replace any sbtmacr<env>.azurecr.io/sbtm/<svc> with the persistent ACR.
+txt = re.sub(r"name:\s*sbtmacr[a-z0-9]+\.azurecr\.io/sbtm/", f"name: {acr}.azurecr.io/sbtm/", txt)
+with open(path, "w") as f:
+    f.write(txt)
+PY
+  ok "Overlay images: pinned to ${PERSISTENT_ACR_NAME}.azurecr.io"
+fi
 
 # 12b. Patch the kustomize overlay with the LIVE workload-identity client ID and
 # Key Vault name so we never carry a stale value across teardowns.
@@ -808,9 +873,43 @@ else
 fi
 
 if [[ -n "${CUSTOM_DOMAIN}" ]]; then
-  step "Applying demo overlay (kustomize) so the api.sbtm.ca ingress + ClusterIssuer are created"
+  # Toggle cert-manager issuer based on USE_PROD_CERT (default: staging for
+  # demo to avoid Let's Encrypt prod rate limits during teardown/rebuild
+  # cycles). Production env always uses letsencrypt-prod.
+  TARGET_ISSUER="letsencrypt-staging"
+  if [[ "${ENVIRONMENT}" == "production" || "${USE_PROD_CERT:-false}" == "true" ]]; then
+    TARGET_ISSUER="letsencrypt-prod"
+  fi
+  step "Pinning ingress to ClusterIssuer ${TARGET_ISSUER}"
+  python3 - "${OVERLAY_KFILE}" "${TARGET_ISSUER}" <<'PY'
+import re, sys
+path, target = sys.argv[1:3]
+with open(path) as f:
+    txt = f.read()
+# Match the patch block that targets cert-manager.io/cluster-issuer and replace
+# the value (letsencrypt-staging | letsencrypt-prod).
+pat = re.compile(
+    r"(path:\s*/metadata/annotations/cert-manager\.io~1cluster-issuer\s*\n\s*value:\s*)(letsencrypt-(?:staging|prod))",
+    re.MULTILINE,
+)
+txt, n = pat.subn(lambda m: m.group(1) + target, txt)
+with open(path, "w") as f:
+    f.write(txt)
+print(f"  ✓ Issuer patches updated: {n}", file=sys.stderr)
+PY
+
+  step "Applying overlay (kustomize) so the api.${CUSTOM_DOMAIN} ingress + ClusterIssuer are created"
   kubectl apply -k "infra/k8s/overlays/${ENVIRONMENT}" >/dev/null 2>&1 || \
     warn "kubectl apply failed; review with: kubectl apply -k infra/k8s/overlays/${ENVIRONMENT}"
+
+  # Detect persistent static IP. If present, the api.<domain> A record is
+  # already created and pinned permanently in the persistent DNS RG, and the
+  # NGINX ingress LoadBalancer was bound to it during provision-azure.sh
+  # (helm install). Skip A-record rotation entirely.
+  PERSISTENT_IP_NAME="${PERSISTENT_IP_NAME:-sbtm-ingress-ip}"
+  PERSISTENT_IP_ADDR=$(az network public-ip show \
+    -g "${DNS_RESOURCE_GROUP}" -n "${PERSISTENT_IP_NAME}" \
+    --query ipAddress -o tsv 2>/dev/null || true)
 
   step "Waiting for ingress LoadBalancer to receive an external IP (timeout 5 min)"
   LB_IP=""
@@ -820,9 +919,17 @@ if [[ -n "${CUSTOM_DOMAIN}" ]]; then
     [[ -n "${LB_IP}" ]] && break
     sleep 10
   done
-  if [[ -n "${LB_IP}" ]]; then
+
+  if [[ -n "${PERSISTENT_IP_ADDR}" && "${LB_IP}" == "${PERSISTENT_IP_ADDR}" ]]; then
+    ok "Ingress bound to persistent IP ${PERSISTENT_IP_ADDR} — A record api.${CUSTOM_DOMAIN} already pinned, no DNS rotation needed"
+  elif [[ -n "${LB_IP}" ]]; then
     ok "Ingress LoadBalancer IP: ${LB_IP}"
-    step "Upserting A record api.${CUSTOM_DOMAIN} → ${LB_IP}"
+    if [[ -n "${PERSISTENT_IP_ADDR}" && "${LB_IP}" != "${PERSISTENT_IP_ADDR}" ]]; then
+      warn "Ingress LB IP ${LB_IP} does NOT match persistent IP ${PERSISTENT_IP_ADDR}"
+      warn "  Helm probably ignored the loadBalancerIP arg. Re-run provision-azure.sh"
+      warn "  or check that AKS cluster identity has Network Contributor on the IP."
+    fi
+    step "Upserting A record api.${CUSTOM_DOMAIN} → ${LB_IP} (no persistent IP detected)"
     az network dns record-set a delete -g "${DNS_RESOURCE_GROUP}" -z "${CUSTOM_DOMAIN}" -n api --yes --output none 2>/dev/null || true
     az network dns record-set a add-record \
       -g "${DNS_RESOURCE_GROUP}" -z "${CUSTOM_DOMAIN}" -n api \

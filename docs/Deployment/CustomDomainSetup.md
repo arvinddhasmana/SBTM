@@ -25,7 +25,63 @@ TLS certificates are issued automatically:
 | Static Web Apps × 2 (Free, demo)           | $0                          |
 | Static Web Apps × 2 (Standard, production) | $18                         |
 | Let's Encrypt cert for `api.sbtm.ca`       | $0                          |
+| Persistent static IP for ingress (Std SKU) | ~$3.65                      |
+| Persistent ACR (Basic, optional)           | ~$5.00                      |
+| Persistent storage for OSRM (~600 MB)      | ~$0.02                      |
 | Domain registrar fee for `sbtm.ca`         | varies (already paid)       |
+
+> The persistent IP / ACR / storage rows are added by [`scripts/azure/setup-persistent-resources.sh`](../../scripts/azure/setup-persistent-resources.sh) — see [Persistent vs ephemeral resources](#persistent-vs-ephemeral-resources) below.
+
+## Persistent vs ephemeral resources
+
+To eliminate the `ERR_NAME_NOT_RESOLVED` window after `teardown-azure.sh` and to speed up rebuilds, four resources live permanently in the persistent DNS resource group (default: `sbtm-dns-rg`) and **survive teardown**:
+
+| Resource                | Name                               | Why it must persist                                                                                      |
+| ----------------------- | ---------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| Static Web App (admin)  | `sbtm-admin-<env>`                 | SWA custom-domain validation tokens are bound to the resource — recreate = stale TXT + 48h CDN replay    |
+| Static Web App (parent) | `sbtm-parent-<env>`                | Same as above                                                                                            |
+| DNS zone                | `sbtm.ca`                          | Registrar NS records would have to be re-pasted on every rebuild                                         |
+| **Static Public IP**    | `sbtm-ingress-ip` (Standard SKU)   | The `api.sbtm.ca` A record points here — survives teardown so the URL never goes 404 between rebuilds    |
+| **Container Registry**  | `sbtmacrshared` (Basic SKU)        | Image cache survives — second-and-later bootstraps skip the ~10–15 min `az acr build` for unchanged code |
+| **Storage Account**     | `sbtmpersist<hash>` (Standard_LRS) | `osrm-data` container holds the immutable 596 MB OSRM dataset — uploaded once, reused on every rebuild   |
+
+Run **one time** to create the persistent IP, ACR, and storage account:
+
+```bash
+bash scripts/azure/setup-persistent-resources.sh sbtm.ca canadacentral
+```
+
+This is idempotent — re-running is a safe no-op.
+
+After that, **all subsequent** `teardown-azure.sh` → `bootstrap.sh` cycles:
+
+- Keep `api.sbtm.ca` resolving the entire time (no DNS gap).
+- Skip Let's Encrypt re-issuance most cycles (cert validates against the same IP — see below).
+- Skip OSRM re-upload (~5–10 min saved).
+- Skip ACR rebuild for unchanged services (~10–15 min saved).
+
+If you skip `setup-persistent-resources.sh`, bootstrap still works but each cycle re-allocates an ephemeral LB IP and rotates the `api.sbtm.ca` A record, leaving a ~5–10 min DNS-propagation window where the API is unreachable.
+
+## Let's Encrypt rate limits — staging vs production issuer
+
+Let's Encrypt's production endpoint is rate limited to **5 duplicate certs per FQDN per week**. Frequent teardown/rebuild cycles can hit this limit and leave `api.sbtm.ca` serving an untrusted self-signed cert.
+
+The demo overlay therefore defaults to the **`letsencrypt-staging`** ClusterIssuer, which has effectively no rate limit but issues certs that browsers warn about ("Not secure"). For a real demo with a browser-trusted cert, run bootstrap with `USE_PROD_CERT=true`:
+
+```bash
+USE_PROD_CERT=true POSTGRES_ADMIN_PASSWORD='...' MAPTILER_KEY='...' \
+  bash scripts/azure/bootstrap.sh demo
+```
+
+Production environment (`bootstrap.sh production`) always uses `letsencrypt-prod`.
+
+To switch a running cluster from staging to prod (without re-running bootstrap):
+
+```bash
+kubectl annotate -n sbtm-demo ingress/sbtm-ingress \
+  cert-manager.io/cluster-issuer=letsencrypt-prod --overwrite
+kubectl delete -n sbtm-demo secret/sbtm-tls       # force re-issuance
+```
 
 ## What `bootstrap.sh` does automatically
 
@@ -34,7 +90,7 @@ TLS certificates are issued automatically:
 | 5    | Provisions the application resource group (`sbtm-demo-rg` / `sbtm-rg`) and Static Web Apps via Bicep. (DNS zone is provisioned out-of-band — see below.)                                                                                                                                                    |
 | 10   | **Ensures the persistent DNS RG `sbtm-dns-rg` and zone `sbtm.ca` exist** (creates them once, idempotent on every re-run). Then creates `admin` and `parent` CNAME records in the zone, registers each subdomain with its SWA using `dns-txt-token` validation, and writes the `_dnsauth.<sub>` TXT records. |
 | 11   | Builds both SPAs with `VITE_API_URL=https://api.sbtm.ca` and uploads them via the Azure SWA CLI.                                                                                                                                                                                                            |
-| 12   | Applies the demo overlay (NGINX Ingress + cert-manager `letsencrypt-prod` ClusterIssuer for `api.sbtm.ca`), waits for the LoadBalancer IP, and creates the `api` A record in the persistent DNS zone.                                                                                                       |
+| 12   | Applies the overlay (NGINX Ingress + cert-manager). When a persistent IP is detected in `sbtm-dns-rg`, the LoadBalancer is bound to it and the `api.sbtm.ca` A record is reused as-is. Without a persistent IP, an ephemeral LB IP is provisioned and the A record is rotated each cycle.                   |
 
 After step 12, `verify-portals.sh` confirms HTTPS is reachable on all three URLs.
 

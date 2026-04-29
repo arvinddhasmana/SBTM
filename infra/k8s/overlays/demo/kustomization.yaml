@@ -48,7 +48,7 @@ patches:
         path: /spec/template/spec/containers/0/env/-
         value:
           name: CORS_ORIGINS
-          value: "http://localhost:5173,http://localhost:5174,http://localhost:5175,http://localhost:5176,https://admin.sbtm.ca,https://parent.sbtm.ca,https://yellow-beach-0c42c9f10.7.azurestaticapps.net,https://zealous-dune-08c612410.7.azurestaticapps.net"
+          value: "http://localhost:5173,http://localhost:5174,http://localhost:5175,http://localhost:5176,https://admin.sbtm.ca,https://parent.sbtm.ca,https://lemon-island-0633c2b10.7.azurestaticapps.net,https://salmon-water-0d21dfd10.7.azurestaticapps.net"
     target:
       kind: Deployment
       name: api-gateway
@@ -128,6 +128,30 @@ patches:
     target:
       kind: Deployment
       labelSelector: app in (api-gateway,emergency-alerts,student-presence,student-management,compliance-management,video-service,notification-service)
+  # Demo: inject INTERNAL_SERVICE_SECRET (HMAC key for internal service-to-service JWTs).
+  # Required by gps-tracking middleware (and used by libs/common internal-service-auth.guard).
+  # All services that mint or verify internal tokens must share the same value.
+  - patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: INTERNAL_SERVICE_SECRET
+          value: MB1vOUJ6d9qkwY9i4OfHpPkxoUVHjd0jDDZAWiO4
+    target:
+      kind: Deployment
+      labelSelector: app in (api-gateway,emergency-alerts,student-presence,student-management,compliance-management,video-service,notification-service,gps-tracking)
+  # Demo: video-service requires STORAGE_BASE_URL (public download URL prefix
+  # for uploaded media). In-cluster default points at the API gateway so the
+  # parent app can resolve `${STORAGE_BASE_URL}/video/...` via api.sbtm.ca.
+  - patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: STORAGE_BASE_URL
+          value: "https://api.sbtm.ca/api/v1/video"
+    target:
+      kind: Deployment
+      name: video-service
   - patch: |-
       - op: add
         path: /spec/template/spec/containers/0/imagePullPolicy
@@ -168,7 +192,7 @@ patches:
         value: sbtm-kv-demo-temp
       - op: replace
         path: /spec/parameters/clientID
-        value: a0ebbdad-c178-41f9-8c08-f46a6d3da046
+        value: 77c73937-06fa-4bcd-9b2b-a5571cb6881f
       - op: replace
         path: /spec/parameters/tenantId
         value: b13ceef6-6c21-40a4-ad1c-bbaac66921c2
@@ -185,7 +209,7 @@ patches:
   - patch: |-
       - op: replace
         path: /metadata/annotations/azure.workload.identity~1client-id
-        value: a0ebbdad-c178-41f9-8c08-f46a6d3da046
+        value: 77c73937-06fa-4bcd-9b2b-a5571cb6881f
       - op: replace
         path: /metadata/annotations/azure.workload.identity~1tenant-id
         value: b13ceef6-6c21-40a4-ad1c-bbaac66921c2
@@ -206,6 +230,22 @@ patches:
     target:
       kind: Ingress
       name: sbtm-ingress
+  # Demo: use Let's Encrypt STAGING issuer by default to avoid the production
+  # rate limit (5 dup certs/FQDN/week, 50 certs/domain/week) during frequent
+  # teardown/rebuild cycles. Staging certs are NOT browser-trusted; for a
+  # real demo with a trusted cert, run:
+  #   kubectl annotate -n sbtm-demo ingress/sbtm-ingress \
+  #     cert-manager.io/cluster-issuer=letsencrypt-prod --overwrite
+  #   kubectl delete -n sbtm-demo secret/sbtm-tls   # force re-issuance
+  # Or set USE_PROD_CERT=true before running scripts/azure/bootstrap.sh
+  # which will rewrite this patch to letsencrypt-prod.
+  - patch: |-
+      - op: replace
+        path: /metadata/annotations/cert-manager.io~1cluster-issuer
+        value: letsencrypt-staging
+    target:
+      kind: Ingress
+      name: sbtm-ingress
   - patch: |-
       - op: replace
         path: /spec/acme/email
@@ -213,6 +253,13 @@ patches:
     target:
       kind: ClusterIssuer
       name: letsencrypt-prod
+  - patch: |-
+      - op: replace
+        path: /spec/acme/email
+        value: devops@sbtm.ca
+    target:
+      kind: ClusterIssuer
+      name: letsencrypt-staging
 
 images:
   - name: sbtmacrdemo.azurecr.io/sbtm/api-gateway

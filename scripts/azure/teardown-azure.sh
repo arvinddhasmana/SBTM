@@ -81,18 +81,32 @@ for SWA in ${SWA_NAMES}; do
   done
 done
 
-echo "==> Cleaning up Azure DNS records in persistent zone (api only — admin/parent stay)"
+echo "==> Cleaning up Azure DNS records in persistent zone (api only when no persistent IP — admin/parent always stay)"
 echo "    DNS RG ${DNS_RESOURCE_GROUP} itself is preserved — NS records stay stable."
 echo "    admin/parent CNAMEs + _dnsauth TXT preserved — they point to persistent SWAs."
+
+# Detect persistent static IP. If present, the api.* A record is permanently
+# pinned to it and must NOT be cleared (clearing it causes ERR_NAME_NOT_RESOLVED
+# until the next bootstrap re-creates it). When absent, the previous behaviour
+# (clear api records since the LB IP rotates) still applies.
+PERSISTENT_IP_NAME="${PERSISTENT_IP_NAME:-sbtm-ingress-ip}"
+PERSISTENT_IP_ADDR=$(az network public-ip show \
+  -g "${DNS_RESOURCE_GROUP}" -n "${PERSISTENT_IP_NAME}" \
+  --query ipAddress -o tsv 2>/dev/null || true)
+
 DNS_ZONES=$(az network dns zone list -g "${DNS_RESOURCE_GROUP}" --query "[].name" -o tsv 2>/dev/null || true)
 for ZONE in ${DNS_ZONES}; do
-  # api.* records are tied to the AKS ingress LB IP which changes every rebuild,
-  # so they must be cleared. admin/parent records bind to persistent SWAs and
-  # are reused as-is.
-  az network dns record-set cname delete -g "${DNS_RESOURCE_GROUP}" -z "${ZONE}" -n "api" --yes --output none 2>/dev/null || true
-  az network dns record-set a     delete -g "${DNS_RESOURCE_GROUP}" -z "${ZONE}" -n "api" --yes --output none 2>/dev/null || true
-  az network dns record-set txt   delete -g "${DNS_RESOURCE_GROUP}" -z "${ZONE}" -n "_dnsauth.api" --yes --output none 2>/dev/null || true
-  echo "    Cleared api records from zone ${ZONE} (admin/parent/_dnsauth preserved)"
+  if [[ -n "${PERSISTENT_IP_ADDR}" ]]; then
+    echo "    Preserving api.${ZONE} → ${PERSISTENT_IP_ADDR} (persistent IP detected)"
+  else
+    # api.* records are tied to the AKS ingress LB IP which changes every rebuild,
+    # so they must be cleared. admin/parent records bind to persistent SWAs and
+    # are reused as-is.
+    az network dns record-set cname delete -g "${DNS_RESOURCE_GROUP}" -z "${ZONE}" -n "api" --yes --output none 2>/dev/null || true
+    az network dns record-set a     delete -g "${DNS_RESOURCE_GROUP}" -z "${ZONE}" -n "api" --yes --output none 2>/dev/null || true
+    az network dns record-set txt   delete -g "${DNS_RESOURCE_GROUP}" -z "${ZONE}" -n "_dnsauth.api" --yes --output none 2>/dev/null || true
+    echo "    Cleared api records from zone ${ZONE} (admin/parent/_dnsauth preserved)"
+  fi
 done
 
 echo "==> Deleting resource group ${RESOURCE_GROUP} (no-wait)"
@@ -152,6 +166,8 @@ cat <<EOF
     Preserved:
       - DNS resource group: ${DNS_RESOURCE_GROUP}
       - DNS zone:           sbtm.ca (NS records unchanged — NO registrar action needed on rebuild)
+      - Persistent IP / ACR / Storage in ${DNS_RESOURCE_GROUP} (if provisioned via setup-persistent-resources.sh)
+      - api.<domain> A record IS preserved when persistent IP exists (no DNS gap on rebuild)
 
     Verify completion:
       az group show --name ${RESOURCE_GROUP} 2>&1 | grep -q ResourceGroupNotFound && echo "Deleted" || echo "Still deleting"

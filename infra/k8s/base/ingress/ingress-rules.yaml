@@ -53,7 +53,12 @@ spec:
                 port:
                   number: 80
 ---
-# Let's Encrypt ClusterIssuer
+# Let's Encrypt PRODUCTION ClusterIssuer
+# Issues browser-trusted certs but is rate limited:
+#   • 5 duplicate certs per FQDN per week
+#   • 50 certs per registered domain (sbtm.ca) per week
+# Use letsencrypt-staging during teardown/rebuild cycles to avoid hitting
+# these limits — switch the ingress annotation cert-manager.io/cluster-issuer.
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
@@ -64,6 +69,27 @@ spec:
     email: devops@sbtm.example.com # Replace with actual email
     privateKeySecretRef:
       name: letsencrypt-prod
+    solvers:
+      - http01:
+          ingress:
+            class: nginx
+---
+# Let's Encrypt STAGING ClusterIssuer (use for build/teardown cycles).
+# Certs issued here are NOT browser-trusted (curl needs -k, browsers warn),
+# but the staging endpoint has FAR higher rate limits (~30k issuances/week)
+# so the same FQDN can be re-issued hundreds of times safely. The demo
+# overlay routes to this issuer by default; flip the patch to letsencrypt-prod
+# only when you need a real demo with a browser-trusted cert.
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-staging
+spec:
+  acme:
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    email: devops@sbtm.example.com # Replace with actual email
+    privateKeySecretRef:
+      name: letsencrypt-staging
     solvers:
       - http01:
           ingress:

@@ -20,6 +20,23 @@ Each environment lives in its own Azure resource group:
 | **Demo**       | `sbtm-demo-rg` | `sbtm-aks-demo`       | `sbtmacrdemo`       | `sbtm-kv-demo`       |
 | **Production** | `sbtm-rg`      | `sbtm-aks-production` | `sbtmacrproduction` | `sbtm-kv-production` |
 
+### Persistent vs ephemeral resource groups
+
+To remove the DNS-propagation gap when teardown rebuilds the application RG, several long-lived resources sit in a **persistent** resource group (`sbtm-dns-rg`) that `teardown-azure.sh` never touches.
+
+| Resource Group                         | Lifetime                              | Contents                                                                                                                                                  |
+| -------------------------------------- | ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sbtm-dns-rg` (persistent)             | Forever — created once, never deleted | DNS zone `sbtm.ca`, both Static Web Apps, persistent static IP `sbtm-ingress-ip`, shared ACR `sbtmacrshared`, persistent OSRM storage `sbtmpersist<hash>` |
+| `sbtm-demo-rg` / `sbtm-rg` (ephemeral) | Recreated each rebuild                | AKS, Postgres Flex, Redis, Key Vault, per-env storage account, AppInsights/LAW, VNET                                                                      |
+
+Provision the persistent resources **once** with [`scripts/azure/setup-persistent-resources.sh`](../../scripts/azure/setup-persistent-resources.sh) (idempotent). Subsequent bootstraps detect them automatically and:
+
+- bind the AKS NGINX LoadBalancer to `sbtm-ingress-ip` (cross-RG) — `api.sbtm.ca` A record stays valid through teardown,
+- push container images to `sbtmacrshared` so unchanged services skip rebuild on next bootstrap,
+- skip `osrm-upload.sh` when the persistent storage container already has the dataset.
+
+Cross-RG IAM: bootstrap grants the AKS cluster identity **Network Contributor** on the persistent IP and the AKS kubelet identity **AcrPull** on `sbtmacrshared`.
+
 ---
 
 ## Azure Provisioning (Bicep)
@@ -200,15 +217,16 @@ Pods authenticate to Azure Key Vault via **Workload Identity** (no passwords). T
 
 **Key Vault secret names → environment variable mapping:**
 
-| Key Vault Secret               | Service                  | Env Variable                      |
-| ------------------------------ | ------------------------ | --------------------------------- |
-| `sbtm-jwt-secret`              | api-gateway              | `JWT_SECRET`                      |
-| `sbtm-db-password`             | all services             | `DB_PASSWORD`                     |
-| `sbtm-database-url`            | gps-tracking             | `DATABASE_URL`                    |
-| `sbtm-redis-connection-string` | all services using Redis | `REDIS_URL`                       |
-| `sbtm-fcm-server-key`          | notification-service     | `FCM_SERVER_KEY`                  |
-| `sbtm-twilio-auth-token`       | notification-service     | `TWILIO_AUTH_TOKEN`               |
-| `sbtm-blob-connection-string`  | video-service, osrm      | `AZURE_STORAGE_CONNECTION_STRING` |
+| Key Vault Secret                      | Service                  | Env Variable                      |
+| ------------------------------------- | ------------------------ | --------------------------------- |
+| `sbtm-jwt-secret`                     | api-gateway              | `JWT_SECRET`                      |
+| `sbtm-db-password`                    | all services             | `DB_PASSWORD`                     |
+| `sbtm-database-url`                   | gps-tracking             | `DATABASE_URL`                    |
+| `sbtm-redis-connection-string`        | all services using Redis | `REDIS_URL`                       |
+| `sbtm-fcm-server-key`                 | notification-service     | `FCM_SERVER_KEY`                  |
+| `sbtm-twilio-auth-token`              | notification-service     | `TWILIO_AUTH_TOKEN`               |
+| `sbtm-blob-connection-string`         | video-service            | `AZURE_STORAGE_CONNECTION_STRING` |
+| `sbtm-osrm-storage-connection-string` | osrm (init container)    | `OSRM_STORAGE_CONNECTION_STRING`  |
 
 Seed before first deployment:
 

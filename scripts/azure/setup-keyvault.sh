@@ -46,6 +46,7 @@ FCM_SERVER_KEY="$(read_env_value FCM_SERVER_KEY)"
 TWILIO_AUTH_TOKEN="$(read_env_value TWILIO_AUTH_TOKEN)"
 TWILIO_ACCOUNT_SID="$(read_env_value TWILIO_ACCOUNT_SID)"
 AZURE_STORAGE_CONNECTION_STRING="$(read_env_value AZURE_STORAGE_CONNECTION_STRING)"
+OSRM_STORAGE_CONNECTION_STRING="$(read_env_value OSRM_STORAGE_CONNECTION_STRING)"
 APPLICATIONINSIGHTS_CONNECTION_STRING="$(read_env_value APPLICATIONINSIGHTS_CONNECTION_STRING)"
 
 # Derive DB_HOST/DB_PORT/DB_USER/DB_NAME from DATABASE_URL so services that
@@ -126,8 +127,11 @@ set_secret "sbtm-fcm-server-key"              "${FCM_SERVER_KEY:-}"          yes
 set_secret "sbtm-twilio-auth-token"           "${TWILIO_AUTH_TOKEN:-}"       yes
 set_secret "sbtm-twilio-account-sid"          "${TWILIO_ACCOUNT_SID:-}"      yes
 
-# Storage
+# Storage (per-environment account for app data: video uploads, etc.)
 set_secret "sbtm-blob-connection-string"      "${AZURE_STORAGE_CONNECTION_STRING:-}"
+# Persistent OSRM storage account (sbtm-dns-rg). Falls back to env storage if
+# the persistent account is not provisioned.
+set_secret "sbtm-osrm-storage-connection-string" "${OSRM_STORAGE_CONNECTION_STRING:-${AZURE_STORAGE_CONNECTION_STRING:-}}"
 
 # Observability (optional)
 set_secret "sbtm-appinsights-connection-string" "${APPLICATIONINSIGHTS_CONNECTION_STRING:-}"

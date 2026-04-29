@@ -23,8 +23,11 @@ spec:
             - sh
             - -c
             - |
+              # Prefer OSRM_STORAGE_CONNECTION_STRING (persistent storage in
+              # sbtm-dns-rg) when set; fall back to per-env storage otherwise.
+              CS="${OSRM_STORAGE_CONNECTION_STRING:-$AZURE_STORAGE_CONNECTION_STRING}"
               az storage blob download-batch \
-                --connection-string "${AZURE_STORAGE_CONNECTION_STRING}" \
+                --connection-string "${CS}" \
                 --source osrm-data \
                 --destination /osrm-data
           env:
@@ -33,6 +36,12 @@ spec:
                 secretKeyRef:
                   name: sbtm-secrets
                   key: AZURE_STORAGE_CONNECTION_STRING
+            - name: OSRM_STORAGE_CONNECTION_STRING
+              valueFrom:
+                secretKeyRef:
+                  name: sbtm-secrets
+                  key: OSRM_STORAGE_CONNECTION_STRING
+                  optional: true
           volumeMounts:
             - name: osrm-data
               mountPath: /osrm-data

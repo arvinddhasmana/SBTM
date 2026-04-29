@@ -25,6 +25,20 @@ if [[ -z "${STORAGE_ACCOUNT}" ]] && [[ -z "${CONNECTION_STRING}" ]]; then
   fi
 fi
 
+# Prefer the persistent storage account in sbtm-dns-rg when present, so the
+# OSRM dataset is uploaded once and reused across teardown/rebuild cycles.
+DNS_RESOURCE_GROUP="${DNS_RESOURCE_GROUP:-sbtm-dns-rg}"
+PERSISTENT_OSRM_SA=$(az storage account list -g "${DNS_RESOURCE_GROUP}" \
+  --query "[?starts_with(name,'sbtmpersist')].name | [0]" -o tsv 2>/dev/null || true)
+if [[ -n "${PERSISTENT_OSRM_SA}" ]]; then
+  PERSIST_KEY=$(az storage account keys list -g "${DNS_RESOURCE_GROUP}" -n "${PERSISTENT_OSRM_SA}" --query "[0].value" -o tsv 2>/dev/null || true)
+  if [[ -n "${PERSIST_KEY}" ]]; then
+    CONNECTION_STRING="DefaultEndpointsProtocol=https;AccountName=${PERSISTENT_OSRM_SA};AccountKey=${PERSIST_KEY};EndpointSuffix=core.windows.net"
+    STORAGE_ACCOUNT="${PERSISTENT_OSRM_SA}"
+    echo "==> Using persistent OSRM storage account: ${PERSISTENT_OSRM_SA} (RG ${DNS_RESOURCE_GROUP})"
+  fi
+fi
+
 if [[ -z "${CONNECTION_STRING}" ]]; then
   echo "ERROR: AZURE_STORAGE_CONNECTION_STRING not set."
   exit 1
