@@ -33,6 +33,7 @@ import {
   TenantDashboard,
   AbsenceManagement,
   FleetAssignments,
+  AlertConfigDashboard,
 } from './pages';
 import './index.css';
 
@@ -146,6 +147,7 @@ const AppRoutes: React.FC = () => {
         />
         <Route path="/absences" element={<AbsenceManagement />} />
         <Route path="/fleet-assignments" element={<FleetAssignments />} />
+        <Route path="/alert-config/*" element={<AlertConfigDashboard />} />
       </Route>
 
       {/* Default redirect */}
