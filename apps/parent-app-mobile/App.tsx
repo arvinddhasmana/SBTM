@@ -34,11 +34,9 @@ export default function App() {
     try {
       // Set up unauthorized handler
       AuthService.setOnUnauthorized(() => {
-        Alert.alert(
-          'Session Expired',
-          'Your session has expired. Please log in again.',
-          [{ text: 'OK', onPress: () => logout() }]
-        );
+        Alert.alert('Session Expired', 'Your session has expired. Please log in again.', [
+          { text: 'OK', onPress: () => logout() },
+        ]);
       });
 
       // Restore session
@@ -53,7 +51,7 @@ export default function App() {
         if (isOffline) {
           Alert.alert(
             'Connection Lost',
-            'You are currently offline. Some features may be unavailable.'
+            'You are currently offline. Some features may be unavailable.',
           );
         }
       });
@@ -90,28 +88,20 @@ export default function App() {
         >
           {!isAuthenticated ? (
             // Unauthenticated Stack
-            <Stack.Screen
-              name="Login"
-              component={LoginScreen}
-              options={{ headerShown: false }}
-            />
+            <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
           ) : (
             // Authenticated Stack
             <>
               <Stack.Screen
                 name="Dashboard"
                 component={DashboardScreen}
-                options={{ title: 'My Children' }}
+                options={{ headerShown: false }}
               />
-              <Stack.Screen
-                name="Map"
-                component={MapScreen}
-                options={{ title: 'Track Bus' }}
-              />
+              <Stack.Screen name="Map" component={MapScreen} options={{ headerShown: false }} />
               <Stack.Screen
                 name="Notifications"
                 component={NotificationsScreen}
-                options={{ title: 'Notifications' }}
+                options={{ headerShown: false }}
               />
               <Stack.Screen
                 name="AbsenceReport"

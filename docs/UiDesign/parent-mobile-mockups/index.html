@@ -1,0 +1,83 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Parent Mobile · Glassmorphic Mockup Gallery</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,'Inter',system-ui,sans-serif;background:#0a0a13;color:#e2e8f0;padding:32px;min-height:100vh}
+  h1{font-size:28px;font-weight:700;letter-spacing:-.5px;margin-bottom:6px}
+  .sub{color:#94a3b8;margin-bottom:8px;font-size:14px}
+  ul.directives{color:#cbd5e1;font-size:13px;margin:0 0 28px 18px;line-height:1.7}
+  h2{font-size:18px;font-weight:600;margin:40px 0 16px;color:#a5b4fc}
+  .row{display:flex;gap:32px;flex-wrap:wrap;justify-content:center}
+  .item{text-align:center}
+  .frame-wrap{width:430px;height:900px;border-radius:60px;background:#000;
+    box-shadow:0 30px 80px rgba(99,102,241,.18);overflow:hidden;display:flex;align-items:center;justify-content:center}
+  iframe{width:430px;height:900px;border:0;transform:scale(.95);transform-origin:center}
+  .caption{margin-top:14px;font-size:14px;font-weight:600}
+  .caption .v{color:#22c55e;margin-left:6px;font-weight:500;font-size:12px}
+  .caption .v.alt{color:#fbcfe8}
+  .openlink{display:inline-block;margin-top:6px;font-size:12px;color:#818cf8;text-decoration:none}
+  .openlink:hover{text-decoration:underline}
+  .legend{background:#16142b;border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:18px 22px;margin-bottom:30px}
+  .legend strong{color:#a5b4fc}
+</style>
+</head><body>
+  <h1>Parent Mobile · Glassmorphic Mockups</h1>
+  <p class="sub">High-fidelity preview · 3 screens × 2 variants · live in-browser HTML/CSS</p>
+
+  <div class="legend">
+    <strong>4 user-directed changes (in every variant):</strong>
+    <ul class="directives">
+      <li>Settings &amp; Logout converted to small icon-only buttons in the <em>top-right</em> row.</li>
+      <li>Notifications is a single bell icon button with a red live dot.</li>
+      <li>Whole student card is the tap target — no separate "Track Bus" button (chevron + "Tap to track →" hint).</li>
+      <li>Map mirrors Parent web portal: SVG bus icon, blue child stop with sequence badge, ghost gray stops, purple school marker, colored polyline.</li>
+    </ul>
+  </div>
+
+  <h2>1. Dashboard</h2>
+  <div class="row">
+    <div class="item">
+      <div class="frame-wrap"><iframe src="dashboard-aurora-dark.html"></iframe></div>
+      <div class="caption">Variant A <span class="v">Aurora Dark</span></div>
+      <a class="openlink" href="dashboard-aurora-dark.html" target="_blank">open ↗</a>
+    </div>
+    <div class="item">
+      <div class="frame-wrap"><iframe src="dashboard-frosted-light.html"></iframe></div>
+      <div class="caption">Variant B <span class="v alt">Frosted Light</span></div>
+      <a class="openlink" href="dashboard-frosted-light.html" target="_blank">open ↗</a>
+    </div>
+  </div>
+
+  <h2>2. Map · Track Bus  <span style="font-size:12px;color:#94a3b8;font-weight:400">(left = live · right = signal-lost state)</span></h2>
+  <div class="row">
+    <div class="item">
+      <div class="frame-wrap"><iframe src="map-aurora-dark.html"></iframe></div>
+      <div class="caption">Variant A <span class="v">Aurora Dark · Live</span></div>
+      <a class="openlink" href="map-aurora-dark.html" target="_blank">open ↗</a>
+    </div>
+    <div class="item">
+      <div class="frame-wrap"><iframe src="map-frosted-light.html"></iframe></div>
+      <div class="caption">Variant B <span class="v alt">Frosted Light · Offline</span></div>
+      <a class="openlink" href="map-frosted-light.html" target="_blank">open ↗</a>
+    </div>
+  </div>
+
+  <h2>3. Notifications</h2>
+  <div class="row">
+    <div class="item">
+      <div class="frame-wrap"><iframe src="notif-aurora-dark.html"></iframe></div>
+      <div class="caption">Variant A <span class="v">Aurora Dark</span></div>
+      <a class="openlink" href="notif-aurora-dark.html" target="_blank">open ↗</a>
+    </div>
+    <div class="item">
+      <div class="frame-wrap"><iframe src="notif-frosted-light.html"></iframe></div>
+      <div class="caption">Variant B <span class="v alt">Frosted Light</span></div>
+      <a class="openlink" href="notif-frosted-light.html" target="_blank">open ↗</a>
+    </div>
+  </div>
+
+  <p style="margin-top:60px;font-size:12px;color:#64748b;text-align:center">
+    Tip: hover student cards (lift), bus marker pulse, drifting aurora blobs, live-dot pulse — all CSS animations, respect <code>prefers-reduced-motion</code>.
+  </p>
+</body></html>

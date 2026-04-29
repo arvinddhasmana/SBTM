@@ -1,16 +1,55 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  RefreshControl,
-} from 'react-native';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import { View, Text, StyleSheet, SectionList, RefreshControl } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
 import { ParentApiService } from '../services/ParentApiService';
 import { Alert } from '../types';
-import { GlassCard, LoadingSpinner, StatusBadge } from '../components';
+import { AuroraBackground, IconButton, LoadingSpinner } from '../components';
+
+type Severity = 'crit' | 'warn' | 'info' | 'ok';
+
+const SEVERITY_COLOR: Record<Severity, string> = {
+  crit: '#ef4444',
+  warn: '#eab308',
+  info: '#3b82f6',
+  ok: '#22c55e',
+};
+
+function severityFor(alert: Alert): Severity {
+  if (alert.eventType === 'PANIC_BUTTON' || alert.eventType === 'INCIDENT') return 'crit';
+  if (alert.eventType === 'LATE_ARRIVAL' || alert.eventType === 'ROUTE_DEVIATION') return 'warn';
+  if (alert.status === 'RESOLVED') return 'ok';
+  return 'info';
+}
+
+function iconFor(alert: Alert): string {
+  switch (alert.eventType) {
+    case 'PANIC_BUTTON':
+      return '🚨';
+    case 'INCIDENT':
+      return '⚠';
+    case 'LATE_ARRIVAL':
+      return '⏱';
+    case 'ROUTE_DEVIATION':
+      return '🛣';
+    default:
+      return alert.status === 'RESOLVED' ? '✓' : 'ℹ';
+  }
+}
+
+function timeAgo(ts: string): string {
+  const ms = Date.now() - new Date(ts).getTime();
+  const m = Math.round(ms / 60_000);
+  if (m < 1) return 'just now';
+  if (m < 60) return `${m}m ago`;
+  const h = Math.round(m / 60);
+  if (h < 24) return `${h}h ago`;
+  const d = Math.round(h / 24);
+  return `${d}d ago`;
+}
 
 export default function NotificationsScreen() {
+  const navigation = useNavigation();
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -39,157 +78,188 @@ export default function NotificationsScreen() {
     }
   }, []);
 
-  const getEventTypeBadgeVariant = (eventType: string) => {
-    switch (eventType) {
-      case 'PANIC_BUTTON':
-      case 'INCIDENT':
-        return 'danger';
-      case 'LATE_ARRIVAL':
-      case 'ROUTE_DEVIATION':
-        return 'warning';
-      default:
-        return 'neutral';
-    }
-  };
+  const sections = useMemo(() => {
+    const today: Alert[] = [];
+    const earlier: Alert[] = [];
+    const dayMs = 24 * 60 * 60 * 1000;
+    const now = Date.now();
+    alerts.forEach((a) => {
+      if (now - new Date(a.timestamp).getTime() < dayMs) today.push(a);
+      else earlier.push(a);
+    });
+    const out = [];
+    if (today.length) out.push({ title: 'Today', data: today });
+    if (earlier.length) out.push({ title: 'Earlier this week', data: earlier });
+    return out;
+  }, [alerts]);
 
-  const getStatusBadgeVariant = (status: string) => {
-    switch (status) {
-      case 'ACTIVE':
-        return 'danger';
-      case 'RESOLVED':
-        return 'success';
-      default:
-        return 'neutral';
-    }
-  };
+  const unreadCount = alerts.filter((a) => a.status === 'ACTIVE').length;
 
   const renderAlert = ({ item }: { item: Alert }) => {
+    const sev = severityFor(item);
+    const stripe = SEVERITY_COLOR[sev];
     return (
-      <GlassCard
-        variant={item.status === 'ACTIVE' ? 'alert' : 'default'}
-        style={styles.card}
-      >
-        <View style={styles.cardHeader}>
-          <StatusBadge
-            label={item.eventType.replace('_', ' ')}
-            variant={getEventTypeBadgeVariant(item.eventType)}
-            size="small"
-          />
-          <StatusBadge
-            label={item.status}
-            variant={getStatusBadgeVariant(item.status)}
-            size="small"
-          />
+      <View style={styles.notif}>
+        <View style={[styles.stripe, { backgroundColor: stripe }]} />
+        <View style={styles.notifBody}>
+          <View style={styles.notifHeader}>
+            <View
+              style={[
+                styles.iconTile,
+                { backgroundColor: `${stripe}33`, borderColor: `${stripe}66` },
+              ]}
+            >
+              <Text style={styles.iconTileText}>{iconFor(item)}</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.notifTitle}>{item.eventType.replace(/_/g, ' ')}</Text>
+              <Text style={styles.notifTime}>{timeAgo(item.timestamp)}</Text>
+            </View>
+          </View>
+          <Text style={styles.notifDesc}>{item.description}</Text>
+          <View style={styles.notifMeta}>
+            <View style={styles.metaChip}>
+              <Text style={styles.metaChipText}>Route {item.routeId}</Text>
+            </View>
+            <View style={styles.metaChip}>
+              <Text style={styles.metaChipText}>Bus {item.vehicleId}</Text>
+            </View>
+            <View style={[styles.metaChip, item.status === 'RESOLVED' && styles.metaChipOk]}>
+              <Text style={styles.metaChipText}>{item.status}</Text>
+            </View>
+          </View>
         </View>
-
-        <Text style={styles.description}>{item.description}</Text>
-
-        <View style={styles.metadata}>
-          <Text style={styles.metadataText}>Route: {item.routeId}</Text>
-          <Text style={styles.metadataText}>Bus: {item.vehicleId}</Text>
-          <Text style={styles.metadataText}>
-            {new Date(item.timestamp).toLocaleString()}
-          </Text>
-        </View>
-      </GlassCard>
+      </View>
     );
   };
 
   if (isLoading) {
     return (
-      <View style={styles.centerContainer}>
-        <LoadingSpinner size="large" />
-        <Text style={styles.loadingText}>Loading notifications...</Text>
-      </View>
+      <AuroraBackground>
+        <View style={styles.centerContainer}>
+          <LoadingSpinner size="large" />
+          <Text style={styles.loadingText}>Loading notifications...</Text>
+        </View>
+      </AuroraBackground>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <FlatList
-        data={alerts}
-        renderItem={renderAlert}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
-        refreshControl={
-          <RefreshControl
-            refreshing={isRefreshing}
-            onRefresh={handleRefresh}
-            tintColor="#6366f1"
-          />
-        }
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>🔔</Text>
-            <Text style={styles.emptyTitle}>No alerts yet</Text>
-            <Text style={styles.emptySubtitle}>
-              You'll see safety alerts and notifications here
-            </Text>
+    <AuroraBackground>
+      <SafeAreaView style={styles.safe} edges={['top']}>
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.headerLeft}>
+            <IconButton icon="‹" accessibilityLabel="Back" onPress={() => navigation.goBack()} />
+            <View style={{ marginLeft: 8 }}>
+              <Text style={styles.title}>Alerts</Text>
+              <Text style={styles.subtitle}>
+                {unreadCount} unread · {alerts.length} total
+              </Text>
+            </View>
           </View>
-        }
-      />
-    </View>
+          <View style={styles.headerRight}>
+            <IconButton icon="⌕" accessibilityLabel="Filter" onPress={() => {}} />
+            <IconButton icon="✓" accessibilityLabel="Mark all read" onPress={() => {}} />
+          </View>
+        </View>
+
+        <SectionList
+          sections={sections}
+          keyExtractor={(item) => item.id}
+          renderItem={renderAlert}
+          renderSectionHeader={({ section }) => (
+            <Text style={styles.sectionTitle}>{section.title}</Text>
+          )}
+          contentContainerStyle={styles.listContent}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={handleRefresh}
+              tintColor="#a5b4fc"
+            />
+          }
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyEmoji}>🔔</Text>
+              <Text style={styles.emptyTitle}>No alerts yet</Text>
+              <Text style={styles.emptySubtitle}>
+                You'll see safety alerts and notifications here
+              </Text>
+            </View>
+          }
+        />
+      </SafeAreaView>
+    </AuroraBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#1e293b',
-  },
-  centerContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#1e293b',
-  },
-  loadingText: {
-    marginTop: 10,
-    color: '#94a3b8',
-    fontSize: 16,
-  },
-  listContent: {
-    padding: 15,
-  },
-  card: {
-    marginBottom: 15,
-  },
-  cardHeader: {
+  safe: { flex: 1 },
+  centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  loadingText: { marginTop: 10, color: '#cbd5e1', fontSize: 16 },
+  header: {
+    paddingHorizontal: 18,
+    paddingTop: 6,
+    paddingBottom: 8,
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 12,
   },
-  description: {
-    color: '#fff',
-    fontSize: 15,
-    lineHeight: 22,
-    marginBottom: 12,
-  },
-  metadata: {
-    gap: 4,
-  },
-  metadataText: {
+  headerLeft: { flexDirection: 'row', alignItems: 'center' },
+  headerRight: { flexDirection: 'row', alignItems: 'center' },
+  title: { color: '#f8fafc', fontSize: 20, fontWeight: '700' },
+  subtitle: { color: '#94a3b8', fontSize: 12, marginTop: 2 },
+  listContent: { padding: 15, paddingBottom: 40 },
+  sectionTitle: {
     color: '#94a3b8',
-    fontSize: 12,
+    fontSize: 11,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    marginTop: 12,
+    marginBottom: 8,
+    paddingHorizontal: 4,
   },
-  emptyContainer: {
+  notif: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 14,
+    overflow: 'hidden',
+    marginBottom: 12,
+  },
+  stripe: { width: 4 },
+  notifBody: { flex: 1, padding: 14 },
+  notifHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 },
+  iconTile: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 80,
+    borderWidth: 1,
   },
-  emptyText: {
-    fontSize: 60,
-    marginBottom: 15,
+  iconTileText: { fontSize: 16 },
+  notifTitle: { color: '#f8fafc', fontSize: 14, fontWeight: '600' },
+  notifTime: { color: '#94a3b8', fontSize: 11, marginTop: 1 },
+  notifDesc: { color: '#cbd5e1', fontSize: 13, lineHeight: 18, marginBottom: 10 },
+  notifMeta: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  metaChip: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
   },
-  emptyTitle: {
-    color: '#fff',
-    fontSize: 20,
-    fontWeight: '600',
-    marginBottom: 8,
+  metaChipOk: {
+    backgroundColor: 'rgba(34,197,94,0.18)',
+    borderColor: 'rgba(34,197,94,0.4)',
   },
-  emptySubtitle: {
-    color: '#94a3b8',
-    fontSize: 14,
-    textAlign: 'center',
-  },
+  metaChipText: { color: '#e2e8f0', fontSize: 10, fontWeight: '500' },
+  emptyContainer: { alignItems: 'center', justifyContent: 'center', paddingVertical: 80 },
+  emptyEmoji: { fontSize: 60, marginBottom: 15 },
+  emptyTitle: { color: '#fff', fontSize: 20, fontWeight: '600', marginBottom: 8 },
+  emptySubtitle: { color: '#94a3b8', fontSize: 14, textAlign: 'center' },
 });

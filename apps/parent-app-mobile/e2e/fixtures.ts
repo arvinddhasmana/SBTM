@@ -52,7 +52,7 @@ export const MOCK_CHILDREN = [
  */
 export async function loginAs(
   page: Page,
-  user: { email: string; password: string }
+  user: { email: string; password: string },
 ): Promise<void> {
   await page.goto('/');
 
@@ -77,7 +77,12 @@ export async function loginAs(
  */
 export async function logout(page: Page): Promise<void> {
   // Look for logout button (could be in header, menu, or settings)
-  const logoutButton = page.locator('button:has-text("Logout"), button:has-text("Log Out"), button:has-text("Sign Out")');
+  // Aurora Dark UI uses an icon-only button with aria-label="Logout".
+  const logoutButton = page
+    .locator(
+      'button:has-text("Logout"), button:has-text("Log Out"), button:has-text("Sign Out"), [aria-label="Logout" i], [aria-label="Log Out" i], [aria-label="Sign Out" i]',
+    )
+    .first();
   await logoutButton.click();
 
   // Wait for redirect to login page
@@ -114,12 +119,15 @@ export function collectConsoleErrors(page: Page): string[] {
 /**
  * Mock API responses for testing
  */
-export async function mockApiResponses(page: Page, scenarios: {
-  login?: boolean;
-  children?: typeof MOCK_CHILDREN;
-  alerts?: any[];
-  liveLocation?: any;
-}): Promise<void> {
+export async function mockApiResponses(
+  page: Page,
+  scenarios: {
+    login?: boolean;
+    children?: typeof MOCK_CHILDREN;
+    alerts?: any[];
+    liveLocation?: any;
+  },
+): Promise<void> {
   // Intercept API calls and return mock data
   await page.route('**/api/v1/parent/login', async (route) => {
     if (scenarios.login === false) {
@@ -184,7 +192,7 @@ export async function injectMockSession(page: Page, user = TEST_USERS.PARENT): P
       localStorage.setItem('auth_token', token);
       localStorage.setItem('user_data', userStr);
     },
-    [JSON.stringify(user), 'mock-jwt-token']
+    [JSON.stringify(user), 'mock-jwt-token'],
   );
 }
 

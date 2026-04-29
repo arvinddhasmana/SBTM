@@ -27,6 +27,11 @@ scripts/dynamic-config.json
 *.swo
 apps/admin-dashboard/test-results/
 apps/admin-dashboard/playwright-report/
+apps/parent-app-mobile/test-results/
+apps/parent-app-mobile/playwright-report/
+
+# Generated mockup previews (rendered from HTML via _render.cjs)
+docs/UiDesign/parent-mobile-mockups/previews/
 
 # Deployment specific
 .env.production

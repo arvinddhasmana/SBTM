@@ -1,0 +1,115 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dashboard · Aurora Dark</title>
+<link rel="stylesheet" href="_shared/glass.css">
+</head><body>
+<div class="device theme-dark">
+  <div class="screen">
+    <div class="blobs"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div></div>
+    <div class="statusbar"><span>9:41</span><span class="right">5G ▮▮▮ ▮</span></div>
+    <div class="content">
+
+      <!-- Header: greeting + right icon buttons -->
+      <div class="row between">
+        <div class="row gap-10">
+          <div class="avatar">SD</div>
+          <div class="greeting">
+            <h1>Hi, Sarah</h1>
+            <p class="muted">Wednesday · Apr 29</p>
+          </div>
+        </div>
+        <div class="row gap-8">
+          <div class="icon-btn glass" title="Notifications">
+            <svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10 21a2 2 0 0 0 4 0"/></svg>
+            <span class="dot"></span>
+          </div>
+          <div class="icon-btn glass" title="Settings">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h0a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v0a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+          </div>
+          <div class="icon-btn glass" title="Logout">
+            <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Active alert summary chip -->
+      <div class="glass row gap-10" style="padding:10px 14px;border-radius:14px">
+        <span class="badge delay"><span class="ddot"></span>1 alert</span>
+        <span style="font-size:12px" class="muted">Route 12 · running 8 min late</span>
+      </div>
+
+      <!-- Section title -->
+      <div class="section-title">Your children</div>
+
+      <!-- Student card #1 -->
+      <div class="glass card" style="animation-delay:.05s">
+        <div class="row gap-12">
+          <div class="avatar" style="background:linear-gradient(135deg,#22c55e,#10b981)">EL</div>
+          <div class="col" style="flex:1">
+            <div class="row between">
+              <div style="font-size:16px;font-weight:600">Emma Lee</div>
+              <span class="badge on_bus" style="margin-right:18px"><span class="ddot"></span>On Bus</span>
+            </div>
+            <div class="muted" style="font-size:12px;margin-top:2px">Maple Ridge Elementary · Grade 3</div>
+            <div class="row gap-8" style="margin-top:8px">
+              <span class="chip" style="font-size:11px;padding:3px 8px;border-radius:8px">AM · Route 12</span>
+              <span class="chip" style="font-size:11px;padding:3px 8px;border-radius:8px">PM · Route 12</span>
+            </div>
+            <div class="row between" style="margin-top:8px">
+              <span style="font-size:12px;color:#22c55e">● Live · ETA 8 min</span>
+              <span class="hint" style="margin:0">Tap to track →</span>
+            </div>
+          </div>
+          <svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        </div>
+      </div>
+
+      <!-- Student card #2 -->
+      <div class="glass card" style="animation-delay:.13s">
+        <div class="row gap-12">
+          <div class="avatar" style="background:linear-gradient(135deg,#f97316,#ec4899)">JL</div>
+          <div class="col" style="flex:1">
+            <div class="row between">
+              <div style="font-size:16px;font-weight:600">Jacob Lee</div>
+              <span class="badge at_school" style="margin-right:18px"><span class="ddot"></span>At School</span>
+            </div>
+            <div class="muted" style="font-size:12px;margin-top:2px">Westwood Middle · Grade 6</div>
+            <div class="row gap-8" style="margin-top:8px">
+              <span class="chip" style="font-size:11px;padding:3px 8px;border-radius:8px">AM · Route 7</span>
+              <span class="chip" style="font-size:11px;padding:3px 8px;border-radius:8px">PM · Route 7</span>
+            </div>
+            <div class="row between" style="margin-top:8px">
+              <span class="muted" style="font-size:12px">PM bus departs 3:15 PM</span>
+              <span class="hint" style="margin:0">Tap to track →</span>
+            </div>
+          </div>
+          <svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        </div>
+      </div>
+
+      <!-- Quick stats -->
+      <div class="row gap-10" style="margin-top:auto">
+        <div class="glass col" style="flex:1;padding:12px;border-radius:14px;align-items:center">
+          <div style="font-size:18px;font-weight:700;color:#22c55e">98%</div>
+          <div class="muted" style="font-size:10px;letter-spacing:.5px;text-transform:uppercase">On-time wk</div>
+        </div>
+        <div class="glass col" style="flex:1;padding:12px;border-radius:14px;align-items:center">
+          <div style="font-size:18px;font-weight:700">12</div>
+          <div class="muted" style="font-size:10px;letter-spacing:.5px;text-transform:uppercase">Trips</div>
+        </div>
+        <div class="glass col" style="flex:1;padding:12px;border-radius:14px;align-items:center">
+          <div style="font-size:18px;font-weight:700;color:#eab308">1</div>
+          <div class="muted" style="font-size:10px;letter-spacing:.5px;text-transform:uppercase">Alerts</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- FAB Report Absence -->
+    <div class="fab">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h4"/></svg>
+      Report Absence
+    </div>
+  </div>
+</div>
+</body></html>
