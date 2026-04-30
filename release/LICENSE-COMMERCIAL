@@ -1,0 +1,71 @@
+SBTM Source Code License
+
+Copyright (c) 2026 SBTM Contributors. All rights reserved.
+
+## Grant of Rights
+
+Subject to the terms and conditions of this license, the copyright holders grant you a limited, non-exclusive, non-transferable license to:
+
+1. **View and Study**: Access and review the source code for educational and evaluation purposes.
+
+2. **Use Container Images**: Deploy and use the pre-built container images in any environment, commercial or non-commercial, without restriction.
+
+3. **Deploy**: Use the deployment tools and documentation (covered under MIT License) to deploy SBTM in your environment.
+
+## Restrictions
+
+You may NOT, without obtaining a separate commercial license:
+
+1. **Distribute Modified Source**: Distribute or sublicense modified versions of the source code.
+
+2. **Create Derivative Works**: Create derivative products based on the source code for commercial distribution.
+
+3. **Hosted Service**: Offer SBTM as a hosted service to third parties without permission.
+
+4. **Remove Attribution**: Remove or modify copyright notices or attributions.
+
+## Exceptions
+
+The following uses are permitted without additional licensing:
+
+1. **Internal Use**: Modify the source code for internal use within your organization.
+
+2. **Bug Fixes**: Submit bug fixes and improvements via pull requests (which will be licensed under this same license).
+
+3. **Educational Use**: Use in educational settings for teaching and learning.
+
+## Container Images
+
+Pre-built container images are provided free of charge and may be used in any environment without restriction. The source code for these images remains under this license.
+
+## Support and Services
+
+This license does not include any support, maintenance, updates, or warranties. Commercial support is available separately. See docs/PRICING.md for details.
+
+## Commercial License
+
+If you wish to:
+- Distribute modified source code
+- Create derivative products for sale
+- Offer SBTM as a hosted service
+- Remove source code restrictions
+
+Please contact: licensing@example.com
+
+## Termination
+
+This license terminates automatically if you violate any of its terms. Upon termination, you must cease all use of the source code and destroy all copies.
+
+## Warranty Disclaimer
+
+THE SOURCE CODE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOURCE CODE OR THE USE OR OTHER DEALINGS IN THE SOURCE CODE.
+
+## Governing Law
+
+This license shall be governed by the laws of [Your Jurisdiction], without regard to its conflict of law provisions.
+
+---
+
+For questions about this license: licensing@example.com
+
+Last updated: 2026-04-30
