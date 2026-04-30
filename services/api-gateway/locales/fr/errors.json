@@ -1,0 +1,30 @@
+{
+  "validation": {
+    "required": "{{field}} est requis",
+    "invalidEmail": "Adresse courriel invalide",
+    "invalidPhone": "Numéro de téléphone invalide",
+    "minLength": "{{field}} doit contenir au moins {{min}} caractères",
+    "maxLength": "{{field}} ne doit pas dépasser {{max}} caractères",
+    "invalidFormat": "Format {{field}} invalide"
+  },
+  "auth": {
+    "unauthorized": "Accès non autorisé",
+    "forbidden": "Vous n'avez pas la permission d'accéder à cette ressource",
+    "invalidCredentials": "Courriel ou mot de passe invalide",
+    "sessionExpired": "Votre session a expiré. Veuillez vous reconnecter",
+    "accountInactive": "Votre compte est inactif. Veuillez contacter le support"
+  },
+  "notFound": {
+    "user": "Utilisateur introuvable",
+    "route": "Itinéraire introuvable",
+    "vehicle": "Véhicule introuvable",
+    "student": "Élève introuvable",
+    "school": "École introuvable",
+    "resource": "Ressource introuvable"
+  },
+  "server": {
+    "internalError": "Une erreur interne du serveur s'est produite",
+    "serviceUnavailable": "Service temporairement indisponible",
+    "timeout": "Délai d'attente de la requête dépassé"
+  }
+}

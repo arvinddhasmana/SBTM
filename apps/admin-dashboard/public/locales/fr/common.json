@@ -1,0 +1,62 @@
+{
+  "nav": {
+    "dashboard": "Tableau de bord",
+    "alerts": "Alertes",
+    "operational": "Opérationnel",
+    "routes": "Itinéraires",
+    "planner": "Planificateur",
+    "fleet": "Flotte",
+    "compliance": "Conformité",
+    "assignments": "Affectations",
+    "students": "Élèves",
+    "absences": "Absences",
+    "boards": "Conseils",
+    "schools": "Écoles",
+    "users": "Utilisateurs",
+    "alertConfig": "Config alertes",
+    "settings": "Paramètres",
+    "logout": "Déconnexion",
+    "collapseMenu": "Réduire le menu",
+    "expandMenu": "Agrandir le menu"
+  },
+  "app": {
+    "title": "Tableau de bord administrateur OSTA",
+    "subtitle": "Gestion du transport",
+    "description": "Système de gestion du transport scolaire"
+  },
+  "common": {
+    "loading": "Chargement...",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "create": "Créer",
+    "view": "Voir",
+    "search": "Rechercher",
+    "filter": "Filtrer",
+    "export": "Exporter",
+    "import": "Importer",
+    "refresh": "Actualiser",
+    "actions": "Actions",
+    "status": "Statut",
+    "date": "Date",
+    "time": "Heure",
+    "yes": "Oui",
+    "no": "Non",
+    "ok": "OK",
+    "confirm": "Confirmer",
+    "close": "Fermer",
+    "back": "Retour",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "submit": "Soumettre",
+    "update": "Mettre à jour",
+    "required": "Requis"
+  },
+  "language": {
+    "current": "Français",
+    "switch": "Changer de langue",
+    "english": "English",
+    "french": "Français"
+  }
+}

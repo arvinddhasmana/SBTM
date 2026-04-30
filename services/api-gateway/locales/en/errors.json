@@ -1,0 +1,30 @@
+{
+  "validation": {
+    "required": "{{field}} is required",
+    "invalidEmail": "Invalid email address",
+    "invalidPhone": "Invalid phone number",
+    "minLength": "{{field}} must be at least {{min}} characters",
+    "maxLength": "{{field}} must not exceed {{max}} characters",
+    "invalidFormat": "Invalid {{field}} format"
+  },
+  "auth": {
+    "unauthorized": "Unauthorized access",
+    "forbidden": "You do not have permission to access this resource",
+    "invalidCredentials": "Invalid email or password",
+    "sessionExpired": "Your session has expired. Please log in again",
+    "accountInactive": "Your account is inactive. Please contact support"
+  },
+  "notFound": {
+    "user": "User not found",
+    "route": "Route not found",
+    "vehicle": "Vehicle not found",
+    "student": "Student not found",
+    "school": "School not found",
+    "resource": "Resource not found"
+  },
+  "server": {
+    "internalError": "An internal server error occurred",
+    "serviceUnavailable": "Service temporarily unavailable",
+    "timeout": "Request timeout"
+  }
+}

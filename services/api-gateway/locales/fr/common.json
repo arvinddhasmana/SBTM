@@ -1,0 +1,43 @@
+{
+  "roles": {
+    "SUPER_ADMIN": "Super administrateur",
+    "OSTA_ADMIN": "Administrateur OSTA",
+    "BOARD_ADMIN": "Administrateur du conseil",
+    "SCHOOL_ADMIN": "Administrateur scolaire",
+    "DRIVER": "Conducteur",
+    "PARENT": "Parent"
+  },
+  "statuses": {
+    "active": "Actif",
+    "inactive": "Inactif",
+    "pending": "En attente",
+    "completed": "Complété",
+    "cancelled": "Annulé"
+  },
+  "actions": {
+    "create": "Créer",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "view": "Voir",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "confirm": "Confirmer",
+    "submit": "Soumettre",
+    "update": "Mettre à jour",
+    "search": "Rechercher",
+    "filter": "Filtrer",
+    "export": "Exporter",
+    "import": "Importer"
+  },
+  "common": {
+    "yes": "Oui",
+    "no": "Non",
+    "ok": "OK",
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "success": "Succès",
+    "warning": "Avertissement",
+    "info": "Information",
+    "required": "Requis"
+  }
+}
