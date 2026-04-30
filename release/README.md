@@ -41,15 +41,15 @@ Stop paying per-student SaaS fees. Deploy SBTM to **your own cloud** and pay onl
 
 ### Azure Deployment
 ```bash
-git clone https://github.com/[YOUR_USERNAME]/SBTM-Deploy.git
-cd SBTM-Deploy/deploy/azure
+git clone https://github.com/arvinddhasmana/SBTM_Releases.git
+cd SBTM_Releases/deploy/azure
 ./quick-deploy.sh
 ```
 
 ### GCP Deployment
 ```bash
-git clone https://github.com/[YOUR_USERNAME]/SBTM-Deploy.git
-cd SBTM-Deploy/deploy/gcp
+git clone https://github.com/arvinddhasmana/SBTM_Releases.git
+cd SBTM_Releases/deploy/gcp
 ./quick-deploy.sh
 ```
 
@@ -175,7 +175,7 @@ Self-hosting is free, but we offer professional support for peace of mind:
 - Training sessions
 - SLA guarantees
 
-[Contact Us for Support](mailto:support@example.com) | [Schedule a Demo](https://calendly.com/your-link)
+[Contact Us for Support](mailto:arvinddhasmana@gmail.com) | [Schedule a Demo](https://calendly.com/your-link)
 
 ## 🔒 Security & Compliance
 
@@ -199,9 +199,9 @@ Self-hosting is free, but we offer professional support for peace of mind:
 
 ### Get Help
 - **Documentation**: Start with [Quick Start Guide](docs/QUICK_START.md)
-- **GitHub Issues**: [Report bugs or request features](https://github.com/[YOUR_USERNAME]/SBTM-Deploy/issues)
-- **Discussions**: [Ask questions, share ideas](https://github.com/[YOUR_USERNAME]/SBTM-Deploy/discussions)
-- **Email**: support@example.com (for commercial support)
+- **GitHub Issues**: [Report bugs or request features](https://github.com/arvinddhasmana/SBTM_Releases/issues)
+- **Discussions**: [Ask questions, share ideas](https://github.com/arvinddhasmana/SBTM_Releases/discussions)
+- **Email**: arvinddhasmana@gmail.com (for commercial support)
 
 ### Contribute
 We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
@@ -227,7 +227,7 @@ This project uses a **dual-license model**:
 - ❌ Cannot distribute modified source code without license
 - ❌ Cannot create competing hosted service without license
 
-For source code licensing inquiries: licensing@example.com
+For source code licensing inquiries: arvinddhasmana@gmail.com
 
 ## 🏆 Why Choose SBTM?
 
@@ -262,7 +262,7 @@ For source code licensing inquiries: licensing@example.com
 >
 > — *Transportation Manager, 5,000-student district*
 
-[Read More Case Studies](docs/CASE_STUDIES.md) | [Request Pilot Program](mailto:support@example.com)
+[Read More Case Studies](docs/CASE_STUDIES.md) | [Request Pilot Program](mailto:arvinddhasmana@gmail.com)
 
 ## 🗺️ Roadmap
 
@@ -288,7 +288,7 @@ For source code licensing inquiries: licensing@example.com
 - 📋 Predictive maintenance
 - 📋 Carbon footprint tracking
 
-[View Full Roadmap](https://github.com/[YOUR_USERNAME]/SBTM-Deploy/projects/1)
+[View Full Roadmap](https://github.com/arvinddhasmana/SBTM_Releases/projects/1)
 
 ## ❤️ About
 
@@ -297,7 +297,7 @@ For source code licensing inquiries: licensing@example.com
 **Mission**: Make world-class school bus management accessible to every district, regardless of size or budget.
 
 **Contact**:
-- Email: hello@example.com
+- Email: arvinddhasmana@gmail.com
 - LinkedIn: [Your Profile](https://linkedin.com/in/your-profile)
 - Twitter: [@your_handle](https://twitter.com/your_handle)
 
@@ -307,7 +307,7 @@ For source code licensing inquiries: licensing@example.com
 
 🚀 **Ready to deploy?** [Get started in 30 minutes →](docs/QUICK_START.md)
 
-💬 **Questions?** [Open a discussion →](https://github.com/[YOUR_USERNAME]/SBTM-Deploy/discussions)
+💬 **Questions?** [Open a discussion →](https://github.com/arvinddhasmana/SBTM_Releases/discussions)
 
 ---
 
