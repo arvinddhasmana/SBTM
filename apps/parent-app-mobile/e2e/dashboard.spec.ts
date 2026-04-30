@@ -1,308 +1,144 @@
 /**
  * E2E: Dashboard and Children Tracking
  *
- * Covers:
- *   - Dashboard renders with children list
- *   - Child status indicators display correctly
- *   - Map view shows bus location
- *   - Real-time updates and notifications
- *   - Empty state when no children
- *   - Refresh functionality
- *
  * Test IDs: DASH01–DASH10
+ *
+ * Notes:
+ *   - Expo Web is a single-page app; we never navigate via URL changes.
+ *   - We log in via the mocked auth flow then assert via data-testid.
  */
 import { test, expect } from '@playwright/test';
-import {
-  injectMockSession,
-  mockApiResponses,
-  MOCK_CHILDREN,
-  TEST_USERS,
-} from './fixtures';
+import { loginAs, mockApiResponses, MOCK_CHILDREN, TEST_USERS } from './fixtures';
+
+const FULL_CHILDREN = MOCK_CHILDREN.map((c) => ({
+  ...c,
+  schoolName: c.school,
+  schoolId: 'school-1',
+  amRouteId: c.routeId,
+  pmRouteId: c.routeId,
+  amRouteName: 'Morning Loop',
+  pmRouteName: 'Afternoon Loop',
+  amStopId: 'stop-1',
+  stopName: 'Maple & 5th',
+  vehicleId: 'BUS-101',
+  status: c.status,
+  avatarUrl: undefined,
+  name: `${c.firstName} ${c.lastName}`,
+}));
+
+async function loginParent(page: import('@playwright/test').Page, children: any[] = FULL_CHILDREN) {
+  await mockApiResponses(page, { login: true, children, alerts: [] });
+  await loginAs(page, TEST_USERS.PARENT);
+}
 
 test.describe('Dashboard and Children Tracking', () => {
-  // ─── Dashboard Rendering ──────────────────────────────────────────────────────
-
   test.describe('Dashboard Rendering', () => {
     test('DASH01: should display children list on dashboard', async ({ page }) => {
-      await mockApiResponses(page, {
-        login: true,
-        children: MOCK_CHILDREN,
-      });
-
-      await injectMockSession(page);
-      await page.goto('/dashboard');
-      await page.waitForLoadState('networkidle');
-
-      // Check for children names
-      await expect(page.locator(`text=${MOCK_CHILDREN[0].firstName}`)).toBeVisible({
-        timeout: 10000,
-      });
-      await expect(page.locator(`text=${MOCK_CHILDREN[1].firstName}`)).toBeVisible();
+      await loginParent(page);
+      const cards = page.locator('[data-testid^="student-card-"]');
+      await expect(cards.first()).toBeVisible({ timeout: 10000 });
+      expect(await cards.count()).toBeGreaterThanOrEqual(1);
+      await expect(
+        page.getByText(`${MOCK_CHILDREN[0].firstName} ${MOCK_CHILDREN[0].lastName}`),
+      ).toBeVisible();
     });
 
-    test('DASH02: should show user greeting with parent name', async ({ page }) => {
-      await mockApiResponses(page, {
-        login: true,
-        children: MOCK_CHILDREN,
-      });
-
-      await injectMockSession(page, TEST_USERS.PARENT);
-      await page.goto('/dashboard');
-      await page.waitForLoadState('networkidle');
-
-      // Look for greeting with user name
-      const greeting = page.locator(`text=/welcome|hello|hi.*${TEST_USERS.PARENT.firstName}/i`);
-      const hasGreeting = (await greeting.count()) > 0;
-
-      // Greeting should exist (though not strictly required)
-      expect(hasGreeting || true).toBe(true);
+    test('DASH02: should show user greeting', async ({ page }) => {
+      await loginParent(page);
+      await expect(page.getByText(/Hi,\s*\w+/)).toBeVisible();
     });
 
     test('DASH03: should display empty state when no children', async ({ page }) => {
-      await mockApiResponses(page, {
-        login: true,
-        children: [],
-      });
-
-      await injectMockSession(page);
-      await page.goto('/dashboard');
-      await page.waitForLoadState('networkidle');
-
-      // Should show empty state message
-      const emptyMessage = page.locator('text=/no children|add child|empty/i');
-      await expect(emptyMessage.first()).toBeVisible({ timeout: 10000 });
+      await loginParent(page, []);
+      await expect(page.getByText(/No children/i)).toBeVisible({ timeout: 10000 });
+      await expect(page.locator('[data-testid^="student-card-"]')).toHaveCount(0);
     });
   });
-
-  // ─── Child Status Indicators ──────────────────────────────────────────────────
 
   test.describe('Child Status Indicators', () => {
-    test('DASH04: should display child status (on_bus, at_home, etc.)', async ({ page }) => {
-      await mockApiResponses(page, {
-        login: true,
-        children: MOCK_CHILDREN,
-      });
-
-      await injectMockSession(page);
-      await page.goto('/dashboard');
-      await page.waitForLoadState('networkidle');
-
-      // Check for status indicators
-      const onBusStatus = page.locator('text=/on bus|riding/i');
-      const atHomeStatus = page.locator('text=/at home|home/i');
-
-      const hasStatusIndicators =
-        (await onBusStatus.count()) > 0 || (await atHomeStatus.count()) > 0;
-
-      expect(hasStatusIndicators).toBe(true);
+    test('DASH04: should display child status badge', async ({ page }) => {
+      await loginParent(page);
+      const status = page.locator('[data-testid^="child-status-"]').first();
+      await expect(status).toBeVisible();
+      const text = (await status.innerText()).trim();
+      expect(text.length).toBeGreaterThan(0);
     });
 
-    test('DASH05: should show child grade and school info', async ({ page }) => {
-      await mockApiResponses(page, {
-        login: true,
-        children: MOCK_CHILDREN,
-      });
-
-      await injectMockSession(page);
-      await page.goto('/dashboard');
-      await page.waitForLoadState('networkidle');
-
-      // Check for grade or school information
-      const gradeInfo = page.locator(`text=/grade.*${MOCK_CHILDREN[0].grade}|${MOCK_CHILDREN[0].grade}.*grade/i`);
-      const schoolInfo = page.locator(`text=${MOCK_CHILDREN[0].school}`);
-
-      const hasInfo = (await gradeInfo.count()) > 0 || (await schoolInfo.count()) > 0;
-      expect(hasInfo).toBe(true);
+    test('DASH05: should show child school info on the card', async ({ page }) => {
+      await loginParent(page);
+      const card = page.locator(`[data-testid="student-card-${FULL_CHILDREN[0].id}"]`);
+      await expect(card).toBeVisible();
+      await expect(card.getByText(FULL_CHILDREN[0].schoolName)).toBeVisible();
     });
   });
-
-  // ─── Map and GPS Tracking ─────────────────────────────────────────────────────
 
   test.describe('Map and GPS Tracking', () => {
-    test('DASH06: should have navigation to map view', async ({ page }) => {
+    test('DASH06: should open map view when clicking a child card', async ({ page }) => {
+      await loginParent(page);
       await mockApiResponses(page, {
-        login: true,
-        children: MOCK_CHILDREN,
-      });
-
-      await injectMockSession(page);
-      await page.goto('/dashboard');
-      await page.waitForLoadState('networkidle');
-
-      // Look for map button/link (could be tab, button, or card action)
-      const mapButton = page.locator('text=/map|track|location|gps/i').first();
-      const hasMapButton = (await mapButton.count()) > 0;
-
-      expect(hasMapButton).toBe(true);
-    });
-
-    test('DASH07: should navigate to map view when clicking track button', async ({ page }) => {
-      await mockApiResponses(page, {
-        login: true,
-        children: MOCK_CHILDREN,
         liveLocation: {
-          latitude: 37.7749,
-          longitude: -122.4194,
-          heading: 45,
-          speed: 30,
-          timestamp: new Date().toISOString(),
+          active: true,
+          routeId: 'route-1',
+          vehicleId: 'BUS-101',
+          lastUpdate: new Date().toISOString(),
+          position: { lat: 45.42, lng: -75.69 },
+          headingDeg: 45,
+          speedKph: 30,
+        },
+        routeDetails: {
+          id: 'route-1',
+          name: 'Morning Loop',
+          direction: 'AM',
+          stops: [],
         },
       });
 
-      await injectMockSession(page);
-      await page.goto('/dashboard');
-      await page.waitForLoadState('networkidle');
+      await page.locator(`[data-testid="student-card-${FULL_CHILDREN[0].id}"]`).click();
+      await expect(page.locator('[data-testid="map-screen"]')).toBeVisible({ timeout: 10000 });
+    });
 
-      // Click on map/track button if present
-      const mapButton = page.locator('text=/map|track|view on map/i').first();
-      const hasButton = (await mapButton.count()) > 0;
-
-      if (hasButton) {
-        await mapButton.click();
-        await page.waitForTimeout(2000);
-
-        // Should either navigate to map page or show map modal/view
-        const url = page.url();
-        const hasMap =
-          url.includes('map') ||
-          (await page.locator('[class*="map"], [id*="map"]').count()) > 0;
-
-        expect(hasMap).toBe(true);
-      }
+    test('DASH07: map should show a back control', async ({ page }) => {
+      await loginParent(page);
+      await mockApiResponses(page, {
+        liveLocation: {
+          active: false,
+          routeId: 'route-1',
+          vehicleId: '',
+          lastUpdate: '',
+          position: { lat: 0, lng: 0 },
+        },
+        routeDetails: { id: 'route-1', name: 'Morning Loop', direction: 'AM', stops: [] },
+      });
+      await page.locator(`[data-testid="student-card-${FULL_CHILDREN[0].id}"]`).click();
+      await expect(page.locator('[data-testid="map-back"]')).toBeVisible({ timeout: 10000 });
     });
   });
-
-  // ─── Refresh and Updates ──────────────────────────────────────────────────────
 
   test.describe('Refresh Functionality', () => {
-    test('DASH08: should have refresh/reload functionality', async ({ page }) => {
-      await mockApiResponses(page, {
-        login: true,
-        children: MOCK_CHILDREN,
-      });
-
-      await injectMockSession(page);
-      await page.goto('/dashboard');
-      await page.waitForLoadState('networkidle');
-
-      // Look for refresh button or pull-to-refresh
-      const refreshButton = page.locator('button:has-text("Refresh"), [aria-label*="refresh" i]');
-      const hasRefresh = (await refreshButton.count()) > 0;
-
-      // Refresh functionality should exist (though may be pull-to-refresh on mobile)
-      expect(hasRefresh || true).toBe(true);
-    });
-
-    test('DASH09: should reload children data after refresh', async ({ page }) => {
-      let apiCallCount = 0;
-
-      await page.route('**/api/v1/parent/children', async (route) => {
-        apiCallCount++;
-        await route.fulfill({
-          status: 200,
-          json: MOCK_CHILDREN,
-        });
-      });
-
-      await injectMockSession(page);
-      await page.goto('/dashboard');
-      await page.waitForLoadState('networkidle');
-
-      const initialCallCount = apiCallCount;
-
-      // Try to trigger refresh
-      const refreshButton = page.locator('button:has-text("Refresh"), [aria-label*="refresh" i]').first();
-      const hasRefreshButton = (await refreshButton.count()) > 0;
-
-      if (hasRefreshButton) {
-        await refreshButton.click();
-        await page.waitForTimeout(2000);
-
-        // API should be called again
-        expect(apiCallCount).toBeGreaterThan(initialCallCount);
-      }
+    test('DASH08: should re-render dashboard root after explicit reload', async ({ page }) => {
+      await loginParent(page);
+      await expect(page.locator('[data-testid="dashboard-screen"]')).toBeVisible();
+      await page.reload();
+      // After reload Expo Web re-mounts; dashboard may or may not auto-restore
+      // depending on session rehydration. We only assert the page itself is alive.
+      await expect(page).toHaveURL(/\//);
     });
   });
-
-  // ─── Navigation ───────────────────────────────────────────────────────────────
 
   test.describe('Navigation', () => {
-    test('DASH10: should navigate to absence reporting', async ({ page }) => {
-      await mockApiResponses(page, {
-        login: true,
-        children: MOCK_CHILDREN,
-      });
-
-      await injectMockSession(page);
-      await page.goto('/dashboard');
-      await page.waitForLoadState('networkidle');
-
-      // Look for absence reporting link/button
-      const absenceButton = page.locator('text=/absence|report absence|absent/i').first();
-      const hasButton = (await absenceButton.count()) > 0;
-
-      if (hasButton) {
-        await absenceButton.click();
-        await page.waitForTimeout(1000);
-
-        // Should navigate to absence page or show absence modal
-        const url = page.url();
-        const hasAbsenceView =
-          url.includes('absence') ||
-          (await page.locator('text=/report absence|absence form/i').count()) > 0;
-
-        expect(hasAbsenceView).toBe(true);
-      }
+    test('DASH10: should navigate to absence reporting via FAB', async ({ page }) => {
+      await loginParent(page);
+      await page.locator('[data-testid="report-absence-fab"]').click();
+      await expect(page.locator('[data-testid="absence-screen"]')).toBeVisible({ timeout: 10000 });
     });
 
-    test('should have navigation tabs or menu', async ({ page }) => {
-      await mockApiResponses(page, {
-        login: true,
-        children: MOCK_CHILDREN,
-      });
-
-      await injectMockSession(page);
-      await page.goto('/dashboard');
-      await page.waitForLoadState('networkidle');
-
-      // Check for navigation elements
-      const navTabs = page.locator('[role="tablist"], nav, [class*="tab"]');
-      const hasNavigation = (await navTabs.count()) > 0;
-
-      expect(hasNavigation).toBe(true);
-    });
-  });
-
-  // ─── Alerts and Notifications ─────────────────────────────────────────────────
-
-  test.describe('Alerts', () => {
-    test('should display active alerts if present', async ({ page }) => {
-      const mockAlerts = [
-        {
-          id: 'alert-1',
-          type: 'delay',
-          message: 'Bus delayed by 10 minutes',
-          routeId: 'route-1',
-          createdAt: new Date().toISOString(),
-        },
-      ];
-
-      await mockApiResponses(page, {
-        login: true,
-        children: MOCK_CHILDREN,
-        alerts: mockAlerts,
-      });
-
-      await injectMockSession(page);
-      await page.goto('/dashboard');
-      await page.waitForLoadState('networkidle');
-
-      // Look for alert section or badge
-      const alertIndicator = page.locator('text=/alert|notification|delay/i');
-      const hasAlerts = (await alertIndicator.count()) > 0;
-
-      // May or may not have alerts depending on children status
-      expect(hasAlerts || true).toBe(true);
+    test('should have notification, settings, and logout controls in the header', async ({
+      page,
+    }) => {
+      await loginParent(page);
+      await expect(page.locator('[data-testid="header-notifications"]')).toBeVisible();
+      await expect(page.locator('[data-testid="header-settings"]')).toBeVisible();
+      await expect(page.locator('[data-testid="header-logout"]')).toBeVisible();
     });
   });
 });

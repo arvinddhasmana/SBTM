@@ -18,6 +18,8 @@ interface GlassButtonProps {
   loading?: boolean;
   style?: ViewStyle;
   textStyle?: TextStyle;
+  testID?: string;
+  accessibilityLabel?: string;
 }
 
 export default function GlassButton({
@@ -28,6 +30,8 @@ export default function GlassButton({
   loading = false,
   style,
   textStyle,
+  testID,
+  accessibilityLabel,
 }: GlassButtonProps) {
   const [scaleValue] = useState(new Animated.Value(1));
 
@@ -82,7 +86,9 @@ export default function GlassButton({
         disabled={disabled || loading}
         activeOpacity={0.8}
         style={[styles.container, { borderColor: getBorderColor() }]}
-        testID="glass-button"
+        testID={testID ?? 'glass-button'}
+        accessibilityLabel={accessibilityLabel ?? title}
+        accessibilityRole="button"
       >
         <LinearGradient
           colors={getGradientColors()}

@@ -33,10 +33,7 @@ export default function LoginScreen() {
       // Initialize notifications after successful login
       await NotificationService.initialize();
     } catch (error: any) {
-      Alert.alert(
-        'Login Failed',
-        error.message || 'Invalid credentials. Please try again.'
-      );
+      Alert.alert('Login Failed', error.message || 'Invalid credentials. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -68,6 +65,7 @@ export default function LoginScreen() {
             autoCapitalize="none"
             keyboardType="email-address"
             editable={!isLoading}
+            testID="login-email"
           />
 
           <TextInput
@@ -79,6 +77,7 @@ export default function LoginScreen() {
             secureTextEntry
             editable={!isLoading}
             onSubmitEditing={handleLogin}
+            testID="login-password"
           />
 
           <GlassButton
@@ -88,12 +87,11 @@ export default function LoginScreen() {
             disabled={isLoading}
             loading={isLoading}
             style={styles.loginButton}
+            testID="login-submit"
           />
 
           {/* Demo Credentials Hint */}
-          <Text style={styles.hint}>
-            Demo: parent1@sbtm.demo / Admin123!
-          </Text>
+          <Text style={styles.hint}>Demo: parent1@sbtm.demo / Admin123!</Text>
         </GlassCard>
       </View>
     </KeyboardAvoidingView>

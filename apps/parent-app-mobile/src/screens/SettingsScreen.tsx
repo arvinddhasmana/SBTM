@@ -1,218 +1,218 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Switch,
   Alert,
   ActivityIndicator,
 } from 'react-native';
 import { ParentApiService } from '../services/ParentApiService';
-import {
-  NotificationPreferences,
-  NotificationEventType,
-  NotificationChannel,
-} from '../types';
+
+/**
+ * Mirrors apps/parent-dashboard/web/src/pages/Settings.tsx.
+ *
+ * Server contract (notification-service):
+ *   - Event types: BOARD, ALIGHT, EMERGENCY, ROUTE_DEVIATION, LATE_ARRIVAL
+ *   - Channels:    PUSH, EMAIL, SMS
+ *
+ * The mobile UI exposes the same three customer-facing categories the web
+ * portal does so parents see a consistent settings page on either platform.
+ * EMERGENCY is locked-on for safety (the web portal treats it the same way).
+ */
+const EVENT_TYPES = [
+  {
+    key: 'BOARD',
+    label: 'Child Boarded',
+    description: 'When your child boards the bus',
+    locked: false,
+  },
+  {
+    key: 'ALIGHT',
+    label: 'Child Alighted',
+    description: 'When your child gets off the bus',
+    locked: false,
+  },
+  {
+    key: 'EMERGENCY',
+    label: 'Emergency Alerts',
+    description: "Safety alerts for your child's route",
+    locked: true,
+  },
+] as const;
+
+const CHANNELS = [
+  { key: 'PUSH', label: 'Push', icon: '🔔' },
+  { key: 'EMAIL', label: 'Email', icon: '✉️' },
+] as const;
+
+type EventKey = (typeof EVENT_TYPES)[number]['key'];
+type ChannelKey = (typeof CHANNELS)[number]['key'];
+type PrefMap = Record<string, Record<string, boolean>>;
+
+function buildInitialPrefMap(
+  rows: Array<{ eventType: string; channel: string; enabled: boolean }>,
+): PrefMap {
+  const map: PrefMap = {};
+  for (const row of rows) {
+    if (!map[row.eventType]) map[row.eventType] = {};
+    map[row.eventType][row.channel] = row.enabled;
+  }
+  // Fill defaults for the canonical event types so the UI always shows them.
+  for (const et of EVENT_TYPES) {
+    if (!map[et.key]) map[et.key] = {};
+    if (map[et.key]['PUSH'] === undefined) map[et.key]['PUSH'] = true;
+    if (map[et.key]['EMAIL'] === undefined) map[et.key]['EMAIL'] = false;
+  }
+  // EMERGENCY is always on (matches web).
+  map['EMERGENCY'] = { PUSH: true, EMAIL: true, SMS: true };
+  return map;
+}
 
 export default function SettingsScreen() {
-  const [preferences, setPreferences] = useState<NotificationPreferences | null>(
-    null
-  );
+  const [preferences, setPreferences] = useState<PrefMap>(() => buildInitialPrefMap([]));
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [savedBanner, setSavedBanner] = useState(false);
 
   useEffect(() => {
-    loadPreferences();
+    let cancelled = false;
+    (async () => {
+      try {
+        const rows = await ParentApiService.getNotificationPreferencesRaw();
+        if (!cancelled) setPreferences(buildInitialPrefMap(rows));
+      } catch (error) {
+        console.warn('Failed to load preferences, using defaults:', error);
+        if (!cancelled) setPreferences(buildInitialPrefMap([]));
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const loadPreferences = async () => {
-    try {
-      const prefs = await ParentApiService.getNotificationPreferences();
-      setPreferences(prefs);
-    } catch (error) {
-      console.error('Failed to load preferences:', error);
-      // Set default preferences if loading fails
-      setPreferences({
-        userId: '',
-        events: [
-          {
-            eventType: 'CHILD_BOARDED',
-            channels: ['PUSH'],
-            enabled: true,
-          },
-          {
-            eventType: 'CHILD_ALIGHTED',
-            channels: ['PUSH'],
-            enabled: true,
-          },
-          {
-            eventType: 'EMERGENCY_ALERT',
-            channels: ['PUSH', 'EMAIL'],
-            enabled: true,
-          },
-        ],
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const toggleChannel = (
-    eventType: NotificationEventType,
-    channel: NotificationChannel
-  ) => {
-    if (!preferences) return;
-
-    // Don't allow disabling emergency alerts
-    if (eventType === 'EMERGENCY_ALERT') {
-      Alert.alert(
-        'Cannot Modify',
-        'Emergency alerts are always enabled for safety.'
-      );
-      return;
-    }
-
-    const updatedEvents = preferences.events.map((event) => {
-      if (event.eventType === eventType) {
-        const hasChannel = event.channels.includes(channel);
-        return {
-          ...event,
-          channels: hasChannel
-            ? event.channels.filter((c) => c !== channel)
-            : [...event.channels, channel],
-        };
-      }
-      return event;
+  const handleToggle = (eventType: EventKey, channel: ChannelKey) => {
+    if (eventType === 'EMERGENCY') return;
+    setPreferences((prev) => {
+      const updated = { ...prev };
+      if (!updated[eventType]) updated[eventType] = {};
+      updated[eventType] = {
+        ...updated[eventType],
+        [channel]: !updated[eventType][channel],
+      };
+      return updated;
     });
-
-    setPreferences({ ...preferences, events: updatedEvents });
   };
 
   const handleSave = async () => {
-    if (!preferences) return;
-
     setIsSaving(true);
-
     try {
-      await ParentApiService.updateNotificationPreferences(preferences);
-      Alert.alert('Success', 'Notification preferences saved successfully.');
+      const rows: Array<{ eventType: string; channel: string; enabled: boolean }> = [];
+      for (const [eventType, channels] of Object.entries(preferences)) {
+        for (const [channel, enabled] of Object.entries(channels)) {
+          rows.push({ eventType, channel, enabled });
+        }
+      }
+      await ParentApiService.updateNotificationPreferencesRaw(rows);
+      setSavedBanner(true);
+      setTimeout(() => setSavedBanner(false), 3000);
     } catch (error: any) {
-      Alert.alert(
-        'Error',
-        error.message || 'Failed to save preferences. Please try again.'
-      );
+      Alert.alert('Error', error?.message || 'Failed to save preferences. Please try again.');
     } finally {
       setIsSaving(false);
     }
   };
 
-  const getEventLabel = (eventType: NotificationEventType): string => {
-    switch (eventType) {
-      case 'CHILD_BOARDED':
-        return 'Child Boarded';
-      case 'CHILD_ALIGHTED':
-        return 'Child Alighted';
-      case 'EMERGENCY_ALERT':
-        return 'Emergency Alerts';
-      case 'BUS_APPROACHING':
-        return 'Bus Approaching';
-      case 'ROUTE_CHANGE':
-        return 'Route Change';
-      case 'ABSENCE_CONFIRMED':
-        return 'Absence Confirmed';
-      default:
-        return eventType;
-    }
-  };
+  const eventCards = useMemo(
+    () =>
+      EVENT_TYPES.map((eventType) => (
+        <View key={eventType.key} style={styles.eventCard} testID={`pref-card-${eventType.key}`}>
+          <View style={styles.eventHeader}>
+            <View style={styles.eventInfo}>
+              <Text style={styles.eventTitle}>
+                {eventType.locked ? '🛡️ ' : ''}
+                {eventType.label}
+              </Text>
+              <Text style={styles.eventDescription}>{eventType.description}</Text>
+            </View>
+            {eventType.locked && (
+              <View style={styles.alwaysOnBadge}>
+                <Text style={styles.alwaysOnText}>Always On</Text>
+              </View>
+            )}
+          </View>
 
-  const getEventDescription = (eventType: NotificationEventType): string => {
-    switch (eventType) {
-      case 'CHILD_BOARDED':
-        return 'When your child boards the bus';
-      case 'CHILD_ALIGHTED':
-        return 'When your child gets off the bus';
-      case 'EMERGENCY_ALERT':
-        return 'Safety alerts for your child\'s route';
-      default:
-        return '';
-    }
-  };
+          <View style={styles.channelRow}>
+            {CHANNELS.map((channel) => {
+              const isEnabled = preferences[eventType.key]?.[channel.key] ?? false;
+              const isLocked = eventType.locked;
+              return (
+                <TouchableOpacity
+                  key={channel.key}
+                  onPress={() => handleToggle(eventType.key, channel.key)}
+                  disabled={isLocked || isSaving}
+                  style={[
+                    styles.channelChip,
+                    isEnabled ? styles.channelChipOn : styles.channelChipOff,
+                    isLocked && styles.channelChipLocked,
+                  ]}
+                  testID={`pref-${eventType.key}-${channel.key}`}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: isEnabled, disabled: isLocked }}
+                >
+                  <Text
+                    style={[
+                      styles.channelChipText,
+                      isEnabled ? styles.channelChipTextOn : styles.channelChipTextOff,
+                    ]}
+                  >
+                    {channel.icon} {channel.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+      )),
+    [preferences, isSaving],
+  );
 
   if (isLoading) {
     return (
       <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#6366f1" />
+        <ActivityIndicator size="large" color="#a5b4fc" />
         <Text style={styles.loadingText}>Loading settings...</Text>
       </View>
     );
   }
 
-  if (!preferences) {
-    return (
-      <View style={styles.centerContainer}>
-        <Text style={styles.errorText}>Failed to load preferences</Text>
-      </View>
-    );
-  }
-
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.content}
+      testID="settings-screen"
+    >
       <Text style={styles.title}>⚙️ Notification Settings</Text>
       <Text style={styles.subtitle}>
         Choose how you want to be notified about your child's bus activity.
       </Text>
 
-      {preferences.events.map((event) => (
-        <View key={event.eventType} style={styles.eventCard}>
-          <View style={styles.eventHeader}>
-            <View style={styles.eventInfo}>
-              <Text style={styles.eventTitle}>
-                {getEventLabel(event.eventType)}
-              </Text>
-              <Text style={styles.eventDescription}>
-                {getEventDescription(event.eventType)}
-              </Text>
-            </View>
-
-            {event.eventType === 'EMERGENCY_ALERT' && (
-              <View style={styles.alwaysOnBadge}>
-                <Text style={styles.alwaysOnText}>🛡️ Always On</Text>
-              </View>
-            )}
-          </View>
-
-          <View style={styles.channelToggles}>
-            <View style={styles.channelToggle}>
-              <Text style={styles.channelLabel}>🔔 Push</Text>
-              <Switch
-                value={event.channels.includes('PUSH')}
-                onValueChange={() => toggleChannel(event.eventType, 'PUSH')}
-                trackColor={{ false: '#374151', true: '#6366f1' }}
-                thumbColor={event.channels.includes('PUSH') ? '#fff' : '#9ca3af'}
-                disabled={event.eventType === 'EMERGENCY_ALERT'}
-              />
-            </View>
-
-            <View style={styles.channelToggle}>
-              <Text style={styles.channelLabel}>✉️ Email</Text>
-              <Switch
-                value={event.channels.includes('EMAIL')}
-                onValueChange={() => toggleChannel(event.eventType, 'EMAIL')}
-                trackColor={{ false: '#374151', true: '#6366f1' }}
-                thumbColor={event.channels.includes('EMAIL') ? '#fff' : '#9ca3af'}
-                disabled={event.eventType === 'EMERGENCY_ALERT'}
-              />
-            </View>
-          </View>
+      {savedBanner && (
+        <View style={styles.successBanner} testID="settings-saved-banner">
+          <Text style={styles.successBannerText}>✓ Preferences saved successfully</Text>
         </View>
-      ))}
+      )}
+
+      {eventCards}
 
       <TouchableOpacity
         style={[styles.button, isSaving && styles.buttonDisabled]}
         onPress={handleSave}
         disabled={isSaving}
+        testID="settings-save"
       >
         {isSaving ? (
           <ActivityIndicator color="#fff" />
@@ -221,7 +221,6 @@ export default function SettingsScreen() {
         )}
       </TouchableOpacity>
 
-      {/* App Info */}
       <View style={styles.appInfo}>
         <Text style={styles.appInfoText}>SBTM Parent App v1.0.0</Text>
         <Text style={styles.appInfoText}>© 2026 SBTM</Text>
@@ -231,116 +230,102 @@ export default function SettingsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#1e293b',
-  },
+  container: { flex: 1, backgroundColor: '#0b1020' },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#1e293b',
+    backgroundColor: '#0b1020',
   },
-  loadingText: {
-    marginTop: 10,
-    color: '#94a3b8',
-    fontSize: 16,
-  },
-  errorText: {
-    color: '#ef4444',
-    fontSize: 16,
-  },
-  content: {
-    padding: 20,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#94a3b8',
-    marginBottom: 30,
-  },
+  loadingText: { marginTop: 10, color: '#94a3b8', fontSize: 16 },
+  content: { padding: 20 },
+  title: { fontSize: 22, fontWeight: 'bold', color: '#fff', marginBottom: 6 },
+  subtitle: { fontSize: 14, color: '#94a3b8', marginBottom: 20 },
   eventCard: {
-    backgroundColor: 'rgba(30, 41, 59, 0.6)',
-    borderRadius: 16,
-    padding: 15,
-    marginBottom: 15,
+    backgroundColor: 'rgba(30, 41, 59, 0.7)',
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 14,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: 'rgba(255, 255, 255, 0.08)',
   },
   eventHeader: {
-    marginBottom: 15,
-  },
-  eventInfo: {
-    marginBottom: 10,
-  },
-  eventTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#fff',
-    marginBottom: 4,
-  },
-  eventDescription: {
-    fontSize: 14,
-    color: '#94a3b8',
-  },
-  alwaysOnBadge: {
-    backgroundColor: 'rgba(251, 191, 36, 0.2)',
-    borderWidth: 1,
-    borderColor: 'rgba(251, 191, 36, 0.3)',
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    alignSelf: 'flex-start',
-  },
-  alwaysOnText: {
-    color: '#fbbf24',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  channelToggles: {
-    gap: 10,
-  },
-  channelToggle: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 8,
+    alignItems: 'flex-start',
+    marginBottom: 12,
   },
-  channelLabel: {
-    fontSize: 16,
-    color: '#fff',
-    fontWeight: '500',
-  },
-  button: {
-    backgroundColor: '#6366f1',
-    borderRadius: 8,
-    paddingVertical: 15,
-    alignItems: 'center',
-    marginTop: 10,
-    marginBottom: 30,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    color: '#fff',
+  eventInfo: { flex: 1, marginRight: 8 },
+  eventTitle: {
     fontSize: 16,
     fontWeight: '600',
+    color: '#f1f5f9',
+    marginBottom: 4,
   },
+  eventDescription: { fontSize: 13, color: '#94a3b8' },
+  alwaysOnBadge: {
+    backgroundColor: 'rgba(251, 191, 36, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(251, 191, 36, 0.35)',
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  alwaysOnText: { color: '#fbbf24', fontSize: 11, fontWeight: '600' },
+  channelRow: { flexDirection: 'row', gap: 10, flexWrap: 'wrap' },
+  channelChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  channelChipOn: {
+    // Stronger fill + brighter border so the selected channel reads
+    // unambiguously even at a glance on Android (previous translucent indigo
+    // was too close to the unselected slate background).
+    backgroundColor: '#6366f1',
+    borderColor: '#a5b4fc',
+    shadowColor: '#6366f1',
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
+  },
+  channelChipOff: {
+    backgroundColor: 'rgba(15, 23, 42, 0.85)',
+    borderColor: 'rgba(148, 163, 184, 0.35)',
+  },
+  channelChipLocked: { opacity: 0.7 },
+  channelChipText: { fontSize: 14, fontWeight: '700' },
+  channelChipTextOn: { color: '#ffffff' },
+  channelChipTextOff: { color: '#94a3b8' },
+  button: {
+    backgroundColor: '#6366f1',
+    borderRadius: 10,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginTop: 14,
+    marginBottom: 24,
+  },
+  buttonDisabled: { opacity: 0.6 },
+  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
   appInfo: {
     alignItems: 'center',
-    paddingVertical: 20,
+    paddingVertical: 18,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+    borderTopColor: 'rgba(255, 255, 255, 0.08)',
   },
-  appInfoText: {
-    color: '#64748b',
-    fontSize: 12,
-    marginVertical: 2,
+  appInfoText: { color: '#64748b', fontSize: 12, marginVertical: 2 },
+  successBanner: {
+    backgroundColor: 'rgba(34, 197, 94, 0.18)',
+    borderWidth: 1,
+    borderColor: 'rgba(34, 197, 94, 0.5)',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    marginBottom: 16,
   },
+  successBannerText: { color: '#86efac', fontSize: 14, fontWeight: '600' },
 });

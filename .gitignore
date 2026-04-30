@@ -11,6 +11,7 @@ tmpclaude-*
 
 # Local dev runtime artifacts (from scripts/dev-hybrid.sh)
 .dev-pids/
+.dev-logs/
 
 # Package manager
 package-lock.json
@@ -19,6 +20,17 @@ package-lock.json
 infra/osrm-data/
 *.log
 scripts/dynamic-config.json
+
+# Captured runtime / build output (do not commit)
+api_logs.txt
+build_output.txt
+sync-temp.sql
+
+# Local backup / scratch files
+*.bak
+*.bak.*
+*.backup
+*.tmp
 
 # Editor Specific
 .vscode/

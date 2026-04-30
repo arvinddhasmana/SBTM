@@ -7,6 +7,10 @@ RUN pnpm install
 
 # Stage 2: Build
 FROM base AS builder
+ARG VITE_API_URL
+ARG VITE_MAPTILER_KEY
+ENV VITE_API_URL=${VITE_API_URL}
+ENV VITE_MAPTILER_KEY=${VITE_MAPTILER_KEY}
 COPY . .
 RUN pnpm run build
 

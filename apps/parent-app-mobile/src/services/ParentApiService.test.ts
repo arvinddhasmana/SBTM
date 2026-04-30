@@ -79,23 +79,24 @@ describe('ParentApiService', () => {
     });
   });
 
-  describe('getRoute', () => {
-    it('should fetch route details', async () => {
+  describe('getRouteDetails', () => {
+    it('should fetch route details from /routes/reference/:id', async () => {
       const mockRoute = {
         id: 'route-123',
         name: 'Route 101',
         stops: [
           { id: 'stop-1', name: 'Stop 1', lat: 45.42, lng: -75.69 },
-          { id: 'stop-2', name: 'Stop 2', lat: 45.43, lng: -75.70 },
+          { id: 'stop-2', name: 'Stop 2', lat: 45.43, lng: -75.7 },
         ],
         polyline: 'encoded-polyline-string',
       };
       mockApiService.get.mockResolvedValue(mockRoute);
 
-      const result = await ParentApiService.getRoute('route-123');
+      const result = await ParentApiService.getRouteDetails('route-123');
 
-      expect(mockApiService.get).toHaveBeenCalledWith('/routes/route-123');
-      expect(result).toEqual(mockRoute);
+      expect(mockApiService.get).toHaveBeenCalledWith('/routes/reference/route-123');
+      expect(result.id).toEqual('route-123');
+      expect(result.stops).toHaveLength(2);
     });
   });
 
@@ -163,7 +164,7 @@ describe('ParentApiService', () => {
 
       const result = await ParentApiService.reportAbsence(absenceReport);
 
-      expect(mockApiService.post).toHaveBeenCalledWith('/parent/absence-reports', absenceReport);
+      expect(mockApiService.post).toHaveBeenCalledWith('/absences', absenceReport);
       expect(result).toEqual(mockResponse);
     });
 
@@ -178,50 +179,62 @@ describe('ParentApiService', () => {
 
       await ParentApiService.reportAbsence(absenceReport);
 
-      expect(mockApiService.post).toHaveBeenCalledWith('/parent/absence-reports', absenceReport);
+      expect(mockApiService.post).toHaveBeenCalledWith('/absences', absenceReport);
     });
   });
 
   describe('getNotificationPreferences', () => {
-    it('should fetch notification preferences', async () => {
-      const mockPreferences = {
-        events: [
-          {
-            eventType: 'EMERGENCY_ALERT',
-            channels: ['PUSH', 'EMAIL'],
-          },
-          {
-            eventType: 'LATE_ARRIVAL',
-            channels: ['PUSH'],
-          },
-        ],
-      };
-      mockApiService.get.mockResolvedValue(mockPreferences);
+    it('should fetch notification preferences and inflate flat server rows', async () => {
+      // Server returns a flat list of rows
+      const serverRows = [
+        { eventType: 'EMERGENCY_ALERT', channel: 'PUSH', enabled: true },
+        { eventType: 'EMERGENCY_ALERT', channel: 'EMAIL', enabled: true },
+        { eventType: 'LATE_ARRIVAL', channel: 'PUSH', enabled: true },
+      ];
+      mockApiService.get.mockResolvedValue(serverRows);
 
       const result = await ParentApiService.getNotificationPreferences();
 
-      expect(mockApiService.get).toHaveBeenCalledWith('/parent/notification-preferences');
-      expect(result).toEqual(mockPreferences);
+      expect(mockApiService.get).toHaveBeenCalledWith('/notification-preferences');
+      expect(result.events).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            eventType: 'EMERGENCY_ALERT',
+            channels: expect.arrayContaining(['PUSH', 'EMAIL']),
+            enabled: true,
+          }),
+          expect.objectContaining({
+            eventType: 'LATE_ARRIVAL',
+            channels: ['PUSH'],
+            enabled: true,
+          }),
+        ]),
+      );
     });
   });
 
   describe('updateNotificationPreferences', () => {
-    it('should update notification preferences', async () => {
+    it('should flatten preferences and PUT to /notification-preferences', async () => {
       const preferences = {
+        userId: 'user-1',
         events: [
           {
             eventType: 'EMERGENCY_ALERT' as const,
             channels: ['PUSH' as const, 'EMAIL' as const],
+            enabled: true,
           },
         ],
       };
-      const mockResponse = { success: true };
-      mockApiService.put.mockResolvedValue(mockResponse);
+      mockApiService.put.mockResolvedValue(undefined);
 
-      const result = await ParentApiService.updateNotificationPreferences(preferences);
+      await ParentApiService.updateNotificationPreferences(preferences);
 
-      expect(mockApiService.put).toHaveBeenCalledWith('/parent/notification-preferences', preferences);
-      expect(result).toEqual(mockResponse);
+      expect(mockApiService.put).toHaveBeenCalledWith('/notification-preferences', {
+        preferences: [
+          { eventType: 'EMERGENCY_ALERT', channel: 'PUSH', enabled: true },
+          { eventType: 'EMERGENCY_ALERT', channel: 'EMAIL', enabled: true },
+        ],
+      });
     });
   });
 

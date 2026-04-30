@@ -25,9 +25,14 @@ export default function MapScreen() {
 
   return (
     <AuroraBackground>
-      <SafeAreaView edges={['top']} style={styles.topBar}>
+      <SafeAreaView edges={['top']} style={styles.topBar} testID="map-screen">
         <View style={styles.row}>
-          <IconButton icon="‹" accessibilityLabel="Back" onPress={() => navigation.goBack()} />
+          <IconButton
+            icon="‹"
+            accessibilityLabel="Back"
+            onPress={() => navigation.goBack()}
+            testID="map-back"
+          />
           {child && (
             <View style={styles.chip}>
               <Text style={styles.chipText}>

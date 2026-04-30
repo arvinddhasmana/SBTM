@@ -48,7 +48,7 @@ export const MOCK_CHILDREN = [
 // ─── Helper Functions ────────────────────────────────────────────────────────
 
 /**
- * Login as a specific user
+ * Login as a specific user (uses data-testid selectors from Aurora Dark UI).
  */
 export async function loginAs(
   page: Page,
@@ -56,45 +56,41 @@ export async function loginAs(
 ): Promise<void> {
   await page.goto('/');
 
-  // Wait for login form to load
-  await page.waitForSelector('input[placeholder*="email" i], input[type="email"]', {
-    timeout: 10000,
-  });
+  // Wait for login form
+  await page.waitForSelector('[data-testid="login-email"]', { timeout: 15000 });
 
   // Fill in credentials
-  await page.fill('input[placeholder*="email" i], input[type="email"]', user.email);
-  await page.fill('input[placeholder*="password" i], input[type="password"]', user.password);
+  await page.locator('[data-testid="login-email"]').fill(user.email);
+  await page.locator('[data-testid="login-password"]').fill(user.password);
 
-  // Click login button
-  await page.click('button:has-text("Login"), button:has-text("Sign In")');
+  // Click login button (RN-Web wraps GlassButton in a div role=button, so use the testID)
+  await page.locator('[data-testid="login-submit"]').click();
 
-  // Wait for navigation to dashboard
-  await page.waitForURL(/dashboard|home/, { timeout: 10000 });
+  // Wait for dashboard to render. Single-page Expo Web app does not change URL,
+  // so probe for the dashboard root testID instead.
+  await page.waitForSelector('[data-testid="dashboard-screen"]', { timeout: 15000 });
 }
 
 /**
  * Logout from the application
  */
 export async function logout(page: Page): Promise<void> {
-  // Look for logout button (could be in header, menu, or settings)
-  // Aurora Dark UI uses an icon-only button with aria-label="Logout".
   const logoutButton = page
     .locator(
-      'button:has-text("Logout"), button:has-text("Log Out"), button:has-text("Sign Out"), [aria-label="Logout" i], [aria-label="Log Out" i], [aria-label="Sign Out" i]',
+      '[data-testid="header-logout"], [aria-label="Logout" i], [aria-label="Log Out" i], [aria-label="Sign Out" i]',
     )
     .first();
   await logoutButton.click();
 
-  // Wait for redirect to login page
-  await page.waitForURL(/login|^\/$/, { timeout: 5000 });
+  // After logout, the login form should reappear.
+  await page.waitForSelector('[data-testid="login-email"]', { timeout: 10000 });
 }
 
 /**
- * Check if user is logged in (should be on dashboard)
+ * Check if user is logged in (dashboard is rendered)
  */
 export async function isLoggedIn(page: Page): Promise<boolean> {
-  const url = page.url();
-  return url.includes('dashboard') || url.includes('home');
+  return (await page.locator('[data-testid="dashboard-screen"]').count()) > 0;
 }
 
 /**
@@ -117,59 +113,95 @@ export function collectConsoleErrors(page: Page): string[] {
 }
 
 /**
- * Mock API responses for testing
+ * Mock API responses for testing.
+ * Uses real gateway routes (`/api/v1/auth/login`, `/api/v1/parent/children`,
+ * `/api/v1/notification-preferences`, etc.). Pass `scenarios.login = false`
+ * to simulate a 401 on login.
  */
 export async function mockApiResponses(
   page: Page,
   scenarios: {
     login?: boolean;
-    children?: typeof MOCK_CHILDREN;
+    children?: typeof MOCK_CHILDREN | any[];
     alerts?: any[];
+    alertHistory?: any[];
+    auditTrail?: any[];
     liveLocation?: any;
+    notificationPreferences?: any;
+    routeDetails?: any;
   },
 ): Promise<void> {
-  // Intercept API calls and return mock data
-  await page.route('**/api/v1/parent/login', async (route) => {
+  // Auth login
+  await page.route('**/api/v1/auth/login', async (route) => {
     if (scenarios.login === false) {
-      await route.fulfill({
-        status: 401,
-        json: { message: 'Invalid credentials' },
-      });
+      await route.fulfill({ status: 401, json: { message: 'Invalid credentials' } });
     } else {
       await route.fulfill({
         status: 200,
         json: {
-          user: TEST_USERS.PARENT,
-          token: 'mock-jwt-token',
+          accessToken: 'mock-jwt-token',
+          user: {
+            id: 'parent-1',
+            email: TEST_USERS.PARENT.email,
+            role: 'PARENT',
+            firstName: TEST_USERS.PARENT.firstName,
+            lastName: TEST_USERS.PARENT.lastName,
+          },
         },
       });
     }
   });
 
-  if (scenarios.children) {
+  // Children list
+  if (scenarios.children !== undefined) {
     await page.route('**/api/v1/parent/children', async (route) => {
-      await route.fulfill({
-        status: 200,
-        json: scenarios.children,
-      });
+      await route.fulfill({ status: 200, json: scenarios.children });
     });
   }
 
+  // Active alerts (per-route)
   if (scenarios.alerts !== undefined) {
-    await page.route('**/api/v1/parent/alerts/*', async (route) => {
-      await route.fulfill({
-        status: 200,
-        json: scenarios.alerts,
-      });
+    await page.route('**/api/v1/alerts/parent-view/*', async (route) => {
+      await route.fulfill({ status: 200, json: scenarios.alerts });
     });
   }
 
-  if (scenarios.liveLocation) {
-    await page.route('**/api/v1/parent/routes/*/live-location', async (route) => {
-      await route.fulfill({
-        status: 200,
-        json: scenarios.liveLocation,
-      });
+  // Alert history (used by Notifications)
+  if (scenarios.alertHistory !== undefined) {
+    await page.route('**/api/v1/alerts/parent-history', async (route) => {
+      await route.fulfill({ status: 200, json: scenarios.alertHistory });
+    });
+  }
+
+  // Audit trail (timeline)
+  if (scenarios.auditTrail !== undefined) {
+    await page.route('**/api/v1/alerts/*/audit-trail', async (route) => {
+      await route.fulfill({ status: 200, json: scenarios.auditTrail });
+    });
+  }
+
+  // Live location (per route)
+  if (scenarios.liveLocation !== undefined) {
+    await page.route('**/api/v1/routes/*/live-location', async (route) => {
+      await route.fulfill({ status: 200, json: scenarios.liveLocation });
+    });
+  }
+
+  // Notification preferences
+  if (scenarios.notificationPreferences !== undefined) {
+    await page.route('**/api/v1/notification-preferences', async (route) => {
+      if (route.request().method() === 'PUT') {
+        await route.fulfill({ status: 204, body: '' });
+      } else {
+        await route.fulfill({ status: 200, json: scenarios.notificationPreferences });
+      }
+    });
+  }
+
+  // Route details (reference)
+  if (scenarios.routeDetails !== undefined) {
+    await page.route('**/api/v1/routes/reference/*', async (route) => {
+      await route.fulfill({ status: 200, json: scenarios.routeDetails });
     });
   }
 }

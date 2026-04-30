@@ -12,7 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useParentStore } from '../store/useParentStore';
-import { Child, RootStackParamList } from '../types';
+import { Child, RootStackParamList, Alert } from '../types';
 import {
   GlassCard,
   LoadingSpinner,
@@ -20,6 +20,13 @@ import {
   AuroraBackground,
   IconButton,
 } from '../components';
+import { ALERT_POLL_INTERVAL_MS, DASHBOARD_LIVE_LOCATION_POLL_MS } from '../config/constants';
+import {
+  alertEventLabel,
+  alertEventEmoji,
+  affectedChildren,
+  childMatchesAlert,
+} from '../utils/alerts';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -37,8 +44,10 @@ export default function DashboardScreen() {
     children,
     activeAlerts,
     isLoadingChildren,
+    routeLiveLocations,
     refreshChildren,
     refreshAlerts,
+    refreshLiveLocations,
     logout,
   } = useParentStore();
 
@@ -46,12 +55,30 @@ export default function DashboardScreen() {
 
   useEffect(() => {
     loadData();
+    const alertTimer = setInterval(() => {
+      refreshAlerts().catch(() => {});
+    }, ALERT_POLL_INTERVAL_MS);
+    const locTimer = setInterval(() => {
+      refreshLiveLocations().catch(() => {});
+    }, DASHBOARD_LIVE_LOCATION_POLL_MS);
+    // Periodically refresh children so the server-side presence status
+    // (on_bus / at_school / at_home) stays current — mirrors the web
+    // portal which polls /parent/children every 15 s.
+    const childrenTimer = setInterval(() => {
+      refreshChildren().catch(() => {});
+    }, ALERT_POLL_INTERVAL_MS);
+    return () => {
+      clearInterval(alertTimer);
+      clearInterval(locTimer);
+      clearInterval(childrenTimer);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadData = async () => {
     try {
-      await Promise.all([refreshChildren(), refreshAlerts()]);
+      await refreshChildren();
+      await Promise.all([refreshAlerts(), refreshLiveLocations()]);
     } catch (error) {
       console.error('Failed to load dashboard data:', error);
     }
@@ -88,15 +115,72 @@ export default function DashboardScreen() {
     });
   }, []);
 
-  const onTimePct = 98;
-  const tripsThisMonth = 12;
   const alertCount = activeAlerts.length;
-  const firstAlert = activeAlerts[0];
+
+  const renderAlertBanner = (alert: Alert) => {
+    const affected = affectedChildren(alert, children);
+    const sev = alert.eventType === 'PANIC_BUTTON' || alert.eventType === 'INCIDENT';
+    return (
+      <TouchableOpacity
+        key={alert.id}
+        accessibilityRole="button"
+        accessibilityLabel={`${alertEventLabel(alert.eventType)} alert`}
+        onPress={() => navigation.navigate('Notifications')}
+        style={[styles.alertBanner, sev && styles.alertBannerCrit]}
+        testID={`alert-banner-${alert.id}`}
+      >
+        <View style={styles.alertBannerHeader}>
+          <Text style={styles.alertBannerEmoji}>{alertEventEmoji(alert.eventType)}</Text>
+          <Text style={styles.alertBannerTitle}>{alertEventLabel(alert.eventType)}</Text>
+          <View style={styles.alertBannerBadge}>
+            <Text style={styles.alertBannerBadgeText}>{alert.status}</Text>
+          </View>
+        </View>
+        <View style={styles.alertBannerChips}>
+          {!!alert.vehicleId && (
+            <View style={styles.alertChipSmall}>
+              <Text style={styles.alertChipSmallText}>Bus {alert.vehicleId}</Text>
+            </View>
+          )}
+          {!!alert.routeId && (
+            <View style={styles.alertChipSmall}>
+              <Text style={styles.alertChipSmallText}>Route {alert.routeId}</Text>
+            </View>
+          )}
+        </View>
+        {!!alert.description && (
+          <Text style={styles.alertBannerDesc} numberOfLines={3}>
+            {alert.description}
+          </Text>
+        )}
+        {affected.length > 0 && (
+          <Text style={styles.alertBannerAffected}>
+            Affected: {affected.map((c) => `${c.firstName} ${c.lastName}`).join(', ')}
+          </Text>
+        )}
+      </TouchableOpacity>
+    );
+  };
 
   const renderChild = ({ item }: { item: Child }) => {
-    const hasAlert = activeAlerts.some(
-      (alert) => alert.routeId === item.amRouteId || alert.routeId === item.pmRouteId,
-    );
+    const childAlerts = activeAlerts.filter((a) => childMatchesAlert(item, a));
+    const hasAlert = childAlerts.length > 0;
+    // Use the server-provided presence status directly (mirrors the web
+    // portal's Dashboard — it does not derive the badge from live GPS).
+    // Normalize to lowercase so legacy fixtures that send "ON_BUS" still
+    // resolve to a known label.
+    const rawStatus = (item.status ?? 'unknown') as string;
+    const status =
+      (rawStatus.toLowerCase() as Child['status']) in STATUS_LABEL
+        ? (rawStatus.toLowerCase() as Child['status'])
+        : 'unknown';
+    const liveAm = item.amRouteId ? routeLiveLocations[item.amRouteId] : undefined;
+    const livePm = item.pmRouteId ? routeLiveLocations[item.pmRouteId] : undefined;
+    const live = liveAm ?? livePm;
+    const etaMin =
+      live && live.eta != null && Number.isFinite(live.eta)
+        ? Math.max(0, Math.round(live.eta / 60))
+        : null;
 
     return (
       <Pressable
@@ -105,8 +189,16 @@ export default function DashboardScreen() {
         aria-label={`Track ${item.firstName} ${item.lastName}` as any}
         onPress={() => handleTrackChild(item)}
         style={({ pressed }) => [pressed && { opacity: 0.85 }]}
+        testID={`student-card-${item.id}`}
       >
         <GlassCard variant={hasAlert ? 'alert' : 'default'} style={styles.card}>
+          {hasAlert && (
+            <View style={styles.cardAlertRibbon}>
+              <Text style={styles.cardAlertRibbonText}>
+                ⚠ {childAlerts.length} active alert{childAlerts.length === 1 ? '' : 's'}
+              </Text>
+            </View>
+          )}
           <View style={styles.cardRow}>
             <View style={styles.avatar}>
               <Text style={styles.avatarText}>
@@ -120,24 +212,41 @@ export default function DashboardScreen() {
                 <Text style={styles.childName}>
                   {item.firstName} {item.lastName}
                 </Text>
-                <StatusBadge label={STATUS_LABEL[item.status]} variant={item.status} size="small" />
+                <View testID={`child-status-${item.id}`}>
+                  <StatusBadge label={STATUS_LABEL[status]} variant={status} size="small" />
+                </View>
               </View>
               <Text style={styles.schoolName}>
-                {item.schoolName}
+                {item.schoolName || 'School'}
                 {item.grade ? ` · Grade ${item.grade}` : ''}
               </Text>
               <View style={styles.routeChips}>
-                {!!item.amRouteName && (
+                {!!(item.amRouteName || item.amRouteId) && (
                   <View style={[styles.routeChip, styles.routeChipAm]}>
-                    <Text style={styles.routeChipText}>AM · {item.amRouteName}</Text>
+                    <Text style={styles.routeChipText}>
+                      AM · {item.amRouteName ?? item.amRouteId}
+                    </Text>
                   </View>
                 )}
-                {!!item.pmRouteName && (
+                {!!(item.pmRouteName || item.pmRouteId) && (
                   <View style={[styles.routeChip, styles.routeChipPm]}>
-                    <Text style={styles.routeChipText}>PM · {item.pmRouteName}</Text>
+                    <Text style={styles.routeChipText}>
+                      PM · {item.pmRouteName ?? item.pmRouteId}
+                    </Text>
+                  </View>
+                )}
+                {!!item.vehicleId && (
+                  <View style={[styles.routeChip, styles.routeChipBus]}>
+                    <Text style={styles.routeChipText}>Bus {item.vehicleId}</Text>
                   </View>
                 )}
               </View>
+              {!!item.stopName && <Text style={styles.metaLine}>Stop · {item.stopName}</Text>}
+              {etaMin != null && status === 'on_bus' && (
+                <Text style={styles.metaLine}>
+                  Bus {etaMin === 0 ? 'arriving now' : `arriving in ~${etaMin} min`}
+                </Text>
+              )}
               <Text style={styles.trackHint}>Tap to track on map →</Text>
             </View>
 
@@ -161,8 +270,7 @@ export default function DashboardScreen() {
 
   return (
     <AuroraBackground>
-      <SafeAreaView style={styles.safe} edges={['top']}>
-        {/* Header */}
+      <SafeAreaView style={styles.safe} edges={['top']} testID="dashboard-screen">
         <View style={styles.header}>
           <View style={styles.greetingWrap}>
             <View style={styles.userAvatar}>
@@ -174,6 +282,12 @@ export default function DashboardScreen() {
             </View>
           </View>
           <View style={styles.iconRow}>
+            <IconButton
+              icon="🗓"
+              accessibilityLabel="Report Absence"
+              testID="report-absence-fab"
+              onPress={() => navigation.navigate('AbsenceReport')}
+            />
             <IconButton
               icon="🔔"
               showDot={alertCount > 0}
@@ -196,25 +310,21 @@ export default function DashboardScreen() {
           </View>
         </View>
 
-        {/* Alert summary chip */}
-        {!!firstAlert && (
-          <TouchableOpacity
-            accessibilityRole="button"
-            onPress={() => navigation.navigate('Notifications')}
-            style={styles.alertChip}
-          >
-            <Text style={styles.alertChipText}>
-              {alertCount} alert{alertCount === 1 ? '' : 's'} · {firstAlert.description}
-            </Text>
-          </TouchableOpacity>
-        )}
-
-        {/* Children List */}
         <FlatList
           data={children}
           renderItem={renderChild}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
+          ListHeaderComponent={
+            activeAlerts.length > 0 ? (
+              <View style={styles.alertsBlock} testID="active-alerts-block">
+                <Text style={styles.alertsBlockTitle}>
+                  {alertCount} active alert{alertCount === 1 ? '' : 's'}
+                </Text>
+                {activeAlerts.map(renderAlertBanner)}
+              </View>
+            ) : null
+          }
           refreshControl={
             <RefreshControl
               refreshing={isRefreshing}
@@ -227,35 +337,7 @@ export default function DashboardScreen() {
               <Text style={styles.emptyText}>No children linked to your account.</Text>
             </View>
           }
-          ListFooterComponent={
-            <View style={styles.statsRow}>
-              <View style={styles.statCard}>
-                <Text style={styles.statValue}>{onTimePct}%</Text>
-                <Text style={styles.statLabel}>on-time</Text>
-              </View>
-              <View style={styles.statCard}>
-                <Text style={styles.statValue}>{tripsThisMonth}</Text>
-                <Text style={styles.statLabel}>trips</Text>
-              </View>
-              <View style={styles.statCard}>
-                <Text style={styles.statValue}>{alertCount}</Text>
-                <Text style={styles.statLabel}>alert{alertCount === 1 ? '' : 's'}</Text>
-              </View>
-            </View>
-          }
         />
-
-        {/* FAB */}
-        <TouchableOpacity
-          accessibilityRole="button"
-          accessibilityLabel="Report Absence"
-          aria-label={'Report Absence' as any}
-          style={styles.fab}
-          onPress={() => navigation.navigate('AbsenceReport')}
-        >
-          <Text style={styles.fabIcon}>＋</Text>
-          <Text style={styles.fabText}>Report Absence</Text>
-        </TouchableOpacity>
       </SafeAreaView>
     </AuroraBackground>
   );
@@ -263,16 +345,8 @@ export default function DashboardScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1 },
-  centerContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    marginTop: 10,
-    color: '#cbd5e1',
-    fontSize: 16,
-  },
+  centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  loadingText: { marginTop: 10, color: '#cbd5e1', fontSize: 16 },
   header: {
     paddingHorizontal: 18,
     paddingTop: 6,
@@ -281,11 +355,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  greetingWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
+  greetingWrap: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   userAvatar: {
     width: 38,
     height: 38,
@@ -298,24 +368,74 @@ const styles = StyleSheet.create({
   greeting: { color: '#f8fafc', fontSize: 18, fontWeight: '700' },
   dateLabel: { color: '#94a3b8', fontSize: 12, marginTop: 2 },
   iconRow: { flexDirection: 'row', alignItems: 'center' },
-  alertChip: {
-    marginHorizontal: 18,
-    marginTop: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 14,
-    backgroundColor: 'rgba(234,179,8,0.15)',
-    borderWidth: 1,
-    borderColor: 'rgba(234,179,8,0.35)',
+
+  alertsBlock: { marginBottom: 6 },
+  alertsBlockTitle: {
+    color: '#fda4af',
+    fontSize: 12,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    marginBottom: 8,
+    paddingHorizontal: 4,
+    fontWeight: '700',
   },
-  alertChipText: { color: '#fde68a', fontSize: 13 },
-  listContent: { padding: 15, paddingBottom: 120 },
-  card: { marginBottom: 14 },
-  cardRow: {
+  alertBanner: {
+    marginBottom: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: 14,
+    backgroundColor: 'rgba(236,72,153,0.10)',
+    borderWidth: 1,
+    borderColor: 'rgba(236,72,153,0.45)',
+  },
+  alertBannerCrit: {
+    backgroundColor: 'rgba(239,68,68,0.12)',
+    borderColor: 'rgba(239,68,68,0.55)',
+  },
+  alertBannerHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 8,
+    marginBottom: 6,
   },
+  alertBannerEmoji: { fontSize: 16 },
+  alertBannerTitle: { color: '#fecdd3', fontWeight: '700', fontSize: 14, flex: 1 },
+  alertBannerBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.15)',
+  },
+  alertBannerBadgeText: { color: '#fff', fontSize: 10, fontWeight: '700' },
+  alertBannerChips: { flexDirection: 'row', gap: 6, flexWrap: 'wrap', marginBottom: 6 },
+  alertChipSmall: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 7,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
+  },
+  alertChipSmallText: { color: '#e2e8f0', fontSize: 10, fontWeight: '600' },
+  alertBannerDesc: { color: '#fee2e2', fontSize: 13, lineHeight: 18, marginBottom: 4 },
+  alertBannerAffected: { color: '#fda4af', fontSize: 12, fontStyle: 'italic' },
+
+  listContent: { padding: 15, paddingBottom: 120 },
+  card: { marginBottom: 14 },
+  cardAlertRibbon: {
+    alignSelf: 'flex-start',
+    marginBottom: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    backgroundColor: 'rgba(236,72,153,0.18)',
+    borderWidth: 1,
+    borderColor: 'rgba(236,72,153,0.5)',
+  },
+  cardAlertRibbonText: { color: '#fda4af', fontSize: 11, fontWeight: '700' },
+  cardRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   avatar: {
     width: 50,
     height: 50,
@@ -350,14 +470,15 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(245,158,11,0.15)',
     borderColor: 'rgba(245,158,11,0.4)',
   },
-  routeChipText: { color: '#e2e8f0', fontSize: 11, fontWeight: '500' },
-  trackHint: { color: '#a5b4fc', fontSize: 12, marginTop: 2 },
-  chevron: { color: '#cbd5e1', fontSize: 28, fontWeight: '300' },
-  statsRow: {
-    flexDirection: 'row',
-    gap: 10,
-    marginTop: 6,
+  routeChipBus: {
+    backgroundColor: 'rgba(139,92,246,0.15)',
+    borderColor: 'rgba(139,92,246,0.4)',
   },
+  routeChipText: { color: '#e2e8f0', fontSize: 11, fontWeight: '500' },
+  metaLine: { color: '#cbd5e1', fontSize: 12, marginTop: 1 },
+  trackHint: { color: '#a5b4fc', fontSize: 12, marginTop: 4 },
+  chevron: { color: '#cbd5e1', fontSize: 28, fontWeight: '300' },
+  statsRow: { flexDirection: 'row', gap: 10, marginTop: 6 },
   statCard: {
     flex: 1,
     paddingVertical: 14,
@@ -369,11 +490,7 @@ const styles = StyleSheet.create({
   },
   statValue: { color: '#f8fafc', fontWeight: '700', fontSize: 18 },
   statLabel: { color: '#94a3b8', fontSize: 11, marginTop: 2 },
-  emptyContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 60,
-  },
+  emptyContainer: { alignItems: 'center', justifyContent: 'center', paddingVertical: 60 },
   emptyText: { color: '#94a3b8', fontSize: 16, textAlign: 'center' },
   fab: {
     position: 'absolute',

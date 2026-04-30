@@ -44,6 +44,8 @@ services:
       - DB_DATABASE=${DB_DATABASE:-sbms}
       - JWT_SECRET=${JWT_SECRET:?JWT_SECRET is required}
       - JWT_EXPIRATION=${JWT_EXPIRATION:-24h}
+      - INTERNAL_SERVICE_SECRET=${INTERNAL_SERVICE_SECRET:?INTERNAL_SERVICE_SECRET is required}
+      - SERVICE_IDENTITY=${SERVICE_IDENTITY:-api-gateway}
       - RATE_LIMIT_TTL=${RATE_LIMIT_TTL:-60000}
       - RATE_LIMIT_MAX=${RATE_LIMIT_MAX:-100}
       - HTTP_TIMEOUT=${HTTP_TIMEOUT:-10000}
@@ -172,6 +174,12 @@ services:
     build:
       context: ./apps/admin-dashboard
       dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:3001}
+        VITE_MAPTILER_KEY: ${VITE_MAPTILER_KEY:-}
+        VITE_USE_MOCK: ${VITE_USE_MOCK:-false}
+        VITE_ALERTS_WS_URL: ${VITE_ALERTS_WS_URL:-http://localhost:3003}
+        VITE_PRESENCE_WS_URL: ${VITE_PRESENCE_WS_URL:-http://localhost:3004}
     ports:
       - '5173:80'
     depends_on:
@@ -227,6 +235,9 @@ services:
     build:
       context: ./apps/parent-dashboard/web
       dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:3001}
+        VITE_MAPTILER_KEY: ${VITE_MAPTILER_KEY:-}
     ports:
       - '3000:80'
     depends_on:

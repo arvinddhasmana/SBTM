@@ -1,5 +1,5 @@
 import React from 'react';
-import Svg, { Circle, Path, Rect, G, Text as SvgText } from 'react-native-svg';
+import Svg, { Circle, Path, Text as SvgText } from 'react-native-svg';
 
 /**
  * SVG bus / stop / school markers that mirror the parent-dashboard web
@@ -22,15 +22,18 @@ const BUS_STATUS_COLORS: Record<BusStatus, { fill: string; border: string }> = {
 
 export function BusMarker({ status = 'normal', size = 36 }: { status?: BusStatus; size?: number }) {
   const { fill, border } = BUS_STATUS_COLORS[status];
+  // Mirrors web portal createBusIcon: solid colored circle with a 3px border
+  // and the same Material-style bus glyph rendered in white.
   return (
     <Svg width={size} height={size} viewBox="0 0 36 36">
-      <Circle cx={18} cy={18} r={16} fill={fill} stroke={border} strokeWidth={2} />
-      {/* Bus body */}
-      <Rect x={9} y={11} width={18} height={12} rx={2} fill="#fff" />
-      <Rect x={11} y={13} width={6} height={4} fill={fill} />
-      <Rect x={19} y={13} width={6} height={4} fill={fill} />
-      <Circle cx={13} cy={24} r={2} fill="#1f2937" />
-      <Circle cx={23} cy={24} r={2} fill="#1f2937" />
+      <Circle cx={18} cy={18} r={16.5} fill={fill} stroke={border} strokeWidth={3} />
+      {/* Same bus path as apps/parent-dashboard/web/src/pages/Map.tsx createBusIcon
+          (24x24 viewBox), translated and scaled into the 36x36 circle. */}
+      <Path
+        transform="translate(9 9) scale(0.75)"
+        d="M4 16c0 .88.39 1.67 1 2.22V20c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h8v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1.78c.61-.55 1-1.34 1-2.22V6c0-3.5-3.58-4-8-4s-8 .5-8 4v10zm3.5 1c-.83 0-1.5-.67-1.5-1.5S6.67 14 7.5 14s1.5.67 1.5 1.5S8.33 17 7.5 17zm9 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm1.5-6H6V6h12v5z"
+        fill="#fff"
+      />
     </Svg>
   );
 }
@@ -64,13 +67,17 @@ export function StopMarker({ sequence }: { sequence: number }) {
 }
 
 export function SchoolMarker() {
+  // Mirrors web portal SCHOOL_ICON: purple circle with white border and a
+  // graduation-cap glyph (lucide School / Material school).
   return (
-    <Svg width={32} height={32} viewBox="0 0 32 32">
-      <Circle cx={16} cy={16} r={14} fill="#8b5cf6" stroke="#fff" strokeWidth={2} />
-      {/* School building */}
-      <Path d="M16 7 L24 12 L24 14 L8 14 L8 12 Z" fill="#fff" />
-      <Rect x={10} y={14} width={12} height={9} fill="#fff" />
-      <Rect x={14} y={17} width={4} height={6} fill="#8b5cf6" />
+    <Svg width={36} height={36} viewBox="0 0 36 36">
+      <Circle cx={18} cy={18} r={16.5} fill="#8b5cf6" stroke="#fff" strokeWidth={3} />
+      {/* Same path as apps/parent-dashboard/web/src/pages/Map.tsx SCHOOL_ICON */}
+      <Path
+        transform="translate(9 9) scale(0.75)"
+        d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82zM12 3L1 9l11 6 9-4.91V17h2V9L12 3z"
+        fill="#fff"
+      />
     </Svg>
   );
 }

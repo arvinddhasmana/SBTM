@@ -12,6 +12,7 @@ export const useParentStore = create<ParentStore>((set, get) => ({
   children: [],
   activeAlerts: [],
   notificationPreferences: null,
+  routeLiveLocations: {},
 
   // Loading States
   isLoadingChildren: false,
@@ -95,19 +96,55 @@ export const useParentStore = create<ParentStore>((set, get) => ({
       set({ isLoadingAlerts: true });
       const { children } = get();
 
-      // Collect all route IDs from all children
-      const routeIds: string[] = [];
+      // Collect unique route IDs from all children. Two siblings often share
+      // the same AM/PM route, so we dedupe before querying — otherwise the
+      // alerts API is called twice for the same route and the dashboard
+      // renders duplicate alert banners (and React warns about duplicate keys).
+      const routeIdSet = new Set<string>();
       children.forEach((child) => {
-        if (child.amRouteId) routeIds.push(child.amRouteId);
-        if (child.pmRouteId) routeIds.push(child.pmRouteId);
+        if (child.amRouteId) routeIdSet.add(child.amRouteId);
+        if (child.pmRouteId) routeIdSet.add(child.pmRouteId);
       });
+      const routeIds = Array.from(routeIdSet);
 
       const alerts = await ParentApiService.getActiveAlerts(routeIds);
-      set({ activeAlerts: Array.isArray(alerts) ? alerts : [], isLoadingAlerts: false });
+      // Defensive: also dedupe by alert id in case the backend returns the
+      // same physical alert under multiple route lookups.
+      const seen = new Set<string>();
+      const unique = (Array.isArray(alerts) ? alerts : []).filter((a) => {
+        if (!a?.id || seen.has(a.id)) return false;
+        seen.add(a.id);
+        return true;
+      });
+      set({ activeAlerts: unique, isLoadingAlerts: false });
     } catch (error) {
       console.error('Failed to refresh alerts:', error);
       set({ isLoadingAlerts: false });
       throw error;
+    }
+  },
+
+  refreshLiveLocations: async () => {
+    try {
+      const { children } = get();
+      const routeIds = new Set<string>();
+      children.forEach((c) => {
+        if (c.amRouteId) routeIds.add(c.amRouteId);
+        if (c.pmRouteId) routeIds.add(c.pmRouteId);
+      });
+      if (routeIds.size === 0) return;
+      const ids = Array.from(routeIds);
+      const results = await Promise.allSettled(
+        ids.map((id) => ParentApiService.getLiveLocation(id)),
+      );
+      const next: Record<string, any> = {};
+      results.forEach((r, idx) => {
+        if (r.status === 'fulfilled' && r.value) next[ids[idx]] = r.value;
+      });
+      set({ routeLiveLocations: next });
+    } catch (error) {
+      // Polling — silent failure
+      console.warn('Failed to refresh live locations:', error);
     }
   },
 }));

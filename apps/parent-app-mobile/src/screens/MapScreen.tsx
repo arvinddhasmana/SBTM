@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
+import { View, Text, StyleSheet, ActivityIndicator, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import { useRoute, useNavigation } from '@react-navigation/native';
@@ -11,17 +11,21 @@ import { BUS_LOCATION_POLL_MS } from '../config/constants';
 import {
   AuroraBackground,
   IconButton,
-  BusMarker,
   ChildStopMarker,
   StopMarker,
   SchoolMarker,
+  BusMarker,
   POLYLINE_COLORS,
   type BusStatus,
 } from '../components';
+import { decodePolyline } from '../utils/polyline';
 
 type MapScreenRouteProp = RouteProp<RootStackParamList, 'Map'>;
 
 const STALE_THRESHOLD_MS = 120_000;
+
+const EMERGENCY_EVENT_TYPES = new Set(['PANIC_BUTTON', 'PANIC_ALERT', 'INCIDENT']);
+const DELAY_EVENT_TYPES = new Set(['LATE_ARRIVAL', 'ROUTE_DEVIATION', 'ROUTE_DIVERSION']);
 
 export default function MapScreen() {
   const route = useRoute<MapScreenRouteProp>();
@@ -29,66 +33,210 @@ export default function MapScreen() {
   const { children, activeAlerts } = useParentStore();
   const mapRef = useRef<MapView>(null);
 
-  const [child] = useState(() => children.find((c) => c.id === route.params.childId));
-  const [busLocation, setBusLocation] = useState<BusLocationUpdate | null>(null);
+  // Re-derive child on each render so a refreshed `children` list (e.g.
+  // status change after a presence event) flows into the map screen. A
+  // useState snapshot froze child.status and caused PM routes to stick on
+  // "Completed". Falls back to the initial snapshot if the row temporarily
+  // disappears mid-render.
+  const initialChildRef = useRef(children.find((c) => c.id === route.params.childId));
+  const child = useMemo(
+    () => children.find((c) => c.id === route.params.childId) ?? initialChildRef.current ?? null,
+    [children, route.params.childId],
+  );
+  // Live locations polled in parallel for AM and PM routes — mirrors
+  // apps/parent-dashboard/web/src/pages/Map.tsx so the active route is
+  // chosen reactively rather than always defaulting to AM.
+  const [amLocation, setAmLocation] = useState<BusLocationUpdate | null>(null);
+  const [pmLocation, setPmLocation] = useState<BusLocationUpdate | null>(null);
   const [routeDetails, setRouteDetails] = useState<Route | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [sheetExpanded, setSheetExpanded] = useState(false);
+  const [nowMs, setNowMs] = useState(() => Date.now());
+  // On Android, calling fitToCoordinates before MapView fires `onMapReady`
+  // is a no-op — that's why the previous build only re-centered "after
+  // some time" (when the user moved the map or polling re-triggered the
+  // effect). Track readiness so the initial fit waits for the map.
+  const [mapReady, setMapReady] = useState(false);
 
-  useEffect(() => {
-    loadMapData();
-    const interval = setInterval(fetchBusLocation, BUS_LOCATION_POLL_MS);
-    return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const amRouteId = child?.amRouteId ?? null;
+  const pmRouteId = child?.pmRouteId ?? null;
 
-  const loadMapData = async () => {
+  const fetchAmLocation = useCallback(async () => {
+    if (!amRouteId) return;
     try {
-      if (!child) return;
-      const routeId = child.amRouteId;
-      if (!routeId) {
-        setIsLoading(false);
-        return;
-      }
-
-      const [location, details] = await Promise.all([
-        ParentApiService.getLiveLocation(routeId),
-        ParentApiService.getRouteDetails(routeId),
-      ]);
-
-      setBusLocation(location);
-      setRouteDetails(details);
-
-      if (details.stops && details.stops.length > 0) fitMapToRoute(details);
-    } catch (error) {
-      console.error('Failed to load map data:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const fetchBusLocation = async () => {
-    if (!child?.amRouteId) return;
-    try {
-      const location = await ParentApiService.getLiveLocation(child.amRouteId);
-      setBusLocation(location);
+      const loc = await ParentApiService.getLiveLocation(amRouteId);
+      setAmLocation(loc);
     } catch {
       /* polling — silent */
     }
+  }, [amRouteId]);
+
+  const fetchPmLocation = useCallback(async () => {
+    if (!pmRouteId) return;
+    try {
+      const loc = await ParentApiService.getLiveLocation(pmRouteId);
+      setPmLocation(loc);
+    } catch {
+      /* polling — silent */
+    }
+  }, [pmRouteId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      await Promise.all([fetchAmLocation(), fetchPmLocation()]);
+      if (!cancelled) setIsLoading(false);
+    })();
+    const interval = setInterval(() => {
+      fetchAmLocation();
+      fetchPmLocation();
+    }, BUS_LOCATION_POLL_MS);
+    const tick = setInterval(() => setNowMs(Date.now()), 5_000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+      clearInterval(tick);
+    };
+  }, [fetchAmLocation, fetchPmLocation]);
+
+  // Pick the freshest live route (mirrors web Map.tsx selection logic).
+  const { activeRouteId, locationData } = useMemo<{
+    activeRouteId: string | null;
+    locationData: BusLocationUpdate | null;
+  }>(() => {
+    const now = nowMs;
+    const amFresh =
+      amLocation && now - new Date(amLocation.timestamp).getTime() < STALE_THRESHOLD_MS;
+    const pmFresh =
+      pmLocation && now - new Date(pmLocation.timestamp).getTime() < STALE_THRESHOLD_MS;
+
+    if (amFresh && pmFresh) {
+      const amAge = now - new Date(amLocation!.timestamp).getTime();
+      const pmAge = now - new Date(pmLocation!.timestamp).getTime();
+      return pmAge <= amAge
+        ? { activeRouteId: pmRouteId, locationData: pmLocation! }
+        : { activeRouteId: amRouteId, locationData: amLocation! };
+    }
+    if (pmFresh) return { activeRouteId: pmRouteId, locationData: pmLocation! };
+    if (amFresh) return { activeRouteId: amRouteId, locationData: amLocation! };
+
+    if (amLocation && pmLocation) {
+      const amAge = now - new Date(amLocation.timestamp).getTime();
+      const pmAge = now - new Date(pmLocation.timestamp).getTime();
+      return pmAge <= amAge
+        ? { activeRouteId: pmRouteId, locationData: pmLocation }
+        : { activeRouteId: amRouteId, locationData: amLocation };
+    }
+    if (pmLocation) return { activeRouteId: pmRouteId, locationData: pmLocation };
+    if (amLocation) return { activeRouteId: amRouteId, locationData: amLocation };
+    return { activeRouteId: amRouteId ?? pmRouteId, locationData: null };
+  }, [amLocation, pmLocation, amRouteId, pmRouteId, nowMs]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!activeRouteId) {
+      setRouteDetails(null);
+      return;
+    }
+    ParentApiService.getRouteDetails(activeRouteId)
+      .then((details) => {
+        if (!cancelled) setRouteDetails(details);
+      })
+      .catch((err) => {
+        console.error('Failed to load route details:', err);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeRouteId]);
+
+  // Decode road-following polyline (mirrors web portal). Falls back to
+  // straight stop-to-stop only when the server omits the polyline.
+  const routePath = useMemo<{ latitude: number; longitude: number }[] | null>(() => {
+    if (routeDetails?.polyline) {
+      const coords = decodePolyline(routeDetails.polyline);
+      if (coords.length > 0) {
+        return coords.map(([lat, lng]) => ({ latitude: lat, longitude: lng }));
+      }
+    }
+    if (routeDetails?.stops && routeDetails.stops.length > 1) {
+      return routeDetails.stops.map((s) => ({ latitude: s.lat, longitude: s.lng }));
+    }
+    return null;
+  }, [routeDetails]);
+
+  const fitMapToRoute = useCallback(
+    (
+      details: Route | null,
+      busLoc: BusLocationUpdate | null,
+      path: { latitude: number; longitude: number }[] | null,
+    ) => {
+      if (!mapRef.current) return;
+      const coords: { latitude: number; longitude: number }[] = [];
+      if (path) coords.push(...path);
+      if (details?.stops) {
+        for (const s of details.stops) coords.push({ latitude: s.lat, longitude: s.lng });
+      }
+      if (details?.schoolLat != null && details?.schoolLng != null) {
+        coords.push({ latitude: details.schoolLat, longitude: details.schoolLng });
+      }
+      if (busLoc) coords.push({ latitude: busLoc.lat, longitude: busLoc.lng });
+      if (coords.length < 2) return;
+      mapRef.current.fitToCoordinates(coords, {
+        edgePadding: { top: 120, right: 60, bottom: 240, left: 60 },
+        animated: true,
+      });
+    },
+    [],
+  );
+
+  // Fit-to-bounds on initial load OR when the active route changes.
+  // Gated on `mapReady` so the very first fit lands as soon as the native
+  // map is mounted on Android (previously this fired too early and nothing
+  // happened until a later re-render moved the camera).
+  const lastFitRouteIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!mapReady) return;
+    if (!routeDetails || !routePath) return;
+    if (lastFitRouteIdRef.current === routeDetails.id) return;
+    fitMapToRoute(routeDetails, locationData, routePath);
+    lastFitRouteIdRef.current = routeDetails.id;
+  }, [mapReady, routeDetails, routePath, locationData, fitMapToRoute]);
+
+  const recenter = () => {
+    if (mapRef.current && locationData) {
+      mapRef.current.animateToRegion(
+        {
+          latitude: locationData.lat,
+          longitude: locationData.lng,
+          latitudeDelta: 0.02,
+          longitudeDelta: 0.02,
+        },
+        500,
+      );
+      return;
+    }
+    fitMapToRoute(routeDetails, locationData, routePath);
   };
 
-  const fitMapToRoute = (details: Route) => {
-    if (!mapRef.current || !details.stops || details.stops.length === 0) return;
-    const coordinates = details.stops.map((stop) => ({
-      latitude: stop.lat,
-      longitude: stop.lng,
-    }));
-    mapRef.current.fitToCoordinates(coordinates, {
-      edgePadding: { top: 100, right: 60, bottom: 240, left: 60 },
-      animated: true,
-    });
-  };
+  const handleRefresh = useCallback(() => {
+    fetchAmLocation();
+    fetchPmLocation();
+    if (activeRouteId) {
+      ParentApiService.getRouteDetails(activeRouteId)
+        .then(setRouteDetails)
+        .catch(() => undefined);
+    }
+  }, [fetchAmLocation, fetchPmLocation, activeRouteId]);
 
-  const recenter = () => routeDetails && fitMapToRoute(routeDetails);
+  // Hoisted derivations — must run on every render BEFORE any early returns
+  // so React hook ordering stays stable across loading / loaded states.
+  const childStopId = useMemo(() => {
+    if (!child || !activeRouteId) return undefined;
+    if (activeRouteId === child.amRouteId) return child.amStopId ?? child.stopId;
+    if (activeRouteId === child.pmRouteId) return child.pmStopId ?? child.stopId;
+    return child.stopId;
+  }, [child, activeRouteId]);
 
   if (isLoading) {
     return (
@@ -111,15 +259,17 @@ export default function MapScreen() {
     );
   }
 
-  // Determine bus status
-  const busAgeMs = busLocation ? Date.now() - new Date(busLocation.timestamp).getTime() : Infinity;
-  const isLive = !!busLocation && busAgeMs < STALE_THRESHOLD_MS;
-  const hasEmergency = activeAlerts.some(
-    (a) => a.routeId === child.amRouteId && a.eventType === 'PANIC_BUTTON',
+  const busAgeMs = locationData
+    ? Date.now() - new Date(locationData.timestamp).getTime()
+    : Infinity;
+  const isLive = !!locationData && busAgeMs < STALE_THRESHOLD_MS;
+
+  const matchingAlerts = activeAlerts.filter(
+    (a) =>
+      a.routeId === activeRouteId || a.routeId === child.amRouteId || a.routeId === child.pmRouteId,
   );
-  const hasDelay = activeAlerts.some(
-    (a) => a.routeId === child.amRouteId && a.eventType === 'LATE_ARRIVAL',
-  );
+  const hasEmergency = matchingAlerts.some((a) => EMERGENCY_EVENT_TYPES.has(a.eventType));
+  const hasDelay = matchingAlerts.some((a) => DELAY_EVENT_TYPES.has(a.eventType));
   const busStatus: BusStatus = !isLive
     ? 'offline'
     : hasEmergency
@@ -127,18 +277,53 @@ export default function MapScreen() {
       : hasDelay
         ? 'delay'
         : 'normal';
+  const statusLabel =
+    busStatus === 'normal'
+      ? 'Normal'
+      : busStatus === 'delay'
+        ? 'Delayed'
+        : busStatus === 'emergency'
+          ? 'Emergency'
+          : 'Offline';
 
-  const direction = routeDetails?.direction === 'PM' ? 'PM' : 'AM';
+  const direction: 'AM' | 'PM' =
+    routeDetails?.direction === 'PM'
+      ? 'PM'
+      : routeDetails?.direction === 'AM'
+        ? 'AM'
+        : activeRouteId && activeRouteId === child.pmRouteId
+          ? 'PM'
+          : 'AM';
   const polylineColor = POLYLINE_COLORS[direction];
 
   const stops = routeDetails?.stops ?? [];
-  const lastStop = stops[stops.length - 1];
+
+  // Route status — a live, fresh GPS signal always wins over the cached
+  // presence flag so an actively running PM bus never displays "Completed".
+  // Falls back to presence (at_home / at_school) only when GPS is absent.
+  const routeStatusLabel = (() => {
+    if (isLive) return 'Live';
+    const isPM = activeRouteId === child.pmRouteId;
+    const isAM = activeRouteId === child.amRouteId;
+    if (isPM && child.status === 'at_home') return 'Completed';
+    if (isAM && child.status === 'at_school') return 'Completed';
+    if (locationData) return 'No Signal';
+    return 'Inactive';
+  })();
+
+  const childFullName = `${child.firstName} ${child.lastName}`.trim();
+  const routeName = routeDetails?.name ?? activeRouteId ?? 'Route';
+  const vehicleId = routeDetails?.vehicleId || child.vehicleId || 'N/A';
+  const etaMinutes =
+    isLive && locationData?.eta != null ? Math.max(0, Math.round(locationData.eta / 60)) : null;
+  const updatedAt = locationData?.timestamp ? new Date(locationData.timestamp) : null;
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} testID="map-screen">
       <MapView
         ref={mapRef}
         style={styles.map}
+        onMapReady={() => setMapReady(true)}
         initialRegion={{
           latitude: 45.4215,
           longitude: -75.6972,
@@ -146,30 +331,12 @@ export default function MapScreen() {
           longitudeDelta: 0.05,
         }}
       >
-        {isLive && busLocation && (
-          <Marker
-            coordinate={{ latitude: busLocation.lat, longitude: busLocation.lng }}
-            title="School Bus"
-            description={`Route: ${routeDetails?.name || 'Unknown'}`}
-            anchor={{ x: 0.5, y: 0.5 }}
-          >
-            <BusMarker status={busStatus} />
-          </Marker>
+        {routePath && routePath.length > 1 && (
+          <Polyline coordinates={routePath} strokeColor={polylineColor} strokeWidth={5} />
         )}
 
-        {!isLive && busLocation && (
-          <Marker
-            coordinate={{ latitude: busLocation.lat, longitude: busLocation.lng }}
-            title="School Bus (offline)"
-            anchor={{ x: 0.5, y: 0.5 }}
-          >
-            <BusMarker status="offline" />
-          </Marker>
-        )}
-
-        {stops.map((stop, idx) => {
-          const isChildStop = stop.id === child.stopId;
-          const isSchool = idx === stops.length - 1;
+        {stops.map((stop) => {
+          const isChildStop = stop.id === childStopId;
           return (
             <Marker
               key={stop.id}
@@ -177,10 +344,9 @@ export default function MapScreen() {
               title={stop.name}
               description={`Stop #${stop.sequence}`}
               anchor={{ x: 0.5, y: 0.5 }}
+              zIndex={isChildStop ? 500 : 1}
             >
-              {isSchool ? (
-                <SchoolMarker />
-              ) : isChildStop ? (
+              {isChildStop ? (
                 <ChildStopMarker sequence={stop.sequence} />
               ) : (
                 <StopMarker sequence={stop.sequence} />
@@ -189,75 +355,149 @@ export default function MapScreen() {
           );
         })}
 
-        {stops.length > 1 && (
-          <Polyline
-            coordinates={stops.map((s) => ({ latitude: s.lat, longitude: s.lng }))}
-            strokeColor={polylineColor}
-            strokeWidth={4}
-          />
+        {/* School marker — uses school coordinates from the route reference,
+            NOT the last stop (that produced the wrong-location bug). */}
+        {routeDetails?.schoolLat != null && routeDetails?.schoolLng != null && (
+          <Marker
+            coordinate={{ latitude: routeDetails.schoolLat, longitude: routeDetails.schoolLng }}
+            title={routeDetails.schoolName ?? child.schoolName ?? 'School'}
+            description="School"
+            anchor={{ x: 0.5, y: 0.5 }}
+            zIndex={600}
+          >
+            <SchoolMarker />
+          </Marker>
+        )}
+
+        {locationData && isLive && (
+          <Marker
+            coordinate={{ latitude: locationData.lat, longitude: locationData.lng }}
+            title={`Bus ${locationData.vehicleId}`}
+            description={`Status: ${statusLabel}`}
+            anchor={{ x: 0.5, y: 0.5 }}
+            zIndex={700}
+          >
+            <BusMarker status={busStatus} />
+          </Marker>
         )}
       </MapView>
 
-      {/* Top bar */}
+      {/* Top bar — back button (testID required by E2E) + recenter / refresh.
+          The previous implementation had a child-name chip and a NEXT STOP
+          banner; per parity request both have been removed so the map matches
+          the web portal layout (only side controls + bottom info card). */}
       <SafeAreaView style={styles.topBar} edges={['top']} pointerEvents="box-none">
         <View style={styles.topBarLeft}>
-          <IconButton icon="‹" accessibilityLabel="Back" onPress={() => navigation.goBack()} />
-          <View style={styles.childChip}>
-            <Text style={styles.childChipName}>
-              {child.firstName} {child.lastName}
-            </Text>
-            <Text style={styles.childChipMeta}>
-              {routeDetails?.name ?? 'Route'} · {direction}
-            </Text>
-          </View>
+          <IconButton
+            icon="❮"
+            accessibilityLabel="Back"
+            onPress={() => navigation.goBack()}
+            testID="map-back"
+            style={styles.backBtnDark}
+          />
         </View>
         <View style={styles.topBarRight}>
-          <IconButton icon="⊙" accessibilityLabel="Recenter" onPress={recenter} />
-          <IconButton icon="↻" accessibilityLabel="Refresh" onPress={loadMapData} />
+          <Pressable
+            onPress={recenter}
+            accessibilityRole="button"
+            accessibilityLabel="Map Reset"
+            testID="map-reset"
+            style={styles.mapResetBtn}
+          >
+            <Text style={styles.mapResetIcon}>⌖</Text>
+            <Text style={styles.mapResetText}>MAP RESET</Text>
+          </Pressable>
+          <IconButton icon="↻" accessibilityLabel="Refresh" onPress={handleRefresh} />
         </View>
       </SafeAreaView>
 
-      {/* Offline banner */}
-      {!isLive && (
-        <View style={styles.offlineBanner}>
-          <Text style={styles.offlineText}>
-            Bus signal lost · {busLocation ? 'Last known location' : 'Route not active'}
-          </Text>
-        </View>
-      )}
-
-      {/* Bottom info sheet */}
+      {/* Bottom collapsible info panel — mirrors web Map.tsx status panel.
+          Heading = student name. Fields: Route (direction), Vehicle, ETA + Updated.
+          Plus delay/emergency badge when applicable. No extras. */}
       <SafeAreaView style={styles.sheetWrap} edges={['bottom']} pointerEvents="box-none">
-        <View style={styles.sheet}>
+        <Pressable
+          style={styles.sheet}
+          onPress={() => setSheetExpanded((v) => !v)}
+          accessibilityRole="button"
+          accessibilityLabel={sheetExpanded ? 'Collapse details' : 'Expand details'}
+          testID="map-bottom-sheet"
+        >
           <View style={styles.sheetHandle} />
           <View style={styles.sheetHeader}>
-            <Text style={styles.sheetTitle}>{routeDetails?.name ?? 'Route'}</Text>
-            <View style={[styles.liveBadge, !isLive && styles.offlineBadge]}>
-              <View style={[styles.liveDot, !isLive && { backgroundColor: '#94a3b8' }]} />
-              <Text style={styles.liveBadgeText}>{isLive ? 'Live' : 'Offline'}</Text>
+            <Text style={styles.sheetTitle} numberOfLines={1}>
+              {childFullName || 'Student'}
+            </Text>
+            <View
+              style={[
+                styles.statusBadge,
+                routeStatusLabel === 'Live'
+                  ? styles.statusBadgeLive
+                  : routeStatusLabel === 'No Signal'
+                    ? styles.statusBadgeNoSignal
+                    : styles.statusBadgeIdle,
+              ]}
+            >
+              <Text style={styles.statusBadgeText}>{routeStatusLabel}</Text>
             </View>
           </View>
-          <View style={styles.statRow}>
-            <View style={styles.statBox}>
-              <Text style={styles.statBoxLabel}>ETA</Text>
-              <Text style={styles.statBoxValue}>
-                {isLive && busLocation?.eta != null
-                  ? `${Math.round(busLocation.eta / 60)} min`
-                  : '—'}
+
+          {/* Active alert chip — always visible (collapsed AND expanded) so
+              the parent sees the bus status at a glance, mirroring the web
+              portal's persistent "Delayed: LATE ARRIVAL" pill. The bus icon
+              on the map is also color-coded via `busStatus`. */}
+          {matchingAlerts.length > 0 && (
+            <View
+              style={[
+                styles.alertChip,
+                busStatus === 'emergency' ? styles.alertChipEmergency : styles.alertChipDelay,
+              ]}
+              testID="map-alert-chip"
+            >
+              <Text style={styles.alertChipText}>
+                {statusLabel}:{' '}
+                {matchingAlerts.map((a) => a.eventType.replace(/_/g, ' ')).join(', ')}
               </Text>
             </View>
-            <View style={styles.statBox}>
-              <Text style={styles.statBoxLabel}>Stops left</Text>
-              <Text style={styles.statBoxValue}>{stops.length > 0 ? stops.length : '—'}</Text>
-            </View>
-            <View style={styles.statBox}>
-              <Text style={styles.statBoxLabel}>Destination</Text>
-              <Text style={styles.statBoxValue} numberOfLines={1}>
-                {lastStop?.name ?? '—'}
+          )}
+
+          {/* Collapsed state shows ONLY the student name + status badge +
+              alert chip plus the tap-to-expand hint. Everything else is
+              hidden until the user taps the panel to expand it. */}
+          {sheetExpanded && (
+            <>
+              <Text style={styles.sheetLine}>
+                Route: <Text style={styles.sheetLineStrong}>{routeName}</Text> ({direction})
               </Text>
-            </View>
-          </View>
-        </View>
+              <Text style={styles.sheetLineMuted}>Vehicle: {vehicleId}</Text>
+
+              {isLive && locationData && (
+                <View style={styles.sheetEtaRow}>
+                  <Text style={styles.sheetEtaText}>
+                    ETA: {etaMinutes != null ? `${etaMinutes} min` : '—'}
+                  </Text>
+                  {updatedAt && (
+                    <Text style={styles.sheetUpdatedText}>
+                      Updated: {updatedAt.toLocaleTimeString()}
+                    </Text>
+                  )}
+                </View>
+              )}
+
+              {!isLive && routeStatusLabel === 'No Signal' && (
+                <Text style={styles.sheetHintWarn}>
+                  Bus signal lost. Route may still be in progress.
+                </Text>
+              )}
+              {!isLive && routeStatusLabel !== 'No Signal' && (
+                <Text style={styles.sheetHintMuted}>Route is not currently active.</Text>
+              )}
+            </>
+          )}
+
+          <Text style={styles.sheetExpandHint}>
+            {sheetExpanded ? '▲ Tap to collapse' : '▼ Tap for details'}
+          </Text>
+        </Pressable>
       </SafeAreaView>
     </View>
   );
@@ -283,29 +523,6 @@ const styles = StyleSheet.create({
   },
   topBarLeft: { flexDirection: 'row', alignItems: 'center', flexShrink: 1 },
   topBarRight: { flexDirection: 'row', alignItems: 'center' },
-  childChip: {
-    marginLeft: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 14,
-    backgroundColor: 'rgba(15,23,42,0.7)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.15)',
-  },
-  childChipName: { color: '#f8fafc', fontWeight: '600', fontSize: 14 },
-  childChipMeta: { color: '#cbd5e1', fontSize: 11, marginTop: 1 },
-
-  offlineBanner: {
-    position: 'absolute',
-    top: 90,
-    left: 16,
-    right: 16,
-    backgroundColor: 'rgba(234,179,8,0.85)',
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-  },
-  offlineText: { color: '#1f2937', fontWeight: '600', fontSize: 13 },
 
   sheetWrap: {
     position: 'absolute',
@@ -317,7 +534,7 @@ const styles = StyleSheet.create({
     margin: 12,
     padding: 16,
     borderRadius: 22,
-    backgroundColor: 'rgba(15,23,42,0.85)',
+    backgroundColor: 'rgba(15,23,42,0.92)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.12)',
   },
@@ -333,36 +550,115 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 14,
+    marginBottom: 10,
   },
-  sheetTitle: { color: '#f8fafc', fontWeight: '700', fontSize: 16 },
-  liveBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
+  sheetTitle: { color: '#f8fafc', fontWeight: '700', fontSize: 18, flexShrink: 1, marginRight: 8 },
+  statusBadge: {
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
-    backgroundColor: 'rgba(34,197,94,0.18)',
     borderWidth: 1,
+  },
+  statusBadgeLive: {
+    backgroundColor: 'rgba(34,197,94,0.18)',
     borderColor: 'rgba(34,197,94,0.45)',
   },
-  offlineBadge: {
+  statusBadgeNoSignal: {
+    backgroundColor: 'rgba(234,179,8,0.18)',
+    borderColor: 'rgba(234,179,8,0.45)',
+  },
+  statusBadgeIdle: {
     backgroundColor: 'rgba(148,163,184,0.18)',
     borderColor: 'rgba(148,163,184,0.45)',
   },
-  liveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#22c55e' },
-  liveBadgeText: { color: '#f1f5f9', fontSize: 11, fontWeight: '600' },
-  statRow: { flexDirection: 'row', gap: 8 },
-  statBox: {
-    flex: 1,
-    paddingVertical: 10,
-    paddingHorizontal: 10,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+  statusBadgeText: { color: '#f1f5f9', fontSize: 11, fontWeight: '700' },
+
+  sheetLine: { color: '#cbd5e1', fontSize: 13, marginTop: 2 },
+  sheetLineStrong: { color: '#f8fafc', fontWeight: '600' },
+  sheetLineMuted: { color: '#94a3b8', fontSize: 12, marginTop: 2 },
+
+  sheetEtaRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 10,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.08)',
   },
-  statBoxLabel: { color: '#94a3b8', fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.5 },
-  statBoxValue: { color: '#f8fafc', fontSize: 14, fontWeight: '600', marginTop: 2 },
+  sheetEtaText: { color: '#60a5fa', fontWeight: '700', fontSize: 13 },
+  sheetUpdatedText: { color: '#94a3b8', fontSize: 11 },
+
+  alertRow: {
+    marginTop: 10,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.08)',
+  },
+  alertText: {
+    fontSize: 12,
+    fontWeight: '700',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+    overflow: 'hidden',
+  },
+  alertTextNormal: { color: '#22c55e', backgroundColor: 'rgba(34,197,94,0.15)' },
+  alertTextDelay: { color: '#eab308', backgroundColor: 'rgba(234,179,8,0.15)' },
+  alertTextEmergency: { color: '#ef4444', backgroundColor: 'rgba(239,68,68,0.15)' },
+
+  alertChip: {
+    marginTop: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+    borderWidth: 1,
+  },
+  alertChipDelay: {
+    backgroundColor: '#eab308',
+    borderColor: '#facc15',
+  },
+  alertChipEmergency: {
+    backgroundColor: '#ef4444',
+    borderColor: '#fca5a5',
+  },
+  alertChipText: { color: '#0b1020', fontSize: 12, fontWeight: '800' },
+
+  // Dark pill style for the BACK arrow on the map screen — matches MAP RESET
+  // so the control is clearly visible against light/satellite map tiles
+  // (parity with web portal map controls).
+  backBtnDark: {
+    backgroundColor: 'rgba(15,23,42,0.85)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.18)',
+  },
+  mapResetBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 18,
+    backgroundColor: 'rgba(15,23,42,0.85)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.18)',
+    marginRight: 6,
+  },
+  mapResetIcon: { color: '#f8fafc', fontSize: 14, marginRight: 4 },
+  mapResetText: {
+    color: '#f8fafc',
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+
+  sheetHintWarn: { color: '#facc15', fontSize: 11, marginTop: 8 },
+  sheetHintMuted: { color: '#94a3b8', fontSize: 11, marginTop: 8 },
+  sheetExpandHint: {
+    color: '#a5b4fc',
+    fontSize: 11,
+    textAlign: 'center',
+    marginTop: 12,
+  },
 });

@@ -13,3 +13,9 @@ export {
   POLYLINE_COLORS,
 } from './MapMarkers';
 export type { BusStatus } from './MapMarkers';
+export {
+  BusNavigationMarker,
+  NextStopBanner,
+  RouteProgressBar,
+  SpeedIndicator,
+} from './MapOverlays';

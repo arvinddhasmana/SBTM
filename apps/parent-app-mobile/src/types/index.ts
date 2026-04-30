@@ -31,7 +31,21 @@ export interface Child {
   status: ChildStatus;
   avatarUrl?: string;
   stopId?: string;
+  amStopId?: string;
+  pmStopId?: string;
   stopName?: string;
+  vehicleId?: string;
+}
+
+export interface AlertAuditEntry {
+  id: string;
+  alertId: string;
+  eventType: string;
+  eventTimestamp: string;
+  actorRole?: string;
+  actorName?: string;
+  notes?: string;
+  metadata?: Record<string, any>;
 }
 
 export type ChildStatus = 'on_bus' | 'at_school' | 'at_home' | 'unknown';
@@ -42,6 +56,9 @@ export interface Route {
   name: string;
   direction: 'AM' | 'PM';
   schoolId: string;
+  schoolName?: string;
+  schoolLat?: number;
+  schoolLng?: number;
   vehicleId: string;
   driverId: string;
   polyline?: string;
@@ -171,6 +188,8 @@ export interface ParentStore {
   children: Child[];
   activeAlerts: Alert[];
   notificationPreferences: NotificationPreferences | null;
+  /** Live bus locations keyed by routeId. Updated by refreshLiveLocations(). */
+  routeLiveLocations: Record<string, BusLocationUpdate>;
 
   // Loading States
   isLoadingChildren: boolean;
@@ -189,6 +208,7 @@ export interface ParentStore {
   setOffline: (offline: boolean) => void;
   refreshChildren: () => Promise<void>;
   refreshAlerts: () => Promise<void>;
+  refreshLiveLocations: () => Promise<void>;
 }
 
 // Navigation Types
