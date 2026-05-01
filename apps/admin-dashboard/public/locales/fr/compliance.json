@@ -1,10 +1,41 @@
 {
-  "title": "Conformité",
-  "subtitle": "Gestion de la conformité des conducteurs et véhicules",
+  "title": "Conformité et sécurité",
+  "subtitle": "Surveiller les certifications conducteurs, inspections véhicules et journaux d'audit",
   "sections": {
     "driverCompliance": "Conformité conducteurs",
     "vehicleInspections": "Inspections véhicules",
     "auditLogs": "Journaux d'audit"
+  },
+  "tabs": {
+    "drivers": "Conducteurs",
+    "inspections": "Inspections",
+    "audit": "Audit"
+  },
+  "metrics": {
+    "compliantDrivers": "Conducteurs conformes",
+    "expiringSoon": "Expire bientôt",
+    "expiredDocs": "Documents expirés"
+  },
+  "table": {
+    "driverId": "ID conducteur",
+    "licenseExpiry": "Expiration permis",
+    "backgroundCheck": "Vérification antécédents",
+    "medicalDue": "Examen médical dû",
+    "date": "Date",
+    "vehicle": "Véhicule",
+    "driver": "Conducteur",
+    "type": "Type",
+    "result": "Résultat",
+    "timestamp": "Horodatage",
+    "user": "Utilisateur",
+    "action": "Action",
+    "resource": "Ressource",
+    "details": "Détails"
+  },
+  "cardTitles": {
+    "driverComplianceStatus": "Statut conformité conducteurs",
+    "recentInspections": "Inspections véhicules récentes",
+    "systemAuditLogs": "Journaux d'audit système"
   },
   "driver": {
     "license": "Permis de conduire",
@@ -27,12 +58,19 @@
     "result": "Résultat",
     "passed": "Réussi",
     "failed": "Échoué",
+    "pass": "RÉUSSI",
+    "fail": "ÉCHOUÉ",
     "conditional": "Conditionnel",
     "inspector": "Inspecteur",
     "date": "Date d'inspection",
     "defects": "Défauts trouvés",
     "notes": "Notes",
     "photos": "Photos"
+  },
+  "status": {
+    "VALID": "VALIDE",
+    "EXPIRING_SOON": "EXPIRE BIENTÔT",
+    "EXPIRED": "EXPIRÉ"
   },
   "audit": {
     "action": "Action",

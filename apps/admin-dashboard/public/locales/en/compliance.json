@@ -1,10 +1,41 @@
 {
-  "title": "Compliance",
-  "subtitle": "Driver and Vehicle Compliance Management",
+  "title": "Compliance & Safety",
+  "subtitle": "Monitor driver certifications, vehicle safety inspections, and system audit logs",
   "sections": {
     "driverCompliance": "Driver Compliance",
     "vehicleInspections": "Vehicle Inspections",
     "auditLogs": "Audit Logs"
+  },
+  "tabs": {
+    "drivers": "Drivers",
+    "inspections": "Inspections",
+    "audit": "Audit"
+  },
+  "metrics": {
+    "compliantDrivers": "Compliant Drivers",
+    "expiringSoon": "Expiring Soon",
+    "expiredDocs": "Expired Docs"
+  },
+  "table": {
+    "driverId": "Driver ID",
+    "licenseExpiry": "License Expiry",
+    "backgroundCheck": "Background Check",
+    "medicalDue": "Medical Due",
+    "date": "Date",
+    "vehicle": "Vehicle",
+    "driver": "Driver",
+    "type": "Type",
+    "result": "Result",
+    "timestamp": "Timestamp",
+    "user": "User",
+    "action": "Action",
+    "resource": "Resource",
+    "details": "Details"
+  },
+  "cardTitles": {
+    "driverComplianceStatus": "Driver Compliance Status",
+    "recentInspections": "Recent Vehicle Inspections",
+    "systemAuditLogs": "System Audit Logs"
   },
   "driver": {
     "license": "Driver's License",
@@ -27,12 +58,19 @@
     "result": "Result",
     "passed": "Passed",
     "failed": "Failed",
+    "pass": "PASS",
+    "fail": "FAIL",
     "conditional": "Conditional",
     "inspector": "Inspector",
     "date": "Inspection Date",
     "defects": "Defects Found",
     "notes": "Notes",
     "photos": "Photos"
+  },
+  "status": {
+    "VALID": "VALID",
+    "EXPIRING_SOON": "EXPIRING SOON",
+    "EXPIRED": "EXPIRED"
   },
   "audit": {
     "action": "Action",
