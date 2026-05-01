@@ -19,13 +19,14 @@ import {
   Truck,
   Sliders,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import type { UserRole } from '../../types';
 
 interface NavItem {
   path: string;
   icon: React.ReactNode;
-  label: string;
+  labelKey: string;
   allowedRoles?: UserRole[];
 }
 
@@ -35,76 +36,76 @@ const navItems: NavItem[] = [
   {
     path: '/dashboard',
     icon: <LayoutDashboard size={20} />,
-    label: 'Dashboard',
+    labelKey: 'nav.dashboard',
     allowedRoles: ALL_ADMIN_ROLES,
   },
-  { path: '/alerts', icon: <Bell size={20} />, label: 'Alerts', allowedRoles: ALL_ADMIN_ROLES },
+  { path: '/alerts', icon: <Bell size={20} />, labelKey: 'nav.alerts', allowedRoles: ALL_ADMIN_ROLES },
   {
     path: '/alerts/operational',
     icon: <ClipboardList size={20} />,
-    label: 'Operational',
+    labelKey: 'nav.operational',
     allowedRoles: ALL_ADMIN_ROLES,
   },
-  { path: '/routes', icon: <Route size={20} />, label: 'Routes', allowedRoles: ALL_ADMIN_ROLES },
+  { path: '/routes', icon: <Route size={20} />, labelKey: 'nav.routes', allowedRoles: ALL_ADMIN_ROLES },
   {
     path: '/routes/planner',
     icon: <Wand2 size={20} />,
-    label: 'Planner',
+    labelKey: 'nav.planner',
     allowedRoles: ALL_ADMIN_ROLES,
   },
   {
     path: '/vehicles',
     icon: <Bus size={20} />,
-    label: 'Fleet',
+    labelKey: 'nav.fleet',
     allowedRoles: ['SUPER_ADMIN', 'OSTA_ADMIN'],
   },
   {
     path: '/compliance',
     icon: <Shield size={20} />,
-    label: 'Compliance',
+    labelKey: 'nav.compliance',
     allowedRoles: ALL_ADMIN_ROLES,
   },
   {
     path: '/fleet-assignments',
     icon: <Truck size={20} />,
-    label: 'Assignments',
+    labelKey: 'nav.assignments',
     allowedRoles: ALL_ADMIN_ROLES,
   },
   {
     path: '/students',
     icon: <Users size={20} />,
-    label: 'Students',
+    labelKey: 'nav.students',
     allowedRoles: ALL_ADMIN_ROLES,
   },
   {
     path: '/absences',
     icon: <CalendarOff size={20} />,
-    label: 'Absences',
+    labelKey: 'nav.absences',
     allowedRoles: ALL_ADMIN_ROLES,
   },
   {
     path: '/boards',
     icon: <Building2 size={20} />,
-    label: 'Boards',
+    labelKey: 'nav.boards',
     allowedRoles: ['SUPER_ADMIN', 'OSTA_ADMIN'],
   },
   {
     path: '/schools',
     icon: <School size={20} />,
-    label: 'Schools',
+    labelKey: 'nav.schools',
     allowedRoles: ['SUPER_ADMIN', 'OSTA_ADMIN', 'BOARD_ADMIN'],
   },
-  { path: '/users', icon: <UserCog size={20} />, label: 'Users', allowedRoles: ['SUPER_ADMIN'] },
+  { path: '/users', icon: <UserCog size={20} />, labelKey: 'nav.users', allowedRoles: ['SUPER_ADMIN'] },
   {
     path: '/alert-config',
     icon: <Sliders size={20} />,
-    label: 'Alert Config',
+    labelKey: 'nav.alertConfig',
     allowedRoles: ALL_ADMIN_ROLES,
   },
   {
     path: '/settings',
     icon: <Settings size={20} />,
-    label: 'Settings',
+    labelKey: 'nav.settings',
     allowedRoles: ALL_ADMIN_ROLES,
   },
 ];
@@ -116,6 +117,7 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ width, isCollapsed, onToggleCollapse }) => {
+  const { t } = useTranslation('common');
   const { logout, user } = useAuth();
   const navigate = useNavigate();
 
@@ -143,8 +145,8 @@ const Sidebar: React.FC<SidebarProps> = ({ width, isCollapsed, onToggleCollapse 
         </div>
         {!isCollapsed && (
           <div className="animate-in fade-in duration-300 group">
-            <h1 className="font-bold text-white text-lg">OSTA Admin</h1>
-            <p className="text-xs text-slate-400">Transport Management</p>
+            <h1 className="font-bold text-white text-lg">{t('app.title')}</h1>
+            <p className="text-xs text-slate-400">{t('app.subtitle')}</p>
           </div>
         )}
       </div>
@@ -166,12 +168,12 @@ const Sidebar: React.FC<SidebarProps> = ({ width, isCollapsed, onToggleCollapse 
                   : 'text-slate-400 hover:bg-slate-800 hover:text-white border border-transparent'
               }`
             }
-            title={isCollapsed ? item.label : ''}
+            title={isCollapsed ? t(item.labelKey) : ''}
           >
             <div className="flex-shrink-0">{item.icon}</div>
             {!isCollapsed && (
               <span className="font-medium whitespace-nowrap animate-in slide-in-from-left-2">
-                {item.label}
+                {t(item.labelKey)}
               </span>
             )}
           </NavLink>
@@ -185,12 +187,12 @@ const Sidebar: React.FC<SidebarProps> = ({ width, isCollapsed, onToggleCollapse 
         <button
           onClick={onToggleCollapse}
           className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition-all duration-200 group"
-          title={isCollapsed ? 'Expand' : 'Collapse'}
+          title={isCollapsed ? t('nav.expandMenu') : t('nav.collapseMenu')}
         >
           <div className={`transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`}>
             <Shield size={20} className="group-hover:text-blue-400" />
           </div>
-          {!isCollapsed && <span className="font-medium">Collapse Menu</span>}
+          {!isCollapsed && <span className="font-medium">{t('nav.collapseMenu')}</span>}
         </button>
 
         <button
@@ -198,10 +200,10 @@ const Sidebar: React.FC<SidebarProps> = ({ width, isCollapsed, onToggleCollapse 
           className={`flex items-center gap-3 w-full rounded-xl text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition-all duration-200 ${
             isCollapsed ? 'justify-center p-3' : 'px-4 py-3'
           }`}
-          title={isCollapsed ? 'Logout' : ''}
+          title={isCollapsed ? t('nav.logout') : ''}
         >
           <LogOut size={20} />
-          {!isCollapsed && <span className="font-medium">Logout</span>}
+          {!isCollapsed && <span className="font-medium">{t('nav.logout')}</span>}
         </button>
       </div>
     </aside>
