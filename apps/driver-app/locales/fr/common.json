@@ -44,6 +44,11 @@
     "arrivalIn": "Arrivée dans {{minutes}} min",
     "studentsOnBoard": "Élèves à bord",
     "totalStudents": "{{current}}/{{total}}",
+    "noActiveRoute": "Aucun itinéraire actif",
+    "bus": "Autobus",
+    "school": "École",
+    "stop": "Arrêt {{number}} : {{name}}",
+    "arrival": "Arrivée : {{time}}",
     "actions": {
       "arrivedAtStop": "Arrivé à l'arrêt",
       "departStop": "Quitter l'arrêt",
@@ -54,6 +59,41 @@
       "onTime": "À l'heure",
       "delayed": "Retard {{minutes}} min",
       "ahead": "En avance"
+    },
+    "incident": {
+      "title": "Signaler incident",
+      "subtitle": "Décrivez brièvement l'incident :",
+      "placeholder": "Ex : égratignure mineure, défaut mécanique...",
+      "report": "Signaler",
+      "reported": "Incident signalé",
+      "reportedMessage": "Votre rapport a été envoyé à l'administrateur."
+    },
+    "endRoute": {
+      "title": "Terminer itinéraire",
+      "message": "Voulez-vous vraiment terminer cet itinéraire ? Tout suivi s'arrêtera et les élèves embarqués seront débarqués.",
+      "confirm": "Terminer itinéraire"
+    },
+    "panic": {
+      "manualTrigger": "Déclenchement manuel panique",
+      "alertSent": "Alerte envoyée",
+      "helpOnWay": "L'aide est en route.",
+      "failed": "Échec d'envoi de l'alerte panique."
+    },
+    "gps": {
+      "error": "Erreur GPS",
+      "unavailable": "GPS indisponible"
+    },
+    "voice": {
+      "title": "Saisie vocale",
+      "unavailable": "Reconnaissance vocale indisponible sur cet appareil.",
+      "notSupported": "Saisie vocale non supportée sur cet appareil.",
+      "iosHint": "La saisie vocale est supportée sur Android. Sur iOS utilisez le microphone du clavier système.",
+      "prompt": "Parlez pour saisir du texte..."
+    },
+    "error": {
+      "title": "Erreur",
+      "provideDescription": "Veuillez fournir une description.",
+      "incidentFailed": "Échec d'envoi du rapport d'incident."
     }
   },
   "presence": {

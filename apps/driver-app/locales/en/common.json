@@ -44,6 +44,11 @@
     "arrivalIn": "Arrival in {{minutes}} min",
     "studentsOnBoard": "Students on Board",
     "totalStudents": "{{current}}/{{total}}",
+    "noActiveRoute": "No Active Route",
+    "bus": "Bus",
+    "school": "School",
+    "stop": "Stop {{number}}: {{name}}",
+    "arrival": "Arrival: {{time}}",
     "actions": {
       "arrivedAtStop": "Arrived at Stop",
       "departStop": "Depart Stop",
@@ -54,6 +59,41 @@
       "onTime": "On Time",
       "delayed": "Delayed {{minutes}} min",
       "ahead": "Ahead of Schedule"
+    },
+    "incident": {
+      "title": "Report Incident",
+      "subtitle": "Briefly describe the incident:",
+      "placeholder": "E.g., minor scrape, mechanical defect...",
+      "report": "Report",
+      "reported": "Incident Reported",
+      "reportedMessage": "Your report has been sent to the admin."
+    },
+    "endRoute": {
+      "title": "End Route",
+      "message": "Are you sure you want to end this route? All tracking will stop and boarded students will be alighted.",
+      "confirm": "End Route"
+    },
+    "panic": {
+      "manualTrigger": "Manual panic trigger",
+      "alertSent": "Alert Sent",
+      "helpOnWay": "Help is on the way.",
+      "failed": "Failed to send panic alert."
+    },
+    "gps": {
+      "error": "GPS Error",
+      "unavailable": "GPS unavailable"
+    },
+    "voice": {
+      "title": "Voice Input",
+      "unavailable": "Speech recognition unavailable on this device.",
+      "notSupported": "Voice input not supported on this device.",
+      "iosHint": "Voice input is supported on Android. On iOS use the system keyboard microphone.",
+      "prompt": "Speak to enter text..."
+    },
+    "error": {
+      "title": "Error",
+      "provideDescription": "Please provide a description.",
+      "incidentFailed": "Failed to send incident report."
     }
   },
   "presence": {
