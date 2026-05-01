@@ -20,13 +20,23 @@
     "selectChild": "Sélectionner un enfant à suivre",
     "addChild": "Ajouter enfant",
     "noChildren": "Aucun enfant inscrit",
+    "noChildrenLinked": "Aucun enfant lié à votre compte.",
+    "subtitle": "Suivi en temps réel et aperçu de la présence des élèves.",
+    "trackBusLive": "Suivre autobus en direct",
     "details": {
       "name": "Nom",
       "grade": "Niveau",
       "school": "École",
       "amRoute": "Itinéraire matin",
       "pmRoute": "Itinéraire après-midi",
-      "studentId": "ID élève"
+      "studentId": "ID élève",
+      "bus": "Autobus"
+    },
+    "status": {
+      "onBus": "Dans l'autobus",
+      "atSchool": "À l'école",
+      "atHome": "À la maison",
+      "unknown": "Statut inconnu"
     }
   },
   "tracking": {
@@ -54,7 +64,16 @@
     "alerts": {
       "title": "Alertes actives",
       "noAlerts": "Aucune alerte active",
-      "viewDetails": "Voir détails"
+      "viewDetails": "Voir détails",
+      "affected": "Affectés",
+      "eventTypes": {
+        "LATE_ARRIVAL": "Arrivée tardive",
+        "ROUTE_DEVIATION": "Déviation itinéraire",
+        "PANIC_BUTTON": "Bouton panique",
+        "INCIDENT": "Incident",
+        "ROUTE_DIVERSION": "Détour itinéraire",
+        "PANIC_ALERT": "Alerte panique"
+      }
     }
   },
   "notifications": {

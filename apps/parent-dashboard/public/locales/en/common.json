@@ -20,13 +20,23 @@
     "selectChild": "Select a child to track",
     "addChild": "Add Child",
     "noChildren": "No children registered",
+    "noChildrenLinked": "No children linked to your account.",
+    "subtitle": "Real-time tracking and student presence overview.",
+    "trackBusLive": "Track Bus Live",
     "details": {
       "name": "Name",
       "grade": "Grade",
       "school": "School",
-      "amRoute": "Morning Route",
-      "pmRoute": "Afternoon Route",
-      "studentId": "Student ID"
+      "amRoute": "AM Route",
+      "pmRoute": "PM Route",
+      "studentId": "Student ID",
+      "bus": "Bus"
+    },
+    "status": {
+      "onBus": "On the Bus",
+      "atSchool": "At School",
+      "atHome": "At Home",
+      "unknown": "Status Unknown"
     }
   },
   "tracking": {
@@ -54,7 +64,16 @@
     "alerts": {
       "title": "Active Alerts",
       "noAlerts": "No active alerts",
-      "viewDetails": "View Details"
+      "viewDetails": "View Details",
+      "affected": "Affected",
+      "eventTypes": {
+        "LATE_ARRIVAL": "Late Arrival",
+        "ROUTE_DEVIATION": "Route Deviation",
+        "PANIC_BUTTON": "Panic Button",
+        "INCIDENT": "Incident",
+        "ROUTE_DIVERSION": "Route Diversion",
+        "PANIC_ALERT": "Panic Alert"
+      }
     }
   },
   "notifications": {

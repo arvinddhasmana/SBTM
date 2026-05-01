@@ -1,21 +1,13 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { MapPin, School, Home, HelpCircle, ArrowRight, AlertTriangle } from 'lucide-react';
 import type { Child } from '../types';
 import { useAlerts } from '../hooks/useAlerts';
 import { parentApi, type ActiveAlert } from '../services/api';
 import { queryKeys } from '../services/query-keys';
-
-const EVENT_TYPE_LABELS: Record<string, string> = {
-  LATE_ARRIVAL: 'Late Arrival',
-  ROUTE_DEVIATION: 'Route Deviation',
-  PANIC_BUTTON: 'Panic Button',
-  INCIDENT: 'Incident',
-  ROUTE_DIVERSION: 'Route Diversion',
-  PANIC_ALERT: 'Panic Alert',
-};
 
 /** Check whether a child is affected by a given alert */
 function childMatchesAlert(child: Child, alert: ActiveAlert): boolean {
@@ -29,6 +21,7 @@ function affectedChildNames(children: Child[], alert: ActiveAlert): string[] {
 }
 
 const Dashboard: React.FC = () => {
+  const { t } = useTranslation('common');
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -73,13 +66,13 @@ const Dashboard: React.FC = () => {
   const getStatusText = (status: Child['status']) => {
     switch (status) {
       case 'on_bus':
-        return 'On the Bus';
+        return t('children.status.onBus');
       case 'at_school':
-        return 'At School';
+        return t('children.status.atSchool');
       case 'at_home':
-        return 'At Home';
+        return t('children.status.atHome');
       case 'unknown':
-        return 'Status Unknown';
+        return t('children.status.unknown');
       default:
         return status;
     }
@@ -100,14 +93,14 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="px-4 sm:px-0">
-      <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">My Children</h1>
-      <p className="text-slate-400 mb-8">Real-time tracking and student presence overview.</p>
+      <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">{t('children.title')}</h1>
+      <p className="text-slate-400 mb-8">{t('children.subtitle')}</p>
 
       {alerts.length > 0 && (
         <div className="mb-8 space-y-3">
           {alerts.map((alert) => {
             const names = affectedChildNames(children, alert);
-            const label = EVENT_TYPE_LABELS[alert.eventType] || alert.eventType;
+            const label = t(`tracking.alerts.eventTypes.${alert.eventType}`, { defaultValue: alert.eventType });
             return (
               <div
                 key={alert.id}
@@ -130,7 +123,7 @@ const Dashboard: React.FC = () => {
                   <p className="mt-1 text-slate-200">{alert.message}</p>
                   {names.length > 0 && (
                     <p className="mt-1 text-sm text-pink-300">
-                      Affected: <span className="font-semibold text-white">{names.join(', ')}</span>
+                      {t('tracking.alerts.affected')}: <span className="font-semibold text-white">{names.join(', ')}</span>
                     </p>
                   )}
                 </div>
@@ -179,7 +172,7 @@ const Dashboard: React.FC = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <dt className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                        AM Route
+                        {t('children.details.amRoute')}
                       </dt>
                       <dd className="mt-1 text-sm font-semibold text-emerald-400">
                         {child.amRouteId || child.routeId || '—'}
@@ -187,7 +180,7 @@ const Dashboard: React.FC = () => {
                     </div>
                     <div>
                       <dt className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                        PM Route
+                        {t('children.details.pmRoute')}
                       </dt>
                       <dd className="mt-1 text-sm font-semibold text-blue-400">
                         {child.pmRouteId || '—'}
@@ -195,7 +188,7 @@ const Dashboard: React.FC = () => {
                     </div>
                     <div className="col-span-2">
                       <dt className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                        Bus
+                        {t('children.details.bus')}
                       </dt>
                       <dd className="mt-1 text-sm font-semibold text-slate-200">
                         {child.vehicleId || '—'}
@@ -220,7 +213,7 @@ const Dashboard: React.FC = () => {
                   onClick={() => navigate('/map', { state: { childId: child.id } })}
                   className="w-full flex justify-center items-center py-2.5 rounded-xl tactical-gradient-active text-white font-bold text-sm shadow-[0_4px_20px_rgba(99,102,241,0.3)] hover:shadow-[0_4px_25px_rgba(99,102,241,0.5)] transition-all transform hover:scale-[1.02] active:scale-95"
                 >
-                  Track Bus Live
+                  {t('children.trackBusLive')}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </button>
               </div>
@@ -230,7 +223,7 @@ const Dashboard: React.FC = () => {
       </div>
       {children.length === 0 && (
         <div className="text-center py-12">
-          <p className="text-gray-500">No children linked to your account.</p>
+          <p className="text-gray-500">{t('children.noChildrenLinked')}</p>
         </div>
       )}
 
