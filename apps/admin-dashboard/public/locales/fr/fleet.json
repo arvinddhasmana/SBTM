@@ -1,0 +1,28 @@
+{
+  "title": "Gestion de la flotte",
+  "vehiclesRegistered": "{{count}} véhicule enregistré",
+  "vehiclesRegistered_plural": "{{count}} véhicules enregistrés",
+  "addVehicle": "Ajouter véhicule",
+  "editVehicle": "Modifier véhicule",
+  "addNewVehicle": "Ajouter nouveau véhicule",
+  "updateVehicle": "Mettre à jour véhicule",
+  "createVehicle": "Créer véhicule",
+  "deleteConfirm": "Voulez-vous vraiment supprimer ce véhicule ?",
+  "loading": "Chargement flotte...",
+  "table": {
+    "vehicle": "Véhicule",
+    "licensePlate": "Plaque d'immatriculation",
+    "status": "Statut",
+    "actions": "Actions"
+  },
+  "form": {
+    "licensePlate": "Plaque d'immatriculation",
+    "licensePlatePlaceholder": "ex. BUS-101",
+    "status": "Statut"
+  },
+  "status": {
+    "active": "Actif",
+    "maintenance": "Entretien",
+    "inactive": "Inactif"
+  }
+}

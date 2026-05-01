@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { Header, Card, LoadingSpinner } from '../components/common';
 import { fleetApi } from '../services/api/fleet.api';
 import { queryKeys } from '../services/query-keys';
@@ -8,6 +9,7 @@ import type { Vehicle, VehicleStatus } from '../types';
 import { useAuth } from '../context/AuthContext';
 
 const Vehicles: React.FC = () => {
+  const { t } = useTranslation(['fleet', 'common']);
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -46,7 +48,7 @@ const Vehicles: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this vehicle?')) {
+    if (window.confirm(t('fleet:deleteConfirm'))) {
       try {
         await fleetApi.deleteVehicle(id);
         queryClient.invalidateQueries({ queryKey: queryKeys.vehicles.all });
@@ -57,17 +59,17 @@ const Vehicles: React.FC = () => {
   };
 
   if (isLoading) {
-    return <LoadingSpinner text="Loading fleet..." size="lg" />;
+    return <LoadingSpinner text={t('fleet:loading')} size="lg" />;
   }
 
   return (
     <>
       <Header
-        title="Fleet Management"
-        subtitle={`${vehicles.length} vehicles registered`}
+        title={t('fleet:title')}
+        subtitle={t('fleet:vehiclesRegistered', { count: vehicles.length })}
         action={
           <button onClick={() => handleOpenModal()} className="btn-primary flex items-center gap-2">
-            <Plus size={20} /> Add Vehicle
+            <Plus size={20} /> {t('fleet:addVehicle')}
           </button>
         }
       />
@@ -78,10 +80,10 @@ const Vehicles: React.FC = () => {
             <table className="w-full text-left">
               <thead>
                 <tr className="border-b border-dashboard-border text-slate-400 text-sm">
-                  <th className="pb-4 pt-2 font-medium">Vehicle</th>
-                  <th className="pb-4 pt-2 font-medium">License Plate</th>
-                  <th className="pb-4 pt-2 font-medium">Status</th>
-                  <th className="pb-4 pt-2 font-medium text-right">Actions</th>
+                  <th className="pb-4 pt-2 font-medium">{t('fleet:table.vehicle')}</th>
+                  <th className="pb-4 pt-2 font-medium">{t('fleet:table.licensePlate')}</th>
+                  <th className="pb-4 pt-2 font-medium">{t('fleet:table.status')}</th>
+                  <th className="pb-4 pt-2 font-medium text-right">{t('fleet:table.actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-dashboard-border">
@@ -104,7 +106,7 @@ const Vehicles: React.FC = () => {
                             : 'bg-yellow-500/10 text-yellow-400'
                         }`}
                       >
-                        {vehicle.status}
+                        {t(`fleet:status.${vehicle.status.toLowerCase()}`)}
                       </span>
                     </td>
                     <td className="py-4 text-right">
@@ -136,24 +138,24 @@ const Vehicles: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <Card className="w-full max-w-md shadow-2xl border-primary-500/20">
             <h3 className="text-xl font-bold text-white mb-6">
-              {editingVehicle ? 'Edit Vehicle' : 'Add New Vehicle'}
+              {editingVehicle ? t('fleet:editVehicle') : t('fleet:addNewVehicle')}
             </h3>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-400 mb-1">
-                  License Plate
+                  {t('fleet:form.licensePlate')}
                 </label>
                 <input
                   type="text"
                   value={formData.licensePlate}
                   onChange={(e) => setFormData({ ...formData, licensePlate: e.target.value })}
                   className="w-full bg-slate-800 border-dashboard-border rounded-lg text-white p-2.5 focus:border-primary-500 outline-none transition-colors"
-                  placeholder="e.g. BUS-101"
+                  placeholder={t('fleet:form.licensePlatePlaceholder')}
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-400 mb-1">Status</label>
+                <label className="block text-sm font-medium text-slate-400 mb-1">{t('fleet:form.status')}</label>
                 <select
                   value={formData.status}
                   onChange={(e) =>
@@ -161,9 +163,9 @@ const Vehicles: React.FC = () => {
                   }
                   className="w-full bg-slate-800 border-dashboard-border rounded-lg text-white p-2.5 focus:border-primary-500 outline-none transition-colors"
                 >
-                  <option value="ACTIVE">Active</option>
-                  <option value="MAINTENANCE">Maintenance</option>
-                  <option value="INACTIVE">Inactive</option>
+                  <option value="ACTIVE">{t('fleet:status.active')}</option>
+                  <option value="MAINTENANCE">{t('fleet:status.maintenance')}</option>
+                  <option value="INACTIVE">{t('fleet:status.inactive')}</option>
                 </select>
               </div>
               <div className="flex justify-end gap-3 mt-8">
@@ -172,10 +174,10 @@ const Vehicles: React.FC = () => {
                   onClick={() => setIsModalOpen(false)}
                   className="btn-secondary"
                 >
-                  Cancel
+                  {t('common:cancel')}
                 </button>
                 <button type="submit" className="btn-primary">
-                  {editingVehicle ? 'Update Vehicle' : 'Create Vehicle'}
+                  {editingVehicle ? t('fleet:updateVehicle') : t('fleet:createVehicle')}
                 </button>
               </div>
             </form>
