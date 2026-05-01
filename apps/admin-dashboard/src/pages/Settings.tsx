@@ -1,41 +1,43 @@
 import React from 'react';
 import { User, Bell, Shield, Info } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Header, Card } from '../components/common';
 import { useAuth } from '../context/AuthContext';
 
 const Settings: React.FC = () => {
+    const { t } = useTranslation(['settings', 'common']);
     const { user } = useAuth();
 
     return (
         <>
-            <Header title="Settings" subtitle="Manage your account and preferences" />
+            <Header title={t('settings:title')} subtitle={t('settings:subtitle')} />
 
             <div className="p-6 space-y-6">
                 {/* Profile */}
-                <Card title="Profile">
+                <Card title={t('settings:sections.profile')}>
                     <div className="flex items-center gap-6">
                         <div className="w-20 h-20 bg-gradient-to-br from-primary-500 to-primary-700 rounded-2xl flex items-center justify-center">
                             <User size={32} className="text-white" />
                         </div>
                         <div>
-                            <h3 className="text-xl font-bold text-white">{user?.name || 'Admin User'}</h3>
-                            <p className="text-slate-400">{user?.email || 'admin@osta.ca'}</p>
+                            <h3 className="text-xl font-bold text-white">{user?.name || t('settings:profile.defaultName')}</h3>
+                            <p className="text-slate-400">{user?.email || t('settings:profile.defaultEmail')}</p>
                             <span className="inline-block mt-2 px-3 py-1 bg-primary-500/20 text-primary-400 rounded-full text-sm font-medium">
-                                {user?.role || 'Administrator'}
+                                {user?.role || t('settings:profile.role')}
                             </span>
                         </div>
                     </div>
                 </Card>
 
                 {/* Notification Preferences */}
-                <Card title="Notification Preferences">
+                <Card title={t('settings:sections.notificationPreferences')}>
                     <div className="space-y-4">
                         <div className="flex items-center justify-between p-4 bg-dashboard-bg rounded-xl">
                             <div className="flex items-center gap-3">
                                 <Bell size={18} className="text-primary-500" />
                                 <div>
-                                    <p className="font-medium text-white">Emergency Alerts</p>
-                                    <p className="text-sm text-slate-400">Get notified for panic buttons and emergencies</p>
+                                    <p className="font-medium text-white">{t('settings:notifications.emergencyAlerts.title')}</p>
+                                    <p className="text-sm text-slate-400">{t('settings:notifications.emergencyAlerts.description')}</p>
                                 </div>
                             </div>
                             <label className="relative inline-flex items-center cursor-pointer">
@@ -48,8 +50,8 @@ const Settings: React.FC = () => {
                             <div className="flex items-center gap-3">
                                 <Bell size={18} className="text-yellow-500" />
                                 <div>
-                                    <p className="font-medium text-white">Route Deviations</p>
-                                    <p className="text-sm text-slate-400">Get notified when buses deviate from route</p>
+                                    <p className="font-medium text-white">{t('settings:notifications.routeDeviations.title')}</p>
+                                    <p className="text-sm text-slate-400">{t('settings:notifications.routeDeviations.description')}</p>
                                 </div>
                             </div>
                             <label className="relative inline-flex items-center cursor-pointer">
@@ -62,8 +64,8 @@ const Settings: React.FC = () => {
                             <div className="flex items-center gap-3">
                                 <Bell size={18} className="text-slate-400" />
                                 <div>
-                                    <p className="font-medium text-white">Daily Summary</p>
-                                    <p className="text-sm text-slate-400">Receive daily summary reports via email</p>
+                                    <p className="font-medium text-white">{t('settings:notifications.dailySummary.title')}</p>
+                                    <p className="text-sm text-slate-400">{t('settings:notifications.dailySummary.description')}</p>
                                 </div>
                             </div>
                             <label className="relative inline-flex items-center cursor-pointer">
@@ -75,26 +77,26 @@ const Settings: React.FC = () => {
                 </Card>
 
                 {/* Security */}
-                <Card title="Security">
+                <Card title={t('settings:sections.security')}>
                     <div className="p-4 bg-dashboard-bg rounded-xl flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <Shield size={18} className="text-green-500" />
                             <div>
-                                <p className="font-medium text-white">Two-Factor Authentication</p>
-                                <p className="text-sm text-slate-400">Add an extra layer of security</p>
+                                <p className="font-medium text-white">{t('settings:security.twoFactor.title')}</p>
+                                <p className="text-sm text-slate-400">{t('settings:security.twoFactor.description')}</p>
                             </div>
                         </div>
-                        <button className="btn-secondary text-sm">Enable</button>
+                        <button className="btn-secondary text-sm">{t('settings:security.twoFactor.enable')}</button>
                     </div>
                 </Card>
 
                 {/* About */}
-                <Card title="About">
+                <Card title={t('settings:sections.about')}>
                     <div className="flex items-center gap-3 p-4 bg-dashboard-bg rounded-xl">
                         <Info size={18} className="text-primary-500" />
                         <div>
-                            <p className="font-medium text-white">OSTA Admin Dashboard</p>
-                            <p className="text-sm text-slate-400">Version 1.0.0 • School Bus Transport Management System</p>
+                            <p className="font-medium text-white">{t('settings:about.appName')}</p>
+                            <p className="text-sm text-slate-400">{t('settings:about.version')}</p>
                         </div>
                     </div>
                 </Card>

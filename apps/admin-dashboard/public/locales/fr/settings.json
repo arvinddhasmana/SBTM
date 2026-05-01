@@ -1,0 +1,40 @@
+{
+  "title": "Paramètres",
+  "subtitle": "Gérer votre compte et préférences",
+  "sections": {
+    "profile": "Profil",
+    "notificationPreferences": "Préférences de notification",
+    "security": "Sécurité",
+    "about": "À propos"
+  },
+  "profile": {
+    "defaultName": "Utilisateur administrateur",
+    "defaultEmail": "admin@osta.ca",
+    "role": "Administrateur"
+  },
+  "notifications": {
+    "emergencyAlerts": {
+      "title": "Alertes d'urgence",
+      "description": "Recevoir des notifications pour boutons panique et urgences"
+    },
+    "routeDeviations": {
+      "title": "Déviations itinéraire",
+      "description": "Recevoir des notifications quand les autobus dévient de l'itinéraire"
+    },
+    "dailySummary": {
+      "title": "Résumé quotidien",
+      "description": "Recevoir rapports résumés quotidiens par courriel"
+    }
+  },
+  "security": {
+    "twoFactor": {
+      "title": "Authentification à deux facteurs",
+      "description": "Ajouter une couche de sécurité supplémentaire",
+      "enable": "Activer"
+    }
+  },
+  "about": {
+    "appName": "Tableau de bord administrateur OSTA",
+    "version": "Version 1.0.0 • Système de gestion transport scolaire"
+  }
+}
