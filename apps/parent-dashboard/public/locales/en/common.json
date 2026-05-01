@@ -78,9 +78,21 @@
   },
   "notifications": {
     "title": "Notifications",
+    "alertHistory": "Alert History",
     "today": "Today",
     "earlier": "Earlier",
     "markAllRead": "Mark All as Read",
+    "refresh": "Refresh",
+    "loadingTimeline": "Loading timeline...",
+    "noTimelineEntries": "No timeline entries.",
+    "timeline": "Timeline",
+    "viewTimeline": "View timeline",
+    "hideTimeline": "Hide timeline",
+    "noAlertsYet": "No alerts yet",
+    "alertsWillAppear": "Safety alerts for your children's routes will appear here.",
+    "unableToLoad": "Unable to load alert history. Please try again.",
+    "route": "Route",
+    "bus": "Bus",
     "types": {
       "boarding": "Boarding",
       "alighting": "Alighting",
@@ -89,7 +101,20 @@
       "routeChange": "Route Change"
     },
     "empty": "No notifications",
-    "settings": "Notification Settings"
+    "settings": "Notification Settings",
+    "auditEvents": {
+      "CREATED": "Created",
+      "PENDING_CONFIRMATION": "Pending confirmation",
+      "CONFIRMED": "Confirmed by school",
+      "AUTO_ESCALATED": "Auto-escalated",
+      "FALSE_ALARM": "False alarm",
+      "PARENT_NOTIFIED": "Parents notified",
+      "BOARD_ESCALATED": "Escalated to board",
+      "OSTA_ESCALATED": "Escalated to OSTA",
+      "RESOLVED": "Resolved",
+      "INFO_REQUESTED": "Info requested",
+      "STATUS_UPDATE": "Update"
+    }
   },
   "absence": {
     "title": "Report Absence",

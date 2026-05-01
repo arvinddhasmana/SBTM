@@ -78,9 +78,21 @@
   },
   "notifications": {
     "title": "Notifications",
+    "alertHistory": "Historique des alertes",
     "today": "Aujourd'hui",
     "earlier": "Antérieures",
     "markAllRead": "Tout marquer comme lu",
+    "refresh": "Actualiser",
+    "loadingTimeline": "Chargement chronologie...",
+    "noTimelineEntries": "Aucune entrée chronologique.",
+    "timeline": "Chronologie",
+    "viewTimeline": "Voir chronologie",
+    "hideTimeline": "Masquer chronologie",
+    "noAlertsYet": "Aucune alerte",
+    "alertsWillAppear": "Les alertes de sécurité pour les itinéraires de vos enfants apparaîtront ici.",
+    "unableToLoad": "Impossible de charger l'historique des alertes. Veuillez réessayer.",
+    "route": "Itinéraire",
+    "bus": "Autobus",
     "types": {
       "boarding": "Embarquement",
       "alighting": "Débarquement",
@@ -89,7 +101,20 @@
       "routeChange": "Modification itinéraire"
     },
     "empty": "Aucune notification",
-    "settings": "Paramètres notifications"
+    "settings": "Paramètres notifications",
+    "auditEvents": {
+      "CREATED": "Créée",
+      "PENDING_CONFIRMATION": "En attente de confirmation",
+      "CONFIRMED": "Confirmée par l'école",
+      "AUTO_ESCALATED": "Escaladée automatiquement",
+      "FALSE_ALARM": "Fausse alerte",
+      "PARENT_NOTIFIED": "Parents notifiés",
+      "BOARD_ESCALATED": "Escaladée au conseil",
+      "OSTA_ESCALATED": "Escaladée à l'OSTA",
+      "RESOLVED": "Résolue",
+      "INFO_REQUESTED": "Info demandée",
+      "STATUS_UPDATE": "Mise à jour"
+    }
   },
   "absence": {
     "title": "Signaler absence",
