@@ -1,0 +1,84 @@
+{
+  "title": "Élèves",
+  "subtitle": "Inscription et gestion des élèves",
+  "addStudent": "Inscrire élève",
+  "importStudents": "Importer élèves",
+  "details": {
+    "studentId": "ID élève",
+    "name": "Nom",
+    "grade": "Niveau",
+    "school": "École",
+    "parent": "Parent/Tuteur",
+    "phone": "Téléphone",
+    "email": "Courriel",
+    "address": "Adresse",
+    "amRoute": "Itinéraire matin",
+    "pmRoute": "Itinéraire après-midi",
+    "status": "Statut",
+    "enrollmentDate": "Date d'inscription",
+    "emergencyContact": "Contact d'urgence"
+  },
+  "status": {
+    "active": "Actif",
+    "inactive": "Inactif",
+    "withdrawn": "Retiré",
+    "suspended": "Suspendu"
+  },
+  "actions": {
+    "viewProfile": "Voir profil",
+    "editStudent": "Modifier élève",
+    "assignRoute": "Assigner itinéraire",
+    "markAbsent": "Marquer absent",
+    "viewHistory": "Voir historique",
+    "withdraw": "Retirer",
+    "printCard": "Imprimer carte"
+  },
+  "presence": {
+    "title": "Historique présence",
+    "today": "Présence aujourd'hui",
+    "boarded": "Embarqué",
+    "alighted": "Débarqué",
+    "absent": "Absent",
+    "viewDetails": "Voir détails"
+  },
+  "filters": {
+    "all": "Tous les élèves",
+    "active": "Actifs seulement",
+    "byGrade": "Par niveau",
+    "bySchool": "Par école",
+    "byRoute": "Par itinéraire",
+    "byStatus": "Par statut"
+  },
+  "import": {
+    "title": "Importer élèves",
+    "selectFile": "Sélectionner fichier CSV ou Excel",
+    "template": "Télécharger modèle",
+    "mapping": "Correspondance des champs",
+    "preview": "Aperçu importation",
+    "importButton": "Importer {{count}} élèves",
+    "success": "{{count}} élèves importés avec succès",
+    "errors": "{{count}} erreurs trouvées. Veuillez réviser."
+  },
+  "messages": {
+    "enrolled": "Élève inscrit avec succès",
+    "updated": "Informations élève mises à jour",
+    "routeAssigned": "Itinéraire assigné avec succès",
+    "withdrawn": "Élève retiré avec succès",
+    "absent": "Élève marqué comme absent"
+  },
+  "empty": "Aucun élève trouvé",
+  "loading": "Chargement des élèves...",
+  "loadingData": "Chargement des données élèves...",
+  "studentPresence": "Présence des élèves",
+  "liveMonitoring": "Surveillance en temps réel des embarquements et débarquements",
+  "manageEnrollments": "Gérer les inscriptions et assignations des élèves",
+  "tabs": {
+    "livePresence": "Présence en direct",
+    "administration": "Administration"
+  },
+  "recentEvents": "Événements récents",
+  "refreshing": "Actualisation...",
+  "studentRoster": "Liste des élèves",
+  "bulkImport": "Importation en masse",
+  "enrollStudent": "Inscrire élève"
+}

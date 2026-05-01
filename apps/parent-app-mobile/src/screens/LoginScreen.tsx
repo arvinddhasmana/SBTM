@@ -11,6 +11,7 @@ import {
 import { useParentStore } from '../store/useParentStore';
 import { NotificationService } from '../services/NotificationService';
 import { GlassCard, GlassButton } from '../components';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -44,6 +45,9 @@ export default function LoginScreen() {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
+      <View style={{ position: 'absolute', top: 50, right: 20, zIndex: 10 }}>
+        <LanguageSwitcher />
+      </View>
       <View style={styles.content}>
         {/* Logo/Brand */}
         <View style={styles.logoContainer}>

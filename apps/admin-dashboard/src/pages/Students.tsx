@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Upload, Plus } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Header, LoadingSpinner } from '../components/common';
 import { PresenceStats } from '../components/presence/PresenceStats';
 import { PresenceFilters } from '../components/presence/PresenceFilters';
@@ -20,6 +21,7 @@ import type { Route } from '../types';
 import type { PresenceStats as StatsType, PresenceEvent } from '../services/api/presence.api';
 
 const Students: React.FC = () => {
+  const { t } = useTranslation(['students', 'common']);
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<'presence' | 'management'>('presence');
 
@@ -112,9 +114,9 @@ const Students: React.FC = () => {
   if (isLoading) {
     return (
       <>
-        <Header title="Students" />
+        <Header title={t('students:title')} />
         <div className="flex items-center justify-center h-96">
-          <LoadingSpinner size="lg" text="Loading student data..." />
+          <LoadingSpinner size="lg" text={t('students:loadingData')} />
         </div>
       </>
     );
@@ -123,11 +125,11 @@ const Students: React.FC = () => {
   return (
     <>
       <Header
-        title="Student Presence"
+        title={t('students:studentPresence')}
         subtitle={
           activeTab === 'presence'
-            ? `Live monitoring of student boardings and alightings`
-            : 'Manage student enrollments and assignments'
+            ? t('students:liveMonitoring')
+            : t('students:manageEnrollments')
         }
       />
 
@@ -142,7 +144,7 @@ const Students: React.FC = () => {
                 : 'text-slate-400 hover:text-white'
             }`}
           >
-            Live Presence
+            {t('students:tabs.livePresence')}
           </button>
           <button
             onClick={() => setActiveTab('management')}
@@ -152,7 +154,7 @@ const Students: React.FC = () => {
                 : 'text-slate-400 hover:text-white'
             }`}
           >
-            Administration
+            {t('students:tabs.administration')}
           </button>
         </div>
 
@@ -161,9 +163,9 @@ const Students: React.FC = () => {
             <PresenceStats stats={stats} loading={isRefreshing} />
 
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold text-white">Recent Events</h3>
+              <h3 className="text-xl font-bold text-white">{t('students:recentEvents')}</h3>
               {isRefreshing && (
-                <div className="text-xs text-blue-400 animate-pulse">Refreshing...</div>
+                <div className="text-xs text-blue-400 animate-pulse">{t('students:refreshing')}</div>
               )}
             </div>
 
@@ -181,21 +183,21 @@ const Students: React.FC = () => {
         ) : (
           <div className="space-y-6 animate-in slide-in-from-bottom-2 duration-500">
             <div className="flex justify-between items-center">
-              <h3 className="text-xl font-bold text-white">Student Roster</h3>
+              <h3 className="text-xl font-bold text-white">{t('students:studentRoster')}</h3>
               <div className="flex gap-3">
                 <button
                   onClick={() => setIsImportModalOpen(true)}
                   className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 text-white hover:bg-slate-700 transition-colors border border-white/10"
                 >
                   <Upload size={18} />
-                  Bulk Import
+                  {t('students:bulkImport')}
                 </button>
                 <button
                   onClick={() => setIsEnrollModalOpen(true)}
                   className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-500 text-white hover:bg-blue-600 transition-colors shadow-lg shadow-blue-500/25"
                 >
                   <Plus size={18} />
-                  Enroll Student
+                  {t('students:enrollStudent')}
                 </button>
               </div>
             </div>

@@ -13,6 +13,7 @@ import { useNavigation } from '@react-navigation/native';
 import { ParentApiService } from '../services/ParentApiService';
 import { Alert, AlertAuditEntry } from '../types';
 import { AuroraBackground, IconButton, LoadingSpinner } from '../components';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 import { auditEventLabel, auditEventColor } from '../utils/alerts';
 
 type Severity = 'crit' | 'warn' | 'info' | 'ok';
@@ -262,6 +263,7 @@ export default function NotificationsScreen() {
             </View>
           </View>
           <View style={styles.headerRight}>
+            <LanguageSwitcher />
             <IconButton icon="⌕" accessibilityLabel="Filter" onPress={() => {}} />
             <IconButton icon="✓" accessibilityLabel="Mark all read" onPress={() => {}} />
           </View>

@@ -11,3 +11,6 @@ export const ALERT_POLL_INTERVAL_MS = 15_000;
 
 /** HTTP request timeout (ms). */
 export const API_REQUEST_TIMEOUT_MS = 15_000;
+
+/** Minimum interval (ms) between successive reroute API calls when the bus is diverted. */
+export const REROUTE_INTERVAL_MS = 30_000;

@@ -1,0 +1,37 @@
+{
+  "boarding": {
+    "subject": "{{studentName}} has boarded the bus",
+    "body": "Dear {{parentName}},\n\nYour child {{studentName}} has boarded bus {{busNumber}} on route {{routeName}} at {{time}}.\n\nExpected arrival: {{eta}}\n\nSchool Bus Transport Management System",
+    "sms": "{{studentName}} boarded bus {{busNumber}} at {{time}}. ETA: {{eta}}"
+  },
+  "alighting": {
+    "subject": "{{studentName}} has left the bus",
+    "body": "Dear {{parentName}},\n\nYour child {{studentName}} has alighted from bus {{busNumber}} on route {{routeName}} at {{time}} at stop {{stopName}}.\n\nSchool Bus Transport Management System",
+    "sms": "{{studentName}} left bus {{busNumber}} at {{time}} - {{stopName}}"
+  },
+  "emergency": {
+    "subject": "URGENT: Emergency Alert - Bus {{busNumber}}",
+    "body": "Dear {{parentName}},\n\nAn emergency situation has been reported on bus {{busNumber}} carrying your child {{studentName}}.\n\nType: {{alertType}}\nLocation: {{location}}\nTime: {{time}}\n\nSchool administration has been notified and appropriate action is being taken. We will keep you updated.\n\nFor immediate assistance, please contact: {{contactPhone}}\n\nSchool Bus Transport Management System",
+    "sms": "URGENT: Emergency on bus {{busNumber}} with {{studentName}}. School notified. Call {{contactPhone}}"
+  },
+  "delay": {
+    "subject": "Bus {{busNumber}} Delayed",
+    "body": "Dear {{parentName}},\n\nBus {{busNumber}} on route {{routeName}} is experiencing a delay.\n\nReason: {{reason}}\nExpected delay: {{delayMinutes}} minutes\nNew ETA: {{newEta}}\n\nWe apologize for any inconvenience.\n\nSchool Bus Transport Management System",
+    "sms": "Bus {{busNumber}} delayed {{delayMinutes}} min. Reason: {{reason}}. New ETA: {{newEta}}"
+  },
+  "routeChange": {
+    "subject": "Route Change Notice - {{routeName}}",
+    "body": "Dear {{parentName}},\n\nWe are notifying you of a change to route {{routeName}} for {{studentName}}.\n\nEffective Date: {{effectiveDate}}\nChanges: {{changes}}\n\nNew pickup time: {{newPickupTime}}\nNew drop-off time: {{newDropoffTime}}\n\nIf you have any questions, please contact your school administration.\n\nSchool Bus Transport Management System",
+    "sms": "Route {{routeName}} change for {{studentName}} from {{effectiveDate}}. New times: pickup {{newPickupTime}}, dropoff {{newDropoffTime}}"
+  },
+  "absence": {
+    "subject": "Absence Confirmation - {{studentName}}",
+    "body": "Dear {{parentName}},\n\nThis confirms that {{studentName}} has been marked as absent for:\n\nDate: {{date}}\nRoute: {{routeName}}\nReason: {{reason}}\n\nNo bus service will be provided on this date.\n\nSchool Bus Transport Management System",
+    "sms": "Absence confirmed for {{studentName}} on {{date}}. No bus service."
+  },
+  "reminder": {
+    "subject": "Reminder: {{studentName}} Bus Service",
+    "body": "Dear {{parentName}},\n\nThis is a reminder about bus service for {{studentName}}:\n\nMorning pickup: {{amPickupTime}} at {{amStopName}}\nAfternoon drop-off: {{pmDropoffTime}} at {{pmStopName}}\n\nPlease ensure your child is ready at least 5 minutes before pickup time.\n\nSchool Bus Transport Management System",
+    "sms": "Reminder: {{studentName}} pickup {{amPickupTime}} at {{amStopName}}"
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "title": "Settings",
+  "subtitle": "Manage your account and preferences",
+  "sections": {
+    "profile": "Profile",
+    "notificationPreferences": "Notification Preferences",
+    "security": "Security",
+    "about": "About"
+  },
+  "profile": {
+    "defaultName": "Admin User",
+    "defaultEmail": "admin@osta.ca",
+    "role": "Administrator"
+  },
+  "notifications": {
+    "emergencyAlerts": {
+      "title": "Emergency Alerts",
+      "description": "Get notified for panic buttons and emergencies"
+    },
+    "routeDeviations": {
+      "title": "Route Deviations",
+      "description": "Get notified when buses deviate from route"
+    },
+    "dailySummary": {
+      "title": "Daily Summary",
+      "description": "Receive daily summary reports via email"
+    }
+  },
+  "security": {
+    "twoFactor": {
+      "title": "Two-Factor Authentication",
+      "description": "Add an extra layer of security",
+      "enable": "Enable"
+    }
+  },
+  "about": {
+    "appName": "OSTA Admin Dashboard",
+    "version": "Version 1.0.0 • School Bus Transport Management System"
+  }
+}

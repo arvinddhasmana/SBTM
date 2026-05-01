@@ -1,0 +1,216 @@
+{
+  "app": {
+    "title": "Conducteur SBTM",
+    "subtitle": "Gestion du transport scolaire"
+  },
+  "auth": {
+    "driverId": "ID conducteur",
+    "password": "Mot de passe",
+    "login": "CONNEXION",
+    "loggingIn": "Connexion...",
+    "faceId": "Reconnaissance faciale",
+    "tapToScan": "Toucher pour scanner",
+    "errors": {
+      "required": "Veuillez saisir l'ID et le mot de passe",
+      "invalid": "Identifiants invalides",
+      "network": "Serveur inaccessible. Vérifiez votre connexion.",
+      "networkTitle": "Serveur inaccessible",
+      "loginFailed": "Échec de connexion"
+    }
+  },
+  "routes": {
+    "title": "Sélectionner itinéraire",
+    "myRoutes": "Mes itinéraires",
+    "scheduled": "Itinéraires planifiés",
+    "selectRoute": "Sélectionner pour démarrer",
+    "noRoutes": "Aucun itinéraire assigné",
+    "startRoute": "Démarrer itinéraire",
+    "routeDetails": "Détails itinéraire",
+    "stops": "{{count}} arrêts",
+    "students": "{{count}} élèves",
+    "duration": "~{{minutes}} min",
+    "welcome": "Bienvenue, {{name}}",
+    "selectYourRoute": "Sélectionner votre itinéraire",
+    "school": "École",
+    "start": "Démarrer",
+    "logOut": "Déconnexion",
+    "startRouteConfirm": "Démarrer {{name}} ({{direction}}) ?",
+    "cancel": "Annuler"
+  },
+  "activeRoute": {
+    "title": "Itinéraire actif",
+    "nextStop": "Prochain arrêt",
+    "currentLocation": "Position actuelle",
+    "arrivalIn": "Arrivée dans {{minutes}} min",
+    "studentsOnBoard": "Élèves à bord",
+    "totalStudents": "{{current}}/{{total}}",
+    "noActiveRoute": "Aucun itinéraire actif",
+    "bus": "Autobus",
+    "school": "École",
+    "stop": "Arrêt {{number}} : {{name}}",
+    "arrival": "Arrivée : {{time}}",
+    "actions": {
+      "arrivedAtStop": "Arrivé à l'arrêt",
+      "departStop": "Quitter l'arrêt",
+      "completeRoute": "Terminer itinéraire",
+      "emergency": "URGENCE"
+    },
+    "status": {
+      "onTime": "À l'heure",
+      "delayed": "Retard {{minutes}} min",
+      "ahead": "En avance"
+    },
+    "incident": {
+      "title": "Signaler incident",
+      "subtitle": "Décrivez brièvement l'incident :",
+      "placeholder": "Ex : égratignure mineure, défaut mécanique...",
+      "report": "Signaler",
+      "reported": "Incident signalé",
+      "reportedMessage": "Votre rapport a été envoyé à l'administrateur."
+    },
+    "endRoute": {
+      "title": "Terminer itinéraire",
+      "message": "Voulez-vous vraiment terminer cet itinéraire ? Tout suivi s'arrêtera et les élèves embarqués seront débarqués.",
+      "confirm": "Terminer itinéraire"
+    },
+    "panic": {
+      "manualTrigger": "Déclenchement manuel panique",
+      "alertSent": "Alerte envoyée",
+      "helpOnWay": "L'aide est en route.",
+      "failed": "Échec d'envoi de l'alerte panique."
+    },
+    "gps": {
+      "error": "Erreur GPS",
+      "unavailable": "GPS indisponible"
+    },
+    "voice": {
+      "title": "Saisie vocale",
+      "unavailable": "Reconnaissance vocale indisponible sur cet appareil.",
+      "notSupported": "Saisie vocale non supportée sur cet appareil.",
+      "iosHint": "La saisie vocale est supportée sur Android. Sur iOS utilisez le microphone du clavier système.",
+      "prompt": "Parlez pour saisir du texte..."
+    },
+    "error": {
+      "title": "Erreur",
+      "provideDescription": "Veuillez fournir une description.",
+      "incidentFailed": "Échec d'envoi du rapport d'incident."
+    }
+  },
+  "presence": {
+    "title": "Présence élèves",
+    "boarding": "Embarquement",
+    "alighting": "Débarquement",
+    "scan": "Scanner étiquette",
+    "manual": "Saisie manuelle",
+    "search": "Rechercher élève...",
+    "board": "Embarquer",
+    "alight": "Débarquer",
+    "absent": "Marquer absent",
+    "boarded": "{{name}} embarqué",
+    "alighted": "{{name}} débarqué",
+    "notOnList": "Élève absent de la liste"
+  },
+  "alerts": {
+    "title": "Alerte urgence",
+    "type": "Type d'alerte",
+    "types": {
+      "emergency": "Urgence",
+      "breakdown": "Panne véhicule",
+      "accident": "Accident",
+      "medical": "Urgence médicale",
+      "other": "Autre"
+    },
+    "description": "Description",
+    "location": "Position actuelle",
+    "sendAlert": "ENVOYER ALERTE",
+    "sending": "Envoi...",
+    "sent": "Alerte envoyée à la répartition",
+    "cancel": "Annuler"
+  },
+  "inspection": {
+    "title": "Inspection pré-trajet",
+    "required": "Inspection pré-trajet requise",
+    "startInspection": "Démarrer inspection",
+    "items": {
+      "tires": "Pneus",
+      "lights": "Lumières",
+      "brakes": "Freins",
+      "mirrors": "Rétroviseurs",
+      "horn": "Klaxon",
+      "emergencyEquipment": "Équipement urgence",
+      "seatbelts": "Ceintures sécurité",
+      "interior": "Propreté intérieur"
+    },
+    "status": {
+      "pass": "Réussi",
+      "fail": "Échoué"
+    },
+    "notes": "Notes (optionnel)",
+    "submit": "Soumettre inspection",
+    "passed": "Inspection réussie - Itinéraire peut démarrer",
+    "failed": "Inspection échouée - Véhicule requiert entretien"
+  },
+  "roster": {
+    "title": "Liste élèves",
+    "loadingRoster": "Chargement liste...",
+    "noStudents": "Aucun élève sur cet itinéraire.",
+    "board": "Embarquer",
+    "alight": "Débarquer",
+    "reset": "Réinitialiser",
+    "boardAll": "Tout embarquer",
+    "boardAllConfirm": "Marquer tous les élèves comme embarqués ?",
+    "boardAllStudents": "Embarquer tous les élèves",
+    "alightAll": "Tout débarquer",
+    "alightAllConfirm": "Marquer tous les élèves embarqués comme débarqués ?",
+    "alightAllStudents": "Débarquer tous les élèves",
+    "stop": "Arrêt {{number}} : {{name}}",
+    "otherStudents": "Autres élèves",
+    "offline": "Hors ligne - les changements seront synchronisés à la reconnexion",
+    "rosterUnavailable": "Liste indisponible",
+    "retry": "Réessayer",
+    "status": {
+      "NOT_BOARDED": "Non embarqué",
+      "BOARDED": "Embarqué",
+      "ALIGHTED": "Débarqué"
+    }
+  },
+  "alertMessages": {
+    "title": "Messages d'alerte",
+    "noAlerts": "Aucune alerte active",
+    "loading": "Chargement alertes...",
+    "responseOptional": "Réponse (optionnel)",
+    "sendResponse": "Envoyer réponse",
+    "sending": "Envoi...",
+    "infoRequested": "L'administrateur a demandé des informations supplémentaires",
+    "voiceInput": "Saisie vocale",
+    "voiceUnavailable": "Reconnaissance vocale indisponible.",
+    "voiceNotSupported": "Saisie vocale non supportée.",
+    "voiceIosHint": "Sur iOS, touchez le microphone sur le clavier système.",
+    "actionLabels": {
+      "INFO_REQUESTED": "Info demandée",
+      "STATUS_UPDATE": "Réponse",
+      "CONFIRMED": "Confirmé",
+      "FALSE_ALARM": "Fausse alerte",
+      "RESOLVED": "Résolu",
+      "CREATED": "Créé",
+      "ESCALATED": "Escaladé"
+    }
+  },
+  "navigation": {
+    "home": "Accueil",
+    "routes": "Itinéraires",
+    "presence": "Présence",
+    "alerts": "Alertes",
+    "profile": "Profil"
+  },
+  "common": {
+    "loading": "Chargement...",
+    "refresh": "Actualiser",
+    "cancel": "Annuler",
+    "confirm": "Confirmer",
+    "yes": "Oui",
+    "no": "Non",
+    "ok": "OK",
+    "error": "Erreur"
+  }
+}

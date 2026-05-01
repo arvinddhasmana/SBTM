@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { Bus, Lock, Mail } from 'lucide-react';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 
 const Login: React.FC = () => {
+  const { t } = useTranslation('common');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -20,7 +23,7 @@ const Login: React.FC = () => {
       await login(email, password);
       navigate('/dashboard');
     } catch (err) {
-      setError('Failed to login. Please check your credentials.');
+      setError(t('auth.errors.invalid'));
     } finally {
       setIsSubmitting(false);
     }
@@ -29,15 +32,16 @@ const Login: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="flex justify-center">
+        <div className="flex justify-center items-center gap-4">
           <div className="bg-blue-600 p-3 rounded-full">
             <Bus className="h-10 w-10 text-white" />
           </div>
+          <LanguageSwitcher />
         </div>
         <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          Sign in to your account
+          {t('auth.title')}
         </h2>
-        <p className="mt-2 text-center text-sm text-gray-600">Parent Portal</p>
+        <p className="mt-2 text-center text-sm text-gray-600">{t('app.title')}</p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
@@ -45,7 +49,7 @@ const Login: React.FC = () => {
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email address
+                {t('auth.email')}
               </label>
               <div className="mt-1 relative rounded-md shadow-sm">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -67,7 +71,7 @@ const Login: React.FC = () => {
 
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Password
+                {t('auth.password')}
               </label>
               <div className="mt-1 relative rounded-md shadow-sm">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -103,12 +107,12 @@ const Login: React.FC = () => {
                 disabled={isSubmitting}
                 className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
               >
-                {isSubmitting ? 'Signing in...' : 'Sign in'}
+                {isSubmitting ? t('auth.loggingIn') : t('auth.login')}
               </button>
             </div>
 
             <div className="mt-4 text-center">
-              <p className="text-xs text-gray-500">For demo purposes, use any email/password.</p>
+              <p className="text-xs text-gray-500">{t('auth.demoMessage')}</p>
             </div>
           </form>
         </div>

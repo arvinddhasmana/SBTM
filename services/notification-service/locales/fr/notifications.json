@@ -1,0 +1,37 @@
+{
+  "boarding": {
+    "subject": "{{studentName}} est monté dans l'autobus",
+    "body": "Cher {{parentName}},\n\nVotre enfant {{studentName}} est monté dans l'autobus {{busNumber}} sur l'itinéraire {{routeName}} à {{time}}.\n\nArrivée prévue : {{eta}}\n\nSystème de gestion du transport scolaire",
+    "sms": "{{studentName}} monté bus {{busNumber}} à {{time}}. Arrivée : {{eta}}"
+  },
+  "alighting": {
+    "subject": "{{studentName}} est descendu de l'autobus",
+    "body": "Cher {{parentName}},\n\nVotre enfant {{studentName}} est descendu de l'autobus {{busNumber}} sur l'itinéraire {{routeName}} à {{time}} à l'arrêt {{stopName}}.\n\nSystème de gestion du transport scolaire",
+    "sms": "{{studentName}} descendu bus {{busNumber}} à {{time}} - {{stopName}}"
+  },
+  "emergency": {
+    "subject": "URGENT : Alerte d'urgence - Autobus {{busNumber}}",
+    "body": "Cher {{parentName}},\n\nUne situation d'urgence a été signalée dans l'autobus {{busNumber}} transportant votre enfant {{studentName}}.\n\nType : {{alertType}}\nEmplacement : {{location}}\nHeure : {{time}}\n\nL'administration scolaire a été avisée et des mesures appropriées sont prises. Nous vous tiendrons informé.\n\nPour assistance immédiate, veuillez contacter : {{contactPhone}}\n\nSystème de gestion du transport scolaire",
+    "sms": "URGENT : Urgence bus {{busNumber}} avec {{studentName}}. École avisée. Appeler {{contactPhone}}"
+  },
+  "delay": {
+    "subject": "Autobus {{busNumber}} en retard",
+    "body": "Cher {{parentName}},\n\nL'autobus {{busNumber}} sur l'itinéraire {{routeName}} subit un retard.\n\nRaison : {{reason}}\nRetard prévu : {{delayMinutes}} minutes\n\nNouvelle heure d'arrivée : {{newEta}}\n\nNous nous excusons pour tout inconvénient.\n\nSystème de gestion du transport scolaire",
+    "sms": "Bus {{busNumber}} retardé {{delayMinutes}} min. Raison : {{reason}}. Arrivée : {{newEta}}"
+  },
+  "routeChange": {
+    "subject": "Avis de modification d'itinéraire - {{routeName}}",
+    "body": "Cher {{parentName}},\n\nNous vous informons d'une modification à l'itinéraire {{routeName}} pour {{studentName}}.\n\nDate d'entrée en vigueur : {{effectiveDate}}\nModifications : {{changes}}\n\nNouvel horaire de ramassage : {{newPickupTime}}\nNouvel horaire de dépose : {{newDropoffTime}}\n\nSi vous avez des questions, veuillez contacter l'administration de votre école.\n\nSystème de gestion du transport scolaire",
+    "sms": "Changement itinéraire {{routeName}} pour {{studentName}} dès {{effectiveDate}}. Horaires : ramassage {{newPickupTime}}, dépose {{newDropoffTime}}"
+  },
+  "absence": {
+    "subject": "Confirmation d'absence - {{studentName}}",
+    "body": "Cher {{parentName}},\n\nCeci confirme que {{studentName}} a été marqué absent pour :\n\nDate : {{date}}\nItinéraire : {{routeName}}\nRaison : {{reason}}\n\nAucun service d'autobus ne sera fourni à cette date.\n\nSystème de gestion du transport scolaire",
+    "sms": "Absence confirmée pour {{studentName}} le {{date}}. Pas de service autobus."
+  },
+  "reminder": {
+    "subject": "Rappel : Service d'autobus pour {{studentName}}",
+    "body": "Cher {{parentName}},\n\nCeci est un rappel concernant le service d'autobus pour {{studentName}} :\n\nRamassage matin : {{amPickupTime}} à {{amStopName}}\nDépose après-midi : {{pmDropoffTime}} à {{pmStopName}}\n\nVeuillez vous assurer que votre enfant est prêt au moins 5 minutes avant l'heure de ramassage.\n\nSystème de gestion du transport scolaire",
+    "sms": "Rappel : {{studentName}} ramassage {{amPickupTime}} à {{amStopName}}"
+  }
+}

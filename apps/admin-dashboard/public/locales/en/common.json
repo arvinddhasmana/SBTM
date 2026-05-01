@@ -1,0 +1,62 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "alerts": "Alerts",
+    "operational": "Operational",
+    "routes": "Routes",
+    "planner": "Planner",
+    "fleet": "Fleet",
+    "compliance": "Compliance",
+    "assignments": "Assignments",
+    "students": "Students",
+    "absences": "Absences",
+    "boards": "Boards",
+    "schools": "Schools",
+    "users": "Users",
+    "alertConfig": "Alert Config",
+    "settings": "Settings",
+    "logout": "Logout",
+    "collapseMenu": "Collapse Menu",
+    "expandMenu": "Expand Menu"
+  },
+  "app": {
+    "title": "OSTA Admin Dashboard",
+    "subtitle": "Transport Management",
+    "description": "School Bus Transport Management System"
+  },
+  "common": {
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "view": "View",
+    "search": "Search",
+    "filter": "Filter",
+    "export": "Export",
+    "import": "Import",
+    "refresh": "Refresh",
+    "actions": "Actions",
+    "status": "Status",
+    "date": "Date",
+    "time": "Time",
+    "yes": "Yes",
+    "no": "No",
+    "ok": "OK",
+    "confirm": "Confirm",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "submit": "Submit",
+    "update": "Update",
+    "required": "Required"
+  },
+  "language": {
+    "current": "English",
+    "switch": "Switch Language",
+    "english": "English",
+    "french": "Français"
+  }
+}

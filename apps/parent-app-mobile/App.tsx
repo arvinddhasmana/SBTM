@@ -9,6 +9,7 @@ import { AuthService } from './src/services/AuthService';
 import { ConnectivityService } from './src/services/ConnectivityService';
 import { NotificationService } from './src/services/NotificationService';
 import { useParentStore } from './src/store/useParentStore';
+import { initI18n } from './src/i18n/config';
 
 // Screens
 import LoginScreen from './src/screens/LoginScreen';
@@ -32,6 +33,15 @@ export default function App() {
 
   const initializeApp = async () => {
     try {
+      // Initialize translations first so screens never render raw keys.
+      // Failures are logged but don't block app startup — i18next falls back
+      // to keys, which is preferable to a permanent loading screen.
+      try {
+        await initI18n();
+      } catch (i18nError) {
+        console.error('[App] i18n init failed, continuing:', i18nError);
+      }
+
       // Set up unauthorized handler
       AuthService.setOnUnauthorized(() => {
         Alert.alert('Session Expired', 'Your session has expired. Please log in again.', [

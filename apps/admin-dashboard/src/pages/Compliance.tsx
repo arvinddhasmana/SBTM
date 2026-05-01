@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Shield, CheckCircle, AlertTriangle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Header, Card, LoadingSpinner } from '../components/common';
 import { complianceApi } from '../services/api';
 import { queryKeys } from '../services/query-keys';
 
 const Compliance: React.FC = () => {
+  const { t } = useTranslation(['compliance', 'common']);
   const [activeTab, setActiveTab] = useState<'drivers' | 'inspections' | 'audit'>('drivers');
 
   const {
@@ -35,9 +37,9 @@ const Compliance: React.FC = () => {
   if (isLoading) {
     return (
       <>
-        <Header title="Compliance & Safety" />
+        <Header title={t('compliance:title')} />
         <div className="flex items-center justify-center h-96">
-          <LoadingSpinner size="lg" text="Loading compliance data..." />
+          <LoadingSpinner size="lg" text={t('compliance:loading')} />
         </div>
       </>
     );
@@ -46,8 +48,8 @@ const Compliance: React.FC = () => {
   return (
     <>
       <Header
-        title="Compliance & Safety"
-        subtitle="Monitor driver certifications, vehicle safety inspections, and system audit logs"
+        title={t('compliance:title')}
+        subtitle={t('compliance:subtitle')}
       />
 
       <div className="p-6 space-y-6">
@@ -57,13 +59,13 @@ const Compliance: React.FC = () => {
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-6 py-2 rounded-lg text-sm font-bold transition-all capitalize ${
+              className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${
                 activeTab === tab
                   ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/25'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
-              {tab}
+              {t(`compliance:tabs.${tab}`)}
             </button>
           ))}
         </div>
@@ -79,7 +81,7 @@ const Compliance: React.FC = () => {
                   <p className="text-2xl font-bold text-white">
                     {drivers.filter((d) => d.status === 'VALID').length}
                   </p>
-                  <p className="text-sm text-slate-400">Compliant Drivers</p>
+                  <p className="text-sm text-slate-400">{t('compliance:metrics.compliantDrivers')}</p>
                 </div>
               </Card>
               <Card className="flex items-center gap-4">
@@ -90,7 +92,7 @@ const Compliance: React.FC = () => {
                   <p className="text-2xl font-bold text-white">
                     {drivers.filter((d) => d.status === 'EXPIRING_SOON').length}
                   </p>
-                  <p className="text-sm text-slate-400">Expiring Soon</p>
+                  <p className="text-sm text-slate-400">{t('compliance:metrics.expiringSoon')}</p>
                 </div>
               </Card>
               <Card className="flex items-center gap-4">
@@ -101,23 +103,23 @@ const Compliance: React.FC = () => {
                   <p className="text-2xl font-bold text-white">
                     {drivers.filter((d) => d.status === 'EXPIRED').length}
                   </p>
-                  <p className="text-sm text-slate-400">Expired Docs</p>
+                  <p className="text-sm text-slate-400">{t('compliance:metrics.expiredDocs')}</p>
                 </div>
               </Card>
             </div>
 
-            <Card title="Driver Compliance Status">
+            <Card title={t('compliance:cardTitles.driverComplianceStatus')}>
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="border-b border-dashboard-border">
-                      <th className="py-4 px-4 text-sm font-bold text-slate-400">Driver ID</th>
-                      <th className="py-4 px-4 text-sm font-bold text-slate-400">License Expiry</th>
+                      <th className="py-4 px-4 text-sm font-bold text-slate-400">{t('compliance:table.driverId')}</th>
+                      <th className="py-4 px-4 text-sm font-bold text-slate-400">{t('compliance:table.licenseExpiry')}</th>
                       <th className="py-4 px-4 text-sm font-bold text-slate-400">
-                        Background Check
+                        {t('compliance:table.backgroundCheck')}
                       </th>
-                      <th className="py-4 px-4 text-sm font-bold text-slate-400">Medical Due</th>
-                      <th className="py-4 px-4 text-sm font-bold text-slate-400">Status</th>
+                      <th className="py-4 px-4 text-sm font-bold text-slate-400">{t('compliance:table.medicalDue')}</th>
+                      <th className="py-4 px-4 text-sm font-bold text-slate-400">{t('compliance:driver.status')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-dashboard-border">
@@ -145,7 +147,7 @@ const Compliance: React.FC = () => {
                                   : 'bg-red-500/20 text-red-500'
                             }`}
                           >
-                            {driver.status}
+                            {t(`compliance:status.${driver.status}`)}
                           </span>
                         </td>
                       </tr>
@@ -159,16 +161,16 @@ const Compliance: React.FC = () => {
 
         {activeTab === 'inspections' && (
           <div className="space-y-6 animate-in slide-in-from-bottom-2 duration-500">
-            <Card title="Recent Vehicle Inspections">
+            <Card title={t('compliance:cardTitles.recentInspections')}>
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="border-b border-dashboard-border">
-                      <th className="py-4 px-4 text-sm font-bold text-slate-400">Date</th>
-                      <th className="py-4 px-4 text-sm font-bold text-slate-400">Vehicle</th>
-                      <th className="py-4 px-4 text-sm font-bold text-slate-400">Driver</th>
-                      <th className="py-4 px-4 text-sm font-bold text-slate-400">Type</th>
-                      <th className="py-4 px-4 text-sm font-bold text-slate-400">Result</th>
+                      <th className="py-4 px-4 text-sm font-bold text-slate-400">{t('compliance:table.date')}</th>
+                      <th className="py-4 px-4 text-sm font-bold text-slate-400">{t('compliance:table.vehicle')}</th>
+                      <th className="py-4 px-4 text-sm font-bold text-slate-400">{t('compliance:table.driver')}</th>
+                      <th className="py-4 px-4 text-sm font-bold text-slate-400">{t('compliance:table.type')}</th>
+                      <th className="py-4 px-4 text-sm font-bold text-slate-400">{t('compliance:table.result')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-dashboard-border">
@@ -188,7 +190,7 @@ const Compliance: React.FC = () => {
                                 : 'bg-red-500/20 text-red-500'
                             }`}
                           >
-                            {ins.is_passed ? 'PASS' : 'FAIL'}
+                            {ins.is_passed ? t('compliance:inspection.pass') : t('compliance:inspection.fail')}
                           </span>
                         </td>
                       </tr>
@@ -202,16 +204,16 @@ const Compliance: React.FC = () => {
 
         {activeTab === 'audit' && (
           <div className="space-y-6 animate-in slide-in-from-bottom-2 duration-500">
-            <Card title="System Audit Logs">
+            <Card title={t('compliance:cardTitles.systemAuditLogs')}>
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="border-b border-dashboard-border">
-                      <th className="py-4 px-4 text-sm font-bold text-slate-400">Timestamp</th>
-                      <th className="py-4 px-4 text-sm font-bold text-slate-400">User</th>
-                      <th className="py-4 px-4 text-sm font-bold text-slate-400">Action</th>
-                      <th className="py-4 px-4 text-sm font-bold text-slate-400">Resource</th>
-                      <th className="py-4 px-4 text-sm font-bold text-slate-400">Details</th>
+                      <th className="py-4 px-4 text-sm font-bold text-slate-400">{t('compliance:table.timestamp')}</th>
+                      <th className="py-4 px-4 text-sm font-bold text-slate-400">{t('compliance:table.user')}</th>
+                      <th className="py-4 px-4 text-sm font-bold text-slate-400">{t('compliance:table.action')}</th>
+                      <th className="py-4 px-4 text-sm font-bold text-slate-400">{t('compliance:table.resource')}</th>
+                      <th className="py-4 px-4 text-sm font-bold text-slate-400">{t('compliance:table.details')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-dashboard-border">

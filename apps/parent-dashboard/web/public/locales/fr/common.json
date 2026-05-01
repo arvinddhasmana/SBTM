@@ -1,0 +1,243 @@
+{
+  "app": {
+    "title": "Portail parent",
+    "subtitle": "Suivi autobus scolaire"
+  },
+  "auth": {
+    "title": "Connexion",
+    "email": "Adresse courriel",
+    "password": "Mot de passe",
+    "login": "Se connecter",
+    "loggingIn": "Connexion...",
+    "forgotPassword": "Mot de passe oublié?",
+    "demoMessage": "À des fins de démonstration, utilisez n'importe quel courriel/mot de passe.",
+    "errors": {
+      "required": "Veuillez saisir courriel et mot de passe",
+      "invalid": "Identifiants invalides"
+    }
+  },
+  "children": {
+    "title": "Mes enfants",
+    "selectChild": "Sélectionner un enfant à suivre",
+    "addChild": "Ajouter enfant",
+    "noChildren": "Aucun enfant inscrit",
+    "noChildrenLinked": "Aucun enfant lié à votre compte.",
+    "subtitle": "Suivi en temps réel et aperçu de la présence des élèves.",
+    "trackBusLive": "Suivre autobus en direct",
+    "details": {
+      "name": "Nom",
+      "grade": "Niveau",
+      "school": "École",
+      "amRoute": "Itinéraire matin",
+      "pmRoute": "Itinéraire après-midi",
+      "studentId": "ID élève",
+      "bus": "Autobus"
+    },
+    "status": {
+      "onBus": "Dans l'autobus",
+      "atSchool": "À l'école",
+      "atHome": "À la maison",
+      "unknown": "Statut inconnu"
+    }
+  },
+  "tracking": {
+    "title": "Suivi autobus",
+    "busLocation": "Position autobus",
+    "busNumber": "Autobus {{number}}",
+    "route": "Itinéraire : {{name}}",
+    "status": "Statut",
+    "eta": "Arrivée prévue",
+    "nextStop": "Prochain arrêt",
+    "stopsAway": "{{count}} arrêts restants",
+    "statuses": {
+      "approaching": "Approche de votre arrêt",
+      "onRoute": "Sur l'itinéraire",
+      "delayed": "En retard",
+      "completed": "Itinéraire terminé",
+      "notStarted": "Pas encore démarré",
+      "live": "En direct",
+      "noSignal": "Pas de signal",
+      "normal": "Normal",
+      "emergency": "Urgence"
+    },
+    "map": {
+      "loading": "Chargement...",
+      "resetMap": "Réinitialiser carte",
+      "mapReset": "Carte réinitialisée",
+      "legend": "Légende",
+      "yourChildsStop": "Arrêt de votre enfant",
+      "otherStops": "Autres arrêts",
+      "school": "École",
+      "busSignalLost": "Signal autobus perdu. Itinéraire possiblement en cours.",
+      "routeNotActive": "Itinéraire pas actuellement actif.",
+      "am": "Matin",
+      "pm": "Après-midi",
+      "notAvailable": "N/D",
+      "eta": "HPA : ",
+      "min": "min",
+      "updated": "Mis à jour : ",
+      "stop": "Arrêt",
+      "route": "Itinéraire : ",
+      "vehicle": "Véhicule : ",
+      "bus": "Autobus ",
+      "stopNumber": "Arrêt {{seq}} : Arrêt de {{name}}",
+      "stopAddress": "Arrêt {{seq}} : {{address}}"
+    },
+    "presence": {
+      "onBus": "Dans l'autobus",
+      "notBoarded": "Pas encore embarqué",
+      "alighted": "Déjà débarqué",
+      "absent": "Marqué absent"
+    },
+    "alerts": {
+      "title": "Alertes actives",
+      "noAlerts": "Aucune alerte active",
+      "viewDetails": "Voir détails",
+      "affected": "Affectés",
+      "eventTypes": {
+        "LATE_ARRIVAL": "Arrivée tardive",
+        "ROUTE_DEVIATION": "Déviation itinéraire",
+        "PANIC_BUTTON": "Bouton panique",
+        "INCIDENT": "Incident",
+        "ROUTE_DIVERSION": "Détour itinéraire",
+        "PANIC_ALERT": "Alerte panique"
+      }
+    }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "alertHistory": "Historique des alertes",
+    "today": "Aujourd'hui",
+    "earlier": "Antérieures",
+    "markAllRead": "Tout marquer comme lu",
+    "refresh": "Actualiser",
+    "loadingTimeline": "Chargement chronologie...",
+    "noTimelineEntries": "Aucune entrée chronologique.",
+    "timeline": "Chronologie",
+    "viewTimeline": "Voir chronologie",
+    "hideTimeline": "Masquer chronologie",
+    "noAlertsYet": "Aucune alerte",
+    "alertsWillAppear": "Les alertes de sécurité pour les itinéraires de vos enfants apparaîtront ici.",
+    "unableToLoad": "Impossible de charger l'historique des alertes. Veuillez réessayer.",
+    "route": "Itinéraire",
+    "bus": "Autobus",
+    "types": {
+      "boarding": "Embarquement",
+      "alighting": "Débarquement",
+      "delay": "Retard",
+      "emergency": "Urgence",
+      "routeChange": "Modification itinéraire"
+    },
+    "empty": "Aucune notification",
+    "settings": "Paramètres notifications",
+    "auditEvents": {
+      "CREATED": "Créée",
+      "PENDING_CONFIRMATION": "En attente de confirmation",
+      "CONFIRMED": "Confirmée par l'école",
+      "AUTO_ESCALATED": "Escaladée automatiquement",
+      "FALSE_ALARM": "Fausse alerte",
+      "PARENT_NOTIFIED": "Parents notifiés",
+      "BOARD_ESCALATED": "Escaladée au conseil",
+      "OSTA_ESCALATED": "Escaladée à l'OSTA",
+      "RESOLVED": "Résolue",
+      "INFO_REQUESTED": "Info demandée",
+      "STATUS_UPDATE": "Mise à jour"
+    }
+  },
+  "absence": {
+    "title": "Signaler absence",
+    "subtitle": "Informer le conducteur et l'école que votre enfant ne prendra pas l'autobus.",
+    "selectChild": "Sélectionner enfant",
+    "child": "Enfant",
+    "date": "Date",
+    "absenceDate": "Date d'absence",
+    "route": "Itinéraire",
+    "reason": "Raison",
+    "reasons": {
+      "sick": "Maladie",
+      "appointment": "Rendez-vous médical",
+      "family": "Raisons familiales",
+      "other": "Autre"
+    },
+    "notes": "Notes (optionnel)",
+    "notesPlaceholder": "Ex : malade aujourd'hui, retour demain",
+    "additionalNotes": "Notes additionnelles (optionnel)",
+    "submit": "Signaler absence",
+    "submitting": "Signalement...",
+    "submitAbsenceReport": "Soumettre signalement",
+    "success": "Absence signalée avec succès. Le conducteur et l'école ont été notifiés.",
+    "error": "Échec du signalement d'absence. Veuillez réessayer.",
+    "errorSelectChild": "Veuillez sélectionner un enfant.",
+    "noChildren": "Aucun enfant associé à votre compte.",
+    "routeTypes": {
+      "AM": "Itinéraire matin uniquement (AM)",
+      "PM": "Itinéraire après-midi uniquement (PM)",
+      "BOTH": "Journée complète (deux itinéraires)"
+    }
+  },
+  "profile": {
+    "title": "Profil",
+    "notificationSettings": "Paramètres notifications",
+    "subtitle": "Choisir comment vous souhaitez être notifié de l'activité de l'autobus de votre enfant.",
+    "personalInfo": "Informations personnelles",
+    "name": "Nom",
+    "email": "Courriel",
+    "phone": "Téléphone",
+    "address": "Adresse",
+    "emergencyContact": "Contact urgence",
+    "preferences": "Préférences",
+    "notifications": "Paramètres notifications",
+    "language": "Langue",
+    "editProfile": "Modifier profil",
+    "changePassword": "Changer mot de passe",
+    "logout": "Déconnexion",
+    "savePreferences": "Enregistrer préférences",
+    "saving": "Enregistrement...",
+    "preferencesSaved": "Préférences enregistrées avec succès.",
+    "eventTypes": {
+      "BOARD": {
+        "label": "Enfant embarqué",
+        "description": "Quand votre enfant monte dans l'autobus"
+      },
+      "ALIGHT": {
+        "label": "Enfant débarqué",
+        "description": "Quand votre enfant descend de l'autobus"
+      },
+      "EMERGENCY": {
+        "label": "Alertes urgence",
+        "description": "Alertes de sécurité pour l'itinéraire de votre enfant"
+      }
+    },
+    "channels": {
+      "PUSH": "Notification",
+      "EMAIL": "Courriel"
+    },
+    "alwaysOn": "Toujours actif"
+  },
+  "navigation": {
+    "home": "Accueil",
+    "dashboard": "Tableau de bord",
+    "tracking": "Suivi",
+    "notifications": "Notifications",
+    "absence": "Signaler absence",
+    "settings": "Paramètres",
+    "profile": "Profil",
+    "signOut": "Déconnexion",
+    "alert": "Alerte",
+    "parent": "PARENT",
+    "openMenu": "Ouvrir le menu principal"
+  },
+  "common": {
+    "loading": "Chargement...",
+    "refresh": "Actualiser",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "confirm": "Confirmer",
+    "yes": "Oui",
+    "no": "Non",
+    "ok": "OK",
+    "back": "Retour"
+  }
+}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Filter } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Header, Card, LoadingSpinner } from '../components/common';
 import { AlertList, AlertDetail, AlertConfirmationModal } from '../components/alerts';
 import { alertsApi, routesApi } from '../services/api';
@@ -12,14 +13,8 @@ import type { Alert, AlertAuditEntry } from '../types';
 type FilterOption = 'all' | 'active' | 'pending' | 'confirmed' | 'resolved';
 type TierFilter = 'all' | 'TIER_1' | 'TIER_2' | 'TIER_3';
 
-const TIER_TABS: { value: TierFilter; label: string; color: string }[] = [
-  { value: 'all', label: 'All Tiers', color: 'bg-primary-500' },
-  { value: 'TIER_1', label: 'Safety (Tier 1)', color: 'bg-red-500' },
-  { value: 'TIER_2', label: 'Operational (Tier 2)', color: 'bg-amber-500' },
-  { value: 'TIER_3', label: 'Informational (Tier 3)', color: 'bg-blue-500' },
-];
-
 const Alerts: React.FC = () => {
+  const { t } = useTranslation(['alerts', 'common']);
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null);
@@ -29,6 +24,13 @@ const Alerts: React.FC = () => {
   const [isResolving, setIsResolving] = useState(false);
   const [isActing, setIsActing] = useState(false);
   const [expandedTimelineAlertId, setExpandedTimelineAlertId] = useState<string | null>(null);
+
+  const TIER_TABS: { value: TierFilter; label: string; color: string }[] = [
+    { value: 'all', label: t('alerts:tierTabs.allTiers'), color: 'bg-primary-500' },
+    { value: 'TIER_1', label: t('alerts:tierTabs.tier1'), color: 'bg-red-500' },
+    { value: 'TIER_2', label: t('alerts:tierTabs.tier2'), color: 'bg-amber-500' },
+    { value: 'TIER_3', label: t('alerts:tierTabs.tier3'), color: 'bg-blue-500' },
+  ];
 
   // Keep a ref to selectedAlert.id for WebSocket callback
   const selectedAlertIdRef = useRef<string | null>(null);
@@ -183,20 +185,27 @@ const Alerts: React.FC = () => {
   if (isLoading) {
     return (
       <>
-        <Header title="Alerts" />
+        <Header title={t('alerts:title')} />
         <div className="flex items-center justify-center h-96">
-          <LoadingSpinner size="lg" text="Loading alerts..." />
+          <LoadingSpinner size="lg" text={t('alerts:loading')} />
         </div>
       </>
     );
   }
 
+  // Build subtitle dynamically with translations
+  const subtitleParts = [t('alerts:activeCount', { count: activeCount })];
+  if (pendingCount > 0) {
+    subtitleParts.push(t('alerts:awaitingConfirmation', { count: pendingCount }));
+  }
+  if (confirmedCount > 0) {
+    subtitleParts.push(t('alerts:inProgressCount', { count: confirmedCount }));
+  }
+  const subtitle = subtitleParts.join(' · ');
+
   return (
     <>
-      <Header
-        title="Alerts Management"
-        subtitle={`${activeCount} active alert${activeCount !== 1 ? 's' : ''}${pendingCount > 0 ? ` · ${pendingCount} awaiting confirmation` : ''}${confirmedCount > 0 ? ` · ${confirmedCount} in progress` : ''}`}
-      />
+      <Header title={t('alerts:management')} subtitle={subtitle} />
 
       <div className="p-6 space-y-6">
         {/* Filters */}
@@ -204,7 +213,7 @@ const Alerts: React.FC = () => {
           <div className="flex flex-wrap items-center gap-4">
             <div className="flex items-center gap-2 text-slate-400">
               <Filter size={18} />
-              <span className="font-medium">Filter:</span>
+              <span className="font-medium">{t('alerts:filter')}:</span>
             </div>
             <div className="flex gap-2 flex-wrap">
               <button
@@ -215,7 +224,7 @@ const Alerts: React.FC = () => {
                     : 'bg-dashboard-bg text-slate-400 hover:text-white'
                 }`}
               >
-                All ({alerts.length})
+                {t('alerts:filterButtons.all', { count: alerts.length })}
               </button>
               <button
                 onClick={() => setFilter('active')}
@@ -225,7 +234,7 @@ const Alerts: React.FC = () => {
                     : 'bg-dashboard-bg text-slate-400 hover:text-white'
                 }`}
               >
-                Active ({activeCount})
+                {t('alerts:filterButtons.active', { count: activeCount })}
               </button>
               {canConfirm && (
                 <button
@@ -236,7 +245,7 @@ const Alerts: React.FC = () => {
                       : 'bg-dashboard-bg text-slate-400 hover:text-white'
                   }`}
                 >
-                  Pending ({pendingCount})
+                  {t('alerts:filterButtons.pending', { count: pendingCount })}
                   {pendingCount > 0 && (
                     <span className="ml-1.5 inline-block w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
                   )}
@@ -250,7 +259,7 @@ const Alerts: React.FC = () => {
                     : 'bg-dashboard-bg text-slate-400 hover:text-white'
                 }`}
               >
-                In Progress ({confirmedCount})
+                {t('alerts:filterButtons.confirmed', { count: confirmedCount })}
               </button>
               <button
                 onClick={() => setFilter('resolved')}
@@ -260,7 +269,7 @@ const Alerts: React.FC = () => {
                     : 'bg-dashboard-bg text-slate-400 hover:text-white'
                 }`}
               >
-                Resolved ({resolvedCount})
+                {t('alerts:filterButtons.resolved', { count: resolvedCount })}
               </button>
             </div>
           </div>
@@ -290,7 +299,11 @@ const Alerts: React.FC = () => {
             onAlertClick={handleAlertClick}
             compact={false}
             routeNames={routeNames}
-            emptyMessage={`No ${filter === 'all' ? '' : filter + ' '}alerts found`}
+            emptyMessage={
+              filter === 'all'
+                ? t('alerts:empty')
+                : t('alerts:emptyFiltered', { filter })
+            }
             expandedTimelineAlertId={expandedTimelineAlertId}
             expandedTimelineAudit={expandedTimelineAudit}
             onToggleTimeline={handleToggleTimeline}

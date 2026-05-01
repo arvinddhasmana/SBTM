@@ -1,0 +1,216 @@
+{
+  "app": {
+    "title": "SBTM Driver",
+    "subtitle": "School Bus Transport Management"
+  },
+  "auth": {
+    "driverId": "Driver ID",
+    "password": "Password",
+    "login": "LOGIN",
+    "loggingIn": "Logging in...",
+    "faceId": "FaceID",
+    "tapToScan": "Tap to scan FaceID",
+    "errors": {
+      "required": "Please enter driver ID and password",
+      "invalid": "Invalid credentials",
+      "network": "Cannot reach server. Please check your connection.",
+      "networkTitle": "Cannot Reach Server",
+      "loginFailed": "Login Failed"
+    }
+  },
+  "routes": {
+    "title": "Select Route",
+    "myRoutes": "My Routes",
+    "scheduled": "Scheduled Routes",
+    "selectRoute": "Select Route to Start",
+    "noRoutes": "No routes assigned",
+    "startRoute": "Start Route",
+    "routeDetails": "Route Details",
+    "stops": "{{count}} stops",
+    "students": "{{count}} students",
+    "duration": "~{{minutes}} min",
+    "welcome": "Welcome, {{name}}",
+    "selectYourRoute": "Select your route",
+    "school": "School",
+    "start": "Start",
+    "logOut": "Log Out",
+    "startRouteConfirm": "Start {{name}} ({{direction}})?",
+    "cancel": "Cancel"
+  },
+  "activeRoute": {
+    "title": "Active Route",
+    "nextStop": "Next Stop",
+    "currentLocation": "Current Location",
+    "arrivalIn": "Arrival in {{minutes}} min",
+    "studentsOnBoard": "Students on Board",
+    "totalStudents": "{{current}}/{{total}}",
+    "noActiveRoute": "No Active Route",
+    "bus": "Bus",
+    "school": "School",
+    "stop": "Stop {{number}}: {{name}}",
+    "arrival": "Arrival: {{time}}",
+    "actions": {
+      "arrivedAtStop": "Arrived at Stop",
+      "departStop": "Depart Stop",
+      "completeRoute": "Complete Route",
+      "emergency": "EMERGENCY"
+    },
+    "status": {
+      "onTime": "On Time",
+      "delayed": "Delayed {{minutes}} min",
+      "ahead": "Ahead of Schedule"
+    },
+    "incident": {
+      "title": "Report Incident",
+      "subtitle": "Briefly describe the incident:",
+      "placeholder": "E.g., minor scrape, mechanical defect...",
+      "report": "Report",
+      "reported": "Incident Reported",
+      "reportedMessage": "Your report has been sent to the admin."
+    },
+    "endRoute": {
+      "title": "End Route",
+      "message": "Are you sure you want to end this route? All tracking will stop and boarded students will be alighted.",
+      "confirm": "End Route"
+    },
+    "panic": {
+      "manualTrigger": "Manual panic trigger",
+      "alertSent": "Alert Sent",
+      "helpOnWay": "Help is on the way.",
+      "failed": "Failed to send panic alert."
+    },
+    "gps": {
+      "error": "GPS Error",
+      "unavailable": "GPS unavailable"
+    },
+    "voice": {
+      "title": "Voice Input",
+      "unavailable": "Speech recognition unavailable on this device.",
+      "notSupported": "Voice input not supported on this device.",
+      "iosHint": "Voice input is supported on Android. On iOS use the system keyboard microphone.",
+      "prompt": "Speak to enter text..."
+    },
+    "error": {
+      "title": "Error",
+      "provideDescription": "Please provide a description.",
+      "incidentFailed": "Failed to send incident report."
+    }
+  },
+  "presence": {
+    "title": "Student Presence",
+    "boarding": "Boarding",
+    "alighting": "Alighting",
+    "scan": "Scan SmartTag",
+    "manual": "Manual Entry",
+    "search": "Search student...",
+    "board": "Board",
+    "alight": "Alight",
+    "absent": "Mark Absent",
+    "boarded": "{{name}} boarded",
+    "alighted": "{{name}} alighted",
+    "notOnList": "Student not on route list"
+  },
+  "alerts": {
+    "title": "Emergency Alert",
+    "type": "Alert Type",
+    "types": {
+      "emergency": "Emergency",
+      "breakdown": "Vehicle Breakdown",
+      "accident": "Accident",
+      "medical": "Medical Emergency",
+      "other": "Other"
+    },
+    "description": "Description",
+    "location": "Current Location",
+    "sendAlert": "SEND ALERT",
+    "sending": "Sending...",
+    "sent": "Alert sent to dispatch",
+    "cancel": "Cancel"
+  },
+  "inspection": {
+    "title": "Pre-Trip Inspection",
+    "required": "Pre-trip inspection required",
+    "startInspection": "Start Inspection",
+    "items": {
+      "tires": "Tires",
+      "lights": "Lights",
+      "brakes": "Brakes",
+      "mirrors": "Mirrors",
+      "horn": "Horn",
+      "emergencyEquipment": "Emergency Equipment",
+      "seatbelts": "Seatbelts",
+      "interior": "Interior Cleanliness"
+    },
+    "status": {
+      "pass": "Pass",
+      "fail": "Fail"
+    },
+    "notes": "Notes (optional)",
+    "submit": "Submit Inspection",
+    "passed": "Inspection passed - Route can start",
+    "failed": "Inspection failed - Vehicle requires maintenance"
+  },
+  "roster": {
+    "title": "Student Roster",
+    "loadingRoster": "Loading roster...",
+    "noStudents": "No students on this route yet.",
+    "board": "Board",
+    "alight": "Alight",
+    "reset": "Reset",
+    "boardAll": "Board All",
+    "boardAllConfirm": "Mark all students as boarded?",
+    "boardAllStudents": "Board All Students",
+    "alightAll": "Alight All",
+    "alightAllConfirm": "Mark all boarded students as alighted?",
+    "alightAllStudents": "Alight All Students",
+    "stop": "Stop {{number}}: {{name}}",
+    "otherStudents": "Other Students",
+    "offline": "Offline - changes will sync when reconnected",
+    "rosterUnavailable": "Roster unavailable",
+    "retry": "Retry",
+    "status": {
+      "NOT_BOARDED": "Not Boarded",
+      "BOARDED": "Boarded",
+      "ALIGHTED": "Alighted"
+    }
+  },
+  "alertMessages": {
+    "title": "Alert Messages",
+    "noAlerts": "No active alerts",
+    "loading": "Loading alerts...",
+    "responseOptional": "Response (optional)",
+    "sendResponse": "Send Response",
+    "sending": "Sending...",
+    "infoRequested": "Admin has requested additional information",
+    "voiceInput": "Voice Input",
+    "voiceUnavailable": "Speech recognition unavailable.",
+    "voiceNotSupported": "Voice input not supported.",
+    "voiceIosHint": "On iOS, tap the microphone on the system keyboard.",
+    "actionLabels": {
+      "INFO_REQUESTED": "Info Requested",
+      "STATUS_UPDATE": "Response",
+      "CONFIRMED": "Confirmed",
+      "FALSE_ALARM": "False Alarm",
+      "RESOLVED": "Resolved",
+      "CREATED": "Created",
+      "ESCALATED": "Escalated"
+    }
+  },
+  "navigation": {
+    "home": "Home",
+    "routes": "Routes",
+    "presence": "Presence",
+    "alerts": "Alerts",
+    "profile": "Profile"
+  },
+  "common": {
+    "loading": "Loading...",
+    "refresh": "Refresh",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No",
+    "ok": "OK",
+    "error": "Error"
+  }
+}

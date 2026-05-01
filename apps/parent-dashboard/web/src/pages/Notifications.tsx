@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import {
   AlertTriangle,
   CheckCircle,
@@ -12,34 +13,11 @@ import {
 import { parentApi, type AlertHistoryRecord, type AlertAuditEntry } from '../services/api';
 import { queryKeys } from '../services/query-keys';
 
-const EVENT_TYPE_LABELS: Record<string, string> = {
-  LATE_ARRIVAL: 'Late Arrival',
-  ROUTE_DEVIATION: 'Route Deviation',
-  PANIC_BUTTON: 'Panic Button',
-  INCIDENT: 'Incident',
-  ROUTE_DIVERSION: 'Route Diversion',
-  PANIC_ALERT: 'Panic Alert',
-};
-
 const EVENT_TYPE_COLORS: Record<string, string> = {
   LATE_ARRIVAL: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
   ROUTE_DEVIATION: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
   PANIC_BUTTON: 'bg-red-500/20 text-red-400 border-red-500/30',
   INCIDENT: 'bg-pink-500/20 text-pink-400 border-pink-500/30',
-};
-
-const AUDIT_EVENT_LABELS: Record<string, string> = {
-  CREATED: 'Created',
-  PENDING_CONFIRMATION: 'Pending confirmation',
-  CONFIRMED: 'Confirmed by school',
-  AUTO_ESCALATED: 'Auto-escalated',
-  FALSE_ALARM: 'False alarm',
-  PARENT_NOTIFIED: 'Parents notified',
-  BOARD_ESCALATED: 'Escalated to board',
-  OSTA_ESCALATED: 'Escalated to OSTA',
-  RESOLVED: 'Resolved',
-  INFO_REQUESTED: 'Info requested',
-  STATUS_UPDATE: 'Update',
 };
 
 function getAuditDotColor(eventType: string): string {
@@ -85,6 +63,7 @@ function getAuditLabelColor(eventType: string): string {
 }
 
 const AlertTimeline: React.FC<{ alertId: string }> = ({ alertId }) => {
+  const { t } = useTranslation('common');
   const { data: auditTrail = [], isLoading } = useQuery({
     queryKey: queryKeys.alerts.auditTrail(alertId),
     queryFn: () => parentApi.getAlertAuditTrail(alertId),
@@ -94,13 +73,13 @@ const AlertTimeline: React.FC<{ alertId: string }> = ({ alertId }) => {
     return (
       <div className="flex items-center gap-2 py-3 text-slate-500 text-sm">
         <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-        Loading timeline...
+        {t('notifications.loadingTimeline')}
       </div>
     );
   }
 
   if (auditTrail.length === 0) {
-    return <p className="text-slate-500 text-sm py-2">No timeline entries.</p>;
+    return <p className="text-slate-500 text-sm py-2">{t('notifications.noTimelineEntries')}</p>;
   }
 
   const sortedTrail = [...auditTrail].sort(
@@ -110,7 +89,7 @@ const AlertTimeline: React.FC<{ alertId: string }> = ({ alertId }) => {
   return (
     <div className="pt-2">
       <p className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider mb-3">
-        Timeline
+        {t('notifications.timeline')}
       </p>
       <div className="space-y-0">
         {sortedTrail.map((entry: AlertAuditEntry) => (
@@ -124,7 +103,7 @@ const AlertTimeline: React.FC<{ alertId: string }> = ({ alertId }) => {
             <div className="flex-1 min-w-0 pb-1">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className={`text-sm font-semibold ${getAuditLabelColor(entry.eventType)}`}>
-                  {AUDIT_EVENT_LABELS[entry.eventType] || entry.eventType.replace(/_/g, ' ')}
+                  {t(`notifications.auditEvents.${entry.eventType}`, { defaultValue: entry.eventType.replace(/_/g, ' ') })}
                 </span>
                 <span className="flex items-center gap-1 text-xs text-slate-500">
                   <Clock className="h-3 w-3" />
@@ -143,6 +122,7 @@ const AlertTimeline: React.FC<{ alertId: string }> = ({ alertId }) => {
 };
 
 const Notifications: React.FC = () => {
+  const { t } = useTranslation('common');
   const [expandedAlertId, setExpandedAlertId] = useState<string | null>(null);
 
   const {
@@ -156,7 +136,7 @@ const Notifications: React.FC = () => {
     refetchInterval: 30_000,
   });
 
-  const error = queryError ? 'Unable to load alert history. Please try again.' : null;
+  const error = queryError ? t('notifications.unableToLoad') : null;
 
   const formatTimestamp = (ts: string): string => {
     try {
@@ -173,18 +153,18 @@ const Notifications: React.FC = () => {
   return (
     <div className="px-4 sm:px-0">
       <div className="flex items-center justify-between mb-2">
-        <h1 className="text-3xl font-bold text-white tracking-tight">Alert History</h1>
+        <h1 className="text-3xl font-bold text-white tracking-tight">{t('notifications.alertHistory')}</h1>
         <button
           onClick={() => refetch()}
           disabled={loading}
           className="flex items-center gap-2 text-sm text-indigo-400 hover:text-indigo-300 disabled:opacity-50 transition-colors"
-          aria-label="Refresh alerts"
+          aria-label={t('notifications.refresh')}
         >
           <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-          Refresh
+          {t('notifications.refresh')}
         </button>
       </div>
-      <p className="text-slate-400 mb-8">Emergency alerts and safety events for your routes.</p>
+      <p className="text-slate-400 mb-8">{t('notifications.alertsWillAppear')}</p>
 
       {error && (
         <div className="mb-4 rounded-2xl bg-red-500/10 border border-red-500/30 p-4 text-red-300 text-sm backdrop-blur-md">
@@ -201,9 +181,9 @@ const Notifications: React.FC = () => {
       {!loading && alerts.length === 0 && !error && (
         <div className="text-center py-16">
           <ShieldAlert className="mx-auto h-14 w-14 text-slate-600" />
-          <p className="mt-4 text-lg text-slate-400 font-medium">No alerts yet</p>
+          <p className="mt-4 text-lg text-slate-400 font-medium">{t('notifications.noAlertsYet')}</p>
           <p className="text-sm text-slate-500 mt-1">
-            Safety alerts for your children's routes will appear here.
+            {t('notifications.alertsWillAppear')}
           </p>
         </div>
       )}
@@ -211,7 +191,7 @@ const Notifications: React.FC = () => {
       {alerts.length > 0 && (
         <div className="space-y-4">
           {alerts.map((alert: AlertHistoryRecord) => {
-            const label = EVENT_TYPE_LABELS[alert.eventType] || alert.eventType;
+            const label = t(`tracking.alerts.eventTypes.${alert.eventType}`, { defaultValue: alert.eventType });
             const colorClass =
               EVENT_TYPE_COLORS[alert.eventType] ||
               'bg-slate-500/20 text-slate-400 border-slate-500/30';
@@ -256,10 +236,10 @@ const Notifications: React.FC = () => {
                       )}
                       <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
                         <span>
-                          Route: <span className="text-slate-300 font-medium">{alert.routeId}</span>
+                          {t('notifications.route')}: <span className="text-slate-300 font-medium">{alert.routeId}</span>
                         </span>
                         <span>
-                          Bus: <span className="text-slate-300 font-medium">{alert.vehicleId}</span>
+                          {t('notifications.bus')}: <span className="text-slate-300 font-medium">{alert.vehicleId}</span>
                         </span>
                         <span>{formatTimestamp(alert.createdAt)}</span>
                       </div>
@@ -272,12 +252,12 @@ const Notifications: React.FC = () => {
                         {isExpanded ? (
                           <>
                             <ChevronUp className="h-4 w-4" />
-                            Hide timeline
+                            {t('notifications.hideTimeline')}
                           </>
                         ) : (
                           <>
                             <ChevronDown className="h-4 w-4" />
-                            View timeline
+                            {t('notifications.viewTimeline')}
                           </>
                         )}
                       </button>

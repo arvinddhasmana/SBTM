@@ -1,0 +1,91 @@
+{
+  "title": "Dashboard",
+  "welcome": "Welcome back, {{name}}",
+  "overview": "System Overview",
+  "metrics": {
+    "activeRoutes": "Active Routes",
+    "totalRoutes": "Total Routes",
+    "activeVehicles": "Active Vehicles",
+    "totalVehicles": "Total Vehicles",
+    "totalStudents": "Total Students",
+    "presentStudents": "Present Today",
+    "activeAlerts": "Active Alerts",
+    "resolvedToday": "Resolved Today",
+    "fleetUtilization": "Fleet Utilization",
+    "onTimePerformance": "On-Time Performance",
+    "averageDelay": "Average Delay",
+    "minutes": "minutes"
+  },
+  "sections": {
+    "recentAlerts": "Recent Alerts",
+    "activeRoutes": "Active Routes",
+    "fleetStatus": "Fleet Status",
+    "studentPresence": "Student Presence",
+    "systemHealth": "System Health"
+  },
+  "status": {
+    "operational": "Operational",
+    "warning": "Warning",
+    "critical": "Critical",
+    "offline": "Offline"
+  },
+  "actions": {
+    "viewAll": "View All",
+    "viewDetails": "View Details",
+    "refresh": "Refresh",
+    "exportReport": "Export Report"
+  },
+  "noData": "No data available",
+  "loading": "Loading dashboard data...",
+  "tacticalOverview": "Tactical Overview",
+  "realTimeFleet": "Real-time fleet intelligence",
+  "initialising": "Initialising Tactical Command...",
+  "mode": {
+    "info": "Info",
+    "action": "Action"
+  },
+  "mockDataActive": "Mock Data Active",
+  "panels": {
+    "routes": "Routes",
+    "tacticalAlerts": "Tactical Alerts",
+    "passengerFeed": "Passenger Feed",
+    "legend": "Legend"
+  },
+  "search": {
+    "routes": "Search routes, schools, buses...",
+    "passengers": "Search passengers..."
+  },
+  "buttons": {
+    "reviewAll": "Review All",
+    "manifest": "Manifest"
+  },
+  "empty": {
+    "noActiveRoutes": "No active routes",
+    "noActiveAlerts": "No active alerts",
+    "noActionableAlerts": "No actionable alerts",
+    "noOccupancy": "No occupancy"
+  },
+  "legend": {
+    "normal": "Normal",
+    "delayed": "Delayed",
+    "emergency": "Emergency"
+  },
+  "missionHealth": {
+    "gps": "GPS",
+    "hub": "HUB",
+    "telem": "TELEM",
+    "ok": "OK"
+  },
+  "stats": {
+    "routes": "Routes",
+    "buses": "Buses",
+    "boarded": "Boarded",
+    "alerts": "Alerts"
+  },
+  "tierFilter": {
+    "allTiers": "All Tiers",
+    "tier1": "Tier 1 — Critical",
+    "tier2": "Tier 2 — Warning",
+    "tier3": "Tier 3 — Info"
+  }
+}

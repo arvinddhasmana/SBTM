@@ -1,0 +1,243 @@
+{
+  "app": {
+    "title": "Parent Portal",
+    "subtitle": "School Bus Tracking"
+  },
+  "auth": {
+    "title": "Sign In",
+    "email": "Email Address",
+    "password": "Password",
+    "login": "Sign In",
+    "loggingIn": "Signing in...",
+    "forgotPassword": "Forgot Password?",
+    "demoMessage": "For demo purposes, use any email/password.",
+    "errors": {
+      "required": "Please enter email and password",
+      "invalid": "Invalid credentials"
+    }
+  },
+  "children": {
+    "title": "My Children",
+    "selectChild": "Select a child to track",
+    "addChild": "Add Child",
+    "noChildren": "No children registered",
+    "noChildrenLinked": "No children linked to your account.",
+    "subtitle": "Real-time tracking and student presence overview.",
+    "trackBusLive": "Track Bus Live",
+    "details": {
+      "name": "Name",
+      "grade": "Grade",
+      "school": "School",
+      "amRoute": "AM Route",
+      "pmRoute": "PM Route",
+      "studentId": "Student ID",
+      "bus": "Bus"
+    },
+    "status": {
+      "onBus": "On the Bus",
+      "atSchool": "At School",
+      "atHome": "At Home",
+      "unknown": "Status Unknown"
+    }
+  },
+  "tracking": {
+    "title": "Bus Tracking",
+    "busLocation": "Bus Location",
+    "busNumber": "Bus {{number}}",
+    "route": "Route: {{name}}",
+    "status": "Status",
+    "eta": "Estimated Arrival",
+    "nextStop": "Next Stop",
+    "stopsAway": "{{count}} stops away",
+    "statuses": {
+      "approaching": "Approaching Your Stop",
+      "onRoute": "On Route",
+      "delayed": "Delayed",
+      "completed": "Route Completed",
+      "notStarted": "Not Started Yet",
+      "live": "Live",
+      "noSignal": "No Signal",
+      "normal": "Normal",
+      "emergency": "Emergency"
+    },
+    "map": {
+      "loading": "Loading...",
+      "resetMap": "Reset Map",
+      "mapReset": "Map Reset",
+      "legend": "Legend",
+      "yourChildsStop": "Your child's stop",
+      "otherStops": "Other stops",
+      "school": "School",
+      "busSignalLost": "Bus signal lost. Route may still be in progress.",
+      "routeNotActive": "Route is not currently active.",
+      "am": "AM",
+      "pm": "PM",
+      "notAvailable": "N/A",
+      "eta": "ETA: ",
+      "min": "min",
+      "updated": "Updated: ",
+      "stop": "Stop",
+      "route": "Route: ",
+      "vehicle": "Vehicle: ",
+      "bus": "Bus ",
+      "stopNumber": "Stop {{seq}}: {{name}}'s Stop",
+      "stopAddress": "Stop {{seq}}: {{address}}"
+    },
+    "presence": {
+      "onBus": "On Bus",
+      "notBoarded": "Not Boarded Yet",
+      "alighted": "Already Alighted",
+      "absent": "Marked Absent"
+    },
+    "alerts": {
+      "title": "Active Alerts",
+      "noAlerts": "No active alerts",
+      "viewDetails": "View Details",
+      "affected": "Affected",
+      "eventTypes": {
+        "LATE_ARRIVAL": "Late Arrival",
+        "ROUTE_DEVIATION": "Route Deviation",
+        "PANIC_BUTTON": "Panic Button",
+        "INCIDENT": "Incident",
+        "ROUTE_DIVERSION": "Route Diversion",
+        "PANIC_ALERT": "Panic Alert"
+      }
+    }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "alertHistory": "Alert History",
+    "today": "Today",
+    "earlier": "Earlier",
+    "markAllRead": "Mark All as Read",
+    "refresh": "Refresh",
+    "loadingTimeline": "Loading timeline...",
+    "noTimelineEntries": "No timeline entries.",
+    "timeline": "Timeline",
+    "viewTimeline": "View timeline",
+    "hideTimeline": "Hide timeline",
+    "noAlertsYet": "No alerts yet",
+    "alertsWillAppear": "Safety alerts for your children's routes will appear here.",
+    "unableToLoad": "Unable to load alert history. Please try again.",
+    "route": "Route",
+    "bus": "Bus",
+    "types": {
+      "boarding": "Boarding",
+      "alighting": "Alighting",
+      "delay": "Delay",
+      "emergency": "Emergency",
+      "routeChange": "Route Change"
+    },
+    "empty": "No notifications",
+    "settings": "Notification Settings",
+    "auditEvents": {
+      "CREATED": "Created",
+      "PENDING_CONFIRMATION": "Pending confirmation",
+      "CONFIRMED": "Confirmed by school",
+      "AUTO_ESCALATED": "Auto-escalated",
+      "FALSE_ALARM": "False alarm",
+      "PARENT_NOTIFIED": "Parents notified",
+      "BOARD_ESCALATED": "Escalated to board",
+      "OSTA_ESCALATED": "Escalated to OSTA",
+      "RESOLVED": "Resolved",
+      "INFO_REQUESTED": "Info requested",
+      "STATUS_UPDATE": "Update"
+    }
+  },
+  "absence": {
+    "title": "Report Absence",
+    "subtitle": "Let the driver and school know your child will not be riding the bus.",
+    "selectChild": "Select Child",
+    "child": "Child",
+    "date": "Date",
+    "absenceDate": "Absence Date",
+    "route": "Route",
+    "reason": "Reason",
+    "reasons": {
+      "sick": "Sick",
+      "appointment": "Medical Appointment",
+      "family": "Family Reasons",
+      "other": "Other"
+    },
+    "notes": "Notes (optional)",
+    "notesPlaceholder": "E.g. sick today, will return tomorrow",
+    "additionalNotes": "Additional Notes (optional)",
+    "submit": "Report Absence",
+    "submitting": "Reporting…",
+    "submitAbsenceReport": "Submit Absence Report",
+    "success": "Absence reported successfully. The driver and school have been notified.",
+    "error": "Failed to report absence. Please try again.",
+    "errorSelectChild": "Please select a child.",
+    "noChildren": "No children associated with your account.",
+    "routeTypes": {
+      "AM": "Morning route only (AM)",
+      "PM": "Afternoon route only (PM)",
+      "BOTH": "Full day (both routes)"
+    }
+  },
+  "profile": {
+    "title": "Profile",
+    "notificationSettings": "Notification Settings",
+    "subtitle": "Choose how you want to be notified about your child's bus activity.",
+    "personalInfo": "Personal Information",
+    "name": "Name",
+    "email": "Email",
+    "phone": "Phone",
+    "address": "Address",
+    "emergencyContact": "Emergency Contact",
+    "preferences": "Preferences",
+    "notifications": "Notification Settings",
+    "language": "Language",
+    "editProfile": "Edit Profile",
+    "changePassword": "Change Password",
+    "logout": "Logout",
+    "savePreferences": "Save Preferences",
+    "saving": "Saving...",
+    "preferencesSaved": "Preferences saved successfully.",
+    "eventTypes": {
+      "BOARD": {
+        "label": "Child Boarded",
+        "description": "When your child boards the bus"
+      },
+      "ALIGHT": {
+        "label": "Child Alighted",
+        "description": "When your child gets off the bus"
+      },
+      "EMERGENCY": {
+        "label": "Emergency Alerts",
+        "description": "Safety alerts for your child's route"
+      }
+    },
+    "channels": {
+      "PUSH": "Push",
+      "EMAIL": "Email"
+    },
+    "alwaysOn": "Always On"
+  },
+  "navigation": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "tracking": "Tracking",
+    "notifications": "Notifications",
+    "absence": "Report Absence",
+    "settings": "Settings",
+    "profile": "Profile",
+    "signOut": "Sign out",
+    "alert": "Alert",
+    "parent": "PARENT",
+    "openMenu": "Open main menu"
+  },
+  "common": {
+    "loading": "Loading...",
+    "refresh": "Refresh",
+    "cancel": "Cancel",
+    "save": "Save",
+    "edit": "Edit",
+    "delete": "Delete",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No",
+    "ok": "OK",
+    "back": "Back"
+  }
+}

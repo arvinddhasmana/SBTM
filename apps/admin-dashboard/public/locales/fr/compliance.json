@@ -1,0 +1,97 @@
+{
+  "title": "Conformité et sécurité",
+  "subtitle": "Surveiller les certifications conducteurs, inspections véhicules et journaux d'audit",
+  "sections": {
+    "driverCompliance": "Conformité conducteurs",
+    "vehicleInspections": "Inspections véhicules",
+    "auditLogs": "Journaux d'audit"
+  },
+  "tabs": {
+    "drivers": "Conducteurs",
+    "inspections": "Inspections",
+    "audit": "Audit"
+  },
+  "metrics": {
+    "compliantDrivers": "Conducteurs conformes",
+    "expiringSoon": "Expire bientôt",
+    "expiredDocs": "Documents expirés"
+  },
+  "table": {
+    "driverId": "ID conducteur",
+    "licenseExpiry": "Expiration permis",
+    "backgroundCheck": "Vérification antécédents",
+    "medicalDue": "Examen médical dû",
+    "date": "Date",
+    "vehicle": "Véhicule",
+    "driver": "Conducteur",
+    "type": "Type",
+    "result": "Résultat",
+    "timestamp": "Horodatage",
+    "user": "Utilisateur",
+    "action": "Action",
+    "resource": "Ressource",
+    "details": "Détails"
+  },
+  "cardTitles": {
+    "driverComplianceStatus": "Statut conformité conducteurs",
+    "recentInspections": "Inspections véhicules récentes",
+    "systemAuditLogs": "Journaux d'audit système"
+  },
+  "driver": {
+    "license": "Permis de conduire",
+    "medicalCertificate": "Certificat médical",
+    "backgroundCheck": "Vérification antécédents",
+    "training": "Certificat formation",
+    "expiryDate": "Date d'expiration",
+    "status": "Statut",
+    "valid": "Valide",
+    "expiring": "Expire bientôt",
+    "expired": "Expiré",
+    "daysUntilExpiry": "{{days}} jours avant expiration"
+  },
+  "inspection": {
+    "title": "Inspection véhicule",
+    "type": "Type d'inspection",
+    "preTrip": "Pré-trajet",
+    "postTrip": "Post-trajet",
+    "periodic": "Périodique",
+    "result": "Résultat",
+    "passed": "Réussi",
+    "failed": "Échoué",
+    "pass": "RÉUSSI",
+    "fail": "ÉCHOUÉ",
+    "conditional": "Conditionnel",
+    "inspector": "Inspecteur",
+    "date": "Date d'inspection",
+    "defects": "Défauts trouvés",
+    "notes": "Notes",
+    "photos": "Photos"
+  },
+  "status": {
+    "VALID": "VALIDE",
+    "EXPIRING_SOON": "EXPIRE BIENTÔT",
+    "EXPIRED": "EXPIRÉ"
+  },
+  "audit": {
+    "action": "Action",
+    "user": "Utilisateur",
+    "timestamp": "Horodatage",
+    "resource": "Ressource",
+    "details": "Détails",
+    "ipAddress": "Adresse IP"
+  },
+  "actions": {
+    "viewDetails": "Voir détails",
+    "scheduleInspection": "Planifier inspection",
+    "uploadDocument": "Téléverser document",
+    "exportReport": "Exporter rapport",
+    "sendReminder": "Envoyer rappel"
+  },
+  "messages": {
+    "documentUploaded": "Document téléversé avec succès",
+    "inspectionScheduled": "Inspection planifiée avec succès",
+    "reminderSent": "Rappel envoyé à {{recipient}}"
+  },
+  "empty": "Aucun enregistrement de conformité trouvé",
+  "loading": "Chargement données de conformité..."
+}

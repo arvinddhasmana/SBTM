@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bus, Mail, Lock, AlertCircle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { useMock } from '../services/api';
+import LanguageSwitcher from '../components/common/LanguageSwitcher';
 
 const Login: React.FC = () => {
+  const { t } = useTranslation(['auth', 'common']);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -16,7 +19,7 @@ const Login: React.FC = () => {
     setError('');
 
     if (!email || !password) {
-      setError('Please enter both email and password');
+      setError(t('auth:errors.required'));
       return;
     }
 
@@ -25,9 +28,9 @@ const Login: React.FC = () => {
       navigate('/dashboard');
     } catch (err) {
       if (err instanceof Error && err.message === 'UNAUTHORIZED_ROLE') {
-        setError('This portal is for administrators only.');
+        setError(t('auth:errors.unauthorized'));
       } else {
-        setError('Invalid credentials. Please try again.');
+        setError(t('auth:errors.invalid'));
       }
     }
   };
@@ -35,16 +38,21 @@ const Login: React.FC = () => {
   return (
     <div className="min-h-screen bg-dashboard-bg flex items-center justify-center p-4">
       <div className="w-full max-w-md">
+        {/* Language Switcher */}
+        <div className="flex justify-end mb-4">
+          <LanguageSwitcher />
+        </div>
+
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-700 rounded-2xl shadow-lg shadow-primary-500/25 mb-4">
             <Bus size={32} className="text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-white">OSTA Admin Dashboard</h1>
+          <h1 className="text-2xl font-bold text-white">{t('common:app.title')}</h1>
           {useMock ? (
             <div className="mt-2 inline-flex items-center gap-2 px-3 py-1 bg-amber-500/20 border border-amber-500/30 rounded-full text-amber-500 text-xs font-bold uppercase tracking-widest">
               <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse" />
-              Mock Mode Active
+              {t('auth:mockMode')}
               <button
                 onClick={() => {
                   localStorage.removeItem('VITE_USE_MOCK');
@@ -53,11 +61,11 @@ const Login: React.FC = () => {
                 }}
                 className="ml-2 hover:text-white transition-colors"
               >
-                (Exit)
+                ({t('auth:mockModeExit')})
               </button>
             </div>
           ) : (
-            <p className="text-slate-400 mt-2">Sign in to your account</p>
+            <p className="text-slate-400 mt-2">{t('auth:subtitle')}</p>
           )}
         </div>
 
@@ -73,7 +81,7 @@ const Login: React.FC = () => {
 
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-slate-300 mb-2">
-                Email Address
+                {t('auth:email')}
               </label>
               <div className="relative">
                 <Mail
@@ -85,7 +93,7 @@ const Login: React.FC = () => {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@osta.ca"
+                  placeholder={t('auth:emailPlaceholder')}
                   className="input-field pl-12"
                   autoComplete="email"
                 />
@@ -94,7 +102,7 @@ const Login: React.FC = () => {
 
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-slate-300 mb-2">
-                Password
+                {t('auth:password')}
               </label>
               <div className="relative">
                 <Lock
@@ -106,7 +114,7 @@ const Login: React.FC = () => {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
+                  placeholder={t('auth:passwordPlaceholder')}
                   className="input-field pl-12"
                   autoComplete="current-password"
                 />
@@ -114,13 +122,13 @@ const Login: React.FC = () => {
             </div>
 
             <button type="submit" disabled={isLoading} className="btn-primary w-full py-3">
-              {isLoading ? 'Signing In...' : 'Sign In'}
+              {isLoading ? t('auth:submitting') : t('auth:submit')}
             </button>
           </form>
         </div>
 
         <p className="text-center text-slate-500 text-sm mt-6">
-          School Bus Transport Management System
+          {t('common:app.description')}
         </p>
       </div>
     </div>

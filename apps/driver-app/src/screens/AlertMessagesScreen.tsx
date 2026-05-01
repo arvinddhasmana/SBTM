@@ -12,6 +12,7 @@ import {
   StatusBar,
   Platform,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDriverStore } from '../store/useDriverStore';
@@ -26,17 +27,8 @@ interface AlertWithMessages extends ActiveAlert {
   infoRequested: boolean;
 }
 
-const ACTION_LABELS: Record<string, { label: string; color: string }> = {
-  INFO_REQUESTED: { label: 'Info Requested', color: '#3b82f6' },
-  STATUS_UPDATE: { label: 'Response', color: '#10b981' },
-  CONFIRMED: { label: 'Confirmed', color: '#22c55e' },
-  FALSE_ALARM: { label: 'False Alarm', color: '#ef4444' },
-  RESOLVED: { label: 'Resolved', color: '#6b7280' },
-  CREATED: { label: 'Created', color: '#f59e0b' },
-  ESCALATED: { label: 'Escalated', color: '#ef4444' },
-};
-
 export default function AlertMessagesScreen() {
+  const { t } = useTranslation('common');
   const insets = useSafeAreaInsets();
   const activeRoute = useDriverStore((s) => s.activeRoute);
   const driver = useDriverStore((s) => s.driver);
@@ -53,7 +45,7 @@ export default function AlertMessagesScreen() {
         IntentLauncher.startActivityAsync('android.speech.action.RECOGNIZE_SPEECH', {
           extra: {
             'android.speech.extra.LANGUAGE_MODEL': 'free_form',
-            'android.speech.extra.PROMPT': 'Speak your response...',
+            'android.speech.extra.PROMPT': t('alertMessages.voiceInput'),
           },
         })
           .then((result: any) => {
@@ -68,13 +60,13 @@ export default function AlertMessagesScreen() {
             }
           })
           .catch(() => {
-            Alert.alert('Voice Input', 'Speech recognition unavailable.');
+            Alert.alert(t('alertMessages.voiceInput'), t('alertMessages.voiceUnavailable'));
           });
       } catch {
-        Alert.alert('Voice Input', 'Voice input not supported.');
+        Alert.alert(t('alertMessages.voiceInput'), t('alertMessages.voiceNotSupported'));
       }
     } else {
-      Alert.alert('Voice Input', 'On iOS, tap the microphone on the system keyboard.');
+      Alert.alert(t('alertMessages.voiceInput'), t('alertMessages.voiceIosHint'));
     }
   };
 
@@ -115,24 +107,40 @@ export default function AlertMessagesScreen() {
   const handleSendReply = async (alertId: string) => {
     const text = replyText[alertId]?.trim();
     if (!text) {
-      Alert.alert('Empty Message', 'Please type a response before sending.');
+      Alert.alert(t('common.error'), t('alertMessages.responseOptional'));
       return;
     }
     setSending((prev) => ({ ...prev, [alertId]: true }));
     try {
       await AlertService.addStatusUpdate(alertId, text, driver?.id);
       setReplyText((prev) => ({ ...prev, [alertId]: '' }));
-      Alert.alert('Sent', 'Your response has been sent to the admin.');
+      Alert.alert(t('alertMessages.sendResponse'), t('alertMessages.sending'));
       await fetchAlerts();
     } catch {
-      Alert.alert('Error', 'Failed to send response. Please try again.');
+      Alert.alert(t('common.error'), t('common.error'));
     } finally {
       setSending((prev) => ({ ...prev, [alertId]: false }));
     }
   };
 
+  const getActionLabel = (action: string): { label: string; color: string } => {
+    const colors: Record<string, string> = {
+      INFO_REQUESTED: '#3b82f6',
+      STATUS_UPDATE: '#10b981',
+      CONFIRMED: '#22c55e',
+      FALSE_ALARM: '#ef4444',
+      RESOLVED: '#6b7280',
+      CREATED: '#f59e0b',
+      ESCALATED: '#ef4444',
+    };
+    return {
+      label: t(`alertMessages.actionLabels.${action}`, { defaultValue: action }),
+      color: colors[action] ?? '#6b7280',
+    };
+  };
+
   const renderAuditEntry = (entry: AuditLogEntry) => {
-    const meta = ACTION_LABELS[entry.action] ?? { label: entry.action, color: '#6b7280' };
+    const meta = getActionLabel(entry.action);
     const isDriverMessage = entry.actorRole === 'DRIVER';
     return (
       <View
@@ -181,7 +189,7 @@ export default function AlertMessagesScreen() {
 
         {item.infoRequested && (
           <View style={styles.infoBanner}>
-            <Text style={styles.infoText}>Admin has requested additional information</Text>
+            <Text style={styles.infoText}>{t('alertMessages.infoRequested')}</Text>
           </View>
         )}
 
@@ -194,7 +202,7 @@ export default function AlertMessagesScreen() {
         <View style={styles.replyRow}>
           <TextInput
             style={styles.replyInput}
-            placeholder="Type or speak a response..."
+            placeholder={t('alertMessages.responseOptional')}
             placeholderTextColor="rgba(255,255,255,0.3)"
             value={replyText[item.id] ?? ''}
             onChangeText={(text) => setReplyText((prev) => ({ ...prev, [item.id]: text }))}
@@ -231,7 +239,7 @@ export default function AlertMessagesScreen() {
       <View style={[styles.centerView, { paddingTop: insets.top }]}>
         <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
         <ActivityIndicator size="large" color="#3b82f6" />
-        <Text style={styles.centerText}>Loading alerts...</Text>
+        <Text style={styles.centerText}>{t('alertMessages.loading')}</Text>
       </View>
     );
   }
@@ -240,7 +248,7 @@ export default function AlertMessagesScreen() {
     <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
-      <Text style={styles.header}>Alert Messages</Text>
+      <Text style={styles.header}>{t('alertMessages.title')}</Text>
       <Text style={styles.subHeader}>
         Active alerts for your route. Respond to admin info requests here.
       </Text>
@@ -248,9 +256,9 @@ export default function AlertMessagesScreen() {
       {alerts.length === 0 ? (
         <View style={styles.centerView}>
           <Text style={{ fontSize: 36 }}>✅</Text>
-          <Text style={styles.centerText}>No active alerts on this route.</Text>
+          <Text style={styles.centerText}>{t('alertMessages.noAlerts')}</Text>
           <TouchableOpacity onPress={handleRefresh} style={styles.refreshBtn}>
-            <Text style={styles.refreshText}>Refresh</Text>
+            <Text style={styles.refreshText}>{t('common.refresh')}</Text>
           </TouchableOpacity>
         </View>
       ) : (
