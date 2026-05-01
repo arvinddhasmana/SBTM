@@ -76,5 +76,15 @@
     "assigned": "{{resource}} assigné avec succès"
   },
   "empty": "Aucun itinéraire trouvé",
-  "loading": "Chargement des itinéraires..."
+  "loading": "Chargement des itinéraires...",
+  "monitoring": "Surveillance des itinéraires",
+  "activeRoutesCount": "{{count}} itinéraire actif",
+  "activeRoutesCount_plural": "{{count}} itinéraires actifs",
+  "allRoutes": "Tous les itinéraires",
+  "fleetMap": "Carte de la flotte",
+  "routeLabel": "Itinéraire : {{name}}",
+  "stopsCount": "{{count}} arrêt",
+  "stopsCount_plural": "{{count}} arrêts",
+  "clearSelection": "Effacer sélection",
+  "noRoutesAvailable": "Aucun itinéraire disponible"
 }

@@ -76,5 +76,15 @@
     "assigned": "{{resource}} assigned successfully"
   },
   "empty": "No routes found",
-  "loading": "Loading routes..."
+  "loading": "Loading routes...",
+  "monitoring": "Route Monitoring",
+  "activeRoutesCount": "{{count}} active route",
+  "activeRoutesCount_plural": "{{count}} active routes",
+  "allRoutes": "All Routes",
+  "fleetMap": "Fleet Map",
+  "routeLabel": "Route: {{name}}",
+  "stopsCount": "{{count}} stop",
+  "stopsCount_plural": "{{count}} stops",
+  "clearSelection": "Clear Selection",
+  "noRoutesAvailable": "No routes available"
 }
