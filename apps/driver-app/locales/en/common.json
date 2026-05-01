@@ -110,6 +110,51 @@
     "passed": "Inspection passed - Route can start",
     "failed": "Inspection failed - Vehicle requires maintenance"
   },
+  "roster": {
+    "title": "Student Roster",
+    "loadingRoster": "Loading roster...",
+    "noStudents": "No students on this route yet.",
+    "board": "Board",
+    "alight": "Alight",
+    "reset": "Reset",
+    "boardAll": "Board All",
+    "boardAllConfirm": "Mark all students as boarded?",
+    "boardAllStudents": "Board All Students",
+    "alightAll": "Alight All",
+    "alightAllConfirm": "Mark all boarded students as alighted?",
+    "alightAllStudents": "Alight All Students",
+    "stop": "Stop {{number}}: {{name}}",
+    "otherStudents": "Other Students",
+    "offline": "Offline - changes will sync when reconnected",
+    "rosterUnavailable": "Roster unavailable",
+    "retry": "Retry",
+    "status": {
+      "NOT_BOARDED": "Not Boarded",
+      "BOARDED": "Boarded",
+      "ALIGHTED": "Alighted"
+    }
+  },
+  "alertMessages": {
+    "title": "Alert Messages",
+    "noAlerts": "No active alerts",
+    "loading": "Loading alerts...",
+    "responseOptional": "Response (optional)",
+    "sendResponse": "Send Response",
+    "sending": "Sending...",
+    "voiceInput": "Voice Input",
+    "voiceUnavailable": "Speech recognition unavailable.",
+    "voiceNotSupported": "Voice input not supported.",
+    "voiceIosHint": "On iOS, tap the microphone on the system keyboard.",
+    "actionLabels": {
+      "INFO_REQUESTED": "Info Requested",
+      "STATUS_UPDATE": "Response",
+      "CONFIRMED": "Confirmed",
+      "FALSE_ALARM": "False Alarm",
+      "RESOLVED": "Resolved",
+      "CREATED": "Created",
+      "ESCALATED": "Escalated"
+    }
+  },
   "navigation": {
     "home": "Home",
     "routes": "Routes",

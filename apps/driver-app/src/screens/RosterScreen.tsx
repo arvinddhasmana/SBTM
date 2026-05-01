@@ -10,6 +10,7 @@ import {
   Alert,
   StatusBar,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDriverStore } from '../store/useDriverStore';
 import type { Student, Stop } from '../types';
@@ -51,7 +52,7 @@ function StudentAvatar({ name, avatarUrl }: { name: string; avatarUrl?: string }
   );
 }
 
-function buildSections(students: Student[], stops: Stop[]): Section[] {
+function buildSections(students: Student[], stops: Stop[], t: (key: string, options?: any) => string): Section[] {
   const stopStudents = new Map<string, Student[]>();
   const unassigned: Student[] = [];
 
@@ -69,20 +70,21 @@ function buildSections(students: Student[], stops: Stop[]): Section[] {
     .slice()
     .sort((a, b) => a.sequence - b.sequence)
     .map((stop) => ({
-      title: `Stop ${stop.sequence}: ${stop.stopName}`,
+      title: t('roster.stop', { number: stop.sequence, name: stop.stopName }),
       arrivalTime: stop.arrivalTime ?? '',
       data: stopStudents.get(stop.id) ?? [],
     }))
     .filter((section) => section.data.length > 0);
 
   if (unassigned.length > 0) {
-    sections.push({ title: 'Other Students', arrivalTime: '', data: unassigned });
+    sections.push({ title: t('roster.otherStudents'), arrivalTime: '', data: unassigned });
   }
 
   return sections;
 }
 
 export default function RosterScreen() {
+  const { t } = useTranslation('common');
   const insets = useSafeAreaInsets();
   const students = useDriverStore((state) => state.students);
   const stops = useDriverStore((state) => state.stops);
@@ -95,22 +97,22 @@ export default function RosterScreen() {
   const boardAll = useDriverStore((state) => state.boardAll);
   const alightAll = useDriverStore((state) => state.alightAll);
 
-  const sections = useMemo(() => buildSections(students, stops), [students, stops]);
+  const sections = useMemo(() => buildSections(students, stops, t), [students, stops, t]);
 
   const hasNotBoarded = students.some((s) => s.status === 'NOT_BOARDED');
   const hasBoarded = students.some((s) => s.status === 'BOARDED');
 
   const handleBoardAll = () => {
-    Alert.alert('Board All', 'Mark all students as boarded?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Board All', onPress: () => void boardAll() },
+    Alert.alert(t('roster.boardAll'), t('roster.boardAllConfirm'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('roster.boardAll'), onPress: () => void boardAll() },
     ]);
   };
 
   const handleAlightAll = () => {
-    Alert.alert('Alight All', 'Mark all boarded students as alighted?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Alight All', onPress: () => void alightAll() },
+    Alert.alert(t('roster.alightAll'), t('roster.alightAllConfirm'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('roster.alightAll'), onPress: () => void alightAll() },
     ]);
   };
 
@@ -125,14 +127,14 @@ export default function RosterScreen() {
 
   const renderItem = ({ item }: { item: Student }) => {
     let statusColor = 'rgba(255,255,255,0.25)';
-    let buttonLabel = 'Board';
+    let buttonLabel = t('roster.board');
     if (item.status === 'BOARDED') {
       statusColor = 'rgba(34,197,94,0.5)';
-      buttonLabel = 'Alight';
+      buttonLabel = t('roster.alight');
     }
     if (item.status === 'ALIGHTED') {
       statusColor = 'rgba(245,158,11,0.5)';
-      buttonLabel = 'Reset';
+      buttonLabel = t('roster.reset');
     }
 
     return (
@@ -141,7 +143,7 @@ export default function RosterScreen() {
         <View style={styles.studentInfo}>
           <Text style={styles.name}>{item.name}</Text>
           <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
-            <Text style={styles.statusText}>{item.status.replace('_', ' ')}</Text>
+            <Text style={styles.statusText}>{t(`roster.status.${item.status}`, { defaultValue: item.status.replace('_', ' ') })}</Text>
           </View>
         </View>
         <TouchableOpacity
@@ -161,7 +163,7 @@ export default function RosterScreen() {
       <View style={[styles.centerView, { paddingTop: insets.top }]}>
         <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
         <ActivityIndicator size="large" color="#3b82f6" />
-        <Text style={styles.infoText}>Loading roster...</Text>
+        <Text style={styles.infoText}>{t('roster.loadingRoster')}</Text>
       </View>
     );
   }
@@ -169,39 +171,39 @@ export default function RosterScreen() {
   return (
     <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
-      <Text style={styles.header}>Student Roster</Text>
+      <Text style={styles.header}>{t('roster.title')}</Text>
 
       {routeDirection === 'PM' && hasNotBoarded && (
         <TouchableOpacity style={styles.bulkBtn} onPress={handleBoardAll}>
-          <Text style={styles.bulkText}>Board All Students</Text>
+          <Text style={styles.bulkText}>{t('roster.boardAllStudents')}</Text>
         </TouchableOpacity>
       )}
       {routeDirection === 'AM' && hasBoarded && (
         <TouchableOpacity style={[styles.bulkBtn, styles.bulkAlight]} onPress={handleAlightAll}>
-          <Text style={styles.bulkText}>Alight All Students</Text>
+          <Text style={styles.bulkText}>{t('roster.alightAllStudents')}</Text>
         </TouchableOpacity>
       )}
 
       {isOffline && (
         <View style={styles.offlineBanner}>
-          <Text style={styles.offlineText}>Offline - changes will sync when reconnected</Text>
+          <Text style={styles.offlineText}>{t('roster.offline')}</Text>
         </View>
       )}
 
       {rosterLoadState === 'error' && (
         <View style={styles.errorBanner}>
-          <Text style={styles.errorText}>{rosterError ?? 'Roster unavailable'}</Text>
+          <Text style={styles.errorText}>{rosterError ?? t('roster.rosterUnavailable')}</Text>
           <TouchableOpacity onPress={() => void refreshRoster()} style={styles.retryBtn}>
-            <Text style={styles.retryText}>Retry</Text>
+            <Text style={styles.retryText}>{t('roster.retry')}</Text>
           </TouchableOpacity>
         </View>
       )}
 
       {students.length === 0 ? (
         <View style={styles.centerView}>
-          <Text style={styles.infoText}>No students on this route yet.</Text>
+          <Text style={styles.infoText}>{t('roster.noStudents')}</Text>
           <TouchableOpacity onPress={() => void refreshRoster()} style={styles.retryBtn}>
-            <Text style={styles.retryText}>Refresh</Text>
+            <Text style={styles.retryText}>{t('common.refresh')}</Text>
           </TouchableOpacity>
         </View>
       ) : (

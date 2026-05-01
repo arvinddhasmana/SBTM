@@ -110,6 +110,51 @@
     "passed": "Inspection réussie - Itinéraire peut démarrer",
     "failed": "Inspection échouée - Véhicule requiert entretien"
   },
+  "roster": {
+    "title": "Liste élèves",
+    "loadingRoster": "Chargement liste...",
+    "noStudents": "Aucun élève sur cet itinéraire.",
+    "board": "Embarquer",
+    "alight": "Débarquer",
+    "reset": "Réinitialiser",
+    "boardAll": "Tout embarquer",
+    "boardAllConfirm": "Marquer tous les élèves comme embarqués ?",
+    "boardAllStudents": "Embarquer tous les élèves",
+    "alightAll": "Tout débarquer",
+    "alightAllConfirm": "Marquer tous les élèves embarqués comme débarqués ?",
+    "alightAllStudents": "Débarquer tous les élèves",
+    "stop": "Arrêt {{number}} : {{name}}",
+    "otherStudents": "Autres élèves",
+    "offline": "Hors ligne - les changements seront synchronisés à la reconnexion",
+    "rosterUnavailable": "Liste indisponible",
+    "retry": "Réessayer",
+    "status": {
+      "NOT_BOARDED": "Non embarqué",
+      "BOARDED": "Embarqué",
+      "ALIGHTED": "Débarqué"
+    }
+  },
+  "alertMessages": {
+    "title": "Messages d'alerte",
+    "noAlerts": "Aucune alerte active",
+    "loading": "Chargement alertes...",
+    "responseOptional": "Réponse (optionnel)",
+    "sendResponse": "Envoyer réponse",
+    "sending": "Envoi...",
+    "voiceInput": "Saisie vocale",
+    "voiceUnavailable": "Reconnaissance vocale indisponible.",
+    "voiceNotSupported": "Saisie vocale non supportée.",
+    "voiceIosHint": "Sur iOS, touchez le microphone sur le clavier système.",
+    "actionLabels": {
+      "INFO_REQUESTED": "Info demandée",
+      "STATUS_UPDATE": "Réponse",
+      "CONFIRMED": "Confirmé",
+      "FALSE_ALARM": "Fausse alerte",
+      "RESOLVED": "Résolu",
+      "CREATED": "Créé",
+      "ESCALATED": "Escaladé"
+    }
+  },
   "navigation": {
     "home": "Accueil",
     "routes": "Itinéraires",
