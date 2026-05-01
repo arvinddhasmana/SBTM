@@ -1,14 +1,21 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
-import HttpBackend from 'i18next-http-backend';
 import LanguageDetector from 'i18next-browser-languagedetector';
 
-// Initialize i18n and export the promise
+// Bundle translation resources directly so the app never depends on a runtime
+// network fetch for /locales/{lng}/{ns}.json (which previously caused the UI
+// to render raw keys like "children.title" if the asset 404'd or was slow).
+import enCommon from '../../public/locales/en/common.json';
+import frCommon from '../../public/locales/fr/common.json';
+
 const initPromise = i18n
-  .use(HttpBackend)
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
+    resources: {
+      en: { common: enCommon },
+      fr: { common: frCommon },
+    },
     fallbackLng: 'en',
     supportedLngs: ['en', 'fr'],
     defaultNS: 'common',
@@ -20,16 +27,12 @@ const initPromise = i18n
       lookupLocalStorage: 'i18nextLng',
     },
 
-    backend: {
-      loadPath: '/locales/{{lng}}/{{ns}}.json',
-    },
-
     interpolation: {
       escapeValue: false, // React already escapes values
     },
 
     react: {
-      useSuspense: true,
+      useSuspense: false,
     },
   });
 

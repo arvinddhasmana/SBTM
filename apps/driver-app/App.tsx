@@ -44,7 +44,14 @@ export default function App() {
 
   // Initialize i18n
   useEffect(() => {
-    initI18n().then(() => setI18nReady(true));
+    initI18n()
+      .then(() => setI18nReady(true))
+      .catch((err) => {
+        console.error('[App] i18n init failed, continuing without translations:', err);
+        // Unblock app rendering even if i18n initialization fails so the user
+        // sees the UI (with key fallbacks) instead of a permanent loading state.
+        setI18nReady(true);
+      });
   }, []);
 
   // Rehydrate persisted token on app launch
