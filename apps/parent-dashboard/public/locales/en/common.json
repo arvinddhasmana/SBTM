@@ -118,8 +118,12 @@
   },
   "absence": {
     "title": "Report Absence",
+    "subtitle": "Let the driver and school know your child will not be riding the bus.",
     "selectChild": "Select Child",
-    "date": "Absence Date",
+    "child": "Child",
+    "date": "Date",
+    "absenceDate": "Absence Date",
+    "route": "Route",
     "reason": "Reason",
     "reasons": {
       "sick": "Sick",
@@ -127,13 +131,26 @@
       "family": "Family Reasons",
       "other": "Other"
     },
-    "notes": "Additional Notes (optional)",
-    "submit": "Submit Absence Report",
-    "success": "Absence reported successfully",
-    "error": "Failed to submit absence report"
+    "notes": "Notes (optional)",
+    "notesPlaceholder": "E.g. sick today, will return tomorrow",
+    "additionalNotes": "Additional Notes (optional)",
+    "submit": "Report Absence",
+    "submitting": "Reporting…",
+    "submitAbsenceReport": "Submit Absence Report",
+    "success": "Absence reported successfully. The driver and school have been notified.",
+    "error": "Failed to report absence. Please try again.",
+    "errorSelectChild": "Please select a child.",
+    "noChildren": "No children associated with your account.",
+    "routeTypes": {
+      "AM": "Morning route only (AM)",
+      "PM": "Afternoon route only (PM)",
+      "BOTH": "Full day (both routes)"
+    }
   },
   "profile": {
     "title": "Profile",
+    "notificationSettings": "Notification Settings",
+    "subtitle": "Choose how you want to be notified about your child's bus activity.",
     "personalInfo": "Personal Information",
     "name": "Name",
     "email": "Email",
@@ -145,7 +162,29 @@
     "language": "Language",
     "editProfile": "Edit Profile",
     "changePassword": "Change Password",
-    "logout": "Logout"
+    "logout": "Logout",
+    "savePreferences": "Save Preferences",
+    "saving": "Saving...",
+    "preferencesSaved": "Preferences saved successfully.",
+    "eventTypes": {
+      "BOARD": {
+        "label": "Child Boarded",
+        "description": "When your child boards the bus"
+      },
+      "ALIGHT": {
+        "label": "Child Alighted",
+        "description": "When your child gets off the bus"
+      },
+      "EMERGENCY": {
+        "label": "Emergency Alerts",
+        "description": "Safety alerts for your child's route"
+      }
+    },
+    "channels": {
+      "PUSH": "Push",
+      "EMAIL": "Email"
+    },
+    "alwaysOn": "Always On"
   },
   "navigation": {
     "home": "Home",

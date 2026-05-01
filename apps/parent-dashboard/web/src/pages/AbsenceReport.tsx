@@ -1,16 +1,12 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { parentApi } from '../services/api';
 import type { AbsenceReportPayload } from '../services/api';
 import { CheckCircle, AlertTriangle } from 'lucide-react';
 
-const ROUTE_TYPE_OPTIONS: { value: AbsenceReportPayload['routeType']; label: string }[] = [
-  { value: 'AM', label: 'Morning route only (AM)' },
-  { value: 'PM', label: 'Afternoon route only (PM)' },
-  { value: 'BOTH', label: 'Full day (both routes)' },
-];
-
 const AbsenceReport: React.FC = () => {
+  const { t } = useTranslation('common');
   const { user } = useAuth();
   const [selectedChildId, setSelectedChildId] = useState<string>(user?.children?.[0]?.id ?? '');
   const [tripDate, setTripDate] = useState<string>(() => new Date().toISOString().split('T')[0]);
@@ -23,7 +19,7 @@ const AbsenceReport: React.FC = () => {
   if (!user || user.children.length === 0) {
     return (
       <div className="px-4 py-8 text-center text-gray-500">
-        No children associated with your account.
+        {t('absence.noChildren')}
       </div>
     );
   }
@@ -31,7 +27,7 @@ const AbsenceReport: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedChildId) {
-      setError('Please select a child.');
+      setError(t('absence.errorSelectChild'));
       return;
     }
     setIsSubmitting(true);
@@ -45,11 +41,11 @@ const AbsenceReport: React.FC = () => {
         routeType,
         notes: notes.trim() || undefined,
       });
-      setSuccess('Absence reported successfully. The driver and school have been notified.');
+      setSuccess(t('absence.success'));
       setNotes('');
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : 'Failed to report absence. Please try again.';
+        err instanceof Error ? err.message : t('absence.error');
       setError(message);
     } finally {
       setIsSubmitting(false);
@@ -58,9 +54,9 @@ const AbsenceReport: React.FC = () => {
 
   return (
     <div className="px-4 sm:px-0 max-w-lg">
-      <h1 className="text-2xl font-bold text-gray-900 mb-2">Report an Absence</h1>
+      <h1 className="text-2xl font-bold text-gray-900 mb-2">{t('absence.title')}</h1>
       <p className="text-sm text-gray-500 mb-6">
-        Let the driver and school know your child will not be riding the bus.
+        {t('absence.subtitle')}
       </p>
 
       {success && (
@@ -79,7 +75,7 @@ const AbsenceReport: React.FC = () => {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Child</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t('absence.child')}</label>
           <select
             value={selectedChildId}
             onChange={(e) => setSelectedChildId(e.target.value)}
@@ -94,7 +90,7 @@ const AbsenceReport: React.FC = () => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t('absence.date')}</label>
           <input
             type="date"
             value={tripDate}
@@ -106,23 +102,21 @@ const AbsenceReport: React.FC = () => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Route</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t('absence.route')}</label>
           <select
             value={routeType}
             onChange={(e) => setRouteType(e.target.value as AbsenceReportPayload['routeType'])}
             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            {ROUTE_TYPE_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
+            <option value="AM">{t('absence.routeTypes.AM')}</option>
+            <option value="PM">{t('absence.routeTypes.PM')}</option>
+            <option value="BOTH">{t('absence.routeTypes.BOTH')}</option>
           </select>
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Notes <span className="text-gray-400">(optional)</span>
+            {t('absence.notes')}
           </label>
           <textarea
             value={notes}
@@ -130,7 +124,7 @@ const AbsenceReport: React.FC = () => {
             rows={3}
             maxLength={500}
             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="E.g. sick today, will return tomorrow"
+            placeholder={t('absence.notesPlaceholder')}
           />
         </div>
 
@@ -139,7 +133,7 @@ const AbsenceReport: React.FC = () => {
           disabled={isSubmitting}
           className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-medium py-2.5 rounded-lg text-sm transition-colors"
         >
-          {isSubmitting ? 'Reporting…' : 'Report Absence'}
+          {isSubmitting ? t('absence.submitting') : t('absence.submit')}
         </button>
       </form>
     </div>

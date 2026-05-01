@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { parentApi } from '../services/api';
 import type { NotificationPreference } from '../types';
 import { Settings as SettingsIcon, Bell, Mail, MessageSquare, Shield } from 'lucide-react';
@@ -31,6 +32,7 @@ const CHANNELS = [
 ] as const;
 
 const Settings: React.FC = () => {
+  const { t } = useTranslation('common');
   const queryClient = useQueryClient();
   const [preferences, setPreferences] = useState<Record<string, Record<string, boolean>>>({});
 
@@ -99,10 +101,10 @@ const Settings: React.FC = () => {
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-slate-100 flex items-center gap-2">
           <SettingsIcon className="h-6 w-6 text-indigo-400" />
-          Notification Settings
+          {t('profile.notificationSettings')}
         </h1>
         <p className="mt-1 text-sm text-slate-400">
-          Choose how you want to be notified about your child's bus activity.
+          {t('profile.subtitle')}
         </p>
       </div>
 
@@ -113,13 +115,13 @@ const Settings: React.FC = () => {
               <div>
                 <h3 className="text-base font-semibold text-slate-100 flex items-center gap-2">
                   {eventType.locked && <Shield className="h-4 w-4 text-amber-400" />}
-                  {eventType.label}
+                  {t(`profile.eventTypes.${eventType.key}.label`)}
                 </h3>
-                <p className="text-sm text-slate-400">{eventType.description}</p>
+                <p className="text-sm text-slate-400">{t(`profile.eventTypes.${eventType.key}.description`)}</p>
               </div>
               {eventType.locked && (
                 <span className="text-xs bg-amber-900/30 text-amber-300 px-2 py-1 rounded-full border border-amber-500/20">
-                  Always On
+                  {t('profile.alwaysOn')}
                 </span>
               )}
             </div>
@@ -142,7 +144,7 @@ const Settings: React.FC = () => {
                     } ${isLocked ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
                   >
                     <Icon className="h-4 w-4" />
-                    {channel.label}
+                    {t(`profile.channels.${channel.key}`)}
                   </button>
                 );
               })}
@@ -157,13 +159,13 @@ const Settings: React.FC = () => {
           disabled={updateMutation.isPending}
           className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-medium transition-colors disabled:opacity-50"
         >
-          {updateMutation.isPending ? 'Saving...' : 'Save Preferences'}
+          {updateMutation.isPending ? t('profile.saving') : t('profile.savePreferences')}
         </button>
       </div>
 
       {updateMutation.isSuccess && (
         <div className="mt-4 p-3 rounded-lg bg-emerald-900/20 border border-emerald-500/20 text-emerald-300 text-sm">
-          Preferences saved successfully.
+          {t('profile.preferencesSaved')}
         </div>
       )}
     </div>
