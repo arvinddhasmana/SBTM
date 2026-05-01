@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { useAuth } from '../context/AuthContext';
@@ -164,6 +165,7 @@ function MapInstanceCapture({
 }
 
 const MapPage: React.FC = () => {
+  const { t } = useTranslation('common');
   const location = useLocation();
   const childId = (location.state as { childId?: string } | null)?.childId;
   const { user } = useAuth();
@@ -339,12 +341,12 @@ const MapPage: React.FC = () => {
     const isPM = child ? activeRouteId === child.pmRouteId : false;
     const isCurrentAM = child ? activeRouteId === child.amRouteId : false;
     // Presence-confirmed completion takes priority
-    if (isPM && child?.status === 'at_home') return 'Completed';
-    if (isCurrentAM && child?.status === 'at_school') return 'Completed';
-    if (isLive) return 'Live';
+    if (isPM && child?.status === 'at_home') return t('tracking.statuses.completed');
+    if (isCurrentAM && child?.status === 'at_school') return t('tracking.statuses.completed');
+    if (isLive) return t('tracking.statuses.live');
     // GPS stale but route not confirmed complete — signal lost
-    if (busLocation) return 'No Signal';
-    return 'Completed';
+    if (busLocation) return t('tracking.statuses.noSignal');
+    return t('tracking.statuses.completed');
   })();
 
   // Compute map bounds from route path + bus position + school
@@ -381,14 +383,14 @@ const MapPage: React.FC = () => {
     }
   };
 
-  if (!child) return <div>Loading...</div>;
+  if (!child) return <div>{t('tracking.map.loading')}</div>;
 
   const currentPosition: [number, number] = busLocation
     ? [busLocation.lat, busLocation.lng]
     : defaultCenter;
 
   const statusLabel =
-    busStatus === 'normal' ? 'Normal' : busStatus === 'delay' ? 'Delayed' : 'Emergency';
+    busStatus === 'normal' ? t('tracking.statuses.normal') : busStatus === 'delay' ? t('tracking.statuses.delayed') : t('tracking.statuses.emergency');
 
   return (
     <div className="fixed inset-x-0 bottom-0 top-16 z-40">
@@ -411,21 +413,21 @@ const MapPage: React.FC = () => {
           </span>
         </div>
         <p className="text-sm text-gray-500">
-          Route: {routeDetails?.name || activeRouteId} ({isAM ? 'AM' : 'PM'})
+          {t('tracking.map.route')} {routeDetails?.name || activeRouteId} ({isAM ? t('tracking.map.am') : t('tracking.map.pm')})
         </p>
         <p className="text-xs text-gray-400">
-          Vehicle: {routeDetails?.vehicleId || child.vehicleId || 'N/A'}
+          {t('tracking.map.vehicle')} {routeDetails?.vehicleId || child.vehicleId || t('tracking.map.notAvailable')}
         </p>
         {isLive && busLocation && (
           <div className="mt-2 flex items-center justify-between border-t border-gray-100 pt-2">
             <div className="flex items-center text-blue-600">
               <Navigation className="h-4 w-4 mr-1" />
               <span className="font-semibold text-sm">
-                ETA: {busLocation.etaToNextStop ?? '—'} min
+                {t('tracking.map.eta')}{busLocation.etaToNextStop ?? '—'} {t('tracking.map.min')}
               </span>
             </div>
             <span className="text-xs text-gray-400">
-              Updated: {new Date(busLocation.timestamp).toLocaleTimeString()}
+              {t('tracking.map.updated')}{new Date(busLocation.timestamp).toLocaleTimeString()}
             </span>
           </div>
         )}
@@ -442,13 +444,13 @@ const MapPage: React.FC = () => {
             </span>
           </div>
         )}
-        {!isLive && routeStatusLabel === 'No Signal' && (
+        {!isLive && routeStatusLabel === t('tracking.statuses.noSignal') && (
           <p className="text-xs text-yellow-600 mt-1">
-            Bus signal lost. Route may still be in progress.
+            {t('tracking.map.busSignalLost')}
           </p>
         )}
-        {!isLive && routeStatusLabel !== 'No Signal' && (
-          <p className="text-xs text-gray-400 mt-1">Route is not currently active.</p>
+        {!isLive && routeStatusLabel !== t('tracking.statuses.noSignal') && (
+          <p className="text-xs text-gray-400 mt-1">{t('tracking.map.routeNotActive')}</p>
         )}
       </div>
 
@@ -456,15 +458,15 @@ const MapPage: React.FC = () => {
       <button
         onClick={handleResetMap}
         className="absolute top-[15px] left-1/2 -translate-x-1/2 z-[1000] px-4 py-2 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 rounded-lg text-white shadow-lg transition-all flex items-center gap-2 group"
-        title="Reset Map"
+        title={t('tracking.map.resetMap')}
       >
         <RotateCcw size={16} className="group-hover:rotate-[-45deg] transition-transform" />
-        <span className="text-xs font-black uppercase tracking-widest pt-0.5">Map Reset</span>
+        <span className="text-xs font-black uppercase tracking-widest pt-0.5">{t('tracking.map.mapReset')}</span>
       </button>
 
       {/* Legend - bottom left, matching admin dashboard */}
       <div className="absolute bottom-6 left-4 z-[1000] pointer-events-auto bg-white/95 backdrop-blur-sm px-3 py-2 rounded-lg shadow-lg text-xs">
-        <div className="font-semibold text-gray-700 mb-1.5">Legend</div>
+        <div className="font-semibold text-gray-700 mb-1.5">{t('tracking.map.legend')}</div>
         {(['normal', 'delay', 'emergency'] as BusStatus[]).map((s) => (
           <div key={s} className="flex items-center gap-2 mb-0.5">
             <span
@@ -472,14 +474,14 @@ const MapPage: React.FC = () => {
               style={{ backgroundColor: BUS_STATUS_COLORS[s] }}
             />
             <span className="text-gray-600">
-              {s === 'delay' ? 'Delayed' : s === 'emergency' ? 'Emergency' : 'Normal'}
+              {s === 'delay' ? t('tracking.statuses.delayed') : s === 'emergency' ? t('tracking.statuses.emergency') : t('tracking.statuses.normal')}
             </span>
           </div>
         ))}
         <div className="border-t border-gray-200 mt-1.5 pt-1.5">
           <div className="flex items-center gap-2 mb-0.5">
             <span className="inline-block w-2.5 h-2.5 rounded-full bg-blue-500" />
-            <span className="text-gray-600">Your child's stop</span>
+            <span className="text-gray-600">{t('tracking.map.yourChildsStop')}</span>
           </div>
           <div className="flex items-center gap-2 mb-0.5">
             <span
@@ -489,14 +491,14 @@ const MapPage: React.FC = () => {
                 border: '1px solid rgba(156,163,175,0.5)',
               }}
             />
-            <span className="text-gray-600">Other stops</span>
+            <span className="text-gray-600">{t('tracking.map.otherStops')}</span>
           </div>
           <div className="flex items-center gap-2">
             <span
               className="inline-block w-2.5 h-2.5 rounded"
               style={{ backgroundColor: '#8b5cf6' }}
             />
-            <span className="text-gray-600">School</span>
+            <span className="text-gray-600">{t('tracking.map.school')}</span>
           </div>
         </div>
       </div>
@@ -549,8 +551,8 @@ const MapPage: React.FC = () => {
                     }}
                   >
                     {isChildStop
-                      ? `Stop ${seq}: ${child.name}'s Stop`
-                      : `Stop ${seq}: ${stop.address}`}
+                      ? t('tracking.map.stopNumber', { seq, name: child.name })
+                      : t('tracking.map.stopAddress', { seq, address: stop.address })}
                   </strong>
                   <div
                     style={{
@@ -561,15 +563,15 @@ const MapPage: React.FC = () => {
                     }}
                   >
                     <span style={{ color: '#64748b' }}>
-                      Route:{' '}
+                      {t('tracking.map.route')}
                       <span style={{ color: '#1e293b', fontWeight: 600 }}>
                         {routeDetails?.name || activeRouteId}
                       </span>
                     </span>
                     <span style={{ color: '#64748b' }}>
-                      Vehicle:{' '}
+                      {t('tracking.map.vehicle')}
                       <span style={{ color: '#1e293b', fontWeight: 600 }}>
-                        {routeDetails?.vehicleId || child.vehicleId || 'N/A'}
+                        {routeDetails?.vehicleId || child.vehicleId || t('tracking.map.notAvailable')}
                       </span>
                     </span>
                   </div>
@@ -584,10 +586,10 @@ const MapPage: React.FC = () => {
           <Marker position={currentPosition} icon={busIcon}>
             <Popup>
               <div className="text-center">
-                <p className="font-bold">Bus {busLocation.vehicleId}</p>
-                <p>Route: {routeDetails?.name || busLocation.routeId}</p>
+                <p className="font-bold">{t('tracking.map.bus')}{busLocation.vehicleId}</p>
+                <p>{t('tracking.map.route')}{routeDetails?.name || busLocation.routeId}</p>
                 <p className="text-xs mt-1" style={{ color: BUS_STATUS_COLORS[busStatus] }}>
-                  Status: {statusLabel}
+                  {t('tracking.status')}: {statusLabel}
                 </p>
               </div>
             </Popup>
@@ -602,7 +604,7 @@ const MapPage: React.FC = () => {
                 <p className="font-bold" style={{ color: '#8b5cf6' }}>
                   {routeDetails?.schoolName || child.schoolName}
                 </p>
-                <p className="text-xs text-gray-500">School</p>
+                <p className="text-xs text-gray-500">{t('tracking.map.school')}</p>
               </div>
             </Popup>
           </Marker>
