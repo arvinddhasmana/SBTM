@@ -1,0 +1,120 @@
+{
+  "app": {
+    "title": "Conducteur SBTM",
+    "subtitle": "Gestion du transport scolaire"
+  },
+  "auth": {
+    "driverId": "ID conducteur",
+    "password": "Mot de passe",
+    "login": "CONNEXION",
+    "loggingIn": "Connexion...",
+    "faceId": "Reconnaissance faciale",
+    "tapToScan": "Toucher pour scanner",
+    "errors": {
+      "required": "Veuillez saisir l'ID et le mot de passe",
+      "invalid": "Identifiants invalides",
+      "network": "Serveur inaccessible. Vérifiez votre connexion."
+    }
+  },
+  "routes": {
+    "title": "Sélectionner itinéraire",
+    "myRoutes": "Mes itinéraires",
+    "scheduled": "Itinéraires planifiés",
+    "selectRoute": "Sélectionner pour démarrer",
+    "noRoutes": "Aucun itinéraire assigné",
+    "startRoute": "Démarrer itinéraire",
+    "routeDetails": "Détails itinéraire",
+    "stops": "{{count}} arrêts",
+    "students": "{{count}} élèves",
+    "duration": "~{{minutes}} min"
+  },
+  "activeRoute": {
+    "title": "Itinéraire actif",
+    "nextStop": "Prochain arrêt",
+    "currentLocation": "Position actuelle",
+    "arrivalIn": "Arrivée dans {{minutes}} min",
+    "studentsOnBoard": "Élèves à bord",
+    "totalStudents": "{{current}}/{{total}}",
+    "actions": {
+      "arrivedAtStop": "Arrivé à l'arrêt",
+      "departStop": "Quitter l'arrêt",
+      "completeRoute": "Terminer itinéraire",
+      "emergency": "URGENCE"
+    },
+    "status": {
+      "onTime": "À l'heure",
+      "delayed": "Retard {{minutes}} min",
+      "ahead": "En avance"
+    }
+  },
+  "presence": {
+    "title": "Présence élèves",
+    "boarding": "Embarquement",
+    "alighting": "Débarquement",
+    "scan": "Scanner étiquette",
+    "manual": "Saisie manuelle",
+    "search": "Rechercher élève...",
+    "board": "Embarquer",
+    "alight": "Débarquer",
+    "absent": "Marquer absent",
+    "boarded": "{{name}} embarqué",
+    "alighted": "{{name}} débarqué",
+    "notOnList": "Élève absent de la liste"
+  },
+  "alerts": {
+    "title": "Alerte urgence",
+    "type": "Type d'alerte",
+    "types": {
+      "emergency": "Urgence",
+      "breakdown": "Panne véhicule",
+      "accident": "Accident",
+      "medical": "Urgence médicale",
+      "other": "Autre"
+    },
+    "description": "Description",
+    "location": "Position actuelle",
+    "sendAlert": "ENVOYER ALERTE",
+    "sending": "Envoi...",
+    "sent": "Alerte envoyée à la répartition",
+    "cancel": "Annuler"
+  },
+  "inspection": {
+    "title": "Inspection pré-trajet",
+    "required": "Inspection pré-trajet requise",
+    "startInspection": "Démarrer inspection",
+    "items": {
+      "tires": "Pneus",
+      "lights": "Lumières",
+      "brakes": "Freins",
+      "mirrors": "Rétroviseurs",
+      "horn": "Klaxon",
+      "emergencyEquipment": "Équipement urgence",
+      "seatbelts": "Ceintures sécurité",
+      "interior": "Propreté intérieur"
+    },
+    "status": {
+      "pass": "Réussi",
+      "fail": "Échoué"
+    },
+    "notes": "Notes (optionnel)",
+    "submit": "Soumettre inspection",
+    "passed": "Inspection réussie - Itinéraire peut démarrer",
+    "failed": "Inspection échouée - Véhicule requiert entretien"
+  },
+  "navigation": {
+    "home": "Accueil",
+    "routes": "Itinéraires",
+    "presence": "Présence",
+    "alerts": "Alertes",
+    "profile": "Profil"
+  },
+  "common": {
+    "loading": "Chargement...",
+    "refresh": "Actualiser",
+    "cancel": "Annuler",
+    "confirm": "Confirmer",
+    "yes": "Oui",
+    "no": "Non",
+    "ok": "OK"
+  }
+}

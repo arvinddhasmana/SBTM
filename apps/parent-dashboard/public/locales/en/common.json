@@ -1,0 +1,126 @@
+{
+  "app": {
+    "title": "Parent Portal",
+    "subtitle": "School Bus Tracking"
+  },
+  "auth": {
+    "title": "Sign In",
+    "email": "Email Address",
+    "password": "Password",
+    "login": "Sign In",
+    "loggingIn": "Signing in...",
+    "forgotPassword": "Forgot Password?",
+    "errors": {
+      "required": "Please enter email and password",
+      "invalid": "Invalid credentials"
+    }
+  },
+  "children": {
+    "title": "My Children",
+    "selectChild": "Select a child to track",
+    "addChild": "Add Child",
+    "noChildren": "No children registered",
+    "details": {
+      "name": "Name",
+      "grade": "Grade",
+      "school": "School",
+      "amRoute": "Morning Route",
+      "pmRoute": "Afternoon Route",
+      "studentId": "Student ID"
+    }
+  },
+  "tracking": {
+    "title": "Bus Tracking",
+    "busLocation": "Bus Location",
+    "busNumber": "Bus {{number}}",
+    "route": "Route: {{name}}",
+    "status": "Status",
+    "eta": "Estimated Arrival",
+    "nextStop": "Next Stop",
+    "stopsAway": "{{count}} stops away",
+    "statuses": {
+      "approaching": "Approaching Your Stop",
+      "onRoute": "On Route",
+      "delayed": "Delayed",
+      "completed": "Route Completed",
+      "notStarted": "Not Started Yet"
+    },
+    "presence": {
+      "onBus": "On Bus",
+      "notBoarded": "Not Boarded Yet",
+      "alighted": "Already Alighted",
+      "absent": "Marked Absent"
+    },
+    "alerts": {
+      "title": "Active Alerts",
+      "noAlerts": "No active alerts",
+      "viewDetails": "View Details"
+    }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "today": "Today",
+    "earlier": "Earlier",
+    "markAllRead": "Mark All as Read",
+    "types": {
+      "boarding": "Boarding",
+      "alighting": "Alighting",
+      "delay": "Delay",
+      "emergency": "Emergency",
+      "routeChange": "Route Change"
+    },
+    "empty": "No notifications",
+    "settings": "Notification Settings"
+  },
+  "absence": {
+    "title": "Report Absence",
+    "selectChild": "Select Child",
+    "date": "Absence Date",
+    "reason": "Reason",
+    "reasons": {
+      "sick": "Sick",
+      "appointment": "Medical Appointment",
+      "family": "Family Reasons",
+      "other": "Other"
+    },
+    "notes": "Additional Notes (optional)",
+    "submit": "Submit Absence Report",
+    "success": "Absence reported successfully",
+    "error": "Failed to submit absence report"
+  },
+  "profile": {
+    "title": "Profile",
+    "personalInfo": "Personal Information",
+    "name": "Name",
+    "email": "Email",
+    "phone": "Phone",
+    "address": "Address",
+    "emergencyContact": "Emergency Contact",
+    "preferences": "Preferences",
+    "notifications": "Notification Settings",
+    "language": "Language",
+    "editProfile": "Edit Profile",
+    "changePassword": "Change Password",
+    "logout": "Logout"
+  },
+  "navigation": {
+    "home": "Home",
+    "tracking": "Tracking",
+    "notifications": "Notifications",
+    "absence": "Absence",
+    "profile": "Profile"
+  },
+  "common": {
+    "loading": "Loading...",
+    "refresh": "Refresh",
+    "cancel": "Cancel",
+    "save": "Save",
+    "edit": "Edit",
+    "delete": "Delete",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No",
+    "ok": "OK",
+    "back": "Back"
+  }
+}

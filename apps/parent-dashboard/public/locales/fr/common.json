@@ -1,0 +1,126 @@
+{
+  "app": {
+    "title": "Portail parent",
+    "subtitle": "Suivi autobus scolaire"
+  },
+  "auth": {
+    "title": "Connexion",
+    "email": "Adresse courriel",
+    "password": "Mot de passe",
+    "login": "Se connecter",
+    "loggingIn": "Connexion...",
+    "forgotPassword": "Mot de passe oublié?",
+    "errors": {
+      "required": "Veuillez saisir courriel et mot de passe",
+      "invalid": "Identifiants invalides"
+    }
+  },
+  "children": {
+    "title": "Mes enfants",
+    "selectChild": "Sélectionner un enfant à suivre",
+    "addChild": "Ajouter enfant",
+    "noChildren": "Aucun enfant inscrit",
+    "details": {
+      "name": "Nom",
+      "grade": "Niveau",
+      "school": "École",
+      "amRoute": "Itinéraire matin",
+      "pmRoute": "Itinéraire après-midi",
+      "studentId": "ID élève"
+    }
+  },
+  "tracking": {
+    "title": "Suivi autobus",
+    "busLocation": "Position autobus",
+    "busNumber": "Autobus {{number}}",
+    "route": "Itinéraire : {{name}}",
+    "status": "Statut",
+    "eta": "Arrivée prévue",
+    "nextStop": "Prochain arrêt",
+    "stopsAway": "{{count}} arrêts restants",
+    "statuses": {
+      "approaching": "Approche de votre arrêt",
+      "onRoute": "Sur l'itinéraire",
+      "delayed": "En retard",
+      "completed": "Itinéraire terminé",
+      "notStarted": "Pas encore démarré"
+    },
+    "presence": {
+      "onBus": "Dans l'autobus",
+      "notBoarded": "Pas encore embarqué",
+      "alighted": "Déjà débarqué",
+      "absent": "Marqué absent"
+    },
+    "alerts": {
+      "title": "Alertes actives",
+      "noAlerts": "Aucune alerte active",
+      "viewDetails": "Voir détails"
+    }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "today": "Aujourd'hui",
+    "earlier": "Antérieures",
+    "markAllRead": "Tout marquer comme lu",
+    "types": {
+      "boarding": "Embarquement",
+      "alighting": "Débarquement",
+      "delay": "Retard",
+      "emergency": "Urgence",
+      "routeChange": "Modification itinéraire"
+    },
+    "empty": "Aucune notification",
+    "settings": "Paramètres notifications"
+  },
+  "absence": {
+    "title": "Signaler absence",
+    "selectChild": "Sélectionner enfant",
+    "date": "Date d'absence",
+    "reason": "Raison",
+    "reasons": {
+      "sick": "Maladie",
+      "appointment": "Rendez-vous médical",
+      "family": "Raisons familiales",
+      "other": "Autre"
+    },
+    "notes": "Notes additionnelles (optionnel)",
+    "submit": "Soumettre signalement",
+    "success": "Absence signalée avec succès",
+    "error": "Échec de soumission du signalement"
+  },
+  "profile": {
+    "title": "Profil",
+    "personalInfo": "Informations personnelles",
+    "name": "Nom",
+    "email": "Courriel",
+    "phone": "Téléphone",
+    "address": "Adresse",
+    "emergencyContact": "Contact urgence",
+    "preferences": "Préférences",
+    "notifications": "Paramètres notifications",
+    "language": "Langue",
+    "editProfile": "Modifier profil",
+    "changePassword": "Changer mot de passe",
+    "logout": "Déconnexion"
+  },
+  "navigation": {
+    "home": "Accueil",
+    "tracking": "Suivi",
+    "notifications": "Notifications",
+    "absence": "Absence",
+    "profile": "Profil"
+  },
+  "common": {
+    "loading": "Chargement...",
+    "refresh": "Actualiser",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "confirm": "Confirmer",
+    "yes": "Oui",
+    "no": "Non",
+    "ok": "OK",
+    "back": "Retour"
+  }
+}

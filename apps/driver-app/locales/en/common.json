@@ -1,0 +1,120 @@
+{
+  "app": {
+    "title": "SBTM Driver",
+    "subtitle": "School Bus Transport Management"
+  },
+  "auth": {
+    "driverId": "Driver ID",
+    "password": "Password",
+    "login": "LOGIN",
+    "loggingIn": "Logging in...",
+    "faceId": "FaceID",
+    "tapToScan": "Tap to scan FaceID",
+    "errors": {
+      "required": "Please enter driver ID and password",
+      "invalid": "Invalid credentials",
+      "network": "Cannot reach server. Please check your connection."
+    }
+  },
+  "routes": {
+    "title": "Select Route",
+    "myRoutes": "My Routes",
+    "scheduled": "Scheduled Routes",
+    "selectRoute": "Select Route to Start",
+    "noRoutes": "No routes assigned",
+    "startRoute": "Start Route",
+    "routeDetails": "Route Details",
+    "stops": "{{count}} stops",
+    "students": "{{count}} students",
+    "duration": "~{{minutes}} min"
+  },
+  "activeRoute": {
+    "title": "Active Route",
+    "nextStop": "Next Stop",
+    "currentLocation": "Current Location",
+    "arrivalIn": "Arrival in {{minutes}} min",
+    "studentsOnBoard": "Students on Board",
+    "totalStudents": "{{current}}/{{total}}",
+    "actions": {
+      "arrivedAtStop": "Arrived at Stop",
+      "departStop": "Depart Stop",
+      "completeRoute": "Complete Route",
+      "emergency": "EMERGENCY"
+    },
+    "status": {
+      "onTime": "On Time",
+      "delayed": "Delayed {{minutes}} min",
+      "ahead": "Ahead of Schedule"
+    }
+  },
+  "presence": {
+    "title": "Student Presence",
+    "boarding": "Boarding",
+    "alighting": "Alighting",
+    "scan": "Scan SmartTag",
+    "manual": "Manual Entry",
+    "search": "Search student...",
+    "board": "Board",
+    "alight": "Alight",
+    "absent": "Mark Absent",
+    "boarded": "{{name}} boarded",
+    "alighted": "{{name}} alighted",
+    "notOnList": "Student not on route list"
+  },
+  "alerts": {
+    "title": "Emergency Alert",
+    "type": "Alert Type",
+    "types": {
+      "emergency": "Emergency",
+      "breakdown": "Vehicle Breakdown",
+      "accident": "Accident",
+      "medical": "Medical Emergency",
+      "other": "Other"
+    },
+    "description": "Description",
+    "location": "Current Location",
+    "sendAlert": "SEND ALERT",
+    "sending": "Sending...",
+    "sent": "Alert sent to dispatch",
+    "cancel": "Cancel"
+  },
+  "inspection": {
+    "title": "Pre-Trip Inspection",
+    "required": "Pre-trip inspection required",
+    "startInspection": "Start Inspection",
+    "items": {
+      "tires": "Tires",
+      "lights": "Lights",
+      "brakes": "Brakes",
+      "mirrors": "Mirrors",
+      "horn": "Horn",
+      "emergencyEquipment": "Emergency Equipment",
+      "seatbelts": "Seatbelts",
+      "interior": "Interior Cleanliness"
+    },
+    "status": {
+      "pass": "Pass",
+      "fail": "Fail"
+    },
+    "notes": "Notes (optional)",
+    "submit": "Submit Inspection",
+    "passed": "Inspection passed - Route can start",
+    "failed": "Inspection failed - Vehicle requires maintenance"
+  },
+  "navigation": {
+    "home": "Home",
+    "routes": "Routes",
+    "presence": "Presence",
+    "alerts": "Alerts",
+    "profile": "Profile"
+  },
+  "common": {
+    "loading": "Loading...",
+    "refresh": "Refresh",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No",
+    "ok": "OK"
+  }
+}
