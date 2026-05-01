@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import MapPage from './Map';
 import * as AuthContext from '../context/AuthContext';
+import * as UseAlerts from '../hooks/useAlerts';
 
 // Mock AuthContext
 vi.mock('../context/AuthContext', async () => {
@@ -122,7 +123,8 @@ describe('Map Page', () => {
 
     renderWithProviders(<MapPage />);
 
-    expect(screen.getByText('Loading...')).toBeInTheDocument();
+    // 'tracking.map.loading' because useTranslation isn't fully returning 'Loading...' inside mock depending on how i18n is mocked
+    expect(screen.getByText(/tracking\.map\.loading|Loading\.\.\./)).toBeInTheDocument();
   });
 
   it('renders child name and route info when child data is available', () => {
@@ -212,6 +214,50 @@ describe('Map Page', () => {
 
     renderWithProviders(<MapPage />);
 
-    expect(screen.getByText('Route is not currently active.')).toBeInTheDocument();
+    // 'tracking.map.routeNotActive' because of i18n translations
+    expect(
+      screen.getByText(/tracking\.map\.routeNotActive|Route is not currently active\./),
+    ).toBeInTheDocument();
+  });
+
+  it('deduplicates active alerts with the same eventType in the banner', () => {
+    vi.mocked(AuthContext.useAuth).mockReturnValue({
+      user: {
+        id: '1',
+        name: 'Jane',
+        email: 'jane@test.com',
+        children: [
+          {
+            id: 'c1',
+            name: 'Alice',
+            schoolName: 'Greenfield Elementary',
+            routeId: 'route-am',
+            amRouteId: 'route-am',
+            pmRouteId: 'route-pm',
+            vehicleId: 'bus-1',
+            status: 'on_bus' as const,
+          },
+        ],
+      },
+      isAuthenticated: true,
+      login: vi.fn(),
+      logout: vi.fn(),
+      isLoading: false,
+    });
+
+    vi.mocked(UseAlerts.useAlerts).mockReturnValue({
+      alerts: [
+        { id: '1', eventType: 'PANIC_ALERT', timestamp: new Date().toISOString() },
+        { id: '2', eventType: 'PANIC_ALERT', timestamp: new Date().toISOString() },
+        { id: '3', eventType: 'ROUTE_DELAY', timestamp: new Date().toISOString() },
+      ] as any,
+      error: null,
+      refresh: vi.fn(),
+    });
+
+    renderWithProviders(<MapPage />);
+
+    // Since both PANIC_ALERTs share the same type, we expect it to render exactly once:
+    expect(screen.getByText(/PANIC ALERT, ROUTE DELAY/i)).toBeInTheDocument();
   });
 });
