@@ -1,0 +1,40 @@
+{
+  "title": "Tableau de bord",
+  "welcome": "Bon retour, {{name}}",
+  "overview": "Vue d'ensemble du système",
+  "metrics": {
+    "activeRoutes": "Itinéraires actifs",
+    "totalRoutes": "Total des itinéraires",
+    "activeVehicles": "Véhicules actifs",
+    "totalVehicles": "Total des véhicules",
+    "totalStudents": "Total des élèves",
+    "presentStudents": "Présents aujourd'hui",
+    "activeAlerts": "Alertes actives",
+    "resolvedToday": "Résolues aujourd'hui",
+    "fleetUtilization": "Utilisation de la flotte",
+    "onTimePerformance": "Performance ponctuelle",
+    "averageDelay": "Retard moyen",
+    "minutes": "minutes"
+  },
+  "sections": {
+    "recentAlerts": "Alertes récentes",
+    "activeRoutes": "Itinéraires actifs",
+    "fleetStatus": "État de la flotte",
+    "studentPresence": "Présence des élèves",
+    "systemHealth": "Santé du système"
+  },
+  "status": {
+    "operational": "Opérationnel",
+    "warning": "Avertissement",
+    "critical": "Critique",
+    "offline": "Hors ligne"
+  },
+  "actions": {
+    "viewAll": "Voir tout",
+    "viewDetails": "Voir les détails",
+    "refresh": "Actualiser",
+    "exportReport": "Exporter le rapport"
+  },
+  "noData": "Aucune donnée disponible",
+  "loading": "Chargement des données du tableau de bord..."
+}

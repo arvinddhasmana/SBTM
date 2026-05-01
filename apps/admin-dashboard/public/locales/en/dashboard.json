@@ -1,0 +1,40 @@
+{
+  "title": "Dashboard",
+  "welcome": "Welcome back, {{name}}",
+  "overview": "System Overview",
+  "metrics": {
+    "activeRoutes": "Active Routes",
+    "totalRoutes": "Total Routes",
+    "activeVehicles": "Active Vehicles",
+    "totalVehicles": "Total Vehicles",
+    "totalStudents": "Total Students",
+    "presentStudents": "Present Today",
+    "activeAlerts": "Active Alerts",
+    "resolvedToday": "Resolved Today",
+    "fleetUtilization": "Fleet Utilization",
+    "onTimePerformance": "On-Time Performance",
+    "averageDelay": "Average Delay",
+    "minutes": "minutes"
+  },
+  "sections": {
+    "recentAlerts": "Recent Alerts",
+    "activeRoutes": "Active Routes",
+    "fleetStatus": "Fleet Status",
+    "studentPresence": "Student Presence",
+    "systemHealth": "System Health"
+  },
+  "status": {
+    "operational": "Operational",
+    "warning": "Warning",
+    "critical": "Critical",
+    "offline": "Offline"
+  },
+  "actions": {
+    "viewAll": "View All",
+    "viewDetails": "View Details",
+    "refresh": "Refresh",
+    "exportReport": "Export Report"
+  },
+  "noData": "No data available",
+  "loading": "Loading dashboard data..."
+}

@@ -1,0 +1,59 @@
+{
+  "title": "Compliance",
+  "subtitle": "Driver and Vehicle Compliance Management",
+  "sections": {
+    "driverCompliance": "Driver Compliance",
+    "vehicleInspections": "Vehicle Inspections",
+    "auditLogs": "Audit Logs"
+  },
+  "driver": {
+    "license": "Driver's License",
+    "medicalCertificate": "Medical Certificate",
+    "backgroundCheck": "Background Check",
+    "training": "Training Certificate",
+    "expiryDate": "Expiry Date",
+    "status": "Status",
+    "valid": "Valid",
+    "expiring": "Expiring Soon",
+    "expired": "Expired",
+    "daysUntilExpiry": "{{days}} days until expiry"
+  },
+  "inspection": {
+    "title": "Vehicle Inspection",
+    "type": "Inspection Type",
+    "preTrip": "Pre-Trip",
+    "postTrip": "Post-Trip",
+    "periodic": "Periodic",
+    "result": "Result",
+    "passed": "Passed",
+    "failed": "Failed",
+    "conditional": "Conditional",
+    "inspector": "Inspector",
+    "date": "Inspection Date",
+    "defects": "Defects Found",
+    "notes": "Notes",
+    "photos": "Photos"
+  },
+  "audit": {
+    "action": "Action",
+    "user": "User",
+    "timestamp": "Timestamp",
+    "resource": "Resource",
+    "details": "Details",
+    "ipAddress": "IP Address"
+  },
+  "actions": {
+    "viewDetails": "View Details",
+    "scheduleInspection": "Schedule Inspection",
+    "uploadDocument": "Upload Document",
+    "exportReport": "Export Report",
+    "sendReminder": "Send Reminder"
+  },
+  "messages": {
+    "documentUploaded": "Document uploaded successfully",
+    "inspectionScheduled": "Inspection scheduled successfully",
+    "reminderSent": "Reminder sent to {{recipient}}"
+  },
+  "empty": "No compliance records found",
+  "loading": "Loading compliance data..."
+}

@@ -1,0 +1,59 @@
+{
+  "title": "Conformité",
+  "subtitle": "Gestion de la conformité des conducteurs et véhicules",
+  "sections": {
+    "driverCompliance": "Conformité conducteurs",
+    "vehicleInspections": "Inspections véhicules",
+    "auditLogs": "Journaux d'audit"
+  },
+  "driver": {
+    "license": "Permis de conduire",
+    "medicalCertificate": "Certificat médical",
+    "backgroundCheck": "Vérification antécédents",
+    "training": "Certificat formation",
+    "expiryDate": "Date d'expiration",
+    "status": "Statut",
+    "valid": "Valide",
+    "expiring": "Expire bientôt",
+    "expired": "Expiré",
+    "daysUntilExpiry": "{{days}} jours avant expiration"
+  },
+  "inspection": {
+    "title": "Inspection véhicule",
+    "type": "Type d'inspection",
+    "preTrip": "Pré-trajet",
+    "postTrip": "Post-trajet",
+    "periodic": "Périodique",
+    "result": "Résultat",
+    "passed": "Réussi",
+    "failed": "Échoué",
+    "conditional": "Conditionnel",
+    "inspector": "Inspecteur",
+    "date": "Date d'inspection",
+    "defects": "Défauts trouvés",
+    "notes": "Notes",
+    "photos": "Photos"
+  },
+  "audit": {
+    "action": "Action",
+    "user": "Utilisateur",
+    "timestamp": "Horodatage",
+    "resource": "Ressource",
+    "details": "Détails",
+    "ipAddress": "Adresse IP"
+  },
+  "actions": {
+    "viewDetails": "Voir détails",
+    "scheduleInspection": "Planifier inspection",
+    "uploadDocument": "Téléverser document",
+    "exportReport": "Exporter rapport",
+    "sendReminder": "Envoyer rappel"
+  },
+  "messages": {
+    "documentUploaded": "Document téléversé avec succès",
+    "inspectionScheduled": "Inspection planifiée avec succès",
+    "reminderSent": "Rappel envoyé à {{recipient}}"
+  },
+  "empty": "Aucun enregistrement de conformité trouvé",
+  "loading": "Chargement données de conformité..."
+}

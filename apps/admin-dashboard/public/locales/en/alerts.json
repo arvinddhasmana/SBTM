@@ -1,0 +1,72 @@
+{
+  "title": "Alerts",
+  "subtitle": "Emergency and Operational Alerts",
+  "createAlert": "Create Alert",
+  "types": {
+    "emergency": "Emergency",
+    "breakdown": "Breakdown",
+    "accident": "Accident",
+    "delay": "Delay",
+    "maintenance": "Maintenance",
+    "weather": "Weather",
+    "traffic": "Traffic",
+    "other": "Other"
+  },
+  "severity": {
+    "critical": "Critical",
+    "high": "High",
+    "medium": "Medium",
+    "low": "Low",
+    "info": "Informational"
+  },
+  "statuses": {
+    "pending": "Pending",
+    "acknowledged": "Acknowledged",
+    "inProgress": "In Progress",
+    "resolved": "Resolved",
+    "closed": "Closed",
+    "escalated": "Escalated"
+  },
+  "filters": {
+    "all": "All Alerts",
+    "byType": "By Type",
+    "bySeverity": "By Severity",
+    "byStatus": "By Status",
+    "byRoute": "By Route",
+    "byVehicle": "By Vehicle",
+    "today": "Today",
+    "thisWeek": "This Week",
+    "thisMonth": "This Month"
+  },
+  "details": {
+    "alertId": "Alert ID",
+    "type": "Type",
+    "severity": "Severity",
+    "status": "Status",
+    "route": "Route",
+    "vehicle": "Vehicle",
+    "driver": "Driver",
+    "location": "Location",
+    "timestamp": "Timestamp",
+    "description": "Description",
+    "actions": "Actions Taken",
+    "notes": "Notes"
+  },
+  "actions": {
+    "acknowledge": "Acknowledge",
+    "resolve": "Resolve",
+    "escalate": "Escalate",
+    "addNote": "Add Note",
+    "notifyParents": "Notify Parents",
+    "viewHistory": "View History"
+  },
+  "messages": {
+    "acknowledged": "Alert acknowledged successfully",
+    "resolved": "Alert resolved successfully",
+    "escalated": "Alert escalated to {{level}}",
+    "noteAdded": "Note added successfully",
+    "parentsNotified": "Parents have been notified"
+  },
+  "empty": "No alerts found",
+  "loading": "Loading alerts..."
+}

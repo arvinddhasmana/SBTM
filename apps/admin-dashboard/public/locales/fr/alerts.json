@@ -1,0 +1,72 @@
+{
+  "title": "Alertes",
+  "subtitle": "Alertes d'urgence et opérationnelles",
+  "createAlert": "Créer une alerte",
+  "types": {
+    "emergency": "Urgence",
+    "breakdown": "Panne",
+    "accident": "Accident",
+    "delay": "Retard",
+    "maintenance": "Entretien",
+    "weather": "Météo",
+    "traffic": "Circulation",
+    "other": "Autre"
+  },
+  "severity": {
+    "critical": "Critique",
+    "high": "Élevée",
+    "medium": "Moyenne",
+    "low": "Faible",
+    "info": "Informationnelle"
+  },
+  "statuses": {
+    "pending": "En attente",
+    "acknowledged": "Acquittée",
+    "inProgress": "En cours",
+    "resolved": "Résolue",
+    "closed": "Fermée",
+    "escalated": "Escaladée"
+  },
+  "filters": {
+    "all": "Toutes les alertes",
+    "byType": "Par type",
+    "bySeverity": "Par gravité",
+    "byStatus": "Par statut",
+    "byRoute": "Par itinéraire",
+    "byVehicle": "Par véhicule",
+    "today": "Aujourd'hui",
+    "thisWeek": "Cette semaine",
+    "thisMonth": "Ce mois-ci"
+  },
+  "details": {
+    "alertId": "ID alerte",
+    "type": "Type",
+    "severity": "Gravité",
+    "status": "Statut",
+    "route": "Itinéraire",
+    "vehicle": "Véhicule",
+    "driver": "Conducteur",
+    "location": "Emplacement",
+    "timestamp": "Horodatage",
+    "description": "Description",
+    "actions": "Mesures prises",
+    "notes": "Notes"
+  },
+  "actions": {
+    "acknowledge": "Acquitter",
+    "resolve": "Résoudre",
+    "escalate": "Escalader",
+    "addNote": "Ajouter note",
+    "notifyParents": "Notifier parents",
+    "viewHistory": "Voir historique"
+  },
+  "messages": {
+    "acknowledged": "Alerte acquittée avec succès",
+    "resolved": "Alerte résolue avec succès",
+    "escalated": "Alerte escaladée à {{level}}",
+    "noteAdded": "Note ajoutée avec succès",
+    "parentsNotified": "Les parents ont été notifiés"
+  },
+  "empty": "Aucune alerte trouvée",
+  "loading": "Chargement des alertes..."
+}

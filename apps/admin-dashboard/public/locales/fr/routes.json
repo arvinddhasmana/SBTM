@@ -1,0 +1,80 @@
+{
+  "title": "Itinéraires",
+  "subtitle": "Gestion des itinéraires et horaires",
+  "createRoute": "Créer un itinéraire",
+  "types": {
+    "morning": "Matin (AM)",
+    "afternoon": "Après-midi (PM)",
+    "midday": "Midi",
+    "special": "Événement spécial"
+  },
+  "status": {
+    "active": "Actif",
+    "inactive": "Inactif",
+    "planned": "Planifié",
+    "inService": "En service",
+    "completed": "Complété"
+  },
+  "details": {
+    "routeId": "ID itinéraire",
+    "name": "Nom de l'itinéraire",
+    "type": "Type",
+    "direction": "Direction",
+    "vehicle": "Véhicule assigné",
+    "driver": "Conducteur assigné",
+    "capacity": "Capacité",
+    "enrolled": "Élèves inscrits",
+    "stops": "Nombre d'arrêts",
+    "distance": "Distance totale",
+    "duration": "Durée estimée",
+    "startTime": "Heure de début",
+    "endTime": "Heure de fin"
+  },
+  "stops": {
+    "title": "Arrêts",
+    "add": "Ajouter arrêt",
+    "edit": "Modifier arrêt",
+    "delete": "Supprimer arrêt",
+    "reorder": "Réorganiser arrêts",
+    "name": "Nom de l'arrêt",
+    "address": "Adresse",
+    "arrival": "Heure d'arrivée",
+    "departure": "Heure de départ",
+    "students": "Élèves",
+    "sequence": "Séquence"
+  },
+  "optimization": {
+    "title": "Optimisation d'itinéraire",
+    "optimize": "Optimiser l'itinéraire",
+    "calculating": "Calcul de l'itinéraire optimal...",
+    "suggestions": "Suggestions d'optimisation",
+    "timeSaved": "Temps économisé",
+    "distanceSaved": "Distance économisée",
+    "apply": "Appliquer l'optimisation"
+  },
+  "actions": {
+    "viewMap": "Voir sur carte",
+    "editRoute": "Modifier itinéraire",
+    "duplicate": "Dupliquer",
+    "archive": "Archiver",
+    "assignVehicle": "Assigner véhicule",
+    "assignDriver": "Assigner conducteur",
+    "printSchedule": "Imprimer horaire"
+  },
+  "filters": {
+    "all": "Tous les itinéraires",
+    "active": "Actifs seulement",
+    "byType": "Par type",
+    "byVehicle": "Par véhicule",
+    "byDriver": "Par conducteur"
+  },
+  "messages": {
+    "created": "Itinéraire créé avec succès",
+    "updated": "Itinéraire mis à jour avec succès",
+    "deleted": "Itinéraire supprimé avec succès",
+    "optimized": "Itinéraire optimisé avec succès",
+    "assigned": "{{resource}} assigné avec succès"
+  },
+  "empty": "Aucun itinéraire trouvé",
+  "loading": "Chargement des itinéraires..."
+}
