@@ -12,13 +12,16 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import { useDriverStore } from '../store/useDriverStore';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 
 const GLASS_BG = 'rgba(15,23,42,0.82)';
 const GLASS_BORDER = 'rgba(255,255,255,0.12)';
 
 export default function LoginScreen() {
+  const { t } = useTranslation('common');
   const insets = useSafeAreaInsets();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -27,7 +30,7 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert('Error', 'Please enter email and password');
+      Alert.alert(t('common.error'), t('auth.errors.required'));
       return;
     }
 
@@ -38,16 +41,16 @@ export default function LoginScreen() {
       const isNetworkError = axios.isAxiosError(error) && !error.response;
       if (isNetworkError) {
         Alert.alert(
-          'Cannot Reach Server',
-          'Backend services are not reachable. Please check your network connection or contact your administrator.',
+          t('auth.errors.networkTitle'),
+          t('auth.errors.network'),
         );
       } else {
         const message = axios.isAxiosError(error)
           ? (error.response?.data?.message ?? error.message)
           : error instanceof Error
             ? error.message
-            : 'Unknown error';
-        Alert.alert('Login Failed', message);
+            : t('auth.errors.invalid');
+        Alert.alert(t('auth.errors.loginFailed'), message);
       }
     } finally {
       setIsLoading(false);
@@ -64,7 +67,10 @@ export default function LoginScreen() {
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
       <View style={styles.card}>
-        <Text style={styles.title}>SBTM Driver</Text>
+        <View style={styles.header}>
+          <Text style={styles.title}>{t('app.title')}</Text>
+          <LanguageSwitcher />
+        </View>
 
         <View style={styles.inputContainer}>
           <MaterialCommunityIcons
@@ -75,7 +81,7 @@ export default function LoginScreen() {
           />
           <TextInput
             style={styles.input}
-            placeholder="Driver ID"
+            placeholder={t('auth.driverId')}
             placeholderTextColor="rgba(255,255,255,0.35)"
             value={email}
             onChangeText={setEmail}
@@ -93,7 +99,7 @@ export default function LoginScreen() {
           />
           <TextInput
             style={styles.input}
-            placeholder="Password"
+            placeholder={t('auth.password')}
             placeholderTextColor="rgba(255,255,255,0.35)"
             value={password}
             onChangeText={setPassword}
@@ -112,15 +118,15 @@ export default function LoginScreen() {
             {isLoading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.buttonText}>LOGIN</Text>
+              <Text style={styles.buttonText}>{t('auth.login')}</Text>
             )}
           </LinearGradient>
         </TouchableOpacity>
 
         <View style={styles.faceIdContainer}>
           <MaterialCommunityIcons name="face-recognition" size={42} color="#38bdf8" />
-          <Text style={styles.faceIdText}>FaceID</Text>
-          <Text style={styles.faceIdSubtext}>Tap to scan FaceID</Text>
+          <Text style={styles.faceIdText}>{t('auth.faceId')}</Text>
+          <Text style={styles.faceIdSubtext}>{t('auth.tapToScan')}</Text>
         </View>
       </View>
     </LinearGradient>
@@ -141,14 +147,19 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 28,
   },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 36,
+  },
   title: {
-    fontSize: 34,
+    fontSize: 28,
     fontWeight: '800',
     fontFamily: 'Inter_800ExtraBold',
     color: '#fff',
-    textAlign: 'center',
     letterSpacing: -0.5,
-    marginBottom: 36,
+    flex: 1,
   },
   inputContainer: {
     flexDirection: 'row',

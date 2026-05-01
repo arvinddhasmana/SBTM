@@ -13,7 +13,9 @@
     "errors": {
       "required": "Please enter driver ID and password",
       "invalid": "Invalid credentials",
-      "network": "Cannot reach server. Please check your connection."
+      "network": "Cannot reach server. Please check your connection.",
+      "networkTitle": "Cannot Reach Server",
+      "loginFailed": "Login Failed"
     }
   },
   "routes": {
@@ -115,6 +117,7 @@
     "confirm": "Confirm",
     "yes": "Yes",
     "no": "No",
-    "ok": "OK"
+    "ok": "OK",
+    "error": "Error"
   }
 }

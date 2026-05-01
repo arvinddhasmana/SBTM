@@ -13,7 +13,9 @@
     "errors": {
       "required": "Veuillez saisir l'ID et le mot de passe",
       "invalid": "Identifiants invalides",
-      "network": "Serveur inaccessible. Vérifiez votre connexion."
+      "network": "Serveur inaccessible. Vérifiez votre connexion.",
+      "networkTitle": "Serveur inaccessible",
+      "loginFailed": "Échec de connexion"
     }
   },
   "routes": {
@@ -115,6 +117,7 @@
     "confirm": "Confirmer",
     "yes": "Oui",
     "no": "Non",
-    "ok": "OK"
+    "ok": "OK",
+    "error": "Erreur"
   }
 }
