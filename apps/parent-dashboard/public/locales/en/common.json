@@ -105,10 +105,16 @@
   },
   "navigation": {
     "home": "Home",
+    "dashboard": "Dashboard",
     "tracking": "Tracking",
     "notifications": "Notifications",
-    "absence": "Absence",
-    "profile": "Profile"
+    "absence": "Report Absence",
+    "settings": "Settings",
+    "profile": "Profile",
+    "signOut": "Sign out",
+    "alert": "Alert",
+    "parent": "PARENT",
+    "openMenu": "Open main menu"
   },
   "common": {
     "loading": "Loading...",

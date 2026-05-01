@@ -105,10 +105,16 @@
   },
   "navigation": {
     "home": "Accueil",
+    "dashboard": "Tableau de bord",
     "tracking": "Suivi",
     "notifications": "Notifications",
-    "absence": "Absence",
-    "profile": "Profil"
+    "absence": "Signaler absence",
+    "settings": "Paramètres",
+    "profile": "Profil",
+    "signOut": "Déconnexion",
+    "alert": "Alerte",
+    "parent": "PARENT",
+    "openMenu": "Ouvrir le menu principal"
   },
   "common": {
     "loading": "Chargement...",
