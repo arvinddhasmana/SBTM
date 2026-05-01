@@ -28,7 +28,14 @@
     "routeDetails": "Détails itinéraire",
     "stops": "{{count}} arrêts",
     "students": "{{count}} élèves",
-    "duration": "~{{minutes}} min"
+    "duration": "~{{minutes}} min",
+    "welcome": "Bienvenue, {{name}}",
+    "selectYourRoute": "Sélectionner votre itinéraire",
+    "school": "École",
+    "start": "Démarrer",
+    "logOut": "Déconnexion",
+    "startRouteConfirm": "Démarrer {{name}} ({{direction}}) ?",
+    "cancel": "Annuler"
   },
   "activeRoute": {
     "title": "Itinéraire actif",

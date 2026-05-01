@@ -28,7 +28,14 @@
     "routeDetails": "Route Details",
     "stops": "{{count}} stops",
     "students": "{{count}} students",
-    "duration": "~{{minutes}} min"
+    "duration": "~{{minutes}} min",
+    "welcome": "Welcome, {{name}}",
+    "selectYourRoute": "Select your route",
+    "school": "School",
+    "start": "Start",
+    "logOut": "Log Out",
+    "startRouteConfirm": "Start {{name}} ({{direction}})?",
+    "cancel": "Cancel"
   },
   "activeRoute": {
     "title": "Active Route",

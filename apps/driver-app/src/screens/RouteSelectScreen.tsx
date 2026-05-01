@@ -12,6 +12,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { useDriverStore } from '../store/useDriverStore';
 import { Route } from '../types';
 
@@ -33,21 +34,26 @@ function formatStartTime(startTime?: string): string {
 }
 
 export default function RouteSelectScreen({ navigation }: any) {
+  const { t } = useTranslation('common');
   const insets = useSafeAreaInsets();
   const driver = useDriverStore((state) => state.driver);
   const setActiveRoute = useDriverStore((state) => state.setActiveRoute);
 
   const handleSelectRoute = (route: Route) => {
-    Alert.alert('Start Route', `Start ${route.name} (${route.direction})?`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Start',
-        onPress: () => {
-          setActiveRoute(route);
-          navigation.navigate('ActiveRoute');
+    Alert.alert(
+      t('routes.startRoute'),
+      t('routes.startRouteConfirm', { name: route.name, direction: route.direction }),
+      [
+        { text: t('routes.cancel'), style: 'cancel' },
+        {
+          text: t('routes.start'),
+          onPress: () => {
+            setActiveRoute(route);
+            navigation.navigate('ActiveRoute');
+          },
         },
-      },
-    ]);
+      ],
+    );
   };
 
   const renderItem = ({ item }: { item: Route }) => (
@@ -61,8 +67,8 @@ export default function RouteSelectScreen({ navigation }: any) {
           <View style={styles.cardHeader}>
             <Text style={styles.routeName}>{item.name}</Text>
           </View>
-          <Text style={styles.details}>School: {item.schoolName || item.schoolId}</Text>
-          <Text style={styles.details}>Start: {formatStartTime(item.startTime)}</Text>
+          <Text style={styles.details}>{t('routes.school')}: {item.schoolName || item.schoolId}</Text>
+          <Text style={styles.details}>{t('routes.start')}: {formatStartTime(item.startTime)}</Text>
         </View>
         <View style={styles.cardRight}>
           <MaterialCommunityIcons
@@ -93,8 +99,8 @@ export default function RouteSelectScreen({ navigation }: any) {
           <MaterialCommunityIcons name="account" size={32} color="#fff" />
         </View>
         <View>
-          <Text style={styles.header}>Welcome, {driver?.name}</Text>
-          <Text style={styles.subHeader}>Select your route</Text>
+          <Text style={styles.header}>{t('routes.welcome', { name: driver?.name })}</Text>
+          <Text style={styles.subHeader}>{t('routes.selectYourRoute')}</Text>
         </View>
       </View>
 
@@ -109,7 +115,7 @@ export default function RouteSelectScreen({ navigation }: any) {
         style={styles.logoutButton}
         onPress={() => useDriverStore.getState().logout()}
       >
-        <Text style={styles.logoutText}>Log Out</Text>
+        <Text style={styles.logoutText}>{t('routes.logOut')}</Text>
       </TouchableOpacity>
     </LinearGradient>
   );

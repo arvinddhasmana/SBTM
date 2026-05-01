@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import { Outlet, useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { Bus, LogOut, User, Bell, Menu, X, ClipboardX, Settings } from 'lucide-react';
 import { useAlerts } from '../hooks/useAlerts';
+import LanguageSwitcher from './LanguageSwitcher';
 
 const Layout: React.FC = () => {
+  const { t } = useTranslation('common');
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -34,9 +37,12 @@ const Layout: React.FC = () => {
                   <Bus className="h-8 w-8 text-indigo-500 transition-colors group-hover:text-indigo-400" />
                 </div>
                 <span className="ml-2 text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400">
-                  Parent Portal
+                  {t('app.title')}
                 </span>
               </Link>
+              <div className="ml-4">
+                <LanguageSwitcher />
+              </div>
             </div>
 
             <div className="hidden sm:ml-6 sm:flex sm:items-center space-x-6">
@@ -45,12 +51,12 @@ const Layout: React.FC = () => {
                 className="flex items-center gap-2 text-sm font-medium text-slate-400 hover:text-slate-100 transition-colors"
               >
                 <ClipboardX className="h-5 w-5" />
-                <span>Report Absence</span>
+                <span>{t('navigation.absence')}</span>
               </Link>
               <Link
                 to="/notifications"
                 className="relative p-2 rounded-xl bg-slate-800/50 text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-all border border-white/5"
-                aria-label="View notifications"
+                aria-label={t('notifications.title')}
               >
                 <Bell className="h-5 w-5" />
                 {hasUnread && (
@@ -60,7 +66,7 @@ const Layout: React.FC = () => {
               <Link
                 to="/settings"
                 className="p-2 rounded-xl bg-slate-800/50 text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-all border border-white/5"
-                aria-label="Notification settings"
+                aria-label={t('navigation.settings')}
               >
                 <Settings className="h-5 w-5" />
               </Link>
@@ -68,12 +74,12 @@ const Layout: React.FC = () => {
               <div className="ml-4 pl-4 border-l border-white/10 flex items-center gap-4">
                 <div className="flex flex-col items-end">
                   <span className="text-sm font-semibold text-slate-200">{user?.name}</span>
-                  <span className="text-[10px] text-slate-500 tracking-wider">PARENT</span>
+                  <span className="text-[10px] text-slate-500 tracking-wider">{t('navigation.parent')}</span>
                 </div>
                 <button
                   onClick={handleLogout}
                   className="p-2 rounded-xl bg-slate-800/50 text-slate-400 hover:text-pink-400 hover:bg-slate-800 transition-all border border-white/5"
-                  title="Sign out"
+                  title={t('navigation.signOut')}
                 >
                   <LogOut className="h-5 w-5" />
                 </button>
@@ -85,7 +91,7 @@ const Layout: React.FC = () => {
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                 className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
               >
-                <span className="sr-only">Open main menu</span>
+                <span className="sr-only">{t('navigation.openMenu')}</span>
                 {isMenuOpen ? (
                   <X className="block h-6 w-6" aria-hidden="true" />
                 ) : (
@@ -105,24 +111,24 @@ const Layout: React.FC = () => {
                 className="bg-blue-50 border-blue-500 text-blue-700 block pl-3 pr-4 py-2 border-l-4 text-base font-medium"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Dashboard
+                {t('navigation.dashboard')}
               </Link>
               <Link
                 to="/absence"
                 className="text-gray-600 hover:bg-gray-50 hover:text-gray-900 block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Report Absence
+                {t('navigation.absence')}
               </Link>
               <Link
                 to="/notifications"
                 className="text-gray-600 hover:bg-gray-50 hover:text-gray-900 block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Notifications
+                {t('navigation.notifications')}
                 {hasUnread && (
                   <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                    Alert
+                    {t('navigation.alert')}
                   </span>
                 )}
               </Link>
@@ -131,7 +137,7 @@ const Layout: React.FC = () => {
                 className="text-gray-600 hover:bg-gray-50 hover:text-gray-900 block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Settings
+                {t('navigation.settings')}
               </Link>
             </div>
             <div className="pt-4 pb-4 border-t border-gray-200">
@@ -148,7 +154,7 @@ const Layout: React.FC = () => {
                 <Link
                   to="/notifications"
                   className="ml-auto flex-shrink-0 relative p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                  aria-label="View notifications"
+                  aria-label={t('notifications.title')}
                 >
                   <Bell className="h-6 w-6" />
                   {hasUnread && (
@@ -161,7 +167,7 @@ const Layout: React.FC = () => {
                   onClick={handleLogout}
                   className="block w-full text-left px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100"
                 >
-                  Sign out
+                  {t('navigation.signOut')}
                 </button>
               </div>
             </div>
