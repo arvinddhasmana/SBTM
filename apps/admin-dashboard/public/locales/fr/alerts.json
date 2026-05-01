@@ -68,5 +68,25 @@
     "parentsNotified": "Les parents ont été notifiés"
   },
   "empty": "Aucune alerte trouvée",
-  "loading": "Chargement des alertes..."
+  "loading": "Chargement des alertes...",
+  "management": "Gestion des alertes",
+  "activeCount": "{{count}} alerte active",
+  "activeCount_plural": "{{count}} alertes actives",
+  "awaitingConfirmation": "{{count}} en attente de confirmation",
+  "inProgressCount": "{{count}} en cours",
+  "filter": "Filtrer",
+  "filterButtons": {
+    "all": "Toutes ({{count}})",
+    "active": "Actives ({{count}})",
+    "pending": "En attente ({{count}})",
+    "confirmed": "En cours ({{count}})",
+    "resolved": "Résolues ({{count}})"
+  },
+  "tierTabs": {
+    "allTiers": "Tous les niveaux",
+    "tier1": "Sécurité (Niveau 1)",
+    "tier2": "Opérationnel (Niveau 2)",
+    "tier3": "Informationnel (Niveau 3)"
+  },
+  "emptyFiltered": "Aucune alerte {{filter}}"
 }
