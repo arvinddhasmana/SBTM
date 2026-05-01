@@ -49,3 +49,4 @@ docs/UiDesign/parent-mobile-mockups/previews/
 .env.production
 .env.demo
 .env.*
+pnpm-lock.yaml

@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { ParentApiService } from '../services/ParentApiService';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 
 /**
  * Mirrors apps/parent-dashboard/web/src/pages/Settings.tsx.
@@ -195,7 +196,10 @@ export default function SettingsScreen() {
       contentContainerStyle={styles.content}
       testID="settings-screen"
     >
-      <Text style={styles.title}>⚙️ Notification Settings</Text>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Text style={styles.title}>⚙️ Notification Settings</Text>
+        <LanguageSwitcher />
+      </View>
       <Text style={styles.subtitle}>
         Choose how you want to be notified about your child's bus activity.
       </Text>

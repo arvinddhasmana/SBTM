@@ -20,6 +20,7 @@ import {
   AuroraBackground,
   IconButton,
 } from '../components';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 import { ALERT_POLL_INTERVAL_MS, DASHBOARD_LIVE_LOCATION_POLL_MS } from '../config/constants';
 import {
   alertEventLabel,
@@ -282,6 +283,7 @@ export default function DashboardScreen() {
             </View>
           </View>
           <View style={styles.iconRow}>
+            <LanguageSwitcher />
             <IconButton
               icon="🗓"
               accessibilityLabel="Report Absence"

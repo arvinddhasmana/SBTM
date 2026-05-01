@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useDriverStore } from '../store/useDriverStore';
 import { Route } from '../types';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 
 const GLASS_BG = 'rgba(15,23,42,0.82)';
 const GLASS_BORDER = 'rgba(255,255,255,0.12)';
@@ -67,8 +68,12 @@ export default function RouteSelectScreen({ navigation }: any) {
           <View style={styles.cardHeader}>
             <Text style={styles.routeName}>{item.name}</Text>
           </View>
-          <Text style={styles.details}>{t('routes.school')}: {item.schoolName || item.schoolId}</Text>
-          <Text style={styles.details}>{t('routes.start')}: {formatStartTime(item.startTime)}</Text>
+          <Text style={styles.details}>
+            {t('routes.school')}: {item.schoolName || item.schoolId}
+          </Text>
+          <Text style={styles.details}>
+            {t('routes.start')}: {formatStartTime(item.startTime)}
+          </Text>
         </View>
         <View style={styles.cardRight}>
           <MaterialCommunityIcons
@@ -98,10 +103,11 @@ export default function RouteSelectScreen({ navigation }: any) {
         <View style={styles.avatarPlaceholder}>
           <MaterialCommunityIcons name="account" size={32} color="#fff" />
         </View>
-        <View>
+        <View style={{ flex: 1 }}>
           <Text style={styles.header}>{t('routes.welcome', { name: driver?.name })}</Text>
           <Text style={styles.subHeader}>{t('routes.selectYourRoute')}</Text>
         </View>
+        <LanguageSwitcher />
       </View>
 
       <FlatList
