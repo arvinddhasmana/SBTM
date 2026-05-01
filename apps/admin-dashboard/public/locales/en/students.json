@@ -67,5 +67,18 @@
     "absent": "Student marked as absent"
   },
   "empty": "No students found",
-  "loading": "Loading students..."
+  "loading": "Loading students...",
+  "loadingData": "Loading student data...",
+  "studentPresence": "Student Presence",
+  "liveMonitoring": "Live monitoring of student boardings and alightings",
+  "manageEnrollments": "Manage student enrollments and assignments",
+  "tabs": {
+    "livePresence": "Live Presence",
+    "administration": "Administration"
+  },
+  "recentEvents": "Recent Events",
+  "refreshing": "Refreshing...",
+  "studentRoster": "Student Roster",
+  "bulkImport": "Bulk Import",
+  "enrollStudent": "Enroll Student"
 }

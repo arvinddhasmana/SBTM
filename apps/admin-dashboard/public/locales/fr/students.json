@@ -67,5 +67,18 @@
     "absent": "Élève marqué comme absent"
   },
   "empty": "Aucun élève trouvé",
-  "loading": "Chargement des élèves..."
+  "loading": "Chargement des élèves...",
+  "loadingData": "Chargement des données élèves...",
+  "studentPresence": "Présence des élèves",
+  "liveMonitoring": "Surveillance en temps réel des embarquements et débarquements",
+  "manageEnrollments": "Gérer les inscriptions et assignations des élèves",
+  "tabs": {
+    "livePresence": "Présence en direct",
+    "administration": "Administration"
+  },
+  "recentEvents": "Événements récents",
+  "refreshing": "Actualisation...",
+  "studentRoster": "Liste des élèves",
+  "bulkImport": "Importation en masse",
+  "enrollStudent": "Inscrire élève"
 }
