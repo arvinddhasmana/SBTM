@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Bus, Users, Bell, Route as RouteIcon, ShieldAlert, Info, Zap, MapPin } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Header, LoadingSpinner, FloatingPanel, PanelSearch } from '../components/common';
 import { LiveMap } from '../components/map';
 import { AlertList, AlertDetail } from '../components/alerts';
@@ -34,6 +35,7 @@ const TERMINAL_STATUSES = new Set(['RESOLVED', 'FALSE_ALARM']);
 type DashboardMode = 'info' | 'action';
 
 const Dashboard: React.FC = () => {
+  const { t } = useTranslation(['dashboard', 'common']);
   const [selectedRoute, setSelectedRoute] = useState<Route | null>(null);
   const [mode, setMode] = useState<DashboardMode>('info');
   const [routeSearch, setRouteSearch] = useState('');
@@ -265,7 +267,7 @@ const Dashboard: React.FC = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen bg-slate-950">
-        <LoadingSpinner size="lg" text="Initialising Tactical Command..." />
+        <LoadingSpinner size="lg" text={t('dashboard:initialising')} />
       </div>
     );
   }
@@ -273,25 +275,25 @@ const Dashboard: React.FC = () => {
   const statCards = [
     {
       icon: <RouteIcon size={18} />,
-      label: 'Routes',
+      label: t('dashboard:stats.routes'),
       value: stats.activeRoutes,
       color: 'text-blue-400',
     },
     {
       icon: <Bus size={18} />,
-      label: 'Buses',
+      label: t('dashboard:stats.buses'),
       value: stats.busesOnRoute,
       color: 'text-emerald-400',
     },
     {
       icon: <Users size={18} />,
-      label: 'Boarded',
+      label: t('dashboard:stats.boarded'),
       value: stats.totalStudents,
       color: 'text-indigo-400',
     },
     {
       icon: <Bell size={18} />,
-      label: 'Alerts',
+      label: t('dashboard:stats.alerts'),
       value: stats.activeAlerts,
       color: 'text-rose-400',
     },
@@ -312,8 +314,8 @@ const Dashboard: React.FC = () => {
       {/* Tactical Overlays */}
       <div className="absolute inset-0 z-10 pointer-events-none">
         <Header
-          title="Tactical Overview"
-          subtitle="Real-time fleet intelligence"
+          title={t('dashboard:tacticalOverview')}
+          subtitle={t('dashboard:realTimeFleet')}
           className="pointer-events-auto"
           action={
             <div className="flex items-center gap-2">
@@ -332,7 +334,7 @@ const Dashboard: React.FC = () => {
                   }`}
                 >
                   <Info size={10} />
-                  Info
+                  {t('dashboard:mode.info')}
                 </button>
                 <button
                   onClick={() => setMode('action')}
@@ -344,7 +346,7 @@ const Dashboard: React.FC = () => {
                   }`}
                 >
                   <Zap size={10} />
-                  Action
+                  {t('dashboard:mode.action')}
                 </button>
               </div>
 
@@ -352,7 +354,7 @@ const Dashboard: React.FC = () => {
                 <div className="flex items-center gap-2 px-3 py-1 bg-amber-500/10 border border-amber-500/20 rounded-lg">
                   <div className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse" />
                   <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest">
-                    Mock Data Active
+                    {t('dashboard:mockDataActive')}
                   </span>
                 </div>
               )}
@@ -363,7 +365,7 @@ const Dashboard: React.FC = () => {
         {/* Panel: Routes (left, top) */}
         <FloatingPanel
           id="routes"
-          title="Routes"
+          title={t('dashboard:panels.routes')}
           icon={<MapPin size={12} />}
           anchor="left"
           defaultPosition={{ x: 30, y: 80 }}
@@ -374,14 +376,14 @@ const Dashboard: React.FC = () => {
             <PanelSearch
               value={routeSearch}
               onChange={setRouteSearch}
-              placeholder="Search routes, schools, buses..."
+              placeholder={t('dashboard:search.routes')}
             />
             <div className="flex-1 overflow-y-auto custom-scrollbar pr-1">
               <RouteListCompact
                 routes={filteredRoutes}
                 liveLocations={locations}
                 onRouteClick={(route) => handleSelection(route.id)}
-                emptyMessage="No active routes"
+                emptyMessage={t('dashboard:empty.noActiveRoutes')}
               />
             </div>
           </div>
@@ -390,7 +392,7 @@ const Dashboard: React.FC = () => {
         {/* Panel: Tactical Alerts (right) */}
         <FloatingPanel
           id="alerts"
-          title="Tactical Alerts"
+          title={t('dashboard:panels.tacticalAlerts')}
           icon={<ShieldAlert size={12} />}
           anchor="right"
           defaultPosition={{ x: 30, y: 80 }}
@@ -406,30 +408,30 @@ const Dashboard: React.FC = () => {
               className="w-full py-1 px-2 glass-item rounded text-[9px] font-black text-white uppercase tracking-widest bg-transparent border-0 outline-none focus:ring-1 focus:ring-blue-500/30 cursor-pointer appearance-none shrink-0"
             >
               <option value="" className="bg-slate-900">
-                All Tiers
+                {t('dashboard:tierFilter.allTiers')}
               </option>
               <option value="TIER_1" className="bg-slate-900">
-                Tier 1 — Critical
+                {t('dashboard:tierFilter.tier1')}
               </option>
               <option value="TIER_2" className="bg-slate-900">
-                Tier 2 — Warning
+                {t('dashboard:tierFilter.tier2')}
               </option>
               <option value="TIER_3" className="bg-slate-900">
-                Tier 3 — Info
+                {t('dashboard:tierFilter.tier3')}
               </option>
             </select>
             <button
               onClick={() => navigate('/alerts')}
               className="w-full py-1.5 glass-item rounded text-[9px] font-black text-blue-400 uppercase tracking-widest hover:bg-white/10 shrink-0"
             >
-              Review All
+              {t('dashboard:buttons.reviewAll')}
             </button>
             <div className="flex-1 overflow-y-auto custom-scrollbar pr-1">
               <AlertList
                 alerts={filteredAlerts}
                 onAlertClick={(alert) => handleSelection(alert.routeId)}
                 onAlertAction={handleAlertAction}
-                emptyMessage={mode === 'action' ? 'No actionable alerts' : 'No active alerts'}
+                emptyMessage={mode === 'action' ? t('dashboard:empty.noActionableAlerts') : t('dashboard:empty.noActiveAlerts')}
               />
             </div>
           </div>
@@ -438,7 +440,7 @@ const Dashboard: React.FC = () => {
         {/* Panel: Passenger Feed (right, below alerts) */}
         <FloatingPanel
           id="passengers"
-          title="Passenger Feed"
+          title={t('dashboard:panels.passengerFeed')}
           icon={<Users size={12} />}
           anchor="right"
           defaultPosition={{ x: 30, y: 510 }}
@@ -449,19 +451,19 @@ const Dashboard: React.FC = () => {
             <PanelSearch
               value={passengerSearch}
               onChange={setPassengerSearch}
-              placeholder="Search passengers..."
+              placeholder={t('dashboard:search.passengers')}
             />
             <button
               onClick={() => navigate('/students')}
               className="w-full py-1.5 glass-item rounded text-[9px] font-black text-blue-400 uppercase tracking-widest hover:bg-white/10 shrink-0"
             >
-              Manifest
+              {t('dashboard:buttons.manifest')}
             </button>
             <div className="flex-1 overflow-y-auto custom-scrollbar">
               <PresenceList
                 students={filteredStudents}
                 onStudentClick={(student) => handleSelection(student.routeId)}
-                emptyMessage="No occupancy"
+                emptyMessage={t('dashboard:empty.noOccupancy')}
               />
             </div>
           </div>
@@ -472,17 +474,17 @@ const Dashboard: React.FC = () => {
           {/* Legend Panel */}
           <div className="glass-card p-2 w-28 pointer-events-auto">
             <div className="text-[8px] font-black text-slate-500 uppercase mb-1 tracking-widest">
-              Legend
+              {t('dashboard:panels.legend')}
             </div>
             <div className="space-y-1">
               <div className="flex items-center gap-2 text-[8px] font-bold text-slate-300">
-                <div className="w-2 h-2 rounded-full bg-green-500" /> Normal
+                <div className="w-2 h-2 rounded-full bg-green-500" /> {t('dashboard:legend.normal')}
               </div>
               <div className="flex items-center gap-2 text-[8px] font-bold text-slate-300">
-                <div className="w-2 h-2 rounded-full bg-yellow-500" /> Delayed
+                <div className="w-2 h-2 rounded-full bg-yellow-500" /> {t('dashboard:legend.delayed')}
               </div>
               <div className="flex items-center gap-2 text-[8px] font-bold text-slate-300">
-                <div className="w-2 h-2 rounded-full bg-red-500" /> Emergency
+                <div className="w-2 h-2 rounded-full bg-red-500" /> {t('dashboard:legend.emergency')}
               </div>
             </div>
           </div>
@@ -491,9 +493,9 @@ const Dashboard: React.FC = () => {
           <div className="glass-card p-2 w-28 pointer-events-auto">
             <div className="flex flex-col gap-1">
               {[
-                { name: 'GPS', status: 'OK' },
-                { name: 'HUB', status: 'OK' },
-                { name: 'TELEM', status: 'OK' },
+                { name: t('dashboard:missionHealth.gps'), status: t('dashboard:missionHealth.ok') },
+                { name: t('dashboard:missionHealth.hub'), status: t('dashboard:missionHealth.ok') },
+                { name: t('dashboard:missionHealth.telem'), status: t('dashboard:missionHealth.ok') },
               ].map((service, idx) => (
                 <div
                   key={idx}

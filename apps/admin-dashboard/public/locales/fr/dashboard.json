@@ -36,5 +36,56 @@
     "exportReport": "Exporter le rapport"
   },
   "noData": "Aucune donnée disponible",
-  "loading": "Chargement des données du tableau de bord..."
+  "loading": "Chargement des données du tableau de bord...",
+  "tacticalOverview": "Vue tactique",
+  "realTimeFleet": "Intelligence de flotte en temps réel",
+  "initialising": "Initialisation du commandement tactique...",
+  "mode": {
+    "info": "Info",
+    "action": "Action"
+  },
+  "mockDataActive": "Données simulées actives",
+  "panels": {
+    "routes": "Itinéraires",
+    "tacticalAlerts": "Alertes tactiques",
+    "passengerFeed": "Flux passagers",
+    "legend": "Légende"
+  },
+  "search": {
+    "routes": "Rechercher itinéraires, écoles, autobus...",
+    "passengers": "Rechercher passagers..."
+  },
+  "buttons": {
+    "reviewAll": "Tout examiner",
+    "manifest": "Manifeste"
+  },
+  "empty": {
+    "noActiveRoutes": "Aucun itinéraire actif",
+    "noActiveAlerts": "Aucune alerte active",
+    "noActionableAlerts": "Aucune alerte nécessitant action",
+    "noOccupancy": "Aucune occupation"
+  },
+  "legend": {
+    "normal": "Normal",
+    "delayed": "Retardé",
+    "emergency": "Urgence"
+  },
+  "missionHealth": {
+    "gps": "GPS",
+    "hub": "HUB",
+    "telem": "TÉLEM",
+    "ok": "OK"
+  },
+  "stats": {
+    "routes": "Itinéraires",
+    "buses": "Autobus",
+    "boarded": "Embarqués",
+    "alerts": "Alertes"
+  },
+  "tierFilter": {
+    "allTiers": "Tous les niveaux",
+    "tier1": "Niveau 1 — Critique",
+    "tier2": "Niveau 2 — Avertissement",
+    "tier3": "Niveau 3 — Info"
+  }
 }

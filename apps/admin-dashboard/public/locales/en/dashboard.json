@@ -36,5 +36,56 @@
     "exportReport": "Export Report"
   },
   "noData": "No data available",
-  "loading": "Loading dashboard data..."
+  "loading": "Loading dashboard data...",
+  "tacticalOverview": "Tactical Overview",
+  "realTimeFleet": "Real-time fleet intelligence",
+  "initialising": "Initialising Tactical Command...",
+  "mode": {
+    "info": "Info",
+    "action": "Action"
+  },
+  "mockDataActive": "Mock Data Active",
+  "panels": {
+    "routes": "Routes",
+    "tacticalAlerts": "Tactical Alerts",
+    "passengerFeed": "Passenger Feed",
+    "legend": "Legend"
+  },
+  "search": {
+    "routes": "Search routes, schools, buses...",
+    "passengers": "Search passengers..."
+  },
+  "buttons": {
+    "reviewAll": "Review All",
+    "manifest": "Manifest"
+  },
+  "empty": {
+    "noActiveRoutes": "No active routes",
+    "noActiveAlerts": "No active alerts",
+    "noActionableAlerts": "No actionable alerts",
+    "noOccupancy": "No occupancy"
+  },
+  "legend": {
+    "normal": "Normal",
+    "delayed": "Delayed",
+    "emergency": "Emergency"
+  },
+  "missionHealth": {
+    "gps": "GPS",
+    "hub": "HUB",
+    "telem": "TELEM",
+    "ok": "OK"
+  },
+  "stats": {
+    "routes": "Routes",
+    "buses": "Buses",
+    "boarded": "Boarded",
+    "alerts": "Alerts"
+  },
+  "tierFilter": {
+    "allTiers": "All Tiers",
+    "tier1": "Tier 1 — Critical",
+    "tier2": "Tier 2 — Warning",
+    "tier3": "Tier 3 — Info"
+  }
 }
