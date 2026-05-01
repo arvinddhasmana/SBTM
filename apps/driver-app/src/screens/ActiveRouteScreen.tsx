@@ -14,6 +14,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import MapView, { Marker, Polyline, LatLng } from 'react-native-maps';
 import Svg, { Path, Circle, Line } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { useDriverStore } from '../store/useDriverStore';
 import { GPSService } from '../services/gps.service';
 import { EmergencyService } from '../services/emergency.service';
@@ -35,6 +36,7 @@ const GLASS_BG = 'rgba(15,23,42,0.75)';
 const GLASS_BORDER = 'rgba(255,255,255,0.12)';
 
 export default function ActiveRouteScreen({ navigation }: any) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const activeRoute = useDriverStore((state) => state.activeRoute);
   const driver = useDriverStore((state) => state.driver);
@@ -79,7 +81,7 @@ export default function ActiveRouteScreen({ navigation }: any) {
         IntentLauncher.startActivityAsync('android.speech.action.RECOGNIZE_SPEECH', {
           extra: {
             'android.speech.extra.LANGUAGE_MODEL': 'free_form',
-            'android.speech.extra.PROMPT': 'Speak to enter text...',
+            'android.speech.extra.PROMPT': t('activeRoute.voice.prompt'),
           },
         })
           .then((result: any) => {
@@ -89,18 +91,18 @@ export default function ActiveRouteScreen({ navigation }: any) {
             }
           })
           .catch(() => {
-            Alert.alert('Voice Input', 'Speech recognition unavailable on this device.');
+            Alert.alert(t('activeRoute.voice.title'), t('activeRoute.voice.unavailable'));
           });
       } catch {
-        Alert.alert('Voice Input', 'Voice input not supported on this device.');
+        Alert.alert(t('activeRoute.voice.title'), t('activeRoute.voice.notSupported'));
       }
     } else {
       Alert.alert(
-        'Voice Input',
-        'Voice input is supported on Android. On iOS use the system keyboard microphone.',
+        t('activeRoute.voice.title'),
+        t('activeRoute.voice.iosHint'),
       );
     }
-  }, []);
+  }, [t]);
 
   // Default region — null until first GPS fix; map will center on route once GPS resolves
   const [region, setRegion] = useState<{
@@ -151,11 +153,11 @@ export default function ActiveRouteScreen({ navigation }: any) {
         { lat: loc.coords.latitude, lng: loc.coords.longitude },
         driver?.id,
       );
-      Alert.alert('Alert Sent', 'Help is on the way.');
+      Alert.alert(t('activeRoute.panic.alertSent'), t('activeRoute.panic.helpOnWay'));
     } catch {
-      Alert.alert('Error', 'Failed to send panic alert.');
+      Alert.alert(t('activeRoute.error.title'), t('activeRoute.panic.failed'));
     }
-  }, [vehicleId, activeRoute?.id, driver?.id]);
+  }, [vehicleId, activeRoute?.id, driver?.id, t]);
 
   const { registerTap } = usePanicDetection(Boolean(activeRoute), (reason: string) => {
     setPanicReason(reason);
@@ -213,8 +215,8 @@ export default function ActiveRouteScreen({ navigation }: any) {
       }
       startLocationWatch();
     } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : 'GPS unavailable';
-      Alert.alert('GPS Error', message);
+      const message = e instanceof Error ? e.message : t('activeRoute.gps.unavailable');
+      Alert.alert(t('activeRoute.gps.error'), message);
     }
   };
 
@@ -284,7 +286,7 @@ export default function ActiveRouteScreen({ navigation }: any) {
   });
 
   const handlePanic = () => {
-    setPanicReason('Manual panic trigger');
+    setPanicReason(t('activeRoute.panic.manualTrigger'));
     setPanicModalVisible(true);
   };
 
@@ -295,7 +297,7 @@ export default function ActiveRouteScreen({ navigation }: any) {
 
   const submitIncidentReport = async () => {
     if (!incidentDescription.trim()) {
-      Alert.alert('Error', 'Please provide a description.');
+      Alert.alert(t('activeRoute.error.title'), t('activeRoute.error.provideDescription'));
       return;
     }
     setIsIncidentModalVisible(false);
@@ -308,20 +310,20 @@ export default function ActiveRouteScreen({ navigation }: any) {
         incidentDescription.trim(),
         driver?.id,
       );
-      Alert.alert('Incident Reported', 'Your report has been sent to the admin.');
+      Alert.alert(t('activeRoute.incident.reported'), t('activeRoute.incident.reportedMessage'));
     } catch {
-      Alert.alert('Error', 'Failed to send incident report.');
+      Alert.alert(t('activeRoute.error.title'), t('activeRoute.error.incidentFailed'));
     }
   };
 
   const handleEndRoute = () => {
     Alert.alert(
-      'End Route',
-      'Are you sure you want to end this route? All tracking will stop and boarded students will be alighted.',
+      t('activeRoute.endRoute.title'),
+      t('activeRoute.endRoute.message'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'End Route',
+          text: t('activeRoute.endRoute.confirm'),
           style: 'destructive',
           onPress: async () => {
             await endRoute();
@@ -335,7 +337,7 @@ export default function ActiveRouteScreen({ navigation }: any) {
   if (!activeRoute)
     return (
       <View style={styles.center}>
-        <Text style={{ color: '#fff' }}>No Active Route</Text>
+        <Text style={{ color: '#fff' }}>{t('activeRoute.noActiveRoute')}</Text>
       </View>
     );
 
@@ -355,12 +357,12 @@ export default function ActiveRouteScreen({ navigation }: any) {
       {isIncidentModalVisible && (
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Report Incident</Text>
-            <Text style={styles.modalSubtitle}>Briefly describe the incident:</Text>
+            <Text style={styles.modalTitle}>{t('activeRoute.incident.title')}</Text>
+            <Text style={styles.modalSubtitle}>{t('activeRoute.incident.subtitle')}</Text>
             <View style={styles.modalInputWrapper}>
               <TextInput
                 style={styles.modalInput}
-                placeholder="E.g., minor scrape, mechanical defect..."
+                placeholder={t('activeRoute.incident.placeholder')}
                 placeholderTextColor="rgba(255,255,255,0.4)"
                 value={incidentDescription}
                 onChangeText={setIncidentDescription}
@@ -382,13 +384,13 @@ export default function ActiveRouteScreen({ navigation }: any) {
                 style={[styles.modalBtn, styles.modalBtnCancel]}
                 onPress={() => setIsIncidentModalVisible(false)}
               >
-                <Text style={styles.modalBtnCancelText}>Cancel</Text>
+                <Text style={styles.modalBtnCancelText}>{t('common.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.modalBtn, styles.modalBtnSubmit]}
                 onPress={submitIncidentReport}
               >
-                <Text style={styles.modalBtnSubmitText}>Report</Text>
+                <Text style={styles.modalBtnSubmitText}>{t('activeRoute.incident.report')}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -414,8 +416,8 @@ export default function ActiveRouteScreen({ navigation }: any) {
             anchor={{ x: 0.5, y: 0.5 }}
             flat={true}
             rotation={currentLocation.heading}
-            title="Bus"
-            description="Current location"
+            title={t('activeRoute.bus')}
+            description={t('activeRoute.currentLocation')}
             zIndex={20}
           >
             <BusNavigationMarker status={routeStatus} />
@@ -461,8 +463,8 @@ export default function ActiveRouteScreen({ navigation }: any) {
             <Marker
               key={stop.id}
               coordinate={{ latitude: stop.lat!, longitude: stop.lng! }}
-              title={`Stop ${stop.sequence}: ${stop.stopName}`}
-              description={stop.arrivalTime ? `Arrival: ${stop.arrivalTime}` : undefined}
+              title={t('activeRoute.stop', { number: stop.sequence, name: stop.stopName })}
+              description={stop.arrivalTime ? t('activeRoute.arrival', { time: stop.arrivalTime }) : undefined}
               zIndex={10}
             >
               <StopMarkerView sequence={stop.sequence} direction={routeDirection} />
@@ -476,7 +478,7 @@ export default function ActiveRouteScreen({ navigation }: any) {
               latitude: activeRoute.schoolLat,
               longitude: activeRoute.schoolLng,
             }}
-            title={activeRoute.schoolName ?? 'School'}
+            title={activeRoute.schoolName ?? t('activeRoute.school')}
             zIndex={10}
           >
             <SchoolMarkerView />
