@@ -181,6 +181,7 @@
     "responseOptional": "Réponse (optionnel)",
     "sendResponse": "Envoyer réponse",
     "sending": "Envoi...",
+    "infoRequested": "L'administrateur a demandé des informations supplémentaires",
     "voiceInput": "Saisie vocale",
     "voiceUnavailable": "Reconnaissance vocale indisponible.",
     "voiceNotSupported": "Saisie vocale non supportée.",

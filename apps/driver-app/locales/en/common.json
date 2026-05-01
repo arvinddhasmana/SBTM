@@ -181,6 +181,7 @@
     "responseOptional": "Response (optional)",
     "sendResponse": "Send Response",
     "sending": "Sending...",
+    "infoRequested": "Admin has requested additional information",
     "voiceInput": "Voice Input",
     "voiceUnavailable": "Speech recognition unavailable.",
     "voiceNotSupported": "Voice input not supported.",

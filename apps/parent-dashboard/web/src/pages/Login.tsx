@@ -112,7 +112,7 @@ const Login: React.FC = () => {
             </div>
 
             <div className="mt-4 text-center">
-              <p className="text-xs text-gray-500">For demo purposes, use any email/password.</p>
+              <p className="text-xs text-gray-500">{t('auth.demoMessage')}</p>
             </div>
           </form>
         </div>

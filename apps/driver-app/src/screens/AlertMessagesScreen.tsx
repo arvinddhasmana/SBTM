@@ -189,7 +189,7 @@ export default function AlertMessagesScreen() {
 
         {item.infoRequested && (
           <View style={styles.infoBanner}>
-            <Text style={styles.infoText}>Admin has requested additional information</Text>
+            <Text style={styles.infoText}>{t('alertMessages.infoRequested')}</Text>
           </View>
         )}
 

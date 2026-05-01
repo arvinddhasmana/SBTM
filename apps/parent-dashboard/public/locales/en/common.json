@@ -10,6 +10,7 @@
     "login": "Sign In",
     "loggingIn": "Signing in...",
     "forgotPassword": "Forgot Password?",
+    "demoMessage": "For demo purposes, use any email/password.",
     "errors": {
       "required": "Please enter email and password",
       "invalid": "Invalid credentials"

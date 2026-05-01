@@ -10,6 +10,7 @@
     "login": "Se connecter",
     "loggingIn": "Connexion...",
     "forgotPassword": "Mot de passe oublié?",
+    "demoMessage": "À des fins de démonstration, utilisez n'importe quel courriel/mot de passe.",
     "errors": {
       "required": "Veuillez saisir courriel et mot de passe",
       "invalid": "Identifiants invalides"
