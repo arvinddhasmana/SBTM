@@ -21,7 +21,8 @@ const getStoredLanguage = async (): Promise<string> => {
   try {
     const stored = await AsyncStorage.getItem(LANGUAGE_KEY);
     return stored || getDeviceLanguage();
-  } catch {
+  } catch (error) {
+    console.error('Error getting stored language:', error);
     return getDeviceLanguage();
   }
 };
@@ -37,32 +38,63 @@ export const setStoredLanguage = async (language: string): Promise<void> => {
 
 // Initialize i18next
 export const initI18n = async (): Promise<void> => {
-  const language = await getStoredLanguage();
+  try {
+    const language = await getStoredLanguage();
 
-  await i18n
-    .use(initReactI18next)
-    .init({
-      compatibilityJSON: 'v3',
-      resources: {
-        en: {
-          common: en,
+    await i18n
+      .use(initReactI18next)
+      .init({
+        compatibilityJSON: 'v3',
+        resources: {
+          en: {
+            common: en,
+          },
+          fr: {
+            common: fr,
+          },
         },
-        fr: {
-          common: fr,
+        lng: language,
+        fallbackLng: 'en',
+        supportedLngs: ['en', 'fr'],
+        defaultNS: 'common',
+        ns: ['common'],
+        interpolation: {
+          escapeValue: false,
         },
-      },
-      lng: language,
-      fallbackLng: 'en',
-      supportedLngs: ['en', 'fr'],
-      defaultNS: 'common',
-      ns: ['common'],
-      interpolation: {
-        escapeValue: false,
-      },
-      react: {
-        useSuspense: false,
-      },
-    });
+        react: {
+          useSuspense: false,
+        },
+      });
+
+    console.log('i18n initialized successfully with language:', i18n.language);
+  } catch (error) {
+    console.error('Error initializing i18n:', error);
+    // Fallback to English if initialization fails
+    await i18n
+      .use(initReactI18next)
+      .init({
+        compatibilityJSON: 'v3',
+        resources: {
+          en: {
+            common: en,
+          },
+          fr: {
+            common: fr,
+          },
+        },
+        lng: 'en',
+        fallbackLng: 'en',
+        supportedLngs: ['en', 'fr'],
+        defaultNS: 'common',
+        ns: ['common'],
+        interpolation: {
+          escapeValue: false,
+        },
+        react: {
+          useSuspense: false,
+        },
+      });
+  }
 };
 
 export default i18n;
