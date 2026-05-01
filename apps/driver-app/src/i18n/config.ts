@@ -1,0 +1,68 @@
+import i18n from 'i18next';
+import { initReactI18next } from 'react-i18next';
+import * as Localization from 'react-native-localize';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// Import translation files
+import en from '../../locales/en/common.json';
+import fr from '../../locales/fr/common.json';
+
+const LANGUAGE_KEY = '@driver_app:language';
+
+// Get device language
+const getDeviceLanguage = (): string => {
+  const locales = Localization.getLocales();
+  const deviceLanguage = locales[0]?.languageCode || 'en';
+  return ['en', 'fr'].includes(deviceLanguage) ? deviceLanguage : 'en';
+};
+
+// Get stored language preference
+const getStoredLanguage = async (): Promise<string> => {
+  try {
+    const stored = await AsyncStorage.getItem(LANGUAGE_KEY);
+    return stored || getDeviceLanguage();
+  } catch {
+    return getDeviceLanguage();
+  }
+};
+
+// Store language preference
+export const setStoredLanguage = async (language: string): Promise<void> => {
+  try {
+    await AsyncStorage.setItem(LANGUAGE_KEY, language);
+  } catch (error) {
+    console.error('Failed to store language preference:', error);
+  }
+};
+
+// Initialize i18next
+export const initI18n = async (): Promise<void> => {
+  const language = await getStoredLanguage();
+
+  await i18n
+    .use(initReactI18next)
+    .init({
+      compatibilityJSON: 'v3',
+      resources: {
+        en: {
+          common: en,
+        },
+        fr: {
+          common: fr,
+        },
+      },
+      lng: language,
+      fallbackLng: 'en',
+      supportedLngs: ['en', 'fr'],
+      defaultNS: 'common',
+      ns: ['common'],
+      interpolation: {
+        escapeValue: false,
+      },
+      react: {
+        useSuspense: false,
+      },
+    });
+};
+
+export default i18n;

@@ -16,6 +16,8 @@ import { AuthService } from './src/services/auth.service';
 import { setOnUnauthorized } from './src/services/api.service';
 import { ConnectivityService } from './src/services/connectivity.service';
 import BackendBanner from './src/components/BackendBanner';
+import { initI18n } from './src/i18n/config';
+import './src/i18n/config';
 
 import LoginScreen from './src/screens/LoginScreen';
 import RouteSelectScreen from './src/screens/RouteSelectScreen';
@@ -32,6 +34,7 @@ export default function App() {
   const setOffline = useDriverStore((state) => state.setOffline);
   const [isRestoring, setIsRestoring] = useState(true);
   const [backendUnreachable, setBackendUnreachable] = useState(false);
+  const [i18nReady, setI18nReady] = useState(false);
 
   const [fontsLoaded] = useFonts({
     Inter_400Regular,
@@ -39,6 +42,11 @@ export default function App() {
     Inter_700Bold,
     Inter_800ExtraBold,
   });
+
+  // Initialize i18n
+  useEffect(() => {
+    initI18n().then(() => setI18nReady(true));
+  }, []);
 
   // Rehydrate persisted token on app launch
   useEffect(() => {
@@ -94,7 +102,7 @@ export default function App() {
     contentStyle: { backgroundColor: '#0f172a' },
   };
 
-  if (isRestoring || !fontsLoaded) {
+  if (isRestoring || !fontsLoaded || !i18nReady) {
     return (
       <View
         style={{
