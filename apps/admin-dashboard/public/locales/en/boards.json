@@ -1,0 +1,29 @@
+{
+  "title": "School Boards",
+  "addBoard": "+ Add Board",
+  "editBoard": "Edit Board",
+  "createBoard": "Create Board",
+  "boardName": "Board Name",
+  "boardNamePlaceholder": "e.g. Durham District School Board",
+  "boardNameMinLength": "Board name must be at least 2 characters.",
+  "columns": {
+    "name": "Name",
+    "schools": "Schools",
+    "actions": "Actions"
+  },
+  "loading": "Loading…",
+  "empty": "No boards found.",
+  "errors": {
+    "loadFailed": "Failed to load boards. Please try again.",
+    "saveFailed": "Failed to save board. Please try again.",
+    "deleteFailed": "Failed to delete board."
+  },
+  "deleteConfirm": "Delete board \"{{name}}\"? This cannot be undone.",
+  "actions": {
+    "edit": "Edit",
+    "delete": "Delete",
+    "save": "Save",
+    "saving": "Saving…",
+    "cancel": "Cancel"
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "title": "Écoles",
+  "addSchool": "+ Ajouter école",
+  "editSchool": "Modifier école",
+  "createSchool": "Créer école",
+  "schoolName": "Nom de l'école",
+  "schoolNamePlaceholder": "ex. École élémentaire Maple Ridge",
+  "boardLabel": "Conseil",
+  "selectBoard": "Sélectionner un conseil…",
+  "schoolNameMinLength": "Le nom de l'école doit comporter au moins 2 caractères.",
+  "selectBoardRequired": "Veuillez sélectionner un conseil.",
+  "columns": {
+    "name": "Nom",
+    "boardId": "ID conseil",
+    "actions": "Actions"
+  },
+  "loading": "Chargement…",
+  "empty": "Aucune école trouvée.",
+  "errors": {
+    "saveFailed": "Impossible d'enregistrer l'école. Veuillez réessayer.",
+    "deleteFailed": "Impossible de supprimer l'école."
+  },
+  "deleteConfirm": "Supprimer l'école «\u00a0{{name}}\u00a0»\u00a0? Cette action est irréversible.",
+  "actions": {
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "save": "Enregistrer",
+    "saving": "Enregistrement…",
+    "cancel": "Annuler"
+  }
+}

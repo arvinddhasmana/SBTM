@@ -88,5 +88,129 @@
     "tier2": "Opérationnel (Niveau 2)",
     "tier3": "Informationnel (Niveau 3)"
   },
-  "emptyFiltered": "Aucune alerte {{filter}}"
+  "emptyFiltered": "Aucune alerte {{filter}}",
+  "operational": {
+    "title": "Alertes opérationnelles",
+    "loading": "Chargement des alertes opérationnelles...",
+    "subtitle": "{{count}} alerte(s) Niveau 2 actives",
+    "eventTypeLabel": "Type d'événement",
+    "empty": "Aucune alerte opérationnelle trouvée",
+    "eventTypes": {
+      "all": "Toutes",
+      "LATE_ARRIVAL": "Arrivée tardive",
+      "LATE_DEPARTURE": "Départ tardif",
+      "ROUTE_DEVIATION": "Déviation de trajet",
+      "ROUTE_DIVERSION": "Détournement de trajet",
+      "COMPLIANCE": "Conformité",
+      "OTHER": "Autre"
+    }
+  },
+  "card": {
+    "types": {
+      "PANIC_BUTTON": "PANIQUE",
+      "ROUTE_DEVIATION": "DÉVIATION",
+      "INCIDENT": "INCIDENT",
+      "LATE_ARRIVAL": "ARRIVÉE TARDIVE",
+      "ROUTE_DIVERSION": "DÉTOURNEMENT",
+      "PANIC_ALERT": "ALERTE PANIQUE",
+      "MEDICAL": "MÉDICAL",
+      "LATE_DEPARTURE": "DÉPART TARDIF",
+      "COMPLIANCE": "CONFORMITÉ",
+      "OTHER": "ALERTE"
+    },
+    "defaultDescriptions": {
+      "PANIC_BUTTON": "Bouton panique déclenché",
+      "ROUTE_DEVIATION": "Le bus a dévié du trajet",
+      "INCIDENT": "Incident signalé",
+      "LATE_ARRIVAL": "Le bus arrive en retard",
+      "ROUTE_DIVERSION": "Détournement de trajet non planifié détecté",
+      "PANIC_ALERT": "Alerte panique d'urgence déclenchée",
+      "MEDICAL": "Urgence médicale signalée",
+      "LATE_DEPARTURE": "Départ en retard selon l'horaire",
+      "COMPLIANCE": "Problème de conformité détecté",
+      "OTHER": "Alerte signalée"
+    },
+    "statusBadges": {
+      "ACTIVE": "Active",
+      "PENDING_CONFIRMATION": "En attente confirm.",
+      "CONFIRMED": "Confirmée",
+      "AUTO_ESCALATED": "Escaladée",
+      "RESOLVED": "Résolue",
+      "FALSE_ALARM": "Fausse alarme"
+    },
+    "tierBadges": {
+      "TIER_1": "N1",
+      "TIER_2": "N2",
+      "TIER_3": "N3"
+    },
+    "auditEvents": {
+      "CREATED": "Créée",
+      "PENDING_CONFIRMATION": "En attente de confirmation",
+      "CONFIRMED": "Confirmée par l'école",
+      "AUTO_ESCALATED": "Auto-escaladée",
+      "FALSE_ALARM": "Fausse alarme",
+      "PARENT_NOTIFIED": "Parents notifiés",
+      "BOARD_ESCALATED": "Escaladée au conseil",
+      "OSTA_ESCALATED": "Escaladée à l'OSTA",
+      "RESOLVED": "Résolue",
+      "INFO_REQUESTED": "Info demandée",
+      "STATUS_UPDATE": "Mise à jour"
+    },
+    "viewTimeline": "Voir la chronologie",
+    "hideTimeline": "Masquer la chronologie",
+    "timeline": "Chronologie"
+  },
+  "detail": {
+    "title": "Détails de l'alerte",
+    "autoEscalatesIn": "Auto-escalade dans",
+    "noActionWarning": "Sans action, l'alerte sera auto-escaladée.",
+    "actionRequired": "Action requise",
+    "activityTimeline": "Chronologie des activités",
+    "escalatedTo": "Escaladée à : Admin {{level}}",
+    "vehicleLabel": "Véhicule",
+    "routeLabel": "Itinéraire",
+    "timestampLabel": "Horodatage",
+    "tierLabels": {
+      "TIER_1": "Niveau 1 — Sécurité critique",
+      "TIER_2": "Niveau 2 — Opérationnel",
+      "TIER_3": "Niveau 3 — Informationnel"
+    },
+    "statusLabels": {
+      "ACTIVE": "Active",
+      "RESOLVED": "Résolue",
+      "PENDING_CONFIRMATION": "En attente de confirmation",
+      "CONFIRMED": "Confirmée",
+      "AUTO_ESCALATED": "Auto-escaladée",
+      "FALSE_ALARM": "Fausse alarme"
+    },
+    "auditEvents": {
+      "CREATED": "Créée",
+      "PENDING_CONFIRMATION": "En attente de confirmation",
+      "CONFIRMED": "Confirmée",
+      "AUTO_ESCALATED": "Auto-escaladée",
+      "FALSE_ALARM": "Fausse alarme",
+      "PARENT_NOTIFIED": "Parents notifiés",
+      "BOARD_ESCALATED": "Escaladée au conseil",
+      "OSTA_ESCALATED": "Escaladée à l'OSTA",
+      "RESOLVED": "Résolue",
+      "INFO_REQUESTED": "Info demandée",
+      "STATUS_UPDATE": "Mise à jour du statut"
+    },
+    "buttons": {
+      "confirm": "Confirmer",
+      "falseAlarm": "Fausse alarme",
+      "requestInfo": "Demander info",
+      "infoRequested": "Info demandée",
+      "addStatusUpdate": "Ajouter une mise à jour",
+      "submitUpdate": "Soumettre la mise à jour",
+      "submitting": "Envoi...",
+      "resolveIncident": "Résoudre l'incident",
+      "confirmResolution": "Confirmer la résolution",
+      "resolving": "Résolution...",
+      "cancel": "Annuler",
+      "close": "Fermer",
+      "enterStatusUpdate": "Saisir la mise à jour du statut...",
+      "resolutionNotes": "Notes de résolution (optionnel)..."
+    }
+  }
 }

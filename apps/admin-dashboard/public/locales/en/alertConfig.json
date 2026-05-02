@@ -1,0 +1,46 @@
+{
+  "title": "Alert Configuration",
+  "subtitle": {
+    "admin": "Manage alert and notification configuration settings",
+    "readOnly": "View current alert and notification configuration settings"
+  },
+  "readOnlyAccess": "Read-Only Access",
+  "readOnlyDescription": "You have read-only access to configuration settings. To request changes, use the Change Requests section.",
+  "cacheStatus": "Cache Status",
+  "cacheInitialized": "✓ Initialized",
+  "cacheNotInitialized": "✗ Not Initialized",
+  "cacheDetails": "{{eventTypeCount}} event types • {{escalationConfigCount}} escalation configs",
+  "sections": {
+    "eventTypes": {
+      "title": "Event Type Configuration",
+      "description": "Map emergency event types to alert tiers"
+    },
+    "escalationTiming": {
+      "title": "Escalation Timing",
+      "description": "Configure confirmation timeouts and escalation delays"
+    },
+    "notificationRouting": {
+      "title": "Notification Routing",
+      "description": "Configure notification channels and recipients per tier"
+    },
+    "workflow": {
+      "title": "Workflow Configuration",
+      "description": "Manage workflow actions and permissions"
+    },
+    "auditLog": {
+      "title": "Configuration Audit Log",
+      "description": "View history of all configuration changes"
+    },
+    "changeRequests": {
+      "title": "Change Requests",
+      "description": "Review configuration change requests from admins",
+      "badge": "Pending"
+    }
+  },
+  "quickActions": {
+    "title": "Quick Actions",
+    "invalidateCache": "Invalidate Cache",
+    "viewAuditLog": "View Audit Log",
+    "invalidateCacheConfirm": "Are you sure you want to invalidate the configuration cache?"
+  }
+}

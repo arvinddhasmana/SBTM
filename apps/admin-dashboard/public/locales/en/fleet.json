@@ -24,5 +24,54 @@
     "active": "Active",
     "maintenance": "Maintenance",
     "inactive": "Inactive"
+  },
+  "assignments": {
+    "title": "Fleet Assignments",
+    "createProposal": "Create Proposal",
+    "newProposalTitle": "New Assignment Proposal",
+    "form": {
+      "schoolId": "School ID",
+      "schoolIdPlaceholder": "Enter school ID",
+      "routeId": "Route ID",
+      "routeIdPlaceholder": "Enter route ID",
+      "vehicleId": "Vehicle ID",
+      "vehicleIdPlaceholder": "Enter vehicle ID",
+      "effectiveDate": "Effective Date",
+      "required": "*",
+      "submitProposal": "Submit Proposal",
+      "submitting": "Submitting...",
+      "cancel": "Cancel"
+    },
+    "table": {
+      "school": "School",
+      "route": "Route",
+      "vehicle": "Vehicle",
+      "effectiveDate": "Effective Date",
+      "status": "Status",
+      "created": "Created",
+      "actions": "Actions"
+    },
+    "actions": {
+      "accept": "Accept",
+      "reject": "Reject",
+      "submit": "Submit",
+      "cancel": "Cancel",
+      "pdf": "PDF",
+      "rejectionNotesPlaceholder": "Rejection notes..."
+    },
+    "statuses": {
+      "PROPOSED": "Proposed",
+      "ACCEPTED": "Accepted",
+      "REJECTED": "Rejected",
+      "SUPERSEDED": "Superseded"
+    },
+    "loading": "Loading...",
+    "empty": "No fleet assignments found.",
+    "errors": {
+      "downloadPdfFailed": "Failed to download PDF.",
+      "proposeFailed": "Failed to create proposal.",
+      "acceptFailed": "Failed to accept assignment.",
+      "rejectFailed": "Failed to reject assignment."
+    }
   }
 }

@@ -88,5 +88,134 @@
     "tier2": "Operational (Tier 2)",
     "tier3": "Informational (Tier 3)"
   },
-  "emptyFiltered": "No {{filter}} alerts found"
+  "emptyFiltered": "No {{filter}} alerts found",
+  "operational": {
+    "title": "Operational Alerts",
+    "loading": "Loading operational alerts...",
+    "subtitle": "{{count}} active Tier 2 alerts",
+    "eventTypeLabel": "Event Type",
+    "empty": "No operational alerts found",
+    "eventTypes": {
+      "all": "All",
+      "LATE_ARRIVAL": "Late Arrival",
+      "LATE_DEPARTURE": "Late Departure",
+      "ROUTE_DEVIATION": "Route Deviation",
+      "ROUTE_DIVERSION": "Route Diversion",
+      "COMPLIANCE": "Compliance",
+      "OTHER": "Other"
+    }
+  },
+  "card": {
+    "types": {
+      "PANIC_BUTTON": "PANIC",
+      "ROUTE_DEVIATION": "ROUTE DEVIATION",
+      "INCIDENT": "INCIDENT",
+      "LATE_ARRIVAL": "LATE ARRIVAL",
+      "ROUTE_DIVERSION": "ROUTE DIVERSION",
+      "PANIC_ALERT": "PANIC ALERT",
+      "MEDICAL": "MEDICAL",
+      "LATE_DEPARTURE": "LATE DEPARTURE",
+      "COMPLIANCE": "COMPLIANCE",
+      "OTHER": "ALERT"
+    },
+    "defaultDescriptions": {
+      "PANIC_BUTTON": "Panic button triggered",
+      "ROUTE_DEVIATION": "Bus deviated from route",
+      "INCIDENT": "Incident reported",
+      "LATE_ARRIVAL": "Bus is arriving late",
+      "ROUTE_DIVERSION": "Unplanned route diversion detected",
+      "PANIC_ALERT": "Emergency panic alert triggered",
+      "MEDICAL": "Medical emergency reported",
+      "LATE_DEPARTURE": "Late departure from schedule",
+      "COMPLIANCE": "Compliance issue detected",
+      "OTHER": "Alert reported"
+    },
+    "statusBadges": {
+      "ACTIVE": "Active",
+      "PENDING_CONFIRMATION": "Awaiting Confirm",
+      "CONFIRMED": "Confirmed",
+      "AUTO_ESCALATED": "Escalated",
+      "RESOLVED": "Resolved",
+      "FALSE_ALARM": "False Alarm"
+    },
+    "tierBadges": {
+      "TIER_1": "T1",
+      "TIER_2": "T2",
+      "TIER_3": "T3"
+    },
+    "auditEvents": {
+      "CREATED": "Created",
+      "PENDING_CONFIRMATION": "Pending confirmation",
+      "CONFIRMED": "Confirmed by school",
+      "AUTO_ESCALATED": "Auto-escalated",
+      "FALSE_ALARM": "False alarm",
+      "PARENT_NOTIFIED": "Parents notified",
+      "BOARD_ESCALATED": "Escalated to board",
+      "OSTA_ESCALATED": "Escalated to OSTA",
+      "RESOLVED": "Resolved",
+      "INFO_REQUESTED": "Info requested",
+      "STATUS_UPDATE": "Update"
+    },
+    "viewTimeline": "View timeline",
+    "hideTimeline": "Hide timeline",
+    "timeline": "Timeline"
+  },
+  "detail": {
+    "title": "Alert Details",
+    "autoEscalatesIn": "Auto-escalates in",
+    "noActionWarning": "If no action is taken, alert will be auto-escalated.",
+    "actionRequired": "Action Required",
+    "activityTimeline": "Activity Timeline",
+    "escalatedTo": "Escalated to: {{level}} Admin",
+    "vehicleLabel": "Vehicle",
+    "routeLabel": "Route",
+    "timestampLabel": "Timestamp",
+    "tierLabels": {
+      "TIER_1": "Tier 1 — Safety Critical",
+      "TIER_2": "Tier 2 — Operational",
+      "TIER_3": "Tier 3 — Informational"
+    },
+    "tierClasses": {
+      "TIER_1": "bg-red-500/20 text-red-400 border-red-500/30",
+      "TIER_2": "bg-amber-500/20 text-amber-400 border-amber-500/30",
+      "TIER_3": "bg-blue-500/20 text-blue-400 border-blue-500/30"
+    },
+    "statusLabels": {
+      "ACTIVE": "Active",
+      "RESOLVED": "Resolved",
+      "PENDING_CONFIRMATION": "Awaiting Confirmation",
+      "CONFIRMED": "Confirmed",
+      "AUTO_ESCALATED": "Auto-Escalated",
+      "FALSE_ALARM": "False Alarm"
+    },
+    "auditEvents": {
+      "CREATED": "Created",
+      "PENDING_CONFIRMATION": "Pending Confirmation",
+      "CONFIRMED": "Confirmed",
+      "AUTO_ESCALATED": "Auto-Escalated",
+      "FALSE_ALARM": "False Alarm",
+      "PARENT_NOTIFIED": "Parents Notified",
+      "BOARD_ESCALATED": "Escalated to Board",
+      "OSTA_ESCALATED": "Escalated to OSTA",
+      "RESOLVED": "Resolved",
+      "INFO_REQUESTED": "Info Requested",
+      "STATUS_UPDATE": "Status Update"
+    },
+    "buttons": {
+      "confirm": "Confirm",
+      "falseAlarm": "False Alarm",
+      "requestInfo": "Request Info",
+      "infoRequested": "Info Requested",
+      "addStatusUpdate": "Add Status Update",
+      "submitUpdate": "Submit Update",
+      "submitting": "Submitting...",
+      "resolveIncident": "Resolve Incident",
+      "confirmResolution": "Confirm Resolution",
+      "resolving": "Resolving...",
+      "cancel": "Cancel",
+      "close": "Close",
+      "enterStatusUpdate": "Enter status update...",
+      "resolutionNotes": "Resolution notes (optional)..."
+    }
+  }
 }

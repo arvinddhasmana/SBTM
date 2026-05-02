@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { provisioningApi } from '../../services/api/provisioning.api';
 import { organizationApi } from '../../services/api/organization.api';
@@ -11,22 +12,13 @@ import type {
 } from '../../services/api/provisioning.api';
 import type { School } from '../../services/api/organization.api';
 
-const INVITABLE_ROLES: { value: InvitableRole; label: string }[] = [
-  { value: 'OSTA_ADMIN', label: 'OSTA Admin' },
-  { value: 'BOARD_ADMIN', label: 'Board Admin' },
-  { value: 'SCHOOL_ADMIN', label: 'School Admin' },
-  { value: 'DRIVER', label: 'Driver' },
-  { value: 'PARENT', label: 'Parent' },
+const INVITABLE_ROLES: InvitableRole[] = [
+  'OSTA_ADMIN',
+  'BOARD_ADMIN',
+  'SCHOOL_ADMIN',
+  'DRIVER',
+  'PARENT',
 ];
-
-const ROLE_LABELS: Record<string, string> = {
-  SUPER_ADMIN: 'Super Admin',
-  OSTA_ADMIN: 'OSTA Admin',
-  BOARD_ADMIN: 'Board Admin',
-  SCHOOL_ADMIN: 'School Admin',
-  DRIVER: 'Driver',
-  PARENT: 'Parent',
-};
 
 type InviteFormState = {
   email: string;
@@ -36,6 +28,7 @@ type InviteFormState = {
 };
 
 export const UserManagement: React.FC = () => {
+  const { t } = useTranslation(['users']);
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
@@ -71,12 +64,12 @@ export const UserManagement: React.FC = () => {
 
   const handleInvite = async () => {
     if (!form.email.trim()) {
-      setFormError('Email address is required.');
+      setFormError(t('users:errors.emailRequired'));
       return;
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(form.email)) {
-      setFormError('Please enter a valid email address.');
+      setFormError(t('users:errors.emailInvalid'));
       return;
     }
 
@@ -98,7 +91,7 @@ export const UserManagement: React.FC = () => {
       });
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to send invitation.';
+      const message = err instanceof Error ? err.message : t('users:errors.inviteFailed');
       setFormError(message);
     } finally {
       setIsInviting(false);
@@ -106,19 +99,22 @@ export const UserManagement: React.FC = () => {
   };
 
   const handleToggleStatus = async (target: ProvisionedUser) => {
-    const action = target.isActive ? 'deactivate' : 'reactivate';
-    const label = target.isActive ? 'deactivate' : 'reactivate';
-    if (!window.confirm(`Are you sure you want to ${label} this user?`)) return;
+    const verbKey = target.isActive
+      ? 'users:actions.deactivateVerb'
+      : 'users:actions.reactivateVerb';
+    if (!window.confirm(t('users:confirmToggle', { action: t(verbKey) }))) return;
     try {
       if (target.isActive) {
         await provisioningApi.deactivateUser(target.id);
+        setSuccessMessage(t('users:successDeactivated'));
       } else {
         await provisioningApi.reactivateUser(target.id);
+        setSuccessMessage(t('users:successReactivated'));
       }
-      setSuccessMessage(`User ${action}d successfully.`);
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
     } catch {
-      setError(`Failed to ${action} user.`);
+      const action = target.isActive ? 'deactivate' : 'reactivate';
+      setError(t('users:errors.toggleFailed', { action }));
     }
   };
 
@@ -127,7 +123,7 @@ export const UserManagement: React.FC = () => {
   return (
     <div className="p-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-white">User Management</h1>
+        <h1 className="text-2xl font-bold text-white">{t('users:title')}</h1>
         <button
           onClick={() => {
             setShowInviteForm(true);
@@ -135,7 +131,7 @@ export const UserManagement: React.FC = () => {
           }}
           className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
         >
-          + Invite User
+          {t('users:inviteUser')}
         </button>
       </div>
 
@@ -152,49 +148,47 @@ export const UserManagement: React.FC = () => {
 
       {showInviteForm && (
         <div className="mb-6 p-5 bg-dashboard-card rounded-xl border border-white/10">
-          <h2 className="text-lg font-semibold text-white mb-4">Invite New User</h2>
+          <h2 className="text-lg font-semibold text-white mb-4">{t('users:inviteNewUser')}</h2>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
-              <label className="block text-xs text-white/60 mb-1">Email Address</label>
+              <label className="block text-xs text-white/60 mb-1">{t('users:emailAddress')}</label>
               <input
                 type="email"
                 value={form.email}
                 onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
                 className="w-full bg-white/5 border border-white/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500"
-                placeholder="user@example.com"
+                placeholder={t('users:emailPlaceholder')}
               />
             </div>
             <div>
-              <label className="block text-xs text-white/60 mb-1">Role</label>
+              <label className="block text-xs text-white/60 mb-1">{t('users:roleLabel')}</label>
               <select
                 value={form.role}
                 onChange={(e) => setForm((f) => ({ ...f, role: e.target.value as InvitableRole }))}
                 className="w-full bg-dashboard-bg border border-white/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500"
               >
                 {INVITABLE_ROLES.filter((r) => {
-                  if (user?.role === 'SCHOOL_ADMIN')
-                    return r.value === 'DRIVER' || r.value === 'PARENT';
+                  if (user?.role === 'SCHOOL_ADMIN') return r === 'DRIVER' || r === 'PARENT';
                   if (user?.role === 'BOARD_ADMIN')
-                    return r.value !== 'OSTA_ADMIN' && r.value !== 'BOARD_ADMIN';
-                  // SUPER_ADMIN and OSTA_ADMIN can see all roles
-                  if (user?.role === 'OSTA_ADMIN') return r.value !== 'OSTA_ADMIN';
+                    return r !== 'OSTA_ADMIN' && r !== 'BOARD_ADMIN';
+                  if (user?.role === 'OSTA_ADMIN') return r !== 'OSTA_ADMIN';
                   return true;
                 }).map((r) => (
-                  <option key={r.value} value={r.value}>
-                    {r.label}
+                  <option key={r} value={r}>
+                    {t(`users:roles.${r}`, { defaultValue: r })}
                   </option>
                 ))}
               </select>
             </div>
             {showSchoolSelector && schools.length > 0 && (
               <div>
-                <label className="block text-xs text-white/60 mb-1">School</label>
+                <label className="block text-xs text-white/60 mb-1">{t('users:schoolLabel')}</label>
                 <select
                   value={form.schoolId}
                   onChange={(e) => setForm((f) => ({ ...f, schoolId: e.target.value }))}
                   className="w-full bg-dashboard-bg border border-white/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500"
                 >
-                  <option value="">Select a school…</option>
+                  <option value="">{t('users:selectSchool')}</option>
                   {schools.map((s) => (
                     <option key={s.id} value={s.id}>
                       {s.name}
@@ -211,30 +205,30 @@ export const UserManagement: React.FC = () => {
               disabled={isInviting}
               className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-4 py-2 rounded-lg transition-colors"
             >
-              {isInviting ? 'Sending…' : 'Send Invitation'}
+              {isInviting ? t('users:actions.sending') : t('users:actions.sendInvitation')}
             </button>
             <button
               onClick={() => setShowInviteForm(false)}
               className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg transition-colors"
             >
-              Cancel
+              {t('users:actions.cancel')}
             </button>
           </div>
         </div>
       )}
 
       {isLoading ? (
-        <div className="text-white/60">Loading…</div>
+        <div className="text-white/60">{t('users:loading')}</div>
       ) : (
         <div className="bg-dashboard-card rounded-xl overflow-hidden shadow-glass border border-white/10">
           <table className="w-full text-left text-white">
             <thead className="bg-white/5 uppercase text-xs font-semibold">
               <tr>
-                <th className="px-6 py-4">Email</th>
-                <th className="px-6 py-4">Name</th>
-                <th className="px-6 py-4">Role</th>
-                <th className="px-6 py-4">Status</th>
-                <th className="px-6 py-4">Actions</th>
+                <th className="px-6 py-4">{t('users:columns.email')}</th>
+                <th className="px-6 py-4">{t('users:columns.name')}</th>
+                <th className="px-6 py-4">{t('users:columns.role')}</th>
+                <th className="px-6 py-4">{t('users:columns.status')}</th>
+                <th className="px-6 py-4">{t('users:columns.actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/10">
@@ -246,14 +240,14 @@ export const UserManagement: React.FC = () => {
                   </td>
                   <td className="px-6 py-4">
                     <span className="text-xs bg-blue-900/40 text-blue-300 px-2 py-1 rounded">
-                      {ROLE_LABELS[u.role] ?? u.role}
+                      {t(`users:roles.${u.role}`, { defaultValue: u.role })}
                     </span>
                   </td>
                   <td className="px-6 py-4">
                     <span
                       className={`text-xs px-2 py-1 rounded ${u.isActive ? 'bg-green-900/40 text-green-300' : 'bg-gray-700 text-gray-400'}`}
                     >
-                      {u.isActive ? 'Active' : 'Inactive'}
+                      {u.isActive ? t('users:status.active') : t('users:status.inactive')}
                     </span>
                   </td>
                   <td className="px-6 py-4">
@@ -262,7 +256,7 @@ export const UserManagement: React.FC = () => {
                         onClick={() => handleToggleStatus(u)}
                         className={`text-sm ${u.isActive ? 'text-red-400 hover:text-red-300' : 'text-green-400 hover:text-green-300'}`}
                       >
-                        {u.isActive ? 'Deactivate' : 'Reactivate'}
+                        {u.isActive ? t('users:actions.deactivate') : t('users:actions.reactivate')}
                       </button>
                     )}
                   </td>
@@ -271,7 +265,7 @@ export const UserManagement: React.FC = () => {
               {users.length === 0 && (
                 <tr>
                   <td colSpan={5} className="px-6 py-8 text-center text-white/50">
-                    No users found.
+                    {t('users:empty')}
                   </td>
                 </tr>
               )}

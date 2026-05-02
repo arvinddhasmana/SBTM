@@ -1,0 +1,46 @@
+{
+  "title": "Configuration des alertes",
+  "subtitle": {
+    "admin": "Gérer les paramètres de configuration des alertes et notifications",
+    "readOnly": "Consulter les paramètres de configuration des alertes et notifications"
+  },
+  "readOnlyAccess": "Accès en lecture seule",
+  "readOnlyDescription": "Vous avez un accès en lecture seule aux paramètres de configuration. Pour demander des modifications, utilisez la section Demandes de changement.",
+  "cacheStatus": "État du cache",
+  "cacheInitialized": "✓ Initialisé",
+  "cacheNotInitialized": "✗ Non initialisé",
+  "cacheDetails": "{{eventTypeCount}} types d'événements • {{escalationConfigCount}} configs d'escalade",
+  "sections": {
+    "eventTypes": {
+      "title": "Configuration des types d'événements",
+      "description": "Associer les types d'événements d'urgence aux niveaux d'alerte"
+    },
+    "escalationTiming": {
+      "title": "Délais d'escalade",
+      "description": "Configurer les délais de confirmation et d'escalade"
+    },
+    "notificationRouting": {
+      "title": "Routage des notifications",
+      "description": "Configurer les canaux et destinataires par niveau"
+    },
+    "workflow": {
+      "title": "Configuration du flux de travail",
+      "description": "Gérer les actions et permissions du flux de travail"
+    },
+    "auditLog": {
+      "title": "Journal d'audit de configuration",
+      "description": "Consulter l'historique de toutes les modifications de configuration"
+    },
+    "changeRequests": {
+      "title": "Demandes de changement",
+      "description": "Examiner les demandes de modification de configuration des administrateurs",
+      "badge": "En attente"
+    }
+  },
+  "quickActions": {
+    "title": "Actions rapides",
+    "invalidateCache": "Invalider le cache",
+    "viewAuditLog": "Voir le journal d'audit",
+    "invalidateCacheConfirm": "Êtes-vous sûr de vouloir invalider le cache de configuration\u00a0?"
+  }
+}
