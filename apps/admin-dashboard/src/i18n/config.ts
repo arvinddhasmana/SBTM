@@ -23,6 +23,7 @@ i18n
       'schools',
       'users',
       'alertConfig',
+      'absences',
       'errors',
     ],
 

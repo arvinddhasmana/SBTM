@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { UserPlus, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Card } from '../common';
 import { studentManagementApi } from '../../services/api';
 
@@ -10,6 +11,7 @@ interface EnrollStudentModalProps {
 }
 
 const EnrollStudentModal: React.FC<EnrollStudentModalProps> = ({ isOpen, onClose, onSuccess }) => {
+  const { t } = useTranslation(['students']);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [grade, setGrade] = useState('');
@@ -38,7 +40,7 @@ const EnrollStudentModal: React.FC<EnrollStudentModalProps> = ({ isOpen, onClose
       onClose();
     } catch (err) {
       console.error('Enroll failed:', err);
-      setError('Failed to enroll student. Please try again.');
+      setError(t('students:enrollModal.error'));
     } finally {
       setIsSubmitting(false);
     }
@@ -56,13 +58,13 @@ const EnrollStudentModal: React.FC<EnrollStudentModalProps> = ({ isOpen, onClose
 
         <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
           <UserPlus size={24} className="text-primary-500" />
-          Enroll Student
+          {t('students:enrollModal.title')}
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-slate-400 mb-2">
-              First Name <span className="text-red-400">*</span>
+              {t('students:enrollModal.firstName')} <span className="text-red-400">*</span>
             </label>
             <input
               type="text"
@@ -70,13 +72,13 @@ const EnrollStudentModal: React.FC<EnrollStudentModalProps> = ({ isOpen, onClose
               onChange={(e) => setFirstName(e.target.value)}
               required
               className="w-full px-4 py-3 rounded-xl bg-dashboard-bg border border-dashboard-border text-white text-sm focus:border-primary-500 transition-colors"
-              placeholder="Enter first name"
+              placeholder={t('students:enrollModal.firstNamePlaceholder')}
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-slate-400 mb-2">
-              Last Name <span className="text-red-400">*</span>
+              {t('students:enrollModal.lastName')} <span className="text-red-400">*</span>
             </label>
             <input
               type="text"
@@ -84,13 +86,13 @@ const EnrollStudentModal: React.FC<EnrollStudentModalProps> = ({ isOpen, onClose
               onChange={(e) => setLastName(e.target.value)}
               required
               className="w-full px-4 py-3 rounded-xl bg-dashboard-bg border border-dashboard-border text-white text-sm focus:border-primary-500 transition-colors"
-              placeholder="Enter last name"
+              placeholder={t('students:enrollModal.lastNamePlaceholder')}
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-slate-400 mb-2">
-              Grade <span className="text-red-400">*</span>
+              {t('students:enrollModal.grade')} <span className="text-red-400">*</span>
             </label>
             <input
               type="text"
@@ -98,18 +100,20 @@ const EnrollStudentModal: React.FC<EnrollStudentModalProps> = ({ isOpen, onClose
               onChange={(e) => setGrade(e.target.value)}
               required
               className="w-full px-4 py-3 rounded-xl bg-dashboard-bg border border-dashboard-border text-white text-sm focus:border-primary-500 transition-colors"
-              placeholder="e.g. Grade 3"
+              placeholder={t('students:enrollModal.gradePlaceholder')}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-400 mb-2">Address</label>
+            <label className="block text-sm font-medium text-slate-400 mb-2">
+              {t('students:enrollModal.address')}
+            </label>
             <input
               type="text"
               value={address}
               onChange={(e) => setAddress(e.target.value)}
               className="w-full px-4 py-3 rounded-xl bg-dashboard-bg border border-dashboard-border text-white text-sm focus:border-primary-500 transition-colors"
-              placeholder="Enter address (optional)"
+              placeholder={t('students:enrollModal.addressPlaceholder')}
             />
           </div>
 
@@ -125,7 +129,7 @@ const EnrollStudentModal: React.FC<EnrollStudentModalProps> = ({ isOpen, onClose
               onClick={onClose}
               className="px-6 py-2 rounded-xl text-slate-400 hover:text-white transition-colors"
             >
-              Cancel
+              {t('students:enrollModal.cancel')}
             </button>
             <button
               type="submit"
@@ -137,7 +141,9 @@ const EnrollStudentModal: React.FC<EnrollStudentModalProps> = ({ isOpen, onClose
               }`}
             >
               <UserPlus size={18} />
-              {isSubmitting ? 'Enrolling...' : 'Enroll Student'}
+              {isSubmitting
+                ? t('students:enrollModal.enrolling')
+                : t('students:enrollModal.enrollButton')}
             </button>
           </div>
         </form>

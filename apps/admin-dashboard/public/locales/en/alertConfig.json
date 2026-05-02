@@ -42,5 +42,310 @@
     "invalidateCache": "Invalidate Cache",
     "viewAuditLog": "View Audit Log",
     "invalidateCacheConfirm": "Are you sure you want to invalidate the configuration cache?"
+  },
+  "escalationTiming": {
+    "title": "Escalation Timing Configuration",
+    "subtitle": "Configure confirmation timeouts and escalation delays for each alert tier",
+    "loading": "Loading configuration...",
+    "guidelines": {
+      "title": "Timing Guidelines",
+      "confirmationTimeout": "Confirmation Timeout: Time before auto-escalating to parents (TIER 1 only)",
+      "boardEscalation": "Board Escalation: Time before escalating to Board Admin",
+      "ostaEscalation": "OSTA Escalation: Time before escalating to OSTA Admin",
+      "units": "All times are in seconds. Leave empty to disable that escalation step."
+    },
+    "fields": {
+      "confirmationTimeout": "Confirmation Timeout (seconds)",
+      "boardEscalation": "Board Escalation (seconds)",
+      "ostaEscalation": "OSTA Escalation (seconds)",
+      "notSet": "Not set",
+      "timeSeconds": "{{value}}s"
+    },
+    "hints": {
+      "confirmationTimeout_tier1": "Time before parents are notified",
+      "confirmationTimeout_other": "Not applicable for this tier",
+      "boardEscalation": "Time before escalating to Board Admin",
+      "ostaEscalation": "Time before escalating to OSTA Admin"
+    },
+    "badges": {
+      "default": "Default"
+    },
+    "tiers": {
+      "TIER_1": "Safety-critical events requiring immediate attention",
+      "TIER_2": "Operational events for admin review",
+      "TIER_3": "Informational events with parent notification"
+    },
+    "buttons": {
+      "edit": "Edit",
+      "save": "Save",
+      "cancel": "Cancel"
+    },
+    "readOnly": "You have read-only access. Contact a Super Admin to request configuration changes."
+  },
+  "eventTypes": {
+    "title": "Event Type Configuration",
+    "subtitle": "Map emergency event types to alert tiers and configure their properties",
+    "loading": "Loading configuration...",
+    "addButton": "Add Event Type",
+    "form": {
+      "addTitle": "Add New Event Type",
+      "editTitle": "Edit Event Type",
+      "eventType": "Event Type",
+      "eventTypePlaceholder": "PANIC_BUTTON",
+      "tier": "Tier",
+      "tiers": {
+        "TIER_1": "TIER 1 (Safety-Critical)",
+        "TIER_2": "TIER 2 (Operational)",
+        "TIER_3": "TIER 3 (Informational)"
+      },
+      "severity": "Severity",
+      "severities": {
+        "CRITICAL": "Critical",
+        "HIGH": "High",
+        "MEDIUM": "Medium",
+        "LOW": "Low"
+      },
+      "requiresLocation": "Requires Location",
+      "activeLabel": "Active",
+      "description": "Description",
+      "descriptionPlaceholder": "Optional description of this event type",
+      "save": "Save",
+      "cancel": "Cancel"
+    },
+    "table": {
+      "eventType": "Event Type",
+      "tier": "Tier",
+      "severity": "Severity",
+      "description": "Description",
+      "status": "Status",
+      "actions": "Actions",
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "empty": "No event type configurations found.",
+    "emptyAdmin": "No event type configurations found. Click \"Add Event Type\" to create one.",
+    "deleteConfirm": "Are you sure you want to delete event type \"{{eventType}}\"?",
+    "readOnly": "You have read-only access. Contact a Super Admin to request configuration changes."
+  },
+  "notificationRouting": {
+    "title": "Notification Routing Configuration",
+    "subtitle": {
+      "admin": "Configure notification channels and recipients per tier and event type",
+      "readOnly": "View notification routing rules"
+    },
+    "addButton": "Add Routing Rule",
+    "loading": "Loading configurations...",
+    "readOnly": {
+      "title": "Read-Only Access",
+      "description": "You have read-only access. To request changes, use the Change Requests section."
+    },
+    "form": {
+      "addTitle": "Add New Routing Rule",
+      "editTitle": "Edit Routing Rule",
+      "tier": "Tier",
+      "tiers": {
+        "TIER_1": "Tier 1 (Safety-Critical)",
+        "TIER_2": "Tier 2 (Operational)",
+        "TIER_3": "Tier 3 (Informational)"
+      },
+      "eventType": "Event Type",
+      "eventTypePlaceholder": "Optional - leave empty for all",
+      "recipientRole": "Recipient Role",
+      "roles": {
+        "SCHOOL_ADMIN": "School Admin",
+        "BOARD_ADMIN": "Board Admin",
+        "OSTA_ADMIN": "OSTA Admin",
+        "PARENT": "Parent",
+        "DRIVER": "Driver"
+      },
+      "notificationTiming": "Notification Timing",
+      "timings": {
+        "IMMEDIATE": "Immediate",
+        "AFTER_CONFIRMATION": "After Confirmation",
+        "ON_TIMEOUT": "On Timeout",
+        "ON_ESCALATION": "On Escalation"
+      },
+      "channels": "Notification Channels",
+      "mandatoryLabel": "Mandatory",
+      "activeLabel": "Active",
+      "saveCreate": "Create Rule",
+      "saveUpdate": "Save Changes",
+      "cancel": "Cancel"
+    },
+    "table": {
+      "tier": "Tier",
+      "eventType": "Event Type",
+      "recipient": "Recipient",
+      "timing": "Timing",
+      "channels": "Channels",
+      "flags": "Flags",
+      "actions": "Actions",
+      "allEvents": "All",
+      "mandatory": "Mandatory",
+      "inactive": "Inactive"
+    },
+    "empty": "No notification routing configurations found.",
+    "count_one": "Showing {{count}} routing rule",
+    "count_other": "Showing {{count}} routing rules"
+  },
+  "workflow": {
+    "title": "Workflow Configuration",
+    "subtitle": {
+      "admin": "Configure available workflow actions and role-based permissions",
+      "readOnly": "View workflow action configurations"
+    },
+    "addButton": "Add Workflow Action",
+    "loading": "Loading configurations...",
+    "readOnly": {
+      "title": "Read-Only Access",
+      "description": "You have read-only access. To request changes, use the Change Requests section."
+    },
+    "form": {
+      "addTitle": "Add New Workflow Action",
+      "editTitle": "Edit Workflow Action",
+      "actionName": "Action Name",
+      "actionNamePlaceholder": "e.g., confirm, resolve, escalate",
+      "allowedTier": "Allowed Tier",
+      "tiers": {
+        "TIER_1": "Tier 1 (Safety-Critical)",
+        "TIER_2": "Tier 2 (Operational)",
+        "TIER_3": "Tier 3 (Informational)",
+        "ALL": "All Tiers"
+      },
+      "allowedStatus": "Allowed Status",
+      "statuses": {
+        "PENDING": "Pending",
+        "CONFIRMED": "Confirmed",
+        "ESCALATED_TO_BOARD": "Escalated to Board",
+        "ESCALATED_TO_OSTA": "Escalated to OSTA",
+        "RESOLVED": "Resolved",
+        "FALSE_ALARM": "False Alarm",
+        "ALL": "All Statuses"
+      },
+      "requiredRole": "Required Role",
+      "roles": {
+        "SCHOOL_ADMIN": "School Admin",
+        "BOARD_ADMIN": "Board Admin",
+        "OSTA_ADMIN": "OSTA Admin",
+        "SUPER_ADMIN": "Super Admin",
+        "ANY_ADMIN": "Any Admin"
+      },
+      "statusTransition": "Status Transition",
+      "statusTransitionPlaceholder": "Optional - e.g., RESOLVED",
+      "requiresNotes": "Requires Notes",
+      "activeLabel": "Active",
+      "saveCreate": "Create Action",
+      "saveUpdate": "Save Changes",
+      "cancel": "Cancel"
+    },
+    "table": {
+      "actionName": "Action Name",
+      "allowedTier": "Allowed Tier",
+      "allowedStatus": "Allowed Status",
+      "requiredRole": "Required Role",
+      "transition": "Transition",
+      "flags": "Flags",
+      "actions": "Actions",
+      "needsNotes": "Needs Notes",
+      "inactive": "Inactive"
+    },
+    "empty": "No workflow configurations found.",
+    "deleteConfirm": "Are you sure you want to delete this workflow configuration?",
+    "count_one": "Showing {{count}} workflow action",
+    "count_other": "Showing {{count}} workflow actions"
+  },
+  "auditLog": {
+    "title": "Configuration Audit Log",
+    "subtitle": "View the complete history of all configuration changes",
+    "loading": "Loading audit logs...",
+    "filters": {
+      "title": "Filters",
+      "configType": "Configuration Type",
+      "allTypes": "All Types",
+      "types": {
+        "alert_event_type_config": "Event Type Config",
+        "alert_escalation_config": "Escalation Config",
+        "notification_routing_config": "Notification Routing",
+        "alert_workflow_config": "Workflow Config"
+      },
+      "limit": "Limit",
+      "limitOptions": {
+        "25": "25 entries",
+        "50": "50 entries",
+        "100": "100 entries",
+        "200": "200 entries"
+      }
+    },
+    "table": {
+      "timestamp": "Timestamp",
+      "action": "Action",
+      "configType": "Config Type",
+      "configId": "Config ID",
+      "changedBy": "Changed By",
+      "role": "Role"
+    },
+    "empty": "No audit log entries found.",
+    "showing": "Showing {{count}} entries"
+  },
+  "changeRequests": {
+    "title": "Configuration Change Requests",
+    "subtitle": {
+      "admin": "Review and approve/reject configuration change requests from admins",
+      "readOnly": "Submit requests for configuration changes and track their status"
+    },
+    "submitButton": "Submit Request",
+    "cancelSubmit": "Cancel",
+    "loading": "Loading change requests...",
+    "form": {
+      "title": "Submit Configuration Change Request",
+      "configType": "Configuration Type",
+      "configTypes": {
+        "alert_event_type_config": "Event Type Configuration",
+        "alert_escalation_config": "Escalation Timing",
+        "notification_routing_config": "Notification Routing",
+        "alert_workflow_config": "Workflow Configuration"
+      },
+      "changeDescription": "Change Description *",
+      "changeDescriptionPlaceholder": "Describe the change you would like to make...",
+      "justification": "Justification (Optional)",
+      "justificationPlaceholder": "Explain why this change is needed...",
+      "submitButton": "Submit Request",
+      "cancel": "Cancel"
+    },
+    "statusFilter": {
+      "title": "Filter by Status",
+      "all": "All",
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected"
+    },
+    "statuses": {
+      "PENDING": "Pending",
+      "APPROVED": "Approved",
+      "REJECTED": "Rejected"
+    },
+    "request": {
+      "requestedBy": "Requested by:",
+      "date": "Date:",
+      "justification": "Justification:",
+      "reviewedBy": "Reviewed by:",
+      "on": "on",
+      "reviewNotes": "Review Notes:"
+    },
+    "review": {
+      "title": "Review Notes (Optional)",
+      "placeholder": "Add notes about your decision...",
+      "approve": "Approve",
+      "reject": "Reject",
+      "cancel": "Cancel",
+      "reviewButton": "Review Request"
+    },
+    "empty": {
+      "all": "No change requests found.",
+      "filtered": "No {{status}} change requests found."
+    },
+    "count_one": "Showing {{count}} request",
+    "count_other": "Showing {{count}} requests",
+    "confirmNoNotes": "Are you sure you want to {{action}} this request without notes?"
   }
 }

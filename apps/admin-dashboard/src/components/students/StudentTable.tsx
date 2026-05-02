@@ -1,5 +1,6 @@
 import React from 'react';
 import { User, Edit2, Trash2, MapPin, Bus } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Card } from '../common';
 
 interface Student {
@@ -21,16 +22,20 @@ interface StudentTableProps {
 }
 
 const StudentTable: React.FC<StudentTableProps> = ({ students, onEdit, onDelete, onAssign }) => {
+  const { t } = useTranslation(['students']);
+
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-left border-collapse">
         <thead>
           <tr className="border-b border-dashboard-border text-slate-400 text-xs uppercase tracking-wider">
-            <th className="px-6 py-4 font-semibold">Student</th>
-            <th className="px-6 py-4 font-semibold">Grade</th>
-            <th className="px-6 py-4 font-semibold">Assignments</th>
-            <th className="px-6 py-4 font-semibold">Status</th>
-            <th className="px-6 py-4 font-semibold text-right">Actions</th>
+            <th className="px-6 py-4 font-semibold">{t('students:table.columns.student')}</th>
+            <th className="px-6 py-4 font-semibold">{t('students:table.columns.grade')}</th>
+            <th className="px-6 py-4 font-semibold">{t('students:table.columns.assignments')}</th>
+            <th className="px-6 py-4 font-semibold">{t('students:table.columns.status')}</th>
+            <th className="px-6 py-4 font-semibold text-right">
+              {t('students:table.columns.actions')}
+            </th>
           </tr>
         </thead>
         <tbody className="divide-y divide-dashboard-border">
@@ -58,16 +63,20 @@ const StudentTable: React.FC<StudentTableProps> = ({ students, onEdit, onDelete,
                 <div className="space-y-1">
                   {student.am_route_id && (
                     <div className="text-xs text-green-400 flex items-center gap-1">
-                      <Bus size={10} /> AM: {student.am_route_id.substring(0, 8)}
+                      <Bus size={10} /> {t('students:table.amLabel')}:{' '}
+                      {student.am_route_id.substring(0, 8)}
                     </div>
                   )}
                   {student.pm_route_id && (
                     <div className="text-xs text-blue-400 flex items-center gap-1">
-                      <Bus size={10} /> PM: {student.pm_route_id.substring(0, 8)}
+                      <Bus size={10} /> {t('students:table.pmLabel')}:{' '}
+                      {student.pm_route_id.substring(0, 8)}
                     </div>
                   )}
                   {!student.am_route_id && !student.pm_route_id && (
-                    <span className="text-xs text-slate-500 italic">No routes assigned</span>
+                    <span className="text-xs text-slate-500 italic">
+                      {t('students:table.noRoutes')}
+                    </span>
                   )}
                 </div>
               </td>
@@ -81,7 +90,7 @@ const StudentTable: React.FC<StudentTableProps> = ({ students, onEdit, onDelete,
                         : 'bg-slate-500/10 text-slate-400 border border-slate-500/20'
                   }`}
                 >
-                  {student.status}
+                  {t(`students:table.statuses.${student.status}`, { defaultValue: student.status })}
                 </span>
               </td>
               <td className="px-6 py-4">
@@ -89,21 +98,21 @@ const StudentTable: React.FC<StudentTableProps> = ({ students, onEdit, onDelete,
                   <button
                     onClick={() => onAssign(student)}
                     className="p-2 text-slate-400 hover:text-primary-400 transition-colors"
-                    title="Assign Routes"
+                    title={t('students:table.tooltips.assignRoutes')}
                   >
                     <Bus size={18} />
                   </button>
                   <button
                     onClick={() => onEdit(student)}
                     className="p-2 text-slate-400 hover:text-white transition-colors"
-                    title="Edit"
+                    title={t('students:table.tooltips.edit')}
                   >
                     <Edit2 size={18} />
                   </button>
                   <button
                     onClick={() => onDelete(student.id)}
                     className="p-2 text-slate-400 hover:text-red-400 transition-colors"
-                    title="Delete"
+                    title={t('students:table.tooltips.delete')}
                   >
                     <Trash2 size={18} />
                   </button>
@@ -114,7 +123,7 @@ const StudentTable: React.FC<StudentTableProps> = ({ students, onEdit, onDelete,
           {students.length === 0 && (
             <tr>
               <td colSpan={5} className="px-6 py-12 text-center text-slate-500 italic">
-                No students found.
+                {t('students:table.noStudents')}
               </td>
             </tr>
           )}

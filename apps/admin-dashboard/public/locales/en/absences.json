@@ -1,0 +1,41 @@
+{
+  "title": "Absence Reports",
+  "dateLabel": "Date:",
+  "allDates": "All dates",
+  "loading": "Loading...",
+  "columns": {
+    "studentId": "Student ID",
+    "tripDate": "Trip Date",
+    "route": "Route",
+    "status": "Status",
+    "notes": "Notes",
+    "reported": "Reported",
+    "actions": "Actions"
+  },
+  "routeTypes": {
+    "AM": "Morning (AM)",
+    "PM": "Afternoon (PM)",
+    "BOTH": "Full Day (Both)"
+  },
+  "statuses": {
+    "PENDING": "Pending",
+    "CONFIRMED": "Confirmed",
+    "REJECTED": "Rejected"
+  },
+  "actions": {
+    "confirm": "Confirm",
+    "reject": "Reject",
+    "remove": "Remove",
+    "submit": "Submit",
+    "cancel": "Cancel"
+  },
+  "rejectionNotesPlaceholder": "Rejection notes...",
+  "noAbsences": "No absences reported.",
+  "noAbsencesForDate": "No absences reported for {{date}}.",
+  "removeConfirm": "Remove this absence record?",
+  "errors": {
+    "removeFailed": "Failed to remove absence record.",
+    "confirmFailed": "Failed to confirm absence.",
+    "rejectFailed": "Failed to reject absence."
+  }
+}

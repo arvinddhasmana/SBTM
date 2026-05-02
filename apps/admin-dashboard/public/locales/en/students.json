@@ -80,5 +80,117 @@
   "refreshing": "Refreshing...",
   "studentRoster": "Student Roster",
   "bulkImport": "Bulk Import",
-  "enrollStudent": "Enroll Student"
+  "enrollStudent": "Enroll Student",
+  "table": {
+    "columns": {
+      "student": "Student",
+      "grade": "Grade",
+      "assignments": "Assignments",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "noRoutes": "No routes assigned",
+    "noStudents": "No students found.",
+    "amLabel": "AM",
+    "pmLabel": "PM",
+    "statuses": {
+      "ENROLLED": "Enrolled",
+      "WITHDRAWN": "Withdrawn"
+    },
+    "tooltips": {
+      "assignRoutes": "Assign Routes",
+      "edit": "Edit",
+      "delete": "Delete"
+    }
+  },
+  "bulkImportModal": {
+    "title": "Bulk Import Students",
+    "clickToSelect": "Click to select CSV file",
+    "csvFormat": "Supported format: CSV (max 10MB)",
+    "importComplete": "Import Complete",
+    "successImported": "Successfully imported <strong>{{count}}</strong> students.",
+    "failedCount": " Failed to import <strong>{{failed}}</strong>.",
+    "uploading": "Uploading...",
+    "startImport": "Start Import",
+    "cancel": "Cancel"
+  },
+  "enrollModal": {
+    "title": "Enroll Student",
+    "firstName": "First Name",
+    "firstNamePlaceholder": "Enter first name",
+    "lastName": "Last Name",
+    "lastNamePlaceholder": "Enter last name",
+    "grade": "Grade",
+    "gradePlaceholder": "e.g. Grade 3",
+    "address": "Address",
+    "addressPlaceholder": "Enter address (optional)",
+    "enrolling": "Enrolling...",
+    "enrollButton": "Enroll Student",
+    "cancel": "Cancel",
+    "error": "Failed to enroll student. Please try again."
+  },
+  "editModal": {
+    "title": "Edit Student",
+    "firstName": "First Name",
+    "firstNamePlaceholder": "Enter first name",
+    "lastName": "Last Name",
+    "lastNamePlaceholder": "Enter last name",
+    "grade": "Grade",
+    "gradePlaceholder": "e.g. Grade 3",
+    "address": "Address",
+    "addressPlaceholder": "Enter address (optional)",
+    "saving": "Saving...",
+    "saveButton": "Save Changes",
+    "cancel": "Cancel",
+    "error": "Failed to update student. Please try again."
+  },
+  "withdrawModal": {
+    "title": "Withdraw Student",
+    "confirmQuestion": "Are you sure you want to withdraw",
+    "warningText": "This will mark the student as withdrawn. This action can be reversed by editing the student record.",
+    "withdrawing": "Withdrawing...",
+    "confirmButton": "Confirm Withdraw",
+    "cancel": "Cancel",
+    "error": "Failed to withdraw student. Please try again."
+  },
+  "routeAssignmentModal": {
+    "title": "Route Assignment",
+    "amRoute": "AM Route",
+    "noAmRoute": "No AM Route",
+    "pmRoute": "PM Route",
+    "noPmRoute": "No PM Route",
+    "saving": "Saving...",
+    "saveButton": "Save Assignment",
+    "cancel": "Cancel"
+  },
+  "presenceStats": {
+    "totalTracked": "Total Tracked",
+    "boarded": "Boarded",
+    "alighted": "Alighted",
+    "unknown": "Unknown"
+  },
+  "presenceFilters": {
+    "searchPlaceholder": "Search students...",
+    "allEvents": "All Events",
+    "boarded": "Boarded",
+    "alighted": "Alighted",
+    "allRoutes": "All Routes"
+  },
+  "presenceTable": {
+    "columns": {
+      "student": "Student",
+      "grade": "Grade",
+      "status": "Status",
+      "routeBus": "Route / Bus",
+      "timestamp": "Timestamp"
+    },
+    "onBus": "On Bus ✓",
+    "droppedOff": "Dropped Off",
+    "noEvents": "No presence events found.",
+    "showing": "Showing",
+    "of": "of",
+    "results": "results",
+    "previous": "Previous",
+    "next": "Next"
+  }
 }

@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { GitBranch, Plus, Trash2, Edit, Save, X } from 'lucide-react';
 import { alertConfigApi } from '../services/api/alert-config.api';
 import type { WorkflowConfig } from '../types/alert-config';
 import { useAuth } from '../context/AuthContext';
+import { Header } from '../components/common';
 
 export const WorkflowConfigPage: React.FC = () => {
+  const { t } = useTranslation(['alertConfig']);
   const { user } = useAuth();
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
   const queryClient = useQueryClient();
@@ -85,7 +88,7 @@ export const WorkflowConfigPage: React.FC = () => {
   };
 
   const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this workflow configuration?')) {
+    if (confirm(t('alertConfig:workflow.deleteConfirm'))) {
       deleteMutation.mutate(id);
     }
   };
@@ -97,13 +100,17 @@ export const WorkflowConfigPage: React.FC = () => {
   };
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-3">
-            <GitBranch className="h-8 w-8 text-purple-400" />
-            <h1 className="text-3xl font-bold text-white">Workflow Configuration</h1>
-          </div>
+    <>
+      <Header
+        title={t('alertConfig:workflow.title')}
+        subtitle={
+          isSuperAdmin
+            ? t('alertConfig:workflow.subtitle.admin')
+            : t('alertConfig:workflow.subtitle.readOnly')
+        }
+      />
+      <div className="p-6">
+        <div className="flex justify-end mb-6">
           {isSuperAdmin && (
             <button
               onClick={() => setIsAdding(true)}
@@ -111,262 +118,294 @@ export const WorkflowConfigPage: React.FC = () => {
               className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 text-white px-4 py-2 rounded-lg flex items-center gap-2"
             >
               <Plus size={20} />
-              Add Workflow Action
+              {t('alertConfig:workflow.addButton')}
             </button>
           )}
         </div>
-        <p className="text-gray-400">
-          {isSuperAdmin
-            ? 'Configure available workflow actions and role-based permissions'
-            : 'View workflow action configurations'}
-        </p>
-      </div>
 
-      {!isSuperAdmin && (
-        <div className="mb-6 bg-yellow-900/20 border border-yellow-600/30 rounded-lg p-4">
-          <div className="flex items-start gap-3">
-            <GitBranch className="h-5 w-5 text-yellow-400 mt-0.5" />
-            <div>
-              <h3 className="text-yellow-400 font-semibold">Read-Only Access</h3>
-              <p className="text-gray-400 text-sm mt-1">
-                You have read-only access. To request changes, use the Change Requests section.
-              </p>
+        {!isSuperAdmin && (
+          <div className="mb-6 bg-yellow-900/20 border border-yellow-600/30 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <GitBranch className="h-5 w-5 text-yellow-400 mt-0.5" />
+              <div>
+                <h3 className="text-yellow-400 font-semibold">
+                  {t('alertConfig:workflow.readOnly.title')}
+                </h3>
+                <p className="text-gray-400 text-sm mt-1">
+                  {t('alertConfig:workflow.readOnly.description')}
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Add/Edit Form */}
-      {(isAdding || editingId) && isSuperAdmin && (
-        <form
-          onSubmit={handleSubmit}
-          className="bg-gray-800 rounded-lg p-6 border border-gray-700 mb-6"
-        >
-          <h3 className="text-xl font-semibold text-white mb-4">
-            {editingId ? 'Edit Workflow Action' : 'Add New Workflow Action'}
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Action Name</label>
-              <input
-                type="text"
-                value={formData.actionName}
-                onChange={(e) => setFormData({ ...formData, actionName: e.target.value })}
-                placeholder="e.g., confirm, resolve, escalate"
-                className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
-                required
-              />
+        {/* Add/Edit Form */}
+        {(isAdding || editingId) && isSuperAdmin && (
+          <form
+            onSubmit={handleSubmit}
+            className="bg-gray-800 rounded-lg p-6 border border-gray-700 mb-6"
+          >
+            <h3 className="text-xl font-semibold text-white mb-4">
+              {editingId
+                ? t('alertConfig:workflow.form.editTitle')
+                : t('alertConfig:workflow.form.addTitle')}
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  {t('alertConfig:workflow.form.actionName')}
+                </label>
+                <input
+                  type="text"
+                  value={formData.actionName}
+                  onChange={(e) => setFormData({ ...formData, actionName: e.target.value })}
+                  placeholder={t('alertConfig:workflow.form.actionNamePlaceholder')}
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  {t('alertConfig:workflow.form.allowedTier')}
+                </label>
+                <select
+                  value={formData.allowedForTier}
+                  onChange={(e) => setFormData({ ...formData, allowedForTier: e.target.value })}
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
+                  required
+                >
+                  <option value="TIER_1">{t('alertConfig:workflow.form.tiers.TIER_1')}</option>
+                  <option value="TIER_2">{t('alertConfig:workflow.form.tiers.TIER_2')}</option>
+                  <option value="TIER_3">{t('alertConfig:workflow.form.tiers.TIER_3')}</option>
+                  <option value="ALL">{t('alertConfig:workflow.form.tiers.ALL')}</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  {t('alertConfig:workflow.form.allowedStatus')}
+                </label>
+                <select
+                  value={formData.allowedForStatus}
+                  onChange={(e) => setFormData({ ...formData, allowedForStatus: e.target.value })}
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
+                  required
+                >
+                  <option value="PENDING">{t('alertConfig:workflow.form.statuses.PENDING')}</option>
+                  <option value="CONFIRMED">
+                    {t('alertConfig:workflow.form.statuses.CONFIRMED')}
+                  </option>
+                  <option value="ESCALATED_TO_BOARD">
+                    {t('alertConfig:workflow.form.statuses.ESCALATED_TO_BOARD')}
+                  </option>
+                  <option value="ESCALATED_TO_OSTA">
+                    {t('alertConfig:workflow.form.statuses.ESCALATED_TO_OSTA')}
+                  </option>
+                  <option value="RESOLVED">
+                    {t('alertConfig:workflow.form.statuses.RESOLVED')}
+                  </option>
+                  <option value="FALSE_ALARM">
+                    {t('alertConfig:workflow.form.statuses.FALSE_ALARM')}
+                  </option>
+                  <option value="ALL">{t('alertConfig:workflow.form.statuses.ALL')}</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  {t('alertConfig:workflow.form.requiredRole')}
+                </label>
+                <select
+                  value={formData.requiredRole}
+                  onChange={(e) => setFormData({ ...formData, requiredRole: e.target.value })}
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
+                  required
+                >
+                  <option value="SCHOOL_ADMIN">
+                    {t('alertConfig:workflow.form.roles.SCHOOL_ADMIN')}
+                  </option>
+                  <option value="BOARD_ADMIN">
+                    {t('alertConfig:workflow.form.roles.BOARD_ADMIN')}
+                  </option>
+                  <option value="OSTA_ADMIN">
+                    {t('alertConfig:workflow.form.roles.OSTA_ADMIN')}
+                  </option>
+                  <option value="SUPER_ADMIN">
+                    {t('alertConfig:workflow.form.roles.SUPER_ADMIN')}
+                  </option>
+                  <option value="ANY_ADMIN">
+                    {t('alertConfig:workflow.form.roles.ANY_ADMIN')}
+                  </option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  {t('alertConfig:workflow.form.statusTransition')}
+                </label>
+                <input
+                  type="text"
+                  value={formData.statusTransition || ''}
+                  onChange={(e) => setFormData({ ...formData, statusTransition: e.target.value })}
+                  placeholder={t('alertConfig:workflow.form.statusTransitionPlaceholder')}
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
+                />
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Allowed Tier</label>
-              <select
-                value={formData.allowedForTier}
-                onChange={(e) => setFormData({ ...formData, allowedForTier: e.target.value })}
-                className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
-                required
-              >
-                <option value="TIER_1">Tier 1 (Safety-Critical)</option>
-                <option value="TIER_2">Tier 2 (Operational)</option>
-                <option value="TIER_3">Tier 3 (Informational)</option>
-                <option value="ALL">All Tiers</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Allowed Status</label>
-              <select
-                value={formData.allowedForStatus}
-                onChange={(e) => setFormData({ ...formData, allowedForStatus: e.target.value })}
-                className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
-                required
-              >
-                <option value="PENDING">Pending</option>
-                <option value="CONFIRMED">Confirmed</option>
-                <option value="ESCALATED_TO_BOARD">Escalated to Board</option>
-                <option value="ESCALATED_TO_OSTA">Escalated to OSTA</option>
-                <option value="RESOLVED">Resolved</option>
-                <option value="FALSE_ALARM">False Alarm</option>
-                <option value="ALL">All Statuses</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Required Role</label>
-              <select
-                value={formData.requiredRole}
-                onChange={(e) => setFormData({ ...formData, requiredRole: e.target.value })}
-                className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
-                required
-              >
-                <option value="SCHOOL_ADMIN">School Admin</option>
-                <option value="BOARD_ADMIN">Board Admin</option>
-                <option value="OSTA_ADMIN">OSTA Admin</option>
-                <option value="SUPER_ADMIN">Super Admin</option>
-                <option value="ANY_ADMIN">Any Admin</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Status Transition
+
+            <div className="mt-4 flex items-center gap-4">
+              <label className="flex items-center gap-2 text-white cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={formData.requiresNotes || false}
+                  onChange={(e) => setFormData({ ...formData, requiresNotes: e.target.checked })}
+                  className="w-5 h-5"
+                />
+                {t('alertConfig:workflow.form.requiresNotes')}
               </label>
-              <input
-                type="text"
-                value={formData.statusTransition || ''}
-                onChange={(e) => setFormData({ ...formData, statusTransition: e.target.value })}
-                placeholder="Optional - e.g., RESOLVED"
-                className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
-              />
+              <label className="flex items-center gap-2 text-white cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={formData.isActive ?? true}
+                  onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                  className="w-5 h-5"
+                />
+                {t('alertConfig:workflow.form.activeLabel')}
+              </label>
             </div>
-          </div>
 
-          <div className="mt-4 flex items-center gap-4">
-            <label className="flex items-center gap-2 text-white cursor-pointer">
-              <input
-                type="checkbox"
-                checked={formData.requiresNotes || false}
-                onChange={(e) => setFormData({ ...formData, requiresNotes: e.target.checked })}
-                className="w-5 h-5"
-              />
-              Requires Notes
-            </label>
-            <label className="flex items-center gap-2 text-white cursor-pointer">
-              <input
-                type="checkbox"
-                checked={formData.isActive ?? true}
-                onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                className="w-5 h-5"
-              />
-              Active
-            </label>
-          </div>
+            <div className="mt-6 flex gap-3">
+              <button
+                type="submit"
+                disabled={createMutation.isPending || updateMutation.isPending}
+                className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 text-white px-6 py-2 rounded-lg flex items-center gap-2"
+              >
+                <Save size={20} />
+                {editingId
+                  ? t('alertConfig:workflow.form.saveUpdate')
+                  : t('alertConfig:workflow.form.saveCreate')}
+              </button>
+              <button
+                type="button"
+                onClick={handleCancel}
+                className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg flex items-center gap-2"
+              >
+                <X size={20} />
+                {t('alertConfig:workflow.form.cancel')}
+              </button>
+            </div>
+          </form>
+        )}
 
-          <div className="mt-6 flex gap-3">
-            <button
-              type="submit"
-              disabled={createMutation.isPending || updateMutation.isPending}
-              className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 text-white px-6 py-2 rounded-lg flex items-center gap-2"
-            >
-              <Save size={20} />
-              {editingId ? 'Save Changes' : 'Create Action'}
-            </button>
-            <button
-              type="button"
-              onClick={handleCancel}
-              className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg flex items-center gap-2"
-            >
-              <X size={20} />
-              Cancel
-            </button>
-          </div>
-        </form>
-      )}
-
-      {/* Configurations List */}
-      {isLoading ? (
-        <div className="text-white">Loading configurations...</div>
-      ) : (
-        <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-900">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">
-                    Action Name
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">
-                    Allowed Tier
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">
-                    Allowed Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">
-                    Required Role
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">
-                    Transition
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">
-                    Flags
-                  </th>
-                  {isSuperAdmin && (
+        {/* Configurations List */}
+        {isLoading ? (
+          <div className="text-white">{t('alertConfig:workflow.loading')}</div>
+        ) : (
+          <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-900">
+                  <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">
-                      Actions
+                      {t('alertConfig:workflow.table.actionName')}
                     </th>
-                  )}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-700">
-                {configs && configs.length > 0 ? (
-                  configs.map((config) => (
-                    <tr key={config.id} className="hover:bg-gray-750">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-white font-semibold">
-                        {config.actionName}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                        {config.allowedForTier}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                        {config.allowedForStatus}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                        {config.requiredRole}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                        {config.statusTransition || '-'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <div className="flex gap-2">
-                          {config.requiresNotes && (
-                            <span className="px-2 py-1 bg-blue-900/50 text-blue-300 rounded text-xs">
-                              Needs Notes
-                            </span>
-                          )}
-                          {config.isActive === false && (
-                            <span className="px-2 py-1 bg-gray-700 text-gray-400 rounded text-xs">
-                              Inactive
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      {isSuperAdmin && (
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">
+                      {t('alertConfig:workflow.table.allowedTier')}
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">
+                      {t('alertConfig:workflow.table.allowedStatus')}
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">
+                      {t('alertConfig:workflow.table.requiredRole')}
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">
+                      {t('alertConfig:workflow.table.transition')}
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">
+                      {t('alertConfig:workflow.table.flags')}
+                    </th>
+                    {isSuperAdmin && (
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">
+                        {t('alertConfig:workflow.table.actions')}
+                      </th>
+                    )}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-700">
+                  {configs && configs.length > 0 ? (
+                    configs.map((config) => (
+                      <tr key={config.id} className="hover:bg-gray-750">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-white font-semibold">
+                          {config.actionName}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                          {config.allowedForTier}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                          {config.allowedForStatus}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                          {config.requiredRole}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                          {config.statusTransition || '-'}
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                           <div className="flex gap-2">
-                            <button
-                              onClick={() => handleEdit(config)}
-                              disabled={isAdding || editingId !== null}
-                              className="text-blue-400 hover:text-blue-300 disabled:text-gray-600"
-                            >
-                              <Edit size={18} />
-                            </button>
-                            <button
-                              onClick={() => handleDelete(config.id!)}
-                              disabled={deleteMutation.isPending}
-                              className="text-red-400 hover:text-red-300 disabled:text-gray-600"
-                            >
-                              <Trash2 size={18} />
-                            </button>
+                            {config.requiresNotes && (
+                              <span className="px-2 py-1 bg-blue-900/50 text-blue-300 rounded text-xs">
+                                {t('alertConfig:workflow.table.needsNotes')}
+                              </span>
+                            )}
+                            {config.isActive === false && (
+                              <span className="px-2 py-1 bg-gray-700 text-gray-400 rounded text-xs">
+                                {t('alertConfig:workflow.table.inactive')}
+                              </span>
+                            )}
                           </div>
                         </td>
-                      )}
+                        {isSuperAdmin && (
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => handleEdit(config)}
+                                disabled={isAdding || editingId !== null}
+                                className="text-blue-400 hover:text-blue-300 disabled:text-gray-600"
+                              >
+                                <Edit size={18} />
+                              </button>
+                              <button
+                                onClick={() => handleDelete(config.id!)}
+                                disabled={deleteMutation.isPending}
+                                className="text-red-400 hover:text-red-300 disabled:text-gray-600"
+                              >
+                                <Trash2 size={18} />
+                              </button>
+                            </div>
+                          </td>
+                        )}
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td
+                        colSpan={isSuperAdmin ? 7 : 6}
+                        className="px-6 py-8 text-center text-gray-400"
+                      >
+                        {t('alertConfig:workflow.empty')}
+                      </td>
                     </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={isSuperAdmin ? 7 : 6} className="px-6 py-8 text-center text-gray-400">
-                      No workflow configurations found.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {configs && configs.length > 0 && (
-        <div className="mt-4 text-sm text-gray-400">
-          Showing {configs.length} workflow {configs.length === 1 ? 'action' : 'actions'}
-        </div>
-      )}
-    </div>
+        {configs && configs.length > 0 && (
+          <div className="mt-4 text-sm text-gray-400">
+            {t('alertConfig:workflow.count', { count: configs.length })}
+          </div>
+        )}
+      </div>
+    </>
   );
 };
 

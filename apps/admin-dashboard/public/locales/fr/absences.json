@@ -1,0 +1,41 @@
+{
+  "title": "Rapports d'absences",
+  "dateLabel": "Date :",
+  "allDates": "Toutes les dates",
+  "loading": "Chargement...",
+  "columns": {
+    "studentId": "ID élève",
+    "tripDate": "Date du trajet",
+    "route": "Itinéraire",
+    "status": "Statut",
+    "notes": "Notes",
+    "reported": "Signalé le",
+    "actions": "Actions"
+  },
+  "routeTypes": {
+    "AM": "Matin (AM)",
+    "PM": "Après-midi (PM)",
+    "BOTH": "Journée complète (Les deux)"
+  },
+  "statuses": {
+    "PENDING": "En attente",
+    "CONFIRMED": "Confirmé",
+    "REJECTED": "Rejeté"
+  },
+  "actions": {
+    "confirm": "Confirmer",
+    "reject": "Rejeter",
+    "remove": "Supprimer",
+    "submit": "Soumettre",
+    "cancel": "Annuler"
+  },
+  "rejectionNotesPlaceholder": "Notes de rejet...",
+  "noAbsences": "Aucune absence signalée.",
+  "noAbsencesForDate": "Aucune absence signalée pour le {{date}}.",
+  "removeConfirm": "Supprimer cet enregistrement d'absence ?",
+  "errors": {
+    "removeFailed": "Échec de la suppression de l'enregistrement d'absence.",
+    "confirmFailed": "Échec de la confirmation de l'absence.",
+    "rejectFailed": "Échec du rejet de l'absence."
+  }
+}

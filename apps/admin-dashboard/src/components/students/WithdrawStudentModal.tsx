@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { AlertTriangle, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Card } from '../common';
 import { studentManagementApi } from '../../services/api';
 
@@ -16,6 +17,7 @@ const WithdrawStudentModal: React.FC<WithdrawStudentModalProps> = ({
   student,
   onSuccess,
 }) => {
+  const { t } = useTranslation(['students']);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -30,7 +32,7 @@ const WithdrawStudentModal: React.FC<WithdrawStudentModalProps> = ({
       onClose();
     } catch (err) {
       console.error('Withdraw failed:', err);
-      setError('Failed to withdraw student. Please try again.');
+      setError(t('students:withdrawModal.error'));
     } finally {
       setIsSubmitting(false);
     }
@@ -48,22 +50,19 @@ const WithdrawStudentModal: React.FC<WithdrawStudentModalProps> = ({
 
         <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
           <AlertTriangle size={24} className="text-red-400" />
-          Withdraw Student
+          {t('students:withdrawModal.title')}
         </h2>
 
         <div className="space-y-4">
           <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
             <p className="text-white text-sm">
-              Are you sure you want to withdraw{' '}
+              {t('students:withdrawModal.confirmQuestion')}{' '}
               <strong>
                 {student.first_name} {student.last_name}
               </strong>
               ?
             </p>
-            <p className="text-slate-400 text-xs mt-2">
-              This will mark the student as withdrawn. This action can be reversed by editing the
-              student record.
-            </p>
+            <p className="text-slate-400 text-xs mt-2">{t('students:withdrawModal.warningText')}</p>
           </div>
 
           {error && (
@@ -77,7 +76,7 @@ const WithdrawStudentModal: React.FC<WithdrawStudentModalProps> = ({
               onClick={onClose}
               className="px-6 py-2 rounded-xl text-slate-400 hover:text-white transition-colors"
             >
-              Cancel
+              {t('students:withdrawModal.cancel')}
             </button>
             <button
               onClick={handleConfirm}
@@ -88,7 +87,9 @@ const WithdrawStudentModal: React.FC<WithdrawStudentModalProps> = ({
                   : 'hover:bg-red-600 shadow-lg shadow-red-500/25'
               }`}
             >
-              {isSubmitting ? 'Withdrawing...' : 'Confirm Withdraw'}
+              {isSubmitting
+                ? t('students:withdrawModal.withdrawing')
+                : t('students:withdrawModal.confirmButton')}
             </button>
           </div>
         </div>

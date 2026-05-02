@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Edit2, X, Save } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Card } from '../common';
 import { studentManagementApi } from '../../services/api';
 
@@ -16,6 +17,7 @@ const EditStudentModal: React.FC<EditStudentModalProps> = ({
   student,
   onSuccess,
 }) => {
+  const { t } = useTranslation(['students']);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [grade, setGrade] = useState('');
@@ -50,7 +52,7 @@ const EditStudentModal: React.FC<EditStudentModalProps> = ({
       onClose();
     } catch (err) {
       console.error('Update failed:', err);
-      setError('Failed to update student. Please try again.');
+      setError(t('students:editModal.error'));
     } finally {
       setIsSubmitting(false);
     }
@@ -68,13 +70,13 @@ const EditStudentModal: React.FC<EditStudentModalProps> = ({
 
         <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
           <Edit2 size={24} className="text-primary-500" />
-          Edit Student
+          {t('students:editModal.title')}
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-slate-400 mb-2">
-              First Name <span className="text-red-400">*</span>
+              {t('students:editModal.firstName')} <span className="text-red-400">*</span>
             </label>
             <input
               type="text"
@@ -82,13 +84,13 @@ const EditStudentModal: React.FC<EditStudentModalProps> = ({
               onChange={(e) => setFirstName(e.target.value)}
               required
               className="w-full px-4 py-3 rounded-xl bg-dashboard-bg border border-dashboard-border text-white text-sm focus:border-primary-500 transition-colors"
-              placeholder="Enter first name"
+              placeholder={t('students:editModal.firstNamePlaceholder')}
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-slate-400 mb-2">
-              Last Name <span className="text-red-400">*</span>
+              {t('students:editModal.lastName')} <span className="text-red-400">*</span>
             </label>
             <input
               type="text"
@@ -96,13 +98,13 @@ const EditStudentModal: React.FC<EditStudentModalProps> = ({
               onChange={(e) => setLastName(e.target.value)}
               required
               className="w-full px-4 py-3 rounded-xl bg-dashboard-bg border border-dashboard-border text-white text-sm focus:border-primary-500 transition-colors"
-              placeholder="Enter last name"
+              placeholder={t('students:editModal.lastNamePlaceholder')}
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-slate-400 mb-2">
-              Grade <span className="text-red-400">*</span>
+              {t('students:editModal.grade')} <span className="text-red-400">*</span>
             </label>
             <input
               type="text"
@@ -110,18 +112,20 @@ const EditStudentModal: React.FC<EditStudentModalProps> = ({
               onChange={(e) => setGrade(e.target.value)}
               required
               className="w-full px-4 py-3 rounded-xl bg-dashboard-bg border border-dashboard-border text-white text-sm focus:border-primary-500 transition-colors"
-              placeholder="e.g. Grade 3"
+              placeholder={t('students:editModal.gradePlaceholder')}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-400 mb-2">Address</label>
+            <label className="block text-sm font-medium text-slate-400 mb-2">
+              {t('students:editModal.address')}
+            </label>
             <input
               type="text"
               value={address}
               onChange={(e) => setAddress(e.target.value)}
               className="w-full px-4 py-3 rounded-xl bg-dashboard-bg border border-dashboard-border text-white text-sm focus:border-primary-500 transition-colors"
-              placeholder="Enter address (optional)"
+              placeholder={t('students:editModal.addressPlaceholder')}
             />
           </div>
 
@@ -137,7 +141,7 @@ const EditStudentModal: React.FC<EditStudentModalProps> = ({
               onClick={onClose}
               className="px-6 py-2 rounded-xl text-slate-400 hover:text-white transition-colors"
             >
-              Cancel
+              {t('students:editModal.cancel')}
             </button>
             <button
               type="submit"
@@ -149,7 +153,7 @@ const EditStudentModal: React.FC<EditStudentModalProps> = ({
               }`}
             >
               <Save size={18} />
-              {isSubmitting ? 'Saving...' : 'Save Changes'}
+              {isSubmitting ? t('students:editModal.saving') : t('students:editModal.saveButton')}
             </button>
           </div>
         </form>

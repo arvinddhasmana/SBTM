@@ -80,5 +80,117 @@
   "refreshing": "Actualisation...",
   "studentRoster": "Liste des élèves",
   "bulkImport": "Importation en masse",
-  "enrollStudent": "Inscrire élève"
+  "enrollStudent": "Inscrire élève",
+  "table": {
+    "columns": {
+      "student": "Élève",
+      "grade": "Niveau",
+      "assignments": "Assignations",
+      "status": "Statut",
+      "actions": "Actions"
+    },
+    "noRoutes": "Aucun itinéraire assigné",
+    "noStudents": "Aucun élève trouvé.",
+    "amLabel": "AM",
+    "pmLabel": "PM",
+    "statuses": {
+      "ENROLLED": "Inscrit",
+      "WITHDRAWN": "Retiré"
+    },
+    "tooltips": {
+      "assignRoutes": "Assigner itinéraires",
+      "edit": "Modifier",
+      "delete": "Supprimer"
+    }
+  },
+  "bulkImportModal": {
+    "title": "Importation en masse des élèves",
+    "clickToSelect": "Cliquer pour sélectionner un fichier CSV",
+    "csvFormat": "Format supporté : CSV (max 10 Mo)",
+    "importComplete": "Importation terminée",
+    "successImported": "{{count}} élèves importés avec succès.",
+    "failedCount": " Échec d'importation pour {{failed}} élèves.",
+    "uploading": "Téléversement...",
+    "startImport": "Démarrer l'importation",
+    "cancel": "Annuler"
+  },
+  "enrollModal": {
+    "title": "Inscrire un élève",
+    "firstName": "Prénom",
+    "firstNamePlaceholder": "Entrer le prénom",
+    "lastName": "Nom de famille",
+    "lastNamePlaceholder": "Entrer le nom de famille",
+    "grade": "Niveau",
+    "gradePlaceholder": "ex. 3e année",
+    "address": "Adresse",
+    "addressPlaceholder": "Entrer l'adresse (optionnel)",
+    "enrolling": "Inscription en cours...",
+    "enrollButton": "Inscrire l'élève",
+    "cancel": "Annuler",
+    "error": "Échec de l'inscription. Veuillez réessayer."
+  },
+  "editModal": {
+    "title": "Modifier l'élève",
+    "firstName": "Prénom",
+    "firstNamePlaceholder": "Entrer le prénom",
+    "lastName": "Nom de famille",
+    "lastNamePlaceholder": "Entrer le nom de famille",
+    "grade": "Niveau",
+    "gradePlaceholder": "ex. 3e année",
+    "address": "Adresse",
+    "addressPlaceholder": "Entrer l'adresse (optionnel)",
+    "saving": "Enregistrement...",
+    "saveButton": "Enregistrer les modifications",
+    "cancel": "Annuler",
+    "error": "Échec de la mise à jour. Veuillez réessayer."
+  },
+  "withdrawModal": {
+    "title": "Retirer l'élève",
+    "confirmQuestion": "Êtes-vous sûr de vouloir retirer",
+    "warningText": "Cela marquera l'élève comme retiré. Cette action peut être annulée en modifiant le dossier de l'élève.",
+    "withdrawing": "Retrait en cours...",
+    "confirmButton": "Confirmer le retrait",
+    "cancel": "Annuler",
+    "error": "Échec du retrait. Veuillez réessayer."
+  },
+  "routeAssignmentModal": {
+    "title": "Assignation d'itinéraire",
+    "amRoute": "Itinéraire AM",
+    "noAmRoute": "Aucun itinéraire AM",
+    "pmRoute": "Itinéraire PM",
+    "noPmRoute": "Aucun itinéraire PM",
+    "saving": "Enregistrement...",
+    "saveButton": "Enregistrer l'assignation",
+    "cancel": "Annuler"
+  },
+  "presenceStats": {
+    "totalTracked": "Total suivi",
+    "boarded": "Embarqués",
+    "alighted": "Débarqués",
+    "unknown": "Inconnu"
+  },
+  "presenceFilters": {
+    "searchPlaceholder": "Rechercher des élèves...",
+    "allEvents": "Tous les événements",
+    "boarded": "Embarqués",
+    "alighted": "Débarqués",
+    "allRoutes": "Tous les itinéraires"
+  },
+  "presenceTable": {
+    "columns": {
+      "student": "Élève",
+      "grade": "Niveau",
+      "status": "Statut",
+      "routeBus": "Itinéraire / Bus",
+      "timestamp": "Horodatage"
+    },
+    "onBus": "Dans le bus ✓",
+    "droppedOff": "Déposé",
+    "noEvents": "Aucun événement de présence trouvé.",
+    "showing": "Affichage",
+    "of": "sur",
+    "results": "résultats",
+    "previous": "Précédent",
+    "next": "Suivant"
+  }
 }

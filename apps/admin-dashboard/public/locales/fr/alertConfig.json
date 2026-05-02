@@ -42,5 +42,310 @@
     "invalidateCache": "Invalider le cache",
     "viewAuditLog": "Voir le journal d'audit",
     "invalidateCacheConfirm": "Êtes-vous sûr de vouloir invalider le cache de configuration\u00a0?"
+  },
+  "escalationTiming": {
+    "title": "Configuration des délais d'escalade",
+    "subtitle": "Configurer les délais de confirmation et d'escalade pour chaque niveau d'alerte",
+    "loading": "Chargement de la configuration...",
+    "guidelines": {
+      "title": "Directives de délais",
+      "confirmationTimeout": "Délai de confirmation : Temps avant escalade automatique aux parents (NIVEAU 1 uniquement)",
+      "boardEscalation": "Escalade au conseil : Temps avant escalade à l'administrateur du conseil",
+      "ostaEscalation": "Escalade OSTA : Temps avant escalade à l'administrateur OSTA",
+      "units": "Tous les délais sont en secondes. Laisser vide pour désactiver cette étape d'escalade."
+    },
+    "fields": {
+      "confirmationTimeout": "Délai de confirmation (secondes)",
+      "boardEscalation": "Escalade au conseil (secondes)",
+      "ostaEscalation": "Escalade OSTA (secondes)",
+      "notSet": "Non défini",
+      "timeSeconds": "{{value}}s"
+    },
+    "hints": {
+      "confirmationTimeout_tier1": "Temps avant notification des parents",
+      "confirmationTimeout_other": "Non applicable pour ce niveau",
+      "boardEscalation": "Temps avant escalade à l'administrateur du conseil",
+      "ostaEscalation": "Temps avant escalade à l'administrateur OSTA"
+    },
+    "badges": {
+      "default": "Par défaut"
+    },
+    "tiers": {
+      "TIER_1": "Événements critiques nécessitant une attention immédiate",
+      "TIER_2": "Événements opérationnels pour révision par l'administrateur",
+      "TIER_3": "Événements informatifs avec notification aux parents"
+    },
+    "buttons": {
+      "edit": "Modifier",
+      "save": "Enregistrer",
+      "cancel": "Annuler"
+    },
+    "readOnly": "Vous avez un accès en lecture seule. Contactez un super administrateur pour demander des modifications."
+  },
+  "eventTypes": {
+    "title": "Configuration des types d'événements",
+    "subtitle": "Associer les types d'événements d'urgence aux niveaux d'alerte et configurer leurs propriétés",
+    "loading": "Chargement de la configuration...",
+    "addButton": "Ajouter un type d'événement",
+    "form": {
+      "addTitle": "Ajouter un nouveau type d'événement",
+      "editTitle": "Modifier le type d'événement",
+      "eventType": "Type d'événement",
+      "eventTypePlaceholder": "BOUTON_PANIQUE",
+      "tier": "Niveau",
+      "tiers": {
+        "TIER_1": "NIVEAU 1 (Critique pour la sécurité)",
+        "TIER_2": "NIVEAU 2 (Opérationnel)",
+        "TIER_3": "NIVEAU 3 (Informationnel)"
+      },
+      "severity": "Sévérité",
+      "severities": {
+        "CRITICAL": "Critique",
+        "HIGH": "Élevée",
+        "MEDIUM": "Moyenne",
+        "LOW": "Faible"
+      },
+      "requiresLocation": "Requiert la localisation",
+      "activeLabel": "Actif",
+      "description": "Description",
+      "descriptionPlaceholder": "Description optionnelle de ce type d'événement",
+      "save": "Enregistrer",
+      "cancel": "Annuler"
+    },
+    "table": {
+      "eventType": "Type d'événement",
+      "tier": "Niveau",
+      "severity": "Sévérité",
+      "description": "Description",
+      "status": "Statut",
+      "actions": "Actions",
+      "active": "Actif",
+      "inactive": "Inactif"
+    },
+    "empty": "Aucune configuration de type d'événement trouvée.",
+    "emptyAdmin": "Aucune configuration de type d'événement trouvée. Cliquez sur « Ajouter un type d'événement » pour en créer un.",
+    "deleteConfirm": "Êtes-vous sûr de vouloir supprimer le type d'événement « {{eventType}} » ?",
+    "readOnly": "Vous avez un accès en lecture seule. Contactez un super administrateur pour demander des modifications."
+  },
+  "notificationRouting": {
+    "title": "Configuration du routage des notifications",
+    "subtitle": {
+      "admin": "Configurer les canaux de notification et les destinataires par niveau et type d'événement",
+      "readOnly": "Consulter les règles de routage des notifications"
+    },
+    "addButton": "Ajouter une règle de routage",
+    "loading": "Chargement des configurations...",
+    "readOnly": {
+      "title": "Accès en lecture seule",
+      "description": "Vous avez un accès en lecture seule. Pour demander des modifications, utilisez la section Demandes de changement."
+    },
+    "form": {
+      "addTitle": "Ajouter une nouvelle règle de routage",
+      "editTitle": "Modifier la règle de routage",
+      "tier": "Niveau",
+      "tiers": {
+        "TIER_1": "Niveau 1 (Critique pour la sécurité)",
+        "TIER_2": "Niveau 2 (Opérationnel)",
+        "TIER_3": "Niveau 3 (Informationnel)"
+      },
+      "eventType": "Type d'événement",
+      "eventTypePlaceholder": "Optionnel - laisser vide pour tous",
+      "recipientRole": "Rôle destinataire",
+      "roles": {
+        "SCHOOL_ADMIN": "Admin École",
+        "BOARD_ADMIN": "Admin Conseil",
+        "OSTA_ADMIN": "Admin OSTA",
+        "PARENT": "Parent",
+        "DRIVER": "Conducteur"
+      },
+      "notificationTiming": "Délai de notification",
+      "timings": {
+        "IMMEDIATE": "Immédiat",
+        "AFTER_CONFIRMATION": "Après confirmation",
+        "ON_TIMEOUT": "Au délai d'expiration",
+        "ON_ESCALATION": "À l'escalade"
+      },
+      "channels": "Canaux de notification",
+      "mandatoryLabel": "Obligatoire",
+      "activeLabel": "Actif",
+      "saveCreate": "Créer la règle",
+      "saveUpdate": "Enregistrer les modifications",
+      "cancel": "Annuler"
+    },
+    "table": {
+      "tier": "Niveau",
+      "eventType": "Type d'événement",
+      "recipient": "Destinataire",
+      "timing": "Délai",
+      "channels": "Canaux",
+      "flags": "Indicateurs",
+      "actions": "Actions",
+      "allEvents": "Tous",
+      "mandatory": "Obligatoire",
+      "inactive": "Inactif"
+    },
+    "empty": "Aucune configuration de routage des notifications trouvée.",
+    "count_one": "Affichage de {{count}} règle de routage",
+    "count_other": "Affichage de {{count}} règles de routage"
+  },
+  "workflow": {
+    "title": "Configuration du flux de travail",
+    "subtitle": {
+      "admin": "Configurer les actions du flux de travail disponibles et les permissions par rôle",
+      "readOnly": "Consulter les configurations d'actions du flux de travail"
+    },
+    "addButton": "Ajouter une action",
+    "loading": "Chargement des configurations...",
+    "readOnly": {
+      "title": "Accès en lecture seule",
+      "description": "Vous avez un accès en lecture seule. Pour demander des modifications, utilisez la section Demandes de changement."
+    },
+    "form": {
+      "addTitle": "Ajouter une nouvelle action de flux de travail",
+      "editTitle": "Modifier l'action de flux de travail",
+      "actionName": "Nom de l'action",
+      "actionNamePlaceholder": "ex. confirmer, résoudre, escalader",
+      "allowedTier": "Niveau autorisé",
+      "tiers": {
+        "TIER_1": "Niveau 1 (Critique pour la sécurité)",
+        "TIER_2": "Niveau 2 (Opérationnel)",
+        "TIER_3": "Niveau 3 (Informationnel)",
+        "ALL": "Tous les niveaux"
+      },
+      "allowedStatus": "Statut autorisé",
+      "statuses": {
+        "PENDING": "En attente",
+        "CONFIRMED": "Confirmé",
+        "ESCALATED_TO_BOARD": "Escaladé au conseil",
+        "ESCALATED_TO_OSTA": "Escaladé à l'OSTA",
+        "RESOLVED": "Résolu",
+        "FALSE_ALARM": "Fausse alarme",
+        "ALL": "Tous les statuts"
+      },
+      "requiredRole": "Rôle requis",
+      "roles": {
+        "SCHOOL_ADMIN": "Admin École",
+        "BOARD_ADMIN": "Admin Conseil",
+        "OSTA_ADMIN": "Admin OSTA",
+        "SUPER_ADMIN": "Super Admin",
+        "ANY_ADMIN": "Tout administrateur"
+      },
+      "statusTransition": "Transition de statut",
+      "statusTransitionPlaceholder": "Optionnel - ex. RÉSOLU",
+      "requiresNotes": "Requiert des notes",
+      "activeLabel": "Actif",
+      "saveCreate": "Créer l'action",
+      "saveUpdate": "Enregistrer les modifications",
+      "cancel": "Annuler"
+    },
+    "table": {
+      "actionName": "Nom de l'action",
+      "allowedTier": "Niveau autorisé",
+      "allowedStatus": "Statut autorisé",
+      "requiredRole": "Rôle requis",
+      "transition": "Transition",
+      "flags": "Indicateurs",
+      "actions": "Actions",
+      "needsNotes": "Notes requises",
+      "inactive": "Inactif"
+    },
+    "empty": "Aucune configuration de flux de travail trouvée.",
+    "deleteConfirm": "Êtes-vous sûr de vouloir supprimer cette configuration de flux de travail ?",
+    "count_one": "Affichage de {{count}} action de flux de travail",
+    "count_other": "Affichage de {{count}} actions de flux de travail"
+  },
+  "auditLog": {
+    "title": "Journal d'audit de configuration",
+    "subtitle": "Consulter l'historique complet de toutes les modifications de configuration",
+    "loading": "Chargement des journaux d'audit...",
+    "filters": {
+      "title": "Filtres",
+      "configType": "Type de configuration",
+      "allTypes": "Tous les types",
+      "types": {
+        "alert_event_type_config": "Config type d'événement",
+        "alert_escalation_config": "Config escalade",
+        "notification_routing_config": "Routage notifications",
+        "alert_workflow_config": "Config flux de travail"
+      },
+      "limit": "Limite",
+      "limitOptions": {
+        "25": "25 entrées",
+        "50": "50 entrées",
+        "100": "100 entrées",
+        "200": "200 entrées"
+      }
+    },
+    "table": {
+      "timestamp": "Horodatage",
+      "action": "Action",
+      "configType": "Type de config",
+      "configId": "ID de config",
+      "changedBy": "Modifié par",
+      "role": "Rôle"
+    },
+    "empty": "Aucune entrée de journal d'audit trouvée.",
+    "showing": "Affichage de {{count}} entrées"
+  },
+  "changeRequests": {
+    "title": "Demandes de changement de configuration",
+    "subtitle": {
+      "admin": "Examiner et approuver/rejeter les demandes de changement de configuration des administrateurs",
+      "readOnly": "Soumettre des demandes de modifications de configuration et suivre leur statut"
+    },
+    "submitButton": "Soumettre une demande",
+    "cancelSubmit": "Annuler",
+    "loading": "Chargement des demandes de changement...",
+    "form": {
+      "title": "Soumettre une demande de changement de configuration",
+      "configType": "Type de configuration",
+      "configTypes": {
+        "alert_event_type_config": "Configuration des types d'événements",
+        "alert_escalation_config": "Délais d'escalade",
+        "notification_routing_config": "Routage des notifications",
+        "alert_workflow_config": "Configuration du flux de travail"
+      },
+      "changeDescription": "Description du changement *",
+      "changeDescriptionPlaceholder": "Décrivez le changement que vous souhaitez effectuer...",
+      "justification": "Justification (optionnel)",
+      "justificationPlaceholder": "Expliquez pourquoi ce changement est nécessaire...",
+      "submitButton": "Soumettre la demande",
+      "cancel": "Annuler"
+    },
+    "statusFilter": {
+      "title": "Filtrer par statut",
+      "all": "Tous",
+      "pending": "En attente",
+      "approved": "Approuvé",
+      "rejected": "Rejeté"
+    },
+    "statuses": {
+      "PENDING": "En attente",
+      "APPROVED": "Approuvé",
+      "REJECTED": "Rejeté"
+    },
+    "request": {
+      "requestedBy": "Demandé par :",
+      "date": "Date :",
+      "justification": "Justification :",
+      "reviewedBy": "Examiné par :",
+      "on": "le",
+      "reviewNotes": "Notes d'examen :"
+    },
+    "review": {
+      "title": "Notes d'examen (optionnel)",
+      "placeholder": "Ajouter des notes sur votre décision...",
+      "approve": "Approuver",
+      "reject": "Rejeter",
+      "cancel": "Annuler",
+      "reviewButton": "Examiner la demande"
+    },
+    "empty": {
+      "all": "Aucune demande de changement trouvée.",
+      "filtered": "Aucune demande de changement {{status}} trouvée."
+    },
+    "count_one": "Affichage de {{count}} demande",
+    "count_other": "Affichage de {{count}} demandes",
+    "confirmNoNotes": "Êtes-vous sûr de vouloir {{action}} cette demande sans notes ?"
   }
 }
