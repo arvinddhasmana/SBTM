@@ -1,17 +1,19 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Header } from '../components/common';
 import { PlannerMap, RoutePlannerSidebar } from '../components/planner';
 import { useRoutePlanner } from '../hooks/useRoutePlanner';
 import { useAuth } from '../context/AuthContext';
 
 const RoutePlanner: React.FC = () => {
+  const { t } = useTranslation(['routes']);
   const { user } = useAuth();
   const planner = useRoutePlanner();
   const isSchoolAdmin = user?.role === 'SCHOOL_ADMIN';
 
   return (
     <div className="flex flex-col h-screen overflow-hidden">
-      <Header title="Route Planner" subtitle="Design and optimize school bus routes" />
+      <Header title={t('routes:planner.title')} subtitle={t('routes:planner.subtitle')} />
 
       <div className="flex flex-1 overflow-hidden">
         {/* Left Pane — Route List / Form */}

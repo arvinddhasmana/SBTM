@@ -24,5 +24,54 @@
     "active": "Actif",
     "maintenance": "Entretien",
     "inactive": "Inactif"
+  },
+  "assignments": {
+    "title": "Affectations de flotte",
+    "createProposal": "Créer une proposition",
+    "newProposalTitle": "Nouvelle proposition d'affectation",
+    "form": {
+      "schoolId": "ID école",
+      "schoolIdPlaceholder": "Saisir l'ID de l'école",
+      "routeId": "ID itinéraire",
+      "routeIdPlaceholder": "Saisir l'ID de l'itinéraire",
+      "vehicleId": "ID véhicule",
+      "vehicleIdPlaceholder": "Saisir l'ID du véhicule",
+      "effectiveDate": "Date d'entrée en vigueur",
+      "required": "*",
+      "submitProposal": "Soumettre la proposition",
+      "submitting": "Envoi...",
+      "cancel": "Annuler"
+    },
+    "table": {
+      "school": "École",
+      "route": "Itinéraire",
+      "vehicle": "Véhicule",
+      "effectiveDate": "Date d'entrée en vigueur",
+      "status": "Statut",
+      "created": "Créé",
+      "actions": "Actions"
+    },
+    "actions": {
+      "accept": "Accepter",
+      "reject": "Rejeter",
+      "submit": "Soumettre",
+      "cancel": "Annuler",
+      "pdf": "PDF",
+      "rejectionNotesPlaceholder": "Notes de rejet..."
+    },
+    "statuses": {
+      "PROPOSED": "Proposée",
+      "ACCEPTED": "Acceptée",
+      "REJECTED": "Rejetée",
+      "SUPERSEDED": "Remplacée"
+    },
+    "loading": "Chargement...",
+    "empty": "Aucune affectation de flotte trouvée.",
+    "errors": {
+      "downloadPdfFailed": "Impossible de télécharger le PDF.",
+      "proposeFailed": "Impossible de créer la proposition.",
+      "acceptFailed": "Impossible d'accepter l'affectation.",
+      "rejectFailed": "Impossible de rejeter l'affectation."
+    }
   }
 }

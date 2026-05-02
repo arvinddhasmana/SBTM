@@ -1,0 +1,49 @@
+{
+  "title": "Gestion des utilisateurs",
+  "inviteUser": "+ Inviter utilisateur",
+  "inviteNewUser": "Inviter nouvel utilisateur",
+  "emailAddress": "Adresse courriel",
+  "emailPlaceholder": "utilisateur@exemple.com",
+  "roleLabel": "Rôle",
+  "schoolLabel": "École",
+  "selectSchool": "Sélectionner une école…",
+  "roles": {
+    "OSTA_ADMIN": "Administrateur OSTA",
+    "BOARD_ADMIN": "Administrateur conseil",
+    "SCHOOL_ADMIN": "Administrateur école",
+    "DRIVER": "Conducteur",
+    "PARENT": "Parent",
+    "SUPER_ADMIN": "Super administrateur"
+  },
+  "status": {
+    "active": "Actif",
+    "inactive": "Inactif"
+  },
+  "columns": {
+    "email": "Courriel",
+    "name": "Nom",
+    "role": "Rôle",
+    "status": "Statut",
+    "actions": "Actions"
+  },
+  "loading": "Chargement…",
+  "empty": "Aucun utilisateur trouvé.",
+  "errors": {
+    "emailRequired": "L'adresse courriel est requise.",
+    "emailInvalid": "Veuillez saisir une adresse courriel valide.",
+    "inviteFailed": "Impossible d'envoyer l'invitation.",
+    "toggleFailed": "Impossible de {{action}} l'utilisateur."
+  },
+  "actions": {
+    "deactivate": "Désactiver",
+    "reactivate": "Réactiver",
+    "sendInvitation": "Envoyer l'invitation",
+    "sending": "Envoi…",
+    "cancel": "Annuler",
+    "deactivateVerb": "désactiver",
+    "reactivateVerb": "réactiver"
+  },
+  "confirmToggle": "Voulez-vous vraiment {{action}} cet utilisateur\u00a0?",
+  "successDeactivated": "Utilisateur désactivé avec succès.",
+  "successReactivated": "Utilisateur réactivé avec succès."
+}

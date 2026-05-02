@@ -1,5 +1,6 @@
 import React from 'react';
 import { Plus, Edit3 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { PanelSearch } from '../common';
 import { RouteListCompact } from '../routes';
 import RoutePlannerForm from './RoutePlannerForm';
@@ -79,6 +80,7 @@ interface RoutePlannerSidebarProps {
 }
 
 const RoutePlannerSidebar: React.FC<RoutePlannerSidebarProps> = (props) => {
+  const { t } = useTranslation(['routes']);
   const {
     mode,
     filteredRoutes,
@@ -103,18 +105,22 @@ const RoutePlannerSidebar: React.FC<RoutePlannerSidebarProps> = (props) => {
       <div className="p-3 border-b border-slate-700/50 shrink-0">
         {mode === 'list' ? (
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-xs font-black text-white uppercase tracking-wider">Routes</h3>
+            <h3 className="text-xs font-black text-white uppercase tracking-wider">
+              {t('routes:planner.sidebar.routesHeader')}
+            </h3>
             <button
               onClick={startCreate}
               className="flex items-center gap-1 px-2.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-[10px] font-bold transition-colors"
             >
               <Plus size={12} />
-              New Route
+              {t('routes:planner.sidebar.newRoute')}
             </button>
           </div>
         ) : (
           <h3 className="text-xs font-black text-white uppercase tracking-wider">
-            {mode === 'create' ? 'New Route' : 'Edit Route'}
+            {mode === 'create'
+              ? t('routes:planner.sidebar.newRouteTitle')
+              : t('routes:planner.sidebar.editRouteTitle')}
           </h3>
         )}
       </div>
@@ -127,7 +133,7 @@ const RoutePlannerSidebar: React.FC<RoutePlannerSidebarProps> = (props) => {
             <PanelSearch
               value={routeSearch}
               onChange={setRouteSearch}
-              placeholder="Search routes, schools, buses..."
+              placeholder={t('routes:planner.sidebar.searchPlaceholder')}
             />
             <div className="flex gap-1.5">
               <select
@@ -135,7 +141,7 @@ const RoutePlannerSidebar: React.FC<RoutePlannerSidebarProps> = (props) => {
                 onChange={(e) => setDirectionFilter(e.target.value as '' | 'AM' | 'PM')}
                 className="flex-1 py-1 px-2 bg-slate-800 border border-slate-700 rounded text-[10px] font-bold text-slate-300 outline-none focus:border-primary-500"
               >
-                <option value="">All Directions</option>
+                <option value="">{t('routes:planner.sidebar.allDirections')}</option>
                 <option value="AM">AM</option>
                 <option value="PM">PM</option>
               </select>
@@ -144,7 +150,7 @@ const RoutePlannerSidebar: React.FC<RoutePlannerSidebarProps> = (props) => {
                 onChange={(e) => setSchoolFilter(e.target.value)}
                 className="flex-1 py-1 px-2 bg-slate-800 border border-slate-700 rounded text-[10px] font-bold text-slate-300 outline-none focus:border-primary-500 truncate"
               >
-                <option value="">All Schools</option>
+                <option value="">{t('routes:planner.sidebar.allSchools')}</option>
                 {schools.map((s) => (
                   <option key={s.id} value={s.id}>
                     {s.name}
@@ -159,7 +165,7 @@ const RoutePlannerSidebar: React.FC<RoutePlannerSidebarProps> = (props) => {
             {routesLoading ? (
               <div className="text-center py-8 text-slate-500">
                 <div className="animate-spin w-5 h-5 border-2 border-slate-500 border-t-blue-400 rounded-full mx-auto mb-2" />
-                <p className="text-[10px] font-bold">Loading routes...</p>
+                <p className="text-[10px] font-bold">{t('routes:planner.sidebar.loadingRoutes')}</p>
               </div>
             ) : (
               <>
@@ -167,7 +173,7 @@ const RoutePlannerSidebar: React.FC<RoutePlannerSidebarProps> = (props) => {
                   routes={filteredRoutes}
                   onRouteClick={(route) => selectRoute(route)}
                   onEdit={(route) => startEdit(route)}
-                  emptyMessage="No routes match your search"
+                  emptyMessage={t('routes:planner.sidebar.noRoutesMatch')}
                 />
                 {/* Edit button for selected route */}
                 {selectedRoute && (
@@ -178,7 +184,10 @@ const RoutePlannerSidebar: React.FC<RoutePlannerSidebarProps> = (props) => {
                           {selectedRoute.name}
                         </p>
                         <p className="text-[8px] text-slate-500">
-                          {selectedRoute.direction} • {selectedRoute.stops.length} stops
+                          {selectedRoute.direction} •{' '}
+                          {t('routes:planner.sidebar.stopsCount', {
+                            count: selectedRoute.stops.length,
+                          })}
                         </p>
                       </div>
                       <button
@@ -186,7 +195,7 @@ const RoutePlannerSidebar: React.FC<RoutePlannerSidebarProps> = (props) => {
                         className="flex items-center gap-1 px-2 py-1 text-[10px] font-bold text-blue-400 hover:text-blue-300 border border-blue-500/30 rounded transition-colors shrink-0"
                       >
                         <Edit3 size={10} />
-                        Edit
+                        {t('routes:planner.sidebar.edit')}
                       </button>
                     </div>
                   </div>

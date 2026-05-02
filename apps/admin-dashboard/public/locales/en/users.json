@@ -1,0 +1,49 @@
+{
+  "title": "User Management",
+  "inviteUser": "+ Invite User",
+  "inviteNewUser": "Invite New User",
+  "emailAddress": "Email Address",
+  "emailPlaceholder": "user@example.com",
+  "roleLabel": "Role",
+  "schoolLabel": "School",
+  "selectSchool": "Select a school…",
+  "roles": {
+    "OSTA_ADMIN": "OSTA Admin",
+    "BOARD_ADMIN": "Board Admin",
+    "SCHOOL_ADMIN": "School Admin",
+    "DRIVER": "Driver",
+    "PARENT": "Parent",
+    "SUPER_ADMIN": "Super Admin"
+  },
+  "status": {
+    "active": "Active",
+    "inactive": "Inactive"
+  },
+  "columns": {
+    "email": "Email",
+    "name": "Name",
+    "role": "Role",
+    "status": "Status",
+    "actions": "Actions"
+  },
+  "loading": "Loading…",
+  "empty": "No users found.",
+  "errors": {
+    "emailRequired": "Email address is required.",
+    "emailInvalid": "Please enter a valid email address.",
+    "inviteFailed": "Failed to send invitation.",
+    "toggleFailed": "Failed to {{action}} user."
+  },
+  "actions": {
+    "deactivate": "Deactivate",
+    "reactivate": "Reactivate",
+    "sendInvitation": "Send Invitation",
+    "sending": "Sending…",
+    "cancel": "Cancel",
+    "deactivateVerb": "deactivate",
+    "reactivateVerb": "reactivate"
+  },
+  "confirmToggle": "Are you sure you want to {{action}} this user?",
+  "successDeactivated": "User deactivated successfully.",
+  "successReactivated": "User reactivated successfully."
+}

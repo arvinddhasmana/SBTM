@@ -12,6 +12,7 @@ import {
   GripVertical,
   Check,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import type { Alert, AlertAuditEntry } from '../../types';
 import { formatTimestamp, formatEventType } from '../../utils/formatters';
 import { useConfirmationTimeoutMs } from '../../hooks/useEscalationConfig';
@@ -30,47 +31,6 @@ interface AlertDetailProps {
   /** kept for API compat — panel is always floating overlay now */
   variant?: 'modal' | 'overlay';
 }
-
-const TIER_LABELS: Record<string, { label: string; className: string }> = {
-  TIER_1: {
-    label: 'Tier 1 — Safety Critical',
-    className: 'bg-red-500/20 text-red-400 border-red-500/30',
-  },
-  TIER_2: {
-    label: 'Tier 2 — Operational',
-    className: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
-  },
-  TIER_3: {
-    label: 'Tier 3 — Informational',
-    className: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-  },
-};
-
-const STATUS_LABELS: Record<string, { label: string; className: string }> = {
-  ACTIVE: { label: 'Active', className: 'bg-red-500/20 text-red-400' },
-  RESOLVED: { label: 'Resolved', className: 'bg-green-500/20 text-green-400' },
-  PENDING_CONFIRMATION: {
-    label: 'Awaiting Confirmation',
-    className: 'bg-yellow-500/20 text-yellow-300',
-  },
-  CONFIRMED: { label: 'Confirmed', className: 'bg-green-500/20 text-green-400' },
-  AUTO_ESCALATED: { label: 'Auto-Escalated', className: 'bg-orange-500/20 text-orange-400' },
-  FALSE_ALARM: { label: 'False Alarm', className: 'bg-slate-500/20 text-slate-400' },
-};
-
-const AUDIT_EVENT_LABELS: Record<string, string> = {
-  CREATED: 'Created',
-  PENDING_CONFIRMATION: 'Pending Confirmation',
-  CONFIRMED: 'Confirmed',
-  AUTO_ESCALATED: 'Auto-Escalated',
-  FALSE_ALARM: 'False Alarm',
-  PARENT_NOTIFIED: 'Parents Notified',
-  BOARD_ESCALATED: 'Escalated to Board',
-  OSTA_ESCALATED: 'Escalated to OSTA',
-  RESOLVED: 'Resolved',
-  INFO_REQUESTED: 'Info Requested',
-  STATUS_UPDATE: 'Status Update',
-};
 
 function getAuditDotColor(eventType: string): string {
   switch (eventType) {
@@ -122,6 +82,7 @@ const AlertDetail: React.FC<AlertDetailProps> = ({
   isResolving,
   isActing,
 }) => {
+  const { t } = useTranslation(['alerts']);
   const [showUpdateInput, setShowUpdateInput] = useState(false);
   const [updateNotes, setUpdateNotes] = useState('');
   const [showResolveInput, setShowResolveInput] = useState(false);
@@ -172,8 +133,29 @@ const AlertDetail: React.FC<AlertDetailProps> = ({
   const isConfirmed = alert.status === 'CONFIRMED';
   const isAutoEscalated = alert.status === 'AUTO_ESCALATED';
   const isWorkingState = isConfirmed || isAutoEscalated || isActive;
-  const tierInfo = alert.tier ? TIER_LABELS[alert.tier] : null;
-  const statusInfo = STATUS_LABELS[alert.status] ?? STATUS_LABELS.ACTIVE;
+
+  const TIER_CLASS_MAP: Record<string, string> = {
+    TIER_1: 'bg-red-500/20 text-red-400 border-red-500/30',
+    TIER_2: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+    TIER_3: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+  };
+  const STATUS_CLASS_MAP: Record<string, string> = {
+    ACTIVE: 'bg-red-500/20 text-red-400',
+    RESOLVED: 'bg-green-500/20 text-green-400',
+    PENDING_CONFIRMATION: 'bg-yellow-500/20 text-yellow-300',
+    CONFIRMED: 'bg-green-500/20 text-green-400',
+    AUTO_ESCALATED: 'bg-orange-500/20 text-orange-400',
+    FALSE_ALARM: 'bg-slate-500/20 text-slate-400',
+  };
+
+  const tierLabel = alert.tier
+    ? t(`alerts:detail.tierLabels.${alert.tier}`, { defaultValue: alert.tier })
+    : null;
+  const tierClassName = alert.tier ? (TIER_CLASS_MAP[alert.tier] ?? '') : '';
+  const statusLabel = t(`alerts:detail.statusLabels.${alert.status}`, {
+    defaultValue: alert.status,
+  });
+  const statusClassName = STATUS_CLASS_MAP[alert.status] ?? STATUS_CLASS_MAP.ACTIVE;
 
   // Persist size via ResizeObserver
   useEffect(() => {
@@ -288,7 +270,7 @@ const AlertDetail: React.FC<AlertDetailProps> = ({
       <div className="flex items-center justify-between px-5 py-3 border-b border-dashboard-border shrink-0 overlay-drag-handle cursor-grab active:cursor-grabbing">
         <div className="flex items-center gap-2">
           <GripVertical size={14} className="text-slate-500 pointer-events-none" />
-          <h3 className="text-base font-bold text-white">Alert Details</h3>
+          <h3 className="text-base font-bold text-white">{t('alerts:detail.title')}</h3>
         </div>
         <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-800 transition-colors">
           <X size={16} className="text-slate-400" />
@@ -305,7 +287,7 @@ const AlertDetail: React.FC<AlertDetailProps> = ({
                 <div className="flex items-center gap-2 text-slate-400">
                   <Clock size={13} />
                   <span className="text-[11px] font-semibold uppercase tracking-wide">
-                    Auto-escalates in
+                    {t('alerts:detail.autoEscalatesIn')}
                   </span>
                 </div>
                 <span className={`text-xl font-black tabular-nums ${timerColor}`}>
@@ -319,7 +301,7 @@ const AlertDetail: React.FC<AlertDetailProps> = ({
                 />
               </div>
               <p className="mt-1 text-[11px] text-slate-500">
-                If no action is taken, alert will be auto-escalated.
+                {t('alerts:detail.noActionWarning')}
               </p>
             </div>
           )}
@@ -330,17 +312,15 @@ const AlertDetail: React.FC<AlertDetailProps> = ({
               <span className="text-lg font-bold text-white">
                 {formatEventType(alert.eventType)}
               </span>
-              {tierInfo && (
+              {tierLabel && (
                 <span
-                  className={`px-2 py-0.5 rounded-lg text-[10px] font-semibold border ${tierInfo.className}`}
+                  className={`px-2 py-0.5 rounded-lg text-[10px] font-semibold border ${tierClassName}`}
                 >
-                  {tierInfo.label}
+                  {tierLabel}
                 </span>
               )}
-              <span
-                className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusInfo.className}`}
-              >
-                {statusInfo.label}
+              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusClassName}`}>
+                {statusLabel}
               </span>
             </div>
           </div>
@@ -355,7 +335,7 @@ const AlertDetail: React.FC<AlertDetailProps> = ({
             <div className="flex items-center gap-2 p-2.5 bg-orange-500/10 border border-orange-500/20 rounded-xl">
               <AlertTriangle size={14} className="text-orange-400 shrink-0" />
               <p className="text-xs text-orange-300">
-                Escalated to: <strong>{alert.escalationLevel}</strong> Admin
+                {t('alerts:detail.escalatedTo', { level: alert.escalationLevel })}
               </p>
             </div>
           )}
@@ -365,21 +345,21 @@ const AlertDetail: React.FC<AlertDetailProps> = ({
             <div className="flex items-center gap-2 p-3 bg-dashboard-bg rounded-xl">
               <Truck size={14} className="text-primary-500" />
               <div>
-                <p className="text-[10px] text-slate-500">Vehicle</p>
+                <p className="text-[10px] text-slate-500">{t('alerts:detail.vehicleLabel')}</p>
                 <p className="text-xs font-semibold text-white">{alert.vehicleId}</p>
               </div>
             </div>
             <div className="flex items-center gap-2 p-3 bg-dashboard-bg rounded-xl">
               <MapPin size={14} className="text-primary-500" />
               <div>
-                <p className="text-[10px] text-slate-500">Route</p>
+                <p className="text-[10px] text-slate-500">{t('alerts:detail.routeLabel')}</p>
                 <p className="text-xs font-semibold text-white">{alert.routeId}</p>
               </div>
             </div>
             <div className="col-span-2 flex items-center gap-2 p-3 bg-dashboard-bg rounded-xl">
               <Clock size={14} className="text-primary-500" />
               <div>
-                <p className="text-[10px] text-slate-500">Timestamp</p>
+                <p className="text-[10px] text-slate-500">{t('alerts:detail.timestampLabel')}</p>
                 <p className="text-xs font-semibold text-white">
                   {formatTimestamp(alert.timestamp)}
                 </p>
@@ -391,7 +371,7 @@ const AlertDetail: React.FC<AlertDetailProps> = ({
           {sortedAudit.length > 0 && (
             <div>
               <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wide mb-2">
-                Activity Timeline
+                {t('alerts:detail.activityTimeline')}
               </p>
               <div className="space-y-0">
                 {sortedAudit.map((entry, idx) => (
@@ -407,8 +387,9 @@ const AlertDetail: React.FC<AlertDetailProps> = ({
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2">
                         <span className="font-semibold text-slate-300 text-[11px]">
-                          {AUDIT_EVENT_LABELS[entry.eventType] ||
-                            entry.eventType.replace(/_/g, ' ')}
+                          {t(`alerts:detail.auditEvents.${entry.eventType}`, {
+                            defaultValue: entry.eventType.replace(/_/g, ' '),
+                          })}
                         </span>
                         <span className="text-slate-500 tabular-nums shrink-0 text-[10px]">
                           {formatTimestamp(entry.eventTimestamp)}
@@ -433,7 +414,7 @@ const AlertDetail: React.FC<AlertDetailProps> = ({
         {isPendingConfirmation ? (
           <div className="flex flex-col gap-2">
             <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wide mb-0.5">
-              Action Required
+              {t('alerts:detail.actionRequired')}
             </p>
             <div className="flex gap-2 flex-wrap">
               {onConfirm && (
@@ -443,7 +424,7 @@ const AlertDetail: React.FC<AlertDetailProps> = ({
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-500/20 border border-green-500/30 text-green-400 text-xs font-semibold hover:bg-green-500/30 transition-colors disabled:opacity-50"
                 >
                   <CheckCircle size={13} />
-                  Confirm
+                  {t('alerts:detail.buttons.confirm')}
                 </button>
               )}
               {onFalseAlarm && (
@@ -453,7 +434,7 @@ const AlertDetail: React.FC<AlertDetailProps> = ({
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-400 text-xs font-semibold hover:bg-amber-500/30 transition-colors disabled:opacity-50"
                 >
                   <XCircle size={13} />
-                  False Alarm
+                  {t('alerts:detail.buttons.falseAlarm')}
                 </button>
               )}
               {onRequestInfo && (
@@ -470,7 +451,9 @@ const AlertDetail: React.FC<AlertDetailProps> = ({
                   }`}
                 >
                   {infoRequested ? <Check size={13} /> : <HelpCircle size={13} />}
-                  {infoRequested ? 'Info Requested' : 'Request Info'}
+                  {infoRequested
+                    ? t('alerts:detail.buttons.infoRequested')
+                    : t('alerts:detail.buttons.requestInfo')}
                 </button>
               )}
             </div>
@@ -482,7 +465,7 @@ const AlertDetail: React.FC<AlertDetailProps> = ({
                 <textarea
                   value={updateNotes}
                   onChange={(e) => setUpdateNotes(e.target.value)}
-                  placeholder="Enter status update..."
+                  placeholder={t('alerts:detail.buttons.enterStatusUpdate')}
                   data-testid="update-notes-input"
                   className="w-full p-2 bg-dashboard-bg border border-dashboard-border rounded-xl text-xs text-white placeholder-slate-500 resize-none focus:outline-none focus:ring-1 focus:ring-blue-500/30"
                   rows={2}
@@ -495,7 +478,7 @@ const AlertDetail: React.FC<AlertDetailProps> = ({
                     }}
                     className="px-2 py-1 text-xs text-slate-400 hover:text-white transition-colors"
                   >
-                    Cancel
+                    {t('alerts:detail.buttons.cancel')}
                   </button>
                   <button
                     onClick={handleSubmitUpdate}
@@ -504,7 +487,9 @@ const AlertDetail: React.FC<AlertDetailProps> = ({
                     className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-blue-500/20 border border-blue-500/30 text-blue-400 text-xs font-medium hover:bg-blue-500/30 transition-colors disabled:opacity-50"
                   >
                     <MessageSquare size={12} />
-                    {isSubmittingUpdate ? 'Submitting...' : 'Submit Update'}
+                    {isSubmittingUpdate
+                      ? t('alerts:detail.buttons.submitting')
+                      : t('alerts:detail.buttons.submitUpdate')}
                   </button>
                 </div>
               </div>
@@ -516,7 +501,7 @@ const AlertDetail: React.FC<AlertDetailProps> = ({
                   className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-blue-500/20 border border-blue-500/30 text-blue-400 text-xs font-medium hover:bg-blue-500/30 transition-colors w-fit"
                 >
                   <MessageSquare size={13} />
-                  Add Status Update
+                  {t('alerts:detail.buttons.addStatusUpdate')}
                 </button>
               )
             )}
@@ -526,7 +511,7 @@ const AlertDetail: React.FC<AlertDetailProps> = ({
                 <textarea
                   value={resolveNotes}
                   onChange={(e) => setResolveNotes(e.target.value)}
-                  placeholder="Resolution notes (optional)..."
+                  placeholder={t('alerts:detail.buttons.resolutionNotes')}
                   data-testid="resolve-notes-input"
                   className="w-full p-2 bg-dashboard-bg border border-dashboard-border rounded-xl text-xs text-white placeholder-slate-500 resize-none focus:outline-none focus:ring-1 focus:ring-green-500/30"
                   rows={2}
@@ -539,7 +524,7 @@ const AlertDetail: React.FC<AlertDetailProps> = ({
                     }}
                     className="px-2 py-1 text-xs text-slate-400 hover:text-white transition-colors"
                   >
-                    Cancel
+                    {t('alerts:detail.buttons.cancel')}
                   </button>
                   <button
                     onClick={handleResolveWithNotes}
@@ -548,14 +533,16 @@ const AlertDetail: React.FC<AlertDetailProps> = ({
                     className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-green-500/20 border border-green-500/30 text-green-400 text-xs font-medium hover:bg-green-500/30 transition-colors disabled:opacity-50"
                   >
                     <CheckCircle size={12} />
-                    {isResolving ? 'Resolving...' : 'Confirm Resolution'}
+                    {isResolving
+                      ? t('alerts:detail.buttons.resolving')
+                      : t('alerts:detail.buttons.confirmResolution')}
                   </button>
                 </div>
               </div>
             ) : (
               <div className="flex justify-between items-center">
                 <button onClick={onClose} className="btn-secondary text-xs">
-                  Close
+                  {t('alerts:detail.buttons.close')}
                 </button>
                 <button
                   onClick={() => setShowResolveInput(true)}
@@ -563,7 +550,7 @@ const AlertDetail: React.FC<AlertDetailProps> = ({
                   className="btn-primary flex items-center gap-1.5 text-xs"
                 >
                   <CheckCircle size={14} />
-                  Resolve Incident
+                  {t('alerts:detail.buttons.resolveIncident')}
                 </button>
               </div>
             )}
@@ -571,7 +558,7 @@ const AlertDetail: React.FC<AlertDetailProps> = ({
         ) : (
           <div className="flex justify-end gap-3">
             <button onClick={onClose} className="btn-secondary text-xs">
-              Close
+              {t('alerts:detail.buttons.close')}
             </button>
           </div>
         )}

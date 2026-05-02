@@ -11,7 +11,20 @@ i18n
     fallbackLng: 'en',
     supportedLngs: ['en', 'fr'],
     defaultNS: 'common',
-    ns: ['common', 'auth', 'dashboard', 'alerts', 'routes', 'students', 'errors'],
+    ns: [
+      'common',
+      'auth',
+      'dashboard',
+      'alerts',
+      'routes',
+      'students',
+      'fleet',
+      'boards',
+      'schools',
+      'users',
+      'alertConfig',
+      'errors',
+    ],
 
     detection: {
       order: ['localStorage', 'navigator', 'htmlTag'],

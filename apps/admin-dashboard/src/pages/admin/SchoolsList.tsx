@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { organizationApi } from '../../services/api/organization.api';
 import { queryKeys } from '../../services/query-keys';
@@ -11,6 +12,7 @@ interface SchoolFormState {
 }
 
 export const SchoolsList: React.FC = () => {
+  const { t } = useTranslation(['schools']);
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
@@ -66,11 +68,11 @@ export const SchoolsList: React.FC = () => {
 
   const handleSave = async () => {
     if (!form.name.trim() || form.name.trim().length < 2) {
-      setFormError('School name must be at least 2 characters.');
+      setFormError(t('schools:schoolNameMinLength'));
       return;
     }
     if (!form.boardId) {
-      setFormError('Please select a board.');
+      setFormError(t('schools:selectBoardRequired'));
       return;
     }
     setIsSaving(true);
@@ -87,7 +89,7 @@ export const SchoolsList: React.FC = () => {
       closeForm();
       queryClient.invalidateQueries({ queryKey: queryKeys.schools.all });
     } catch {
-      setFormError('Failed to save school. Please try again.');
+      setFormError(t('schools:errors.saveFailed'));
     } finally {
       setIsSaving(false);
     }
@@ -95,25 +97,25 @@ export const SchoolsList: React.FC = () => {
 
   const handleDelete = async (school: School) => {
     if (!isOstaAdmin) return;
-    if (!window.confirm(`Delete school "${school.name}"? This cannot be undone.`)) return;
+    if (!window.confirm(t('schools:deleteConfirm', { name: school.name }))) return;
     try {
       await organizationApi.deleteSchool(school.id);
       queryClient.invalidateQueries({ queryKey: queryKeys.schools.all });
     } catch {
-      setError('Failed to delete school.');
+      setError(t('schools:errors.deleteFailed'));
     }
   };
 
   return (
     <div className="p-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-white">Schools</h1>
+        <h1 className="text-2xl font-bold text-white">{t('schools:title')}</h1>
         {canManage && (
           <button
             onClick={openCreateForm}
             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
           >
-            + Add School
+            {t('schools:addSchool')}
           </button>
         )}
       </div>
@@ -127,29 +129,31 @@ export const SchoolsList: React.FC = () => {
       {showForm && (
         <div className="mb-6 p-5 bg-dashboard-card rounded-xl border border-white/10">
           <h2 className="text-lg font-semibold text-white mb-4">
-            {editingSchool ? 'Edit School' : 'Create School'}
+            {editingSchool ? t('schools:editSchool') : t('schools:createSchool')}
           </h2>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
-              <label className="block text-xs text-white/60 mb-1">School Name</label>
+              <label className="block text-xs text-white/60 mb-1">{t('schools:schoolName')}</label>
               <input
                 type="text"
                 value={form.name}
                 onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                 className="w-full bg-white/5 border border-white/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500"
-                placeholder="e.g. Maple Ridge Elementary"
+                placeholder={t('schools:schoolNamePlaceholder')}
                 maxLength={120}
               />
             </div>
             {isOstaAdmin && (
               <div>
-                <label className="block text-xs text-white/60 mb-1">Board</label>
+                <label className="block text-xs text-white/60 mb-1">
+                  {t('schools:boardLabel')}
+                </label>
                 <select
                   value={form.boardId}
                   onChange={(e) => setForm((f) => ({ ...f, boardId: e.target.value }))}
                   className="w-full bg-dashboard-bg border border-white/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500"
                 >
-                  <option value="">Select a board…</option>
+                  <option value="">{t('schools:selectBoard')}</option>
                   {boards.map((b) => (
                     <option key={b.id} value={b.id}>
                       {b.name}
@@ -166,28 +170,28 @@ export const SchoolsList: React.FC = () => {
               disabled={isSaving}
               className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-4 py-2 rounded-lg transition-colors"
             >
-              {isSaving ? 'Saving…' : 'Save'}
+              {isSaving ? t('schools:actions.saving') : t('schools:actions.save')}
             </button>
             <button
               onClick={closeForm}
               className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg transition-colors"
             >
-              Cancel
+              {t('schools:actions.cancel')}
             </button>
           </div>
         </div>
       )}
 
       {isLoading ? (
-        <div className="text-white/60">Loading…</div>
+        <div className="text-white/60">{t('schools:loading')}</div>
       ) : (
         <div className="bg-dashboard-card rounded-xl overflow-hidden shadow-glass border border-white/10">
           <table className="w-full text-left text-white">
             <thead className="bg-white/5 uppercase text-xs font-semibold">
               <tr>
-                <th className="px-6 py-4">Name</th>
-                <th className="px-6 py-4">Board ID</th>
-                {canManage && <th className="px-6 py-4">Actions</th>}
+                <th className="px-6 py-4">{t('schools:columns.name')}</th>
+                <th className="px-6 py-4">{t('schools:columns.boardId')}</th>
+                {canManage && <th className="px-6 py-4">{t('schools:columns.actions')}</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-white/10">
@@ -202,14 +206,14 @@ export const SchoolsList: React.FC = () => {
                           onClick={() => openEditForm(school)}
                           className="text-blue-400 hover:text-blue-300 text-sm"
                         >
-                          Edit
+                          {t('schools:actions.edit')}
                         </button>
                         {isOstaAdmin && (
                           <button
                             onClick={() => handleDelete(school)}
                             className="text-red-400 hover:text-red-300 text-sm"
                           >
-                            Delete
+                            {t('schools:actions.delete')}
                           </button>
                         )}
                       </div>
@@ -220,7 +224,7 @@ export const SchoolsList: React.FC = () => {
               {schools.length === 0 && (
                 <tr>
                   <td colSpan={canManage ? 3 : 2} className="px-6 py-8 text-center text-white/50">
-                    No schools found.
+                    {t('schools:empty')}
                   </td>
                 </tr>
               )}

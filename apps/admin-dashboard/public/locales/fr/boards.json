@@ -1,0 +1,29 @@
+{
+  "title": "Conseils scolaires",
+  "addBoard": "+ Ajouter conseil",
+  "editBoard": "Modifier conseil",
+  "createBoard": "Créer conseil",
+  "boardName": "Nom du conseil",
+  "boardNamePlaceholder": "ex. Conseil scolaire de district de Durham",
+  "boardNameMinLength": "Le nom du conseil doit comporter au moins 2 caractères.",
+  "columns": {
+    "name": "Nom",
+    "schools": "Écoles",
+    "actions": "Actions"
+  },
+  "loading": "Chargement…",
+  "empty": "Aucun conseil trouvé.",
+  "errors": {
+    "loadFailed": "Impossible de charger les conseils. Veuillez réessayer.",
+    "saveFailed": "Impossible d'enregistrer le conseil. Veuillez réessayer.",
+    "deleteFailed": "Impossible de supprimer le conseil."
+  },
+  "deleteConfirm": "Supprimer le conseil «\u00a0{{name}}\u00a0»\u00a0? Cette action est irréversible.",
+  "actions": {
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "save": "Enregistrer",
+    "saving": "Enregistrement…",
+    "cancel": "Annuler"
+  }
+}

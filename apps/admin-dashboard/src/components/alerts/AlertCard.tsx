@@ -12,6 +12,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import type { Alert, AlertAuditEntry } from '../../types';
 import { formatTimestamp } from '../../utils/formatters';
 
@@ -31,76 +32,53 @@ interface AlertCardProps {
   onToggleTimeline?: () => void;
 }
 
-const ALERT_DISPLAY: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
+const ALERT_ICONS: Record<string, { color: string; icon: React.ReactNode }> = {
   PANIC_BUTTON: {
-    label: 'PANIC',
     color: 'bg-rose-500/20 border-rose-500/30 text-rose-500 shadow-rose-500/10',
     icon: <Siren size={14} className="animate-pulse" />,
   },
   ROUTE_DEVIATION: {
-    label: 'ROUTE DEVIATION',
     color: 'bg-amber-500/20 border-amber-500/30 text-amber-500 shadow-amber-500/10',
     icon: <Navigation size={14} />,
   },
   INCIDENT: {
-    label: 'INCIDENT',
     color: 'bg-orange-500/20 border-orange-500/30 text-orange-500 shadow-orange-500/10',
     icon: <AlertTriangle size={14} />,
   },
   LATE_ARRIVAL: {
-    label: 'LATE ARRIVAL',
     color: 'bg-blue-500/20 border-blue-500/30 text-blue-500 shadow-blue-500/10',
     icon: <Bus size={14} className="animate-pulse" />,
   },
   ROUTE_DIVERSION: {
-    label: 'ROUTE DIVERSION',
     color: 'bg-amber-500/20 border-amber-500/30 text-amber-500 shadow-amber-500/10',
     icon: <Navigation size={14} className="animate-bounce" />,
   },
   PANIC_ALERT: {
-    label: 'PANIC ALERT',
     color: 'bg-rose-500/20 border-rose-500/30 text-rose-500 shadow-rose-500/10',
     icon: <Siren size={14} className="animate-pulse" />,
   },
   MEDICAL: {
-    label: 'MEDICAL',
     color: 'bg-rose-500/20 border-rose-500/30 text-rose-500 shadow-rose-500/10',
     icon: <Stethoscope size={14} className="animate-pulse" />,
   },
   LATE_DEPARTURE: {
-    label: 'LATE DEPARTURE',
     color: 'bg-amber-500/20 border-amber-500/30 text-amber-500 shadow-amber-500/10',
     icon: <Clock size={14} />,
   },
   COMPLIANCE: {
-    label: 'COMPLIANCE',
     color: 'bg-purple-500/20 border-purple-500/30 text-purple-400 shadow-purple-500/10',
     icon: <ShieldCheck size={14} />,
   },
   OTHER: {
-    label: 'ALERT',
     color: 'bg-slate-500/20 border-slate-500/30 text-slate-400 shadow-slate-500/10',
     icon: <AlertTriangle size={14} />,
   },
 };
 
-const DEFAULT_DESCRIPTIONS: Record<string, string> = {
-  PANIC_BUTTON: 'Panic button triggered',
-  ROUTE_DEVIATION: 'Bus deviated from route',
-  INCIDENT: 'Incident reported',
-  LATE_ARRIVAL: 'Bus is arriving late',
-  ROUTE_DIVERSION: 'Unplanned route diversion detected',
-  PANIC_ALERT: 'Emergency panic alert triggered',
-  MEDICAL: 'Medical emergency reported',
-  LATE_DEPARTURE: 'Late departure from schedule',
-  COMPLIANCE: 'Compliance issue detected',
-  OTHER: 'Alert reported',
-};
-
-const TIER_BADGE: Record<string, { label: string; className: string }> = {
-  TIER_1: { label: 'T1', className: 'bg-red-500/20 text-red-400 border border-red-500/30' },
-  TIER_2: { label: 'T2', className: 'bg-amber-500/20 text-amber-400 border border-amber-500/30' },
-  TIER_3: { label: 'T3', className: 'bg-blue-500/20 text-blue-400 border border-blue-500/30' },
+const TIER_BADGE_CLASS: Record<string, string> = {
+  TIER_1: 'bg-red-500/20 text-red-400 border border-red-500/30',
+  TIER_2: 'bg-amber-500/20 text-amber-400 border border-amber-500/30',
+  TIER_3: 'bg-blue-500/20 text-blue-400 border border-blue-500/30',
 };
 
 // Compact mode: only non-default statuses get a badge
@@ -112,43 +90,15 @@ const COMPACT_STATUS_BADGE: Record<string, string> = {
   FALSE_ALARM: 'bg-slate-500/20 text-slate-400 border border-slate-500/30',
 };
 
-// Expanded mode: every status has a badge
-const EXPANDED_STATUS_BADGE: Record<string, { label: string; className: string }> = {
-  ACTIVE: { label: 'Active', className: 'bg-red-500/20 text-red-400 border border-red-500/30' },
-  PENDING_CONFIRMATION: {
-    label: 'Awaiting Confirm',
-    className: 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30 animate-pulse',
-  },
-  CONFIRMED: {
-    label: 'Confirmed',
-    className: 'bg-green-500/20 text-green-400 border border-green-500/30',
-  },
-  AUTO_ESCALATED: {
-    label: 'Escalated',
-    className: 'bg-orange-500/20 text-orange-400 border border-orange-500/30',
-  },
-  RESOLVED: {
-    label: 'Resolved',
-    className: 'bg-green-500/20 text-green-400 border border-green-500/30',
-  },
-  FALSE_ALARM: {
-    label: 'False Alarm',
-    className: 'bg-slate-500/20 text-slate-400 border border-slate-500/30',
-  },
-};
-
-const CARD_AUDIT_LABELS: Record<string, string> = {
-  CREATED: 'Created',
-  PENDING_CONFIRMATION: 'Pending confirmation',
-  CONFIRMED: 'Confirmed by school',
-  AUTO_ESCALATED: 'Auto-escalated',
-  FALSE_ALARM: 'False alarm',
-  PARENT_NOTIFIED: 'Parents notified',
-  BOARD_ESCALATED: 'Escalated to board',
-  OSTA_ESCALATED: 'Escalated to OSTA',
-  RESOLVED: 'Resolved',
-  INFO_REQUESTED: 'Info requested',
-  STATUS_UPDATE: 'Update',
+// Expanded mode: every status has a badge className
+const EXPANDED_STATUS_CLASS: Record<string, string> = {
+  ACTIVE: 'bg-red-500/20 text-red-400 border border-red-500/30',
+  PENDING_CONFIRMATION:
+    'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30 animate-pulse',
+  CONFIRMED: 'bg-green-500/20 text-green-400 border border-green-500/30',
+  AUTO_ESCALATED: 'bg-orange-500/20 text-orange-400 border border-orange-500/30',
+  RESOLVED: 'bg-green-500/20 text-green-400 border border-green-500/30',
+  FALSE_ALARM: 'bg-slate-500/20 text-slate-400 border border-slate-500/30',
 };
 
 function getCardAuditDotColor(eventType: string): string {
@@ -211,7 +161,12 @@ const AlertCard: React.FC<AlertCardProps> = ({
   showTimeline,
   onToggleTimeline,
 }) => {
-  const display = ALERT_DISPLAY[alert.eventType] ?? ALERT_DISPLAY.OTHER;
+  const { t } = useTranslation(['alerts']);
+  const displayIcon = ALERT_ICONS[alert.eventType] ?? ALERT_ICONS.OTHER;
+  const typeLabel = t(`alerts:card.types.${alert.eventType}`, { defaultValue: alert.eventType });
+  const defaultDesc = t(`alerts:card.defaultDescriptions.${alert.eventType}`, {
+    defaultValue: 'Alert',
+  });
   const isPanic = alert.eventType === 'PANIC_BUTTON' || alert.eventType === 'PANIC_ALERT';
   const isResolved = alert.status === 'RESOLVED' || alert.status === 'FALSE_ALARM';
   const isPendingConfirmation = alert.status === 'PENDING_CONFIRMATION';
@@ -229,11 +184,17 @@ const AlertCard: React.FC<AlertCardProps> = ({
             ? 'text-purple-400'
             : 'text-orange-400';
 
-  const tierBadge = alert.tier ? TIER_BADGE[alert.tier] : null;
+  const tierBadgeClass = alert.tier ? (TIER_BADGE_CLASS[alert.tier] ?? '') : null;
+  const tierBadgeLabel = alert.tier
+    ? t(`alerts:card.tierBadges.${alert.tier}`, { defaultValue: alert.tier })
+    : null;
 
   if (!compact) {
     // ── Expanded row (Alerts page) ──────────────────────────────────────────
-    const statusBadge = EXPANDED_STATUS_BADGE[alert.status];
+    const statusBadgeClass = EXPANDED_STATUS_CLASS[alert.status];
+    const statusBadgeLabel = t(`alerts:card.statusBadges.${alert.status}`, {
+      defaultValue: alert.status,
+    });
     const ts = new Date(alert.timestamp);
     const dateStr = ts.toLocaleDateString([], { day: '2-digit', month: 'short', year: 'numeric' });
     const timeStr = ts.toLocaleTimeString([], {
@@ -254,8 +215,8 @@ const AlertCard: React.FC<AlertCardProps> = ({
       >
         <div className="flex items-start gap-3">
           {/* Icon */}
-          <div className={`p-2 rounded-xl border shrink-0 shadow-lg ${display.color}`}>
-            {display.icon}
+          <div className={`p-2 rounded-xl border shrink-0 shadow-lg ${displayIcon.color}`}>
+            {displayIcon.icon}
           </div>
 
           {/* Main content */}
@@ -263,27 +224,27 @@ const AlertCard: React.FC<AlertCardProps> = ({
             {/* Row 1: type label + badges */}
             <div className="flex items-center gap-2 flex-wrap mb-1">
               <span className={`text-xs font-black uppercase tracking-widest ${labelColor}`}>
-                {display.label}
+                {typeLabel}
               </span>
-              {tierBadge && (
+              {tierBadgeClass && tierBadgeLabel && (
                 <span
-                  className={`px-1.5 py-0.5 rounded text-[10px] font-black uppercase ${tierBadge.className}`}
+                  className={`px-1.5 py-0.5 rounded text-[10px] font-black uppercase ${tierBadgeClass}`}
                 >
-                  {tierBadge.label}
+                  {tierBadgeLabel}
                 </span>
               )}
-              {statusBadge && (
+              {statusBadgeClass && statusBadgeLabel && (
                 <span
-                  className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${statusBadge.className}`}
+                  className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${statusBadgeClass}`}
                 >
-                  {statusBadge.label}
+                  {statusBadgeLabel}
                 </span>
               )}
             </div>
 
             {/* Row 2: description */}
             <p className="text-sm text-white font-medium line-clamp-2 leading-snug mb-2">
-              {alert.description || DEFAULT_DESCRIPTIONS[alert.eventType] || 'Alert'}
+              {alert.description || defaultDesc}
             </p>
 
             {/* Row 3: route / vehicle / time */}
@@ -326,12 +287,12 @@ const AlertCard: React.FC<AlertCardProps> = ({
                 {showTimeline ? (
                   <>
                     <ChevronUp size={14} />
-                    Hide timeline
+                    {t('alerts:card.hideTimeline')}
                   </>
                 ) : (
                   <>
                     <ChevronDown size={14} />
-                    View timeline
+                    {t('alerts:card.viewTimeline')}
                   </>
                 )}
               </div>
@@ -341,7 +302,7 @@ const AlertCard: React.FC<AlertCardProps> = ({
             {showTimeline && auditTrail && auditTrail.length > 0 && (
               <div className="mt-3 pt-2 border-t border-dashboard-border">
                 <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider mb-2">
-                  Timeline
+                  {t('alerts:card.timeline')}
                 </p>
                 <div className="space-y-0">
                   {[...auditTrail]
@@ -362,8 +323,9 @@ const AlertCard: React.FC<AlertCardProps> = ({
                             <span
                               className={`text-xs font-semibold ${getCardAuditLabelColor(entry.eventType)}`}
                             >
-                              {CARD_AUDIT_LABELS[entry.eventType] ||
-                                entry.eventType.replace(/_/g, ' ')}
+                              {t(`alerts:card.auditEvents.${entry.eventType}`, {
+                                defaultValue: entry.eventType.replace(/_/g, ' '),
+                              })}
                             </span>
                             <span className="flex items-center gap-1 text-[10px] text-slate-500">
                               <Clock size={9} />
@@ -421,21 +383,21 @@ const AlertCard: React.FC<AlertCardProps> = ({
       } ${isPendingConfirmation ? 'ring-1 ring-yellow-500/40' : ''}`}
     >
       <div className="flex items-start gap-2.5">
-        <div className={`p-1.5 rounded-lg border shrink-0 shadow-lg ${display.color}`}>
-          {display.icon}
+        <div className={`p-1.5 rounded-lg border shrink-0 shadow-lg ${displayIcon.color}`}>
+          {displayIcon.icon}
         </div>
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-1 mb-1">
             <span className={`text-[8px] font-black uppercase tracking-widest ${labelColor}`}>
-              {display.label}
+              {typeLabel}
             </span>
             <div className="flex items-center gap-1">
-              {tierBadge && (
+              {tierBadgeClass && tierBadgeLabel && (
                 <span
-                  className={`px-1 py-0.5 rounded text-[7px] font-black uppercase ${tierBadge.className}`}
+                  className={`px-1 py-0.5 rounded text-[7px] font-black uppercase ${tierBadgeClass}`}
                 >
-                  {tierBadge.label}
+                  {tierBadgeLabel}
                 </span>
               )}
               {compactStatusBadge && (
@@ -453,7 +415,7 @@ const AlertCard: React.FC<AlertCardProps> = ({
           </div>
 
           <p className="text-[10px] text-white font-black line-clamp-1 leading-none mb-1.5">
-            {alert.description || DEFAULT_DESCRIPTIONS[alert.eventType] || 'Alert'}
+            {alert.description || defaultDesc}
           </p>
 
           <div className="flex items-center justify-between text-[8px] font-bold text-slate-500 uppercase tracking-tighter">

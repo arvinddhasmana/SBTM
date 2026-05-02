@@ -1,0 +1,31 @@
+{
+  "title": "Schools",
+  "addSchool": "+ Add School",
+  "editSchool": "Edit School",
+  "createSchool": "Create School",
+  "schoolName": "School Name",
+  "schoolNamePlaceholder": "e.g. Maple Ridge Elementary",
+  "boardLabel": "Board",
+  "selectBoard": "Select a board…",
+  "schoolNameMinLength": "School name must be at least 2 characters.",
+  "selectBoardRequired": "Please select a board.",
+  "columns": {
+    "name": "Name",
+    "boardId": "Board ID",
+    "actions": "Actions"
+  },
+  "loading": "Loading…",
+  "empty": "No schools found.",
+  "errors": {
+    "saveFailed": "Failed to save school. Please try again.",
+    "deleteFailed": "Failed to delete school."
+  },
+  "deleteConfirm": "Delete school \"{{name}}\"? This cannot be undone.",
+  "actions": {
+    "edit": "Edit",
+    "delete": "Delete",
+    "save": "Save",
+    "saving": "Saving…",
+    "cancel": "Cancel"
+  }
+}
