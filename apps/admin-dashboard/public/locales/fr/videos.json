@@ -1,0 +1,12 @@
+{
+  "title": "Vidéos",
+  "pageTitle": "Examen des événements vidéo",
+  "pageSubtitle": "{{count}} événements vidéo",
+  "loading": "Chargement des événements vidéo...",
+  "filters": "Filtres :",
+  "allRoutes": "Tous les itinéraires",
+  "allEventTypes": "Tous les types d'événements",
+  "clearFilters": "Effacer les filtres",
+  "listTitle": "Événements vidéo ({{count}})",
+  "empty": "Aucun événement vidéo trouvé"
+}

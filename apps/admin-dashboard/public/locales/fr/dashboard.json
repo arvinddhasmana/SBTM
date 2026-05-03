@@ -87,5 +87,27 @@
     "tier1": "Niveau 1 — Critique",
     "tier2": "Niveau 2 — Avertissement",
     "tier3": "Niveau 3 — Info"
+  },
+  "tenantDashboard": {
+    "loading": "Chargement de l'aperçu des locataires…",
+    "titleOsta": "Vue d'ensemble OSTA",
+    "titleBoard": "Vue d'ensemble du conseil",
+    "subtitleOsta": "Vue agrégée de tous les conseils et écoles",
+    "subtitleBoard": "Limité au conseil : {{boardId}}",
+    "errorLoad": "Impossible de charger les données.",
+    "statTotalBoards": "Total conseils",
+    "statTotalBoardsSub": "Conseils scolaires actifs",
+    "statTotalSchools": "Écoles totales",
+    "statTotalSchoolsSubOsta": "De tous les conseils",
+    "statTotalSchoolsSubBoard": "Dans votre conseil",
+    "statAvgSchools": "Moy. écoles / conseil",
+    "statAvgSchoolsSub": "Écoles par conseil",
+    "boardsHeading": "Conseils",
+    "schoolsHeading": "Écoles",
+    "colBoardName": "Nom du conseil",
+    "colSchools": "Écoles",
+    "colSchoolName": "Nom de l'école",
+    "colBoard": "Conseil",
+    "empty": "Aucune donnée disponible pour votre périmètre."
   }
 }

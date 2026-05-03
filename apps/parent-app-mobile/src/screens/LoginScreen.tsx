@@ -8,12 +8,14 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useParentStore } from '../store/useParentStore';
 import { NotificationService } from '../services/NotificationService';
 import { GlassCard, GlassButton } from '../components';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 
 export default function LoginScreen() {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -22,7 +24,7 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert('Error', 'Please enter both email and password');
+      Alert.alert(t('auth.errorTitle'), t('auth.errors.required'));
       return;
     }
 
@@ -34,7 +36,7 @@ export default function LoginScreen() {
       // Initialize notifications after successful login
       await NotificationService.initialize();
     } catch (error: any) {
-      Alert.alert('Login Failed', error.message || 'Invalid credentials. Please try again.');
+      Alert.alert(t('auth.loginFailedTitle'), error.message || t('auth.errors.invalid'));
     } finally {
       setIsLoading(false);
     }
@@ -54,15 +56,15 @@ export default function LoginScreen() {
           <View style={styles.logoCircle}>
             <Text style={styles.logoText}>🚌</Text>
           </View>
-          <Text style={styles.title}>SBTM Parent</Text>
-          <Text style={styles.subtitle}>Track your child's journey</Text>
+          <Text style={styles.title}>{t('app.title')}</Text>
+          <Text style={styles.subtitle}>{t('app.subtitle')}</Text>
         </View>
 
         {/* Login Form */}
         <GlassCard style={styles.formCard}>
           <TextInput
             style={styles.input}
-            placeholder="Email"
+            placeholder={t('auth.email')}
             placeholderTextColor="#64748b"
             value={email}
             onChangeText={setEmail}
@@ -74,7 +76,7 @@ export default function LoginScreen() {
 
           <TextInput
             style={styles.input}
-            placeholder="Password"
+            placeholder={t('auth.password')}
             placeholderTextColor="#64748b"
             value={password}
             onChangeText={setPassword}
@@ -85,7 +87,7 @@ export default function LoginScreen() {
           />
 
           <GlassButton
-            title="Log In"
+            title={t('auth.login')}
             onPress={handleLogin}
             variant="primary"
             disabled={isLoading}
@@ -95,7 +97,7 @@ export default function LoginScreen() {
           />
 
           {/* Demo Credentials Hint */}
-          <Text style={styles.hint}>Demo: parent1@sbtm.demo / Admin123!</Text>
+          <Text style={styles.hint}>{t('auth.demoMessage')}</Text>
         </GlassCard>
       </View>
     </KeyboardAvoidingView>

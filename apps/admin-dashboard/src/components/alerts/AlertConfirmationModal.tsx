@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { X, AlertTriangle, CheckCircle, XCircle, HelpCircle, Clock, Check } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import type { Alert } from '../../types';
 import { formatEventType } from '../../utils/formatters';
 import { useConfirmationTimeoutMs } from '../../hooks/useEscalationConfig';
@@ -33,6 +34,7 @@ const AlertConfirmationModal: React.FC<AlertConfirmationModalProps> = ({
   onRequestInfo,
   onClose,
 }) => {
+  const { t } = useTranslation(['alerts']);
   const confirmationWindowMs = useConfirmationTimeoutMs(alert.tier ?? 'TIER_1');
   const confirmationWindowSec = Math.floor(confirmationWindowMs / 1000);
 
@@ -142,15 +144,17 @@ const AlertConfirmationModal: React.FC<AlertConfirmationModalProps> = ({
             </div>
             <div>
               <h3 id="confirmation-modal-title" className="text-lg font-bold text-white">
-                Alert Requires Confirmation
+                {t('alerts:confirmationModal.title')}
               </h3>
-              <p className="text-xs text-slate-400">Tier 1 — {formatEventType(alert.eventType)}</p>
+              <p className="text-xs text-slate-400">
+                {t('alerts:confirmationModal.tier1Label')} — {formatEventType(alert.eventType)}
+              </p>
             </div>
           </div>
           <button
             onClick={onClose}
             className="p-2 rounded-lg hover:bg-slate-800 transition-colors"
-            aria-label="Close modal"
+            aria-label={t('alerts:confirmationModal.closeModal')}
           >
             <X size={20} className="text-slate-400" />
           </button>
@@ -161,7 +165,9 @@ const AlertConfirmationModal: React.FC<AlertConfirmationModalProps> = ({
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2 text-slate-400">
               <Clock size={14} />
-              <span className="text-xs font-medium uppercase tracking-wide">Auto-escalates in</span>
+              <span className="text-xs font-medium uppercase tracking-wide">
+                {t('alerts:confirmationModal.autoEscalatesIn')}
+              </span>
             </div>
             <span
               className={`text-2xl font-black tabular-nums ${timerColor}`}
@@ -186,7 +192,7 @@ const AlertConfirmationModal: React.FC<AlertConfirmationModalProps> = ({
             />
           </div>
           <p className="mt-1.5 text-xs text-slate-500">
-            If no action is taken, parents will be notified automatically.
+            {t('alerts:confirmationModal.noActionWarning')}
           </p>
         </div>
 
@@ -194,15 +200,17 @@ const AlertConfirmationModal: React.FC<AlertConfirmationModalProps> = ({
         <div className="p-6 space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div className="p-3 bg-dashboard-bg rounded-xl">
-              <p className="text-xs text-slate-500 mb-0.5">Route</p>
+              <p className="text-xs text-slate-500 mb-0.5">{t('alerts:confirmationModal.route')}</p>
               <p className="text-sm font-semibold text-white">{alert.routeId}</p>
             </div>
             <div className="p-3 bg-dashboard-bg rounded-xl">
-              <p className="text-xs text-slate-500 mb-0.5">Vehicle</p>
+              <p className="text-xs text-slate-500 mb-0.5">
+                {t('alerts:confirmationModal.vehicle')}
+              </p>
               <p className="text-sm font-semibold text-white">{alert.vehicleId}</p>
             </div>
             <div className="col-span-2 p-3 bg-dashboard-bg rounded-xl">
-              <p className="text-xs text-slate-500 mb-0.5">Event</p>
+              <p className="text-xs text-slate-500 mb-0.5">{t('alerts:confirmationModal.event')}</p>
               <p className="text-sm font-semibold text-white">
                 {formatEventType(alert.eventType)}
                 {alert.description && (
@@ -216,7 +224,7 @@ const AlertConfirmationModal: React.FC<AlertConfirmationModalProps> = ({
         {/* Action buttons */}
         <div className="p-6 pt-0 border-t border-dashboard-border flex flex-col gap-3">
           <p className="text-xs text-slate-500 font-medium uppercase tracking-wide mb-1">
-            Choose an action
+            {t('alerts:confirmationModal.chooseAction')}
           </p>
 
           <button
@@ -226,7 +234,9 @@ const AlertConfirmationModal: React.FC<AlertConfirmationModalProps> = ({
             data-testid="btn-confirm"
           >
             <CheckCircle size={18} />
-            {activeAction === 'confirm' ? 'Confirming...' : 'Confirm and Notify Parents'}
+            {activeAction === 'confirm'
+              ? t('alerts:confirmationModal.confirmingButton')
+              : t('alerts:confirmationModal.confirmButton')}
           </button>
 
           <button
@@ -236,7 +246,9 @@ const AlertConfirmationModal: React.FC<AlertConfirmationModalProps> = ({
             data-testid="btn-false-alarm"
           >
             <XCircle size={18} />
-            {activeAction === 'false-alarm' ? 'Marking...' : 'Mark as False Alarm'}
+            {activeAction === 'false-alarm'
+              ? t('alerts:confirmationModal.markingButton')
+              : t('alerts:confirmationModal.falseAlarmButton')}
           </button>
 
           <button
@@ -251,17 +263,17 @@ const AlertConfirmationModal: React.FC<AlertConfirmationModalProps> = ({
           >
             {infoRequested ? <Check size={18} /> : <HelpCircle size={18} />}
             {infoRequested
-              ? 'Info Requested'
+              ? t('alerts:confirmationModal.infoRequestedButton')
               : activeAction === 'request-info'
-                ? 'Requesting...'
-                : 'Request More Information'}
+                ? t('alerts:confirmationModal.requestingButton')
+                : t('alerts:confirmationModal.requestInfoButton')}
           </button>
           {infoRequested && (
             <p
               className="text-xs text-slate-500 text-center mt-1"
               data-testid="info-requested-note"
             >
-              Request logged. Escalation timer continues.
+              {t('alerts:confirmationModal.infoRequestedNote')}
             </p>
           )}
         </div>

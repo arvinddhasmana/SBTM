@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import { useParentStore } from '../store/useParentStore';
 import { ParentApiService } from '../services/ParentApiService';
 import { BusLocationUpdate, Route, RootStackParamList } from '../types';
@@ -28,6 +29,7 @@ const EMERGENCY_EVENT_TYPES = new Set(['PANIC_BUTTON', 'PANIC_ALERT', 'INCIDENT'
 const DELAY_EVENT_TYPES = new Set(['LATE_ARRIVAL', 'ROUTE_DEVIATION', 'ROUTE_DIVERSION']);
 
 export default function MapScreen() {
+  const { t } = useTranslation();
   const route = useRoute<MapScreenRouteProp>();
   const navigation = useNavigation();
   const { children, activeAlerts } = useParentStore();
@@ -243,7 +245,7 @@ export default function MapScreen() {
       <AuroraBackground>
         <View style={styles.centerContainer}>
           <ActivityIndicator size="large" color="#a5b4fc" />
-          <Text style={styles.loadingText}>Loading map...</Text>
+          <Text style={styles.loadingText}>{t('tracking.loadingMap')}</Text>
         </View>
       </AuroraBackground>
     );
@@ -253,7 +255,7 @@ export default function MapScreen() {
     return (
       <AuroraBackground>
         <View style={styles.centerContainer}>
-          <Text style={styles.errorText}>Child not found</Text>
+          <Text style={styles.errorText}>{t('tracking.childNotFound')}</Text>
         </View>
       </AuroraBackground>
     );
@@ -279,12 +281,12 @@ export default function MapScreen() {
         : 'normal';
   const statusLabel =
     busStatus === 'normal'
-      ? 'Normal'
+      ? t('tracking.statuses.normal')
       : busStatus === 'delay'
-        ? 'Delayed'
+        ? t('tracking.statuses.delayed')
         : busStatus === 'emergency'
-          ? 'Emergency'
-          : 'Offline';
+          ? t('tracking.statuses.emergency')
+          : t('tracking.statuses.offline');
 
   const direction: 'AM' | 'PM' =
     routeDetails?.direction === 'PM'
@@ -301,19 +303,29 @@ export default function MapScreen() {
   // Route status — a live, fresh GPS signal always wins over the cached
   // presence flag so an actively running PM bus never displays "Completed".
   // Falls back to presence (at_home / at_school) only when GPS is absent.
-  const routeStatusLabel = (() => {
-    if (isLive) return 'Live';
+  // Separate raw status key for conditional styling/logic
+  const routeStatusKey = (() => {
+    if (isLive) return 'live';
     const isPM = activeRouteId === child.pmRouteId;
     const isAM = activeRouteId === child.amRouteId;
-    if (isPM && child.status === 'at_home') return 'Completed';
-    if (isAM && child.status === 'at_school') return 'Completed';
-    if (locationData) return 'No Signal';
-    return 'Inactive';
+    if (isPM && child.status === 'at_home') return 'completed';
+    if (isAM && child.status === 'at_school') return 'completed';
+    if (locationData) return 'noSignal';
+    return 'inactive';
+  })();
+  const routeStatusLabel = (() => {
+    if (isLive) return t('tracking.statuses.live');
+    const isPM = activeRouteId === child.pmRouteId;
+    const isAM = activeRouteId === child.amRouteId;
+    if (isPM && child.status === 'at_home') return t('tracking.statuses.completed');
+    if (isAM && child.status === 'at_school') return t('tracking.statuses.completed');
+    if (locationData) return t('tracking.statuses.noSignal');
+    return t('tracking.statuses.inactive');
   })();
 
   const childFullName = `${child.firstName} ${child.lastName}`.trim();
   const routeName = routeDetails?.name ?? activeRouteId ?? 'Route';
-  const vehicleId = routeDetails?.vehicleId || child.vehicleId || 'N/A';
+  const vehicleId = routeDetails?.vehicleId || child.vehicleId || t('tracking.map.notAvailable');
   const etaMinutes =
     isLive && locationData?.eta != null ? Math.max(0, Math.round(locationData.eta / 60)) : null;
   const updatedAt = locationData?.timestamp ? new Date(locationData.timestamp) : null;
@@ -405,7 +417,7 @@ export default function MapScreen() {
             style={styles.mapResetBtn}
           >
             <Text style={styles.mapResetIcon}>⌖</Text>
-            <Text style={styles.mapResetText}>MAP RESET</Text>
+            <Text style={styles.mapResetText}>{t('tracking.map.mapReset').toUpperCase()}</Text>
           </Pressable>
           <IconButton icon="↻" accessibilityLabel="Refresh" onPress={handleRefresh} />
         </View>
@@ -430,9 +442,9 @@ export default function MapScreen() {
             <View
               style={[
                 styles.statusBadge,
-                routeStatusLabel === 'Live'
+                routeStatusKey === 'live'
                   ? styles.statusBadgeLive
-                  : routeStatusLabel === 'No Signal'
+                  : routeStatusKey === 'noSignal'
                     ? styles.statusBadgeNoSignal
                     : styles.statusBadgeIdle,
               ]}
@@ -466,30 +478,35 @@ export default function MapScreen() {
           {sheetExpanded && (
             <>
               <Text style={styles.sheetLine}>
-                Route: <Text style={styles.sheetLineStrong}>{routeName}</Text> ({direction})
+                {t('tracking.map.route')}
+                <Text style={styles.sheetLineStrong}>{routeName}</Text> (
+                {t(`tracking.map.${direction.toLowerCase()}`)})
               </Text>
-              <Text style={styles.sheetLineMuted}>Vehicle: {vehicleId}</Text>
+              <Text style={styles.sheetLineMuted}>
+                {t('tracking.map.vehicle')}
+                {vehicleId}
+              </Text>
 
               {isLive && locationData && (
                 <View style={styles.sheetEtaRow}>
                   <Text style={styles.sheetEtaText}>
-                    ETA: {etaMinutes != null ? `${etaMinutes} min` : '—'}
+                    {t('tracking.map.eta')}
+                    {etaMinutes != null ? `${etaMinutes} ${t('tracking.map.min')}` : '—'}
                   </Text>
                   {updatedAt && (
                     <Text style={styles.sheetUpdatedText}>
-                      Updated: {updatedAt.toLocaleTimeString()}
+                      {t('tracking.map.updated')}
+                      {updatedAt.toLocaleTimeString()}
                     </Text>
                   )}
                 </View>
               )}
 
-              {!isLive && routeStatusLabel === 'No Signal' && (
-                <Text style={styles.sheetHintWarn}>
-                  Bus signal lost. Route may still be in progress.
-                </Text>
+              {!isLive && routeStatusKey === 'noSignal' && (
+                <Text style={styles.sheetHintWarn}>{t('tracking.map.busSignalLost')}</Text>
               )}
-              {!isLive && routeStatusLabel !== 'No Signal' && (
-                <Text style={styles.sheetHintMuted}>Route is not currently active.</Text>
+              {!isLive && routeStatusKey !== 'noSignal' && (
+                <Text style={styles.sheetHintMuted}>{t('tracking.map.routeNotActive')}</Text>
               )}
             </>
           )}

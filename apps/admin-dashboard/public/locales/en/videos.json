@@ -1,0 +1,12 @@
+{
+  "title": "Videos",
+  "pageTitle": "Video Event Review",
+  "pageSubtitle": "{{count}} video events",
+  "loading": "Loading video events...",
+  "filters": "Filters:",
+  "allRoutes": "All Routes",
+  "allEventTypes": "All Event Types",
+  "clearFilters": "Clear Filters",
+  "listTitle": "Video Events ({{count}})",
+  "empty": "No video events found"
+}

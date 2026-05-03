@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import { useTranslation } from 'react-i18next';
 import { useParentStore } from '../store/useParentStore';
 import { ParentApiService } from '../services/ParentApiService';
 import { AbsenceReport } from '../types';
@@ -65,6 +66,7 @@ function WebDateInput({
 }
 
 export default function AbsenceReportScreen() {
+  const { t } = useTranslation();
   const { children } = useParentStore();
   const [selectedChildId, setSelectedChildId] = useState(children.length > 0 ? children[0].id : '');
   const minDate = useMemo(() => todayIso(), []);
@@ -106,25 +108,25 @@ export default function AbsenceReportScreen() {
 
   const handleSubmit = async () => {
     if (!selectedChildId) {
-      Alert.alert('Error', 'Please select a child');
+      Alert.alert(t('auth.errorTitle'), t('absence.errorSelectChild'));
       return;
     }
 
     if (!tripDate) {
-      Alert.alert('Error', 'Please select a date');
+      Alert.alert(t('auth.errorTitle'), t('absence.date'));
       return;
     }
 
     // Validate date format (YYYY-MM-DD)
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
     if (!dateRegex.test(tripDate)) {
-      Alert.alert('Error', 'Please enter date in format YYYY-MM-DD (e.g., 2026-05-01)');
+      Alert.alert(t('auth.errorTitle'), t('absence.absenceDate'));
       return;
     }
 
     const selectedChild = children.find((c) => c.id === selectedChildId);
     if (!selectedChild) {
-      Alert.alert('Error', 'Selected child not found');
+      Alert.alert(t('auth.errorTitle'), t('absence.errorSelectChild'));
       return;
     }
 
@@ -140,20 +142,16 @@ export default function AbsenceReportScreen() {
 
       await ParentApiService.reportAbsence(report);
 
-      Alert.alert(
-        'Success',
-        'Absence reported successfully. The driver and school have been notified.',
-        [
-          {
-            text: 'OK',
-            onPress: () => {
-              setTripDate(minDate);
-              setRouteType('BOTH');
-              setNotes('');
-            },
+      Alert.alert(t('common.ok'), t('absence.success'), [
+        {
+          text: t('common.ok'),
+          onPress: () => {
+            setTripDate(minDate);
+            setRouteType('BOTH');
+            setNotes('');
           },
-        ],
-      );
+        },
+      ]);
     } catch (error: any) {
       // NestJS ValidationPipe returns `message` as a string[]; the gateway's
       // ConflictException returns a string. Normalize so the parent sees
@@ -163,8 +161,8 @@ export default function AbsenceReportScreen() {
         ? raw.join('\n')
         : typeof raw === 'string' && raw.trim()
           ? raw
-          : 'Failed to report absence. Please try again.';
-      Alert.alert('Error', friendly);
+          : t('absence.error');
+      Alert.alert(t('auth.errorTitle'), friendly);
     } finally {
       setIsSubmitting(false);
     }
@@ -173,7 +171,7 @@ export default function AbsenceReportScreen() {
   if (children.length === 0) {
     return (
       <View style={styles.centerContainer} testID="absence-screen">
-        <Text style={styles.emptyText}>No children associated with your account.</Text>
+        <Text style={styles.emptyText}>{t('absence.noChildren')}</Text>
       </View>
     );
   }
@@ -182,15 +180,13 @@ export default function AbsenceReportScreen() {
     <View style={styles.container} testID="absence-screen">
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
         <GlassCard style={styles.formCard}>
-          <Text style={styles.title}>Report an Absence</Text>
-          <Text style={styles.subtitle}>
-            Let the driver and school know your child will not be riding the bus.
-          </Text>
+          <Text style={styles.title}>{t('absence.title')}</Text>
+          <Text style={styles.subtitle}>{t('absence.subtitle')}</Text>
 
           {/* Submit at the top — keeps the primary action visible without
             scrolling on smaller phones. */}
           <GlassButton
-            title="Submit Report"
+            title={t('absence.submit')}
             onPress={handleSubmit}
             variant="primary"
             disabled={isSubmitting}
@@ -202,7 +198,7 @@ export default function AbsenceReportScreen() {
           {/* Child Selector — light surface so the selected option text is
             readable on both web (browser-native popup) and native dropdowns. */}
           <View style={styles.formGroup}>
-            <Text style={styles.label}>Child</Text>
+            <Text style={styles.label}>{t('absence.child')}</Text>
             <View style={styles.pickerContainer}>
               <Picker
                 selectedValue={selectedChildId}
@@ -230,7 +226,7 @@ export default function AbsenceReportScreen() {
             TextInput fallback was kept so existing E2E tests still pass on
             web (`getByTestId('absence-date').fill(...)`). */}
           <View style={styles.formGroup}>
-            <Text style={styles.label}>Date</Text>
+            <Text style={styles.label}>{t('absence.date')}</Text>
             {Platform.OS === 'web' ? (
               <WebDateInput
                 value={tripDate}
@@ -264,7 +260,7 @@ export default function AbsenceReportScreen() {
                 )}
                 {Platform.OS === 'ios' && showNativePicker && (
                   <Pressable onPress={() => setShowNativePicker(false)} style={styles.dateDoneBtn}>
-                    <Text style={styles.dateDoneText}>Done</Text>
+                    <Text style={styles.dateDoneText}>{t('absence.done')}</Text>
                   </Pressable>
                 )}
               </>
@@ -274,7 +270,7 @@ export default function AbsenceReportScreen() {
 
           {/* Route Type Selector */}
           <View style={styles.formGroup}>
-            <Text style={styles.label}>Route</Text>
+            <Text style={styles.label}>{t('absence.route')}</Text>
             <View style={styles.pickerContainer}>
               <Picker
                 selectedValue={routeType}
@@ -284,16 +280,16 @@ export default function AbsenceReportScreen() {
                 dropdownIconColor="#0f172a"
                 testID="absence-route"
               >
-                <Picker.Item label="Morning route only (AM)" value="AM" color="#0f172a" />
-                <Picker.Item label="Afternoon route only (PM)" value="PM" color="#0f172a" />
-                <Picker.Item label="Full day (both routes)" value="BOTH" color="#0f172a" />
+                <Picker.Item label={t('absence.routeTypes.AM')} value="AM" color="#0f172a" />
+                <Picker.Item label={t('absence.routeTypes.PM')} value="PM" color="#0f172a" />
+                <Picker.Item label={t('absence.routeTypes.BOTH')} value="BOTH" color="#0f172a" />
               </Picker>
             </View>
           </View>
 
           {/* Notes */}
           <View style={styles.formGroup}>
-            <Text style={styles.label}>Notes (Optional)</Text>
+            <Text style={styles.label}>{t('absence.additionalNotes')}</Text>
             <TextInput
               style={[styles.input, styles.textArea]}
               placeholder="Additional information..."

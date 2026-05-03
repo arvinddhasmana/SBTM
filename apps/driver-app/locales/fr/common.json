@@ -211,6 +211,7 @@
     "yes": "Oui",
     "no": "Non",
     "ok": "OK",
-    "error": "Erreur"
+    "error": "Erreur",
+    "backendUnreachable": "Services backend inaccessibles. Vérifiez votre réseau ou contactez votre administrateur."
   }
 }

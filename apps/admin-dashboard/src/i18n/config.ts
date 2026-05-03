@@ -24,6 +24,7 @@ i18n
       'users',
       'alertConfig',
       'absences',
+      'videos',
       'errors',
     ],
 

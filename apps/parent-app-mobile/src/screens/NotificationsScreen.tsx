@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import { ParentApiService } from '../services/ParentApiService';
 import { Alert, AlertAuditEntry } from '../types';
 import { AuroraBackground, IconButton, LoadingSpinner } from '../components';
@@ -59,6 +60,7 @@ function timeAgo(ts: string): string {
 }
 
 export default function NotificationsScreen() {
+  const { t } = useTranslation();
   const navigation = useNavigation();
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -140,8 +142,8 @@ export default function NotificationsScreen() {
       else earlier.push(a);
     });
     const out = [];
-    if (today.length) out.push({ title: 'Today', data: today });
-    if (earlier.length) out.push({ title: 'Earlier this week', data: earlier });
+    if (today.length) out.push({ title: 'today', data: today });
+    if (earlier.length) out.push({ title: 'earlier', data: earlier });
     return out;
   }, [alerts, filter]);
 
@@ -174,10 +176,14 @@ export default function NotificationsScreen() {
           <Text style={styles.notifDesc}>{item.description}</Text>
           <View style={styles.notifMeta}>
             <View style={styles.metaChip}>
-              <Text style={styles.metaChipText}>Route {item.routeId}</Text>
+              <Text style={styles.metaChipText}>
+                {t('notifications.routeLabel', { id: item.routeId })}
+              </Text>
             </View>
             <View style={styles.metaChip}>
-              <Text style={styles.metaChipText}>Bus {item.vehicleId}</Text>
+              <Text style={styles.metaChipText}>
+                {t('notifications.busLabel', { id: item.vehicleId })}
+              </Text>
             </View>
             <View style={[styles.metaChip, item.status === 'RESOLVED' && styles.metaChipOk]}>
               <Text style={styles.metaChipText}>{item.status}</Text>
@@ -192,7 +198,9 @@ export default function NotificationsScreen() {
             testID={`timeline-toggle-${item.id}`}
           >
             <Text style={styles.timelineToggleText}>
-              {isExpanded ? '▲ Hide timeline' : '▼ View timeline'}
+              {isExpanded
+                ? t('notifications.hideTimelineArrow')
+                : t('notifications.viewTimelineArrow')}
             </Text>
           </Pressable>
 
@@ -201,11 +209,13 @@ export default function NotificationsScreen() {
               {isLoadingTrail && (
                 <View style={styles.timelineLoading}>
                   <ActivityIndicator size="small" color="#a5b4fc" />
-                  <Text style={styles.timelineLoadingText}>Loading timeline…</Text>
+                  <Text style={styles.timelineLoadingText}>
+                    {t('notifications.loadingTimeline')}
+                  </Text>
                 </View>
               )}
               {!isLoadingTrail && trail && trail.length === 0 && (
-                <Text style={styles.timelineEmpty}>No timeline events yet.</Text>
+                <Text style={styles.timelineEmpty}>{t('notifications.noTimelineEntries')}</Text>
               )}
               {!isLoadingTrail &&
                 trail &&
@@ -242,7 +252,7 @@ export default function NotificationsScreen() {
       <AuroraBackground>
         <View style={styles.centerContainer}>
           <LoadingSpinner size="large" />
-          <Text style={styles.loadingText}>Loading notifications...</Text>
+          <Text style={styles.loadingText}>{t('notifications.loadingNotifications')}</Text>
         </View>
       </AuroraBackground>
     );
@@ -256,9 +266,9 @@ export default function NotificationsScreen() {
           <View style={styles.headerLeft}>
             <IconButton icon="‹" accessibilityLabel="Back" onPress={() => navigation.goBack()} />
             <View style={{ marginLeft: 8 }}>
-              <Text style={styles.title}>Alerts</Text>
+              <Text style={styles.title}>{t('notifications.title')}</Text>
               <Text style={styles.subtitle}>
-                {unreadCount} unread · {alerts.length} total
+                {t('notifications.unreadSummary', { unread: unreadCount, total: alerts.length })}
               </Text>
             </View>
           </View>
@@ -273,10 +283,10 @@ export default function NotificationsScreen() {
         <View style={styles.filterRow} testID="notifications-filter-row">
           {(
             [
-              { key: 'all', label: 'All' },
-              { key: 'active', label: 'Active' },
-              { key: 'today', label: 'Today' },
-              { key: 'week', label: 'This week' },
+              { key: 'all', label: t('notifications.filterAll') },
+              { key: 'active', label: t('notifications.filterActive') },
+              { key: 'today', label: t('notifications.filterToday') },
+              { key: 'week', label: t('notifications.filterWeek') },
             ] as const
           ).map((chip) => {
             const active = filter === chip.key;
@@ -302,7 +312,11 @@ export default function NotificationsScreen() {
           keyExtractor={(item) => item.id}
           renderItem={renderAlert}
           renderSectionHeader={({ section }) => (
-            <Text style={styles.sectionTitle}>{section.title}</Text>
+            <Text style={styles.sectionTitle}>
+              {section.title === 'today'
+                ? t('notifications.today')
+                : t('notifications.sectionEarlier')}
+            </Text>
           )}
           contentContainerStyle={styles.listContent}
           refreshControl={
@@ -315,10 +329,8 @@ export default function NotificationsScreen() {
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <Text style={styles.emptyEmoji}>🔔</Text>
-              <Text style={styles.emptyTitle}>No alerts yet</Text>
-              <Text style={styles.emptySubtitle}>
-                You'll see safety alerts and notifications here
-              </Text>
+              <Text style={styles.emptyTitle}>{t('notifications.noAlertsYet')}</Text>
+              <Text style={styles.emptySubtitle}>{t('notifications.emptySubtitle')}</Text>
             </View>
           }
         />

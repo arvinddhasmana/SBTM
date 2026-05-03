@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { organizationApi } from '../../services/api/organization.api';
 import type { Board, School } from '../../services/api/organization.api';
@@ -22,6 +23,7 @@ const StatCard: React.FC<{ label: string; value: string | number; sub?: string }
 );
 
 export const TenantDashboard: React.FC = () => {
+  const { t } = useTranslation(['dashboard']);
   const { user } = useAuth();
   const [boards, setBoards] = useState<Board[]>([]);
   const [schools, setSchools] = useState<School[]>([]);
@@ -48,7 +50,7 @@ export const TenantDashboard: React.FC = () => {
           setSchools(schoolsData);
         }
       } catch {
-        setError('Failed to load tenant data.');
+        setError(t('dashboard:tenantDashboard.errorLoad'));
       } finally {
         setIsLoading(false);
       }
@@ -67,19 +69,21 @@ export const TenantDashboard: React.FC = () => {
   };
 
   if (isLoading) {
-    return <div className="p-8 text-white/60">Loading tenant overview…</div>;
+    return <div className="p-8 text-white/60">{t('dashboard:tenantDashboard.loading')}</div>;
   }
 
   return (
     <div className="p-8">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-white">
-          {isOstaAdmin ? 'OSTA-Wide Overview' : 'Board Overview'}
+          {isOstaAdmin
+            ? t('dashboard:tenantDashboard.titleOsta')
+            : t('dashboard:tenantDashboard.titleBoard')}
         </h1>
         <p className="text-white/50 text-sm mt-1">
           {isOstaAdmin
-            ? 'Aggregate view across all boards and schools'
-            : `Scoped to board: ${user?.boardId ?? '—'}`}
+            ? t('dashboard:tenantDashboard.subtitleOsta')
+            : t('dashboard:tenantDashboard.subtitleBoard', { boardId: user?.boardId ?? '—' })}
         </p>
       </div>
 
@@ -91,31 +95,41 @@ export const TenantDashboard: React.FC = () => {
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
         {isOstaAdmin && (
-          <StatCard label="Total Boards" value={stats.boardCount} sub="Active school boards" />
+          <StatCard
+            label={t('dashboard:tenantDashboard.statTotalBoards')}
+            value={stats.boardCount}
+            sub={t('dashboard:tenantDashboard.statTotalBoardsSub')}
+          />
         )}
         <StatCard
-          label="Total Schools"
+          label={t('dashboard:tenantDashboard.statTotalSchools')}
           value={stats.schoolCount}
-          sub={isOstaAdmin ? 'Across all boards' : 'In your board'}
+          sub={
+            isOstaAdmin
+              ? t('dashboard:tenantDashboard.statTotalSchoolsSubOsta')
+              : t('dashboard:tenantDashboard.statTotalSchoolsSubBoard')
+          }
         />
         {isOstaAdmin && (
           <StatCard
-            label="Avg Schools / Board"
+            label={t('dashboard:tenantDashboard.statAvgSchools')}
             value={stats.boardCount > 0 ? (stats.schoolCount / stats.boardCount).toFixed(1) : '—'}
-            sub="Schools per board"
+            sub={t('dashboard:tenantDashboard.statAvgSchoolsSub')}
           />
         )}
       </div>
 
       {isOstaAdmin && boards.length > 0 && (
         <>
-          <h2 className="text-lg font-semibold text-white mb-3">Boards</h2>
+          <h2 className="text-lg font-semibold text-white mb-3">
+            {t('dashboard:tenantDashboard.boardsHeading')}
+          </h2>
           <div className="bg-dashboard-card rounded-xl overflow-hidden border border-white/10 mb-8">
             <table className="w-full text-left text-white">
               <thead className="bg-white/5 uppercase text-xs font-semibold">
                 <tr>
-                  <th className="px-6 py-4">Board Name</th>
-                  <th className="px-6 py-4">Schools</th>
+                  <th className="px-6 py-4">{t('dashboard:tenantDashboard.colBoardName')}</th>
+                  <th className="px-6 py-4">{t('dashboard:tenantDashboard.colSchools')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/10">
@@ -135,13 +149,17 @@ export const TenantDashboard: React.FC = () => {
 
       {schools.length > 0 && (
         <>
-          <h2 className="text-lg font-semibold text-white mb-3">Schools</h2>
+          <h2 className="text-lg font-semibold text-white mb-3">
+            {t('dashboard:tenantDashboard.schoolsHeading')}
+          </h2>
           <div className="bg-dashboard-card rounded-xl overflow-hidden border border-white/10">
             <table className="w-full text-left text-white">
               <thead className="bg-white/5 uppercase text-xs font-semibold">
                 <tr>
-                  <th className="px-6 py-4">School Name</th>
-                  {isOstaAdmin && <th className="px-6 py-4">Board</th>}
+                  <th className="px-6 py-4">{t('dashboard:tenantDashboard.colSchoolName')}</th>
+                  {isOstaAdmin && (
+                    <th className="px-6 py-4">{t('dashboard:tenantDashboard.colBoard')}</th>
+                  )}
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/10">
@@ -166,7 +184,7 @@ export const TenantDashboard: React.FC = () => {
 
       {!isLoading && schools.length === 0 && boards.length === 0 && (
         <div className="text-center text-white/40 py-12">
-          No tenant data available for your scope.
+          {t('dashboard:tenantDashboard.empty')}
         </div>
       )}
     </div>

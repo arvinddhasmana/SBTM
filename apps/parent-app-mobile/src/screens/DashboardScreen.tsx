@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useTranslation } from 'react-i18next';
 import { useParentStore } from '../store/useParentStore';
 import { Child, RootStackParamList, Alert } from '../types';
 import {
@@ -31,14 +32,8 @@ import {
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
-const STATUS_LABEL: Record<Child['status'], string> = {
-  on_bus: 'On Bus',
-  at_school: 'At School',
-  at_home: 'At Home',
-  unknown: 'Unknown',
-};
-
 export default function DashboardScreen() {
+  const { t } = useTranslation();
   const navigation = useNavigation<NavigationProp>();
   const {
     user,
@@ -140,12 +135,16 @@ export default function DashboardScreen() {
         <View style={styles.alertBannerChips}>
           {!!alert.vehicleId && (
             <View style={styles.alertChipSmall}>
-              <Text style={styles.alertChipSmallText}>Bus {alert.vehicleId}</Text>
+              <Text style={styles.alertChipSmallText}>
+                {t('children.vehicleLabel', { id: alert.vehicleId })}
+              </Text>
             </View>
           )}
           {!!alert.routeId && (
             <View style={styles.alertChipSmall}>
-              <Text style={styles.alertChipSmallText}>Route {alert.routeId}</Text>
+              <Text style={styles.alertChipSmallText}>
+                {t('notifications.routeLabel', { id: alert.routeId })}
+              </Text>
             </View>
           )}
         </View>
@@ -156,7 +155,9 @@ export default function DashboardScreen() {
         )}
         {affected.length > 0 && (
           <Text style={styles.alertBannerAffected}>
-            Affected: {affected.map((c) => `${c.firstName} ${c.lastName}`).join(', ')}
+            {t('children.affectedLabel', {
+              names: affected.map((c) => `${c.firstName} ${c.lastName}`).join(', '),
+            })}
           </Text>
         )}
       </TouchableOpacity>
@@ -172,9 +173,16 @@ export default function DashboardScreen() {
     // resolve to a known label.
     const rawStatus = (item.status ?? 'unknown') as string;
     const status =
-      (rawStatus.toLowerCase() as Child['status']) in STATUS_LABEL
+      (rawStatus.toLowerCase() as Child['status']) in
+      { on_bus: 1, at_school: 1, at_home: 1, unknown: 1 }
         ? (rawStatus.toLowerCase() as Child['status'])
         : 'unknown';
+    const statusLabelMap: Record<string, string> = {
+      on_bus: t('children.status.onBus'),
+      at_school: t('children.status.atSchool'),
+      at_home: t('children.status.atHome'),
+      unknown: t('children.status.unknown'),
+    };
     const liveAm = item.amRouteId ? routeLiveLocations[item.amRouteId] : undefined;
     const livePm = item.pmRouteId ? routeLiveLocations[item.pmRouteId] : undefined;
     const live = liveAm ?? livePm;
@@ -196,7 +204,7 @@ export default function DashboardScreen() {
           {hasAlert && (
             <View style={styles.cardAlertRibbon}>
               <Text style={styles.cardAlertRibbonText}>
-                ⚠ {childAlerts.length} active alert{childAlerts.length === 1 ? '' : 's'}
+                {t('children.alertBadge', { count: childAlerts.length })}
               </Text>
             </View>
           )}
@@ -214,12 +222,16 @@ export default function DashboardScreen() {
                   {item.firstName} {item.lastName}
                 </Text>
                 <View testID={`child-status-${item.id}`}>
-                  <StatusBadge label={STATUS_LABEL[status]} variant={status} size="small" />
+                  <StatusBadge
+                    label={statusLabelMap[status] ?? t('children.status.unknown')}
+                    variant={status}
+                    size="small"
+                  />
                 </View>
               </View>
               <Text style={styles.schoolName}>
-                {item.schoolName || 'School'}
-                {item.grade ? ` · Grade ${item.grade}` : ''}
+                {item.schoolName || t('children.details.school')}
+                {item.grade ? ` · ${t('children.gradeLabel', { grade: item.grade })}` : ''}
               </Text>
               <View style={styles.routeChips}>
                 {!!(item.amRouteName || item.amRouteId) && (
@@ -238,17 +250,26 @@ export default function DashboardScreen() {
                 )}
                 {!!item.vehicleId && (
                   <View style={[styles.routeChip, styles.routeChipBus]}>
-                    <Text style={styles.routeChipText}>Bus {item.vehicleId}</Text>
+                    <Text style={styles.routeChipText}>
+                      {t('children.vehicleLabel', { id: item.vehicleId })}
+                    </Text>
                   </View>
                 )}
               </View>
-              {!!item.stopName && <Text style={styles.metaLine}>Stop · {item.stopName}</Text>}
-              {etaMin != null && status === 'on_bus' && (
+              {!!item.stopName && (
                 <Text style={styles.metaLine}>
-                  Bus {etaMin === 0 ? 'arriving now' : `arriving in ~${etaMin} min`}
+                  {t('children.stopLabel', { name: item.stopName })}
                 </Text>
               )}
-              <Text style={styles.trackHint}>Tap to track on map →</Text>
+              {etaMin != null && status === 'on_bus' && (
+                <Text style={styles.metaLine}>
+                  {t('children.details.bus')}{' '}
+                  {etaMin === 0
+                    ? t('children.arrivingNow')
+                    : t('children.arrivingIn', { minutes: etaMin })}
+                </Text>
+              )}
+              <Text style={styles.trackHint}>{t('children.trackHint')}</Text>
             </View>
 
             <Text style={styles.chevron}>›</Text>
@@ -263,7 +284,7 @@ export default function DashboardScreen() {
       <AuroraBackground>
         <View style={styles.centerContainer}>
           <LoadingSpinner size="large" />
-          <Text style={styles.loadingText}>Loading children...</Text>
+          <Text style={styles.loadingText}>{t('children.loadingChildren')}</Text>
         </View>
       </AuroraBackground>
     );
@@ -278,7 +299,7 @@ export default function DashboardScreen() {
               <Text style={styles.userAvatarText}>{greetingName[0]?.toUpperCase()}</Text>
             </View>
             <View>
-              <Text style={styles.greeting}>Hi, {greetingName}</Text>
+              <Text style={styles.greeting}>{t('children.greeting', { name: greetingName })}</Text>
               <Text style={styles.dateLabel}>{todayLabel}</Text>
             </View>
           </View>
@@ -321,7 +342,7 @@ export default function DashboardScreen() {
             activeAlerts.length > 0 ? (
               <View style={styles.alertsBlock} testID="active-alerts-block">
                 <Text style={styles.alertsBlockTitle}>
-                  {alertCount} active alert{alertCount === 1 ? '' : 's'}
+                  {t('children.activeAlerts', { count: alertCount })}
                 </Text>
                 {activeAlerts.map(renderAlertBanner)}
               </View>
@@ -336,7 +357,7 @@ export default function DashboardScreen() {
           }
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>No children linked to your account.</Text>
+              <Text style={styles.emptyText}>{t('children.noChildrenLinked')}</Text>
             </View>
           }
         />

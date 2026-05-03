@@ -1,7 +1,7 @@
 {
   "app": {
-    "title": "Portail parent",
-    "subtitle": "Suivi autobus scolaire"
+    "title": "SBTM Parent",
+    "subtitle": "Suivez le trajet de votre enfant"
   },
   "auth": {
     "title": "Connexion",
@@ -14,7 +14,9 @@
     "errors": {
       "required": "Veuillez saisir courriel et mot de passe",
       "invalid": "Identifiants invalides"
-    }
+    },
+    "loginFailedTitle": "Échec de connexion",
+    "errorTitle": "Erreur"
   },
   "children": {
     "title": "Mes enfants",
@@ -38,7 +40,20 @@
       "atSchool": "À l'école",
       "atHome": "À la maison",
       "unknown": "Statut inconnu"
-    }
+    },
+    "loadingChildren": "Chargement des enfants...",
+    "greeting": "Bonjour, {{name}}",
+    "alertBadge_one": "⚠ {{count}} alerte active",
+    "alertBadge_other": "⚠ {{count}} alertes actives",
+    "activeAlerts_one": "{{count}} alerte active",
+    "activeAlerts_other": "{{count}} alertes actives",
+    "trackHint": "Appuyer pour suivre sur la carte →",
+    "gradeLabel": "Niveau {{grade}}",
+    "stopLabel": "Arrêt · {{name}}",
+    "vehicleLabel": "Autobus {{id}}",
+    "arrivingNow": "arrive maintenant",
+    "arrivingIn": "arrive dans ~{{minutes}} min",
+    "affectedLabel": "Affectés : {{names}}"
   },
   "tracking": {
     "title": "Suivi autobus",
@@ -58,7 +73,9 @@
       "live": "En direct",
       "noSignal": "Pas de signal",
       "normal": "Normal",
-      "emergency": "Urgence"
+      "emergency": "Urgence",
+      "offline": "Hors ligne",
+      "inactive": "Inactif"
     },
     "map": {
       "loading": "Chargement...",
@@ -102,7 +119,9 @@
         "ROUTE_DIVERSION": "Détour itinéraire",
         "PANIC_ALERT": "Alerte panique"
       }
-    }
+    },
+    "childNotFound": "Enfant introuvable",
+    "loadingMap": "Chargement de la carte..."
   },
   "notifications": {
     "title": "Notifications",
@@ -142,7 +161,19 @@
       "RESOLVED": "Résolue",
       "INFO_REQUESTED": "Info demandée",
       "STATUS_UPDATE": "Mise à jour"
-    }
+    },
+    "loadingNotifications": "Chargement des notifications...",
+    "emptySubtitle": "Les alertes de sécurité et notifications apparaîtront ici",
+    "routeLabel": "Itinéraire {{id}}",
+    "busLabel": "Autobus {{id}}",
+    "unreadSummary": "{{unread}} non lues · {{total}} total",
+    "sectionEarlier": "Cette semaine",
+    "filterAll": "Toutes",
+    "filterActive": "Actives",
+    "filterToday": "Aujourd'hui",
+    "filterWeek": "Cette semaine",
+    "viewTimelineArrow": "▼ Voir chronologie",
+    "hideTimelineArrow": "▲ Masquer chronologie"
   },
   "absence": {
     "title": "Signaler absence",
@@ -173,7 +204,8 @@
       "AM": "Itinéraire matin uniquement (AM)",
       "PM": "Itinéraire après-midi uniquement (PM)",
       "BOTH": "Journée complète (deux itinéraires)"
-    }
+    },
+    "done": "Terminé"
   },
   "profile": {
     "title": "Profil",
@@ -213,6 +245,15 @@
       "EMAIL": "Courriel"
     },
     "alwaysOn": "Toujours actif"
+  },
+  "settings": {
+    "title": "Paramètres de notifications",
+    "loadingSettings": "Chargement des paramètres...",
+    "savedBanner": "✓ Préférences enregistrées avec succès",
+    "errorTitle": "Erreur",
+    "errorSave": "Échec de l'enregistrement des préférences. Veuillez réessayer.",
+    "appInfo": "Application SBTM Parent v1.0.0",
+    "copyright": "© 2026 SBTM"
   },
   "navigation": {
     "home": "Accueil",

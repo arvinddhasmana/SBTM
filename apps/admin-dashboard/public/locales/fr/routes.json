@@ -139,5 +139,14 @@
       "cancelBtn": "Annuler",
       "deleteBtn": "Supprimer"
     }
+  },
+  "routeCard": {
+    "directionLabel": "Itinéraire {{direction}}",
+    "routeDeviation": "Déviation d'itinéraire",
+    "stops": "{{count}} arrêts",
+    "eta": "HPA : {{eta}}"
+  },
+  "videoCard": {
+    "routeLabel": "Itinéraire : {{id}}"
   }
 }

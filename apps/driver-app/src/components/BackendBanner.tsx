@@ -1,20 +1,20 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   visible: boolean;
 }
 
 export default function BackendBanner({ visible }: Props) {
+  const { t } = useTranslation();
   if (!visible) return null;
 
   return (
     <View style={styles.banner}>
       <MaterialCommunityIcons name="wifi-off" size={16} color="#fef08a" style={styles.icon} />
-      <Text style={styles.text}>
-        Backend services are unreachable. Check your network or contact your administrator.
-      </Text>
+      <Text style={styles.text}>{t('common.backendUnreachable')}</Text>
     </View>
   );
 }

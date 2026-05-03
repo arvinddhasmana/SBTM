@@ -8,6 +8,7 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { ParentApiService } from '../services/ParentApiService';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 
@@ -72,6 +73,7 @@ function buildInitialPrefMap(
 }
 
 export default function SettingsScreen() {
+  const { t } = useTranslation();
   const [preferences, setPreferences] = useState<PrefMap>(() => buildInitialPrefMap([]));
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -121,7 +123,7 @@ export default function SettingsScreen() {
       setSavedBanner(true);
       setTimeout(() => setSavedBanner(false), 3000);
     } catch (error: any) {
-      Alert.alert('Error', error?.message || 'Failed to save preferences. Please try again.');
+      Alert.alert(t('settings.errorTitle'), error?.message || t('settings.errorSave'));
     } finally {
       setIsSaving(false);
     }
@@ -135,13 +137,15 @@ export default function SettingsScreen() {
             <View style={styles.eventInfo}>
               <Text style={styles.eventTitle}>
                 {eventType.locked ? '🛡️ ' : ''}
-                {eventType.label}
+                {t(`profile.eventTypes.${eventType.key}.label`)}
               </Text>
-              <Text style={styles.eventDescription}>{eventType.description}</Text>
+              <Text style={styles.eventDescription}>
+                {t(`profile.eventTypes.${eventType.key}.description`)}
+              </Text>
             </View>
             {eventType.locked && (
               <View style={styles.alwaysOnBadge}>
-                <Text style={styles.alwaysOnText}>Always On</Text>
+                <Text style={styles.alwaysOnText}>{t('profile.alwaysOn')}</Text>
               </View>
             )}
           </View>
@@ -170,7 +174,7 @@ export default function SettingsScreen() {
                       isEnabled ? styles.channelChipTextOn : styles.channelChipTextOff,
                     ]}
                   >
-                    {channel.icon} {channel.label}
+                    {channel.icon} {t(`profile.channels.${channel.key}`)}
                   </Text>
                 </TouchableOpacity>
               );
@@ -178,14 +182,14 @@ export default function SettingsScreen() {
           </View>
         </View>
       )),
-    [preferences, isSaving],
+    [preferences, isSaving, t],
   );
 
   if (isLoading) {
     return (
       <View style={styles.centerContainer}>
         <ActivityIndicator size="large" color="#a5b4fc" />
-        <Text style={styles.loadingText}>Loading settings...</Text>
+        <Text style={styles.loadingText}>{t('settings.loadingSettings')}</Text>
       </View>
     );
   }
@@ -197,16 +201,14 @@ export default function SettingsScreen() {
       testID="settings-screen"
     >
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Text style={styles.title}>⚙️ Notification Settings</Text>
+        <Text style={styles.title}>⚙️ {t('settings.title')}</Text>
         <LanguageSwitcher />
       </View>
-      <Text style={styles.subtitle}>
-        Choose how you want to be notified about your child's bus activity.
-      </Text>
+      <Text style={styles.subtitle}>{t('profile.subtitle')}</Text>
 
       {savedBanner && (
         <View style={styles.successBanner} testID="settings-saved-banner">
-          <Text style={styles.successBannerText}>✓ Preferences saved successfully</Text>
+          <Text style={styles.successBannerText}>{t('settings.savedBanner')}</Text>
         </View>
       )}
 
@@ -221,13 +223,13 @@ export default function SettingsScreen() {
         {isSaving ? (
           <ActivityIndicator color="#fff" />
         ) : (
-          <Text style={styles.buttonText}>Save Preferences</Text>
+          <Text style={styles.buttonText}>{t('profile.savePreferences')}</Text>
         )}
       </TouchableOpacity>
 
       <View style={styles.appInfo}>
-        <Text style={styles.appInfoText}>SBTM Parent App v1.0.0</Text>
-        <Text style={styles.appInfoText}>© 2026 SBTM</Text>
+        <Text style={styles.appInfoText}>{t('settings.appInfo')}</Text>
+        <Text style={styles.appInfoText}>{t('settings.copyright')}</Text>
       </View>
     </ScrollView>
   );

@@ -49,9 +49,9 @@
     "loading": "Loading configuration...",
     "guidelines": {
       "title": "Timing Guidelines",
-      "confirmationTimeout": "Confirmation Timeout: Time before auto-escalating to parents (TIER 1 only)",
-      "boardEscalation": "Board Escalation: Time before escalating to Board Admin",
-      "ostaEscalation": "OSTA Escalation: Time before escalating to OSTA Admin",
+      "confirmation": "Confirmation Timeout: Time before auto-escalating to parents (TIER 1 only)",
+      "board": "Board Escalation: Time before escalating to Board Admin",
+      "osta": "OSTA Escalation: Time before escalating to OSTA Admin",
       "units": "All times are in seconds. Leave empty to disable that escalation step."
     },
     "fields": {
@@ -62,10 +62,10 @@
       "timeSeconds": "{{value}}s"
     },
     "hints": {
-      "confirmationTimeout_tier1": "Time before parents are notified",
-      "confirmationTimeout_other": "Not applicable for this tier",
-      "boardEscalation": "Time before escalating to Board Admin",
-      "ostaEscalation": "Time before escalating to OSTA Admin"
+      "confirmationTier1": "Time before parents are notified",
+      "confirmationOther": "Not applicable for this tier",
+      "board": "Time before escalating to Board Admin",
+      "osta": "Time before escalating to OSTA Admin"
     },
     "badges": {
       "default": "Default"

@@ -217,5 +217,24 @@
       "enterStatusUpdate": "Enter status update...",
       "resolutionNotes": "Resolution notes (optional)..."
     }
+  },
+  "confirmationModal": {
+    "title": "Alert Requires Confirmation",
+    "tier1Label": "Tier 1",
+    "autoEscalatesIn": "Auto-escalates in",
+    "noActionWarning": "If no action is taken, parents will be notified automatically.",
+    "route": "Route",
+    "vehicle": "Vehicle",
+    "event": "Event",
+    "chooseAction": "Choose an action",
+    "confirmButton": "Confirm and Notify Parents",
+    "confirmingButton": "Confirming...",
+    "falseAlarmButton": "Mark as False Alarm",
+    "markingButton": "Marking...",
+    "requestInfoButton": "Request More Information",
+    "requestingButton": "Requesting...",
+    "infoRequestedButton": "Info Requested",
+    "infoRequestedNote": "Request logged. Escalation timer continues.",
+    "closeModal": "Close modal"
   }
 }

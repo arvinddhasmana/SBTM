@@ -212,5 +212,24 @@
       "enterStatusUpdate": "Saisir la mise à jour du statut...",
       "resolutionNotes": "Notes de résolution (optionnel)..."
     }
+  },
+  "confirmationModal": {
+    "title": "Alerte nécessite confirmation",
+    "tier1Label": "Niveau 1",
+    "autoEscalatesIn": "Escalade automatique dans",
+    "noActionWarning": "Sans action, les parents seront notifiés automatiquement.",
+    "route": "Itinéraire",
+    "vehicle": "Véhicule",
+    "event": "Événement",
+    "chooseAction": "Choisir une action",
+    "confirmButton": "Confirmer et notifier les parents",
+    "confirmingButton": "Confirmation...",
+    "falseAlarmButton": "Marquer comme fausse alarme",
+    "markingButton": "Marquage...",
+    "requestInfoButton": "Demander plus d'information",
+    "requestingButton": "Demande en cours...",
+    "infoRequestedButton": "Information demandée",
+    "infoRequestedNote": "Demande enregistrée. L'escalade se poursuit.",
+    "closeModal": "Fermer la fenêtre"
   }
 }

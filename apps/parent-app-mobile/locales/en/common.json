@@ -1,7 +1,7 @@
 {
   "app": {
-    "title": "Parent Portal",
-    "subtitle": "School Bus Tracking"
+    "title": "SBTM Parent",
+    "subtitle": "Track your child's journey"
   },
   "auth": {
     "title": "Sign In",
@@ -14,7 +14,9 @@
     "errors": {
       "required": "Please enter email and password",
       "invalid": "Invalid credentials"
-    }
+    },
+    "loginFailedTitle": "Login Failed",
+    "errorTitle": "Error"
   },
   "children": {
     "title": "My Children",
@@ -38,7 +40,20 @@
       "atSchool": "At School",
       "atHome": "At Home",
       "unknown": "Status Unknown"
-    }
+    },
+    "loadingChildren": "Loading children...",
+    "greeting": "Hi, {{name}}",
+    "alertBadge_one": "⚠ {{count}} active alert",
+    "alertBadge_other": "⚠ {{count}} active alerts",
+    "activeAlerts_one": "{{count}} active alert",
+    "activeAlerts_other": "{{count}} active alerts",
+    "trackHint": "Tap to track on map →",
+    "gradeLabel": "Grade {{grade}}",
+    "stopLabel": "Stop · {{name}}",
+    "vehicleLabel": "Bus {{id}}",
+    "arrivingNow": "arriving now",
+    "arrivingIn": "arriving in ~{{minutes}} min",
+    "affectedLabel": "Affected: {{names}}"
   },
   "tracking": {
     "title": "Bus Tracking",
@@ -58,7 +73,9 @@
       "live": "Live",
       "noSignal": "No Signal",
       "normal": "Normal",
-      "emergency": "Emergency"
+      "emergency": "Emergency",
+      "offline": "Offline",
+      "inactive": "Inactive"
     },
     "map": {
       "loading": "Loading...",
@@ -102,7 +119,9 @@
         "ROUTE_DIVERSION": "Route Diversion",
         "PANIC_ALERT": "Panic Alert"
       }
-    }
+    },
+    "childNotFound": "Child not found",
+    "loadingMap": "Loading map..."
   },
   "notifications": {
     "title": "Notifications",
@@ -142,7 +161,19 @@
       "RESOLVED": "Resolved",
       "INFO_REQUESTED": "Info requested",
       "STATUS_UPDATE": "Update"
-    }
+    },
+    "loadingNotifications": "Loading notifications...",
+    "emptySubtitle": "You'll see safety alerts and notifications here",
+    "routeLabel": "Route {{id}}",
+    "busLabel": "Bus {{id}}",
+    "unreadSummary": "{{unread}} unread · {{total}} total",
+    "sectionEarlier": "Earlier this week",
+    "filterAll": "All",
+    "filterActive": "Active",
+    "filterToday": "Today",
+    "filterWeek": "This week",
+    "viewTimelineArrow": "▼ View timeline",
+    "hideTimelineArrow": "▲ Hide timeline"
   },
   "absence": {
     "title": "Report Absence",
@@ -173,7 +204,8 @@
       "AM": "Morning route only (AM)",
       "PM": "Afternoon route only (PM)",
       "BOTH": "Full day (both routes)"
-    }
+    },
+    "done": "Done"
   },
   "profile": {
     "title": "Profile",
@@ -213,6 +245,15 @@
       "EMAIL": "Email"
     },
     "alwaysOn": "Always On"
+  },
+  "settings": {
+    "title": "Notification Settings",
+    "loadingSettings": "Loading settings...",
+    "savedBanner": "✓ Preferences saved successfully",
+    "errorTitle": "Error",
+    "errorSave": "Failed to save preferences. Please try again.",
+    "appInfo": "SBTM Parent App v1.0.0",
+    "copyright": "© 2026 SBTM"
   },
   "navigation": {
     "home": "Home",

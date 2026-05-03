@@ -49,9 +49,9 @@
     "loading": "Chargement de la configuration...",
     "guidelines": {
       "title": "Directives de délais",
-      "confirmationTimeout": "Délai de confirmation : Temps avant escalade automatique aux parents (NIVEAU 1 uniquement)",
-      "boardEscalation": "Escalade au conseil : Temps avant escalade à l'administrateur du conseil",
-      "ostaEscalation": "Escalade OSTA : Temps avant escalade à l'administrateur OSTA",
+      "confirmation": "Délai de confirmation : Temps avant escalade automatique aux parents (NIVEAU 1 uniquement)",
+      "board": "Escalade au conseil : Temps avant escalade à l'administrateur du conseil",
+      "osta": "Escalade OSTA : Temps avant escalade à l'administrateur OSTA",
       "units": "Tous les délais sont en secondes. Laisser vide pour désactiver cette étape d'escalade."
     },
     "fields": {
@@ -62,10 +62,10 @@
       "timeSeconds": "{{value}}s"
     },
     "hints": {
-      "confirmationTimeout_tier1": "Temps avant notification des parents",
-      "confirmationTimeout_other": "Non applicable pour ce niveau",
-      "boardEscalation": "Temps avant escalade à l'administrateur du conseil",
-      "ostaEscalation": "Temps avant escalade à l'administrateur OSTA"
+      "confirmationTier1": "Temps avant notification des parents",
+      "confirmationOther": "Non applicable pour ce niveau",
+      "board": "Temps avant escalade à l'administrateur du conseil",
+      "osta": "Temps avant escalade à l'administrateur OSTA"
     },
     "badges": {
       "default": "Par défaut"

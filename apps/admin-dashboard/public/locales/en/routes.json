@@ -139,5 +139,14 @@
       "cancelBtn": "Cancel",
       "deleteBtn": "Delete"
     }
+  },
+  "routeCard": {
+    "directionLabel": "{{direction}} Route",
+    "routeDeviation": "Route Deviation",
+    "stops": "{{count}} stops",
+    "eta": "ETA: {{eta}}"
+  },
+  "videoCard": {
+    "routeLabel": "Route: {{id}}"
   }
 }
