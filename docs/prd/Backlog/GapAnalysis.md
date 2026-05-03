@@ -13,6 +13,8 @@ This analysis reviews the implementation state **after completion of all five up
 - [../GapAnalysis.md](../v4/GapAnalysis.md) — Original pre-phase gap analysis
 - [../PhaseWiseImplementationPlan.md](../v1/PhaseWiseImplementationPlan.md) — Original phase plan
 - [UpgradePlan.md](UpgradePlan.md) — New upgrade plan derived from this analysis
+- [STPMS-RFP-Comparison.md](STPMS-RFP-Comparison.md) — External comparison vs OECM RFP #2018-310 (STPMS)
+- [STPMS-RFP-ImplementationPlan.md](STPMS-RFP-ImplementationPlan.md) — Phased plan to close RFP gaps
 - [../../Design/Architecture.md](../../Design/Architecture.md)
 - [../../Design/SecurityPrivacyArchitecture.md](../../Design/SecurityPrivacyArchitecture.md)
 - [../../Design/EventCatalog.md](../../Design/EventCatalog.md)
