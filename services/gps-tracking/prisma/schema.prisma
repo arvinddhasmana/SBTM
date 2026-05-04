@@ -91,7 +91,6 @@ model GpsDeviceToken {
   createdAt   DateTime  @default(now()) @map("created_at")
   lastSeenAt  DateTime? @map("last_seen_at")
 
-  @@index([token])
   @@index([schoolId])
   @@map("gps_device_tokens")
 }

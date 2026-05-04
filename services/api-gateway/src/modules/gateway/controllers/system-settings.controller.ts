@@ -19,6 +19,7 @@ import {
   Delete,
   Body,
   Param,
+  Query,
   Request,
   UseGuards,
   HttpCode,
@@ -108,11 +109,7 @@ export class SystemSettingsController {
    * SUPER_ADMIN must pass the target schoolId as a query parameter.
    */
   @Get('gps-device-tokens')
-  async listDeviceTokens(
-    @Request() req: RequestWithUser & { query: { schoolId?: string } },
-  ) {
-    const schoolId = (req as unknown as { query: { schoolId?: string } }).query
-      ?.schoolId;
+  async listDeviceTokens(@Query('schoolId') schoolId: string | undefined) {
     if (!schoolId) {
       throw new BadRequestException('schoolId query parameter is required');
     }

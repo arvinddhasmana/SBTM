@@ -122,7 +122,11 @@ export class GpsController {
   /**
    * POST /api/v1/routes/device-locations
    *
-   * Pass-through endpoint for dedicated GPS hardware devices.
+   * Pass-through endpoint for dedicated GPS hardware devices. This endpoint is
+   * grouped under the `/routes` prefix for consistency with the existing driver-app
+   * GPS ingestion endpoint (`POST /routes/locations`); both paths ultimately write
+   * vehicle position data that is keyed by routeId.
+   *
    * The device's Bearer token is extracted from the Authorization header and
    * forwarded to the GPS tracking service, which performs all validation:
    *   - device token authenticity and active status

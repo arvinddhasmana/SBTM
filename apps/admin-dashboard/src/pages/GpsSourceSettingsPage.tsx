@@ -295,7 +295,7 @@ const GpsSourceSettingsPage: React.FC = () => {
 
           {/* Create token form */}
           {showCreateForm && (
-            <div className="mb-6 bg-gray-750 border border-gray-600 rounded-lg p-5">
+            <div className="mb-6 bg-gray-700 border border-gray-600 rounded-lg p-5">
               <h3 className="text-white font-medium mb-4">New Device Token</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -417,8 +417,8 @@ const GpsSourceSettingsPage: React.FC = () => {
                       </td>
                     </tr>
                   ) : tokens && tokens.length > 0 ? (
-                    tokens.map((token: GpsDeviceToken) => (
-                      <tr key={token.id} className="hover:bg-gray-750">
+                    tokens.map((token) => (
+                      <tr key={token.id} className="hover:bg-gray-700">
                         <td className="px-4 py-3 text-sm text-white font-mono">
                           {token.vehicleId}
                         </td>
