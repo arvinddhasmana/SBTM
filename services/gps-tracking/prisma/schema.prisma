@@ -65,6 +65,37 @@ model RouteGeofence {
   @@map("route_geofences")
 }
 
+/// System-wide singleton key/value configuration store.
+/// Used to store platform-level settings such as the GPS tracking source.
+/// No school_id scoping — these settings apply to the entire platform.
+model SystemSetting {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt @map("updated_at")
+  updatedBy String?  @map("updated_by")
+
+  @@map("system_settings")
+}
+
+/// Authentication tokens for dedicated GPS hardware devices.
+/// Each token is bound to a specific vehicle and school.
+/// The token is a 64-char hex string (32 bytes CSPRNG entropy).
+model GpsDeviceToken {
+  id          String    @id @default(uuid())
+  token       String    @unique
+  vehicleId   String    @map("vehicle_id")
+  schoolId    String    @map("school_id")
+  description String?
+  isActive    Boolean   @default(true) @map("is_active")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  lastSeenAt  DateTime? @map("last_seen_at")
+
+  @@index([token])
+  @@index([schoolId])
+  @@map("gps_device_tokens")
+}
+
 /// Audit log for route deviation events detected by the geofence service.
 model RouteDeviationEvent {
   id               String   @id @default(uuid())

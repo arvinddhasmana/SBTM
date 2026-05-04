@@ -9,6 +9,8 @@ import {
   Body,
   Sse,
   MessageEvent,
+  Headers,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import {
@@ -115,5 +117,40 @@ export class GpsController {
     @Request() req: { user: any },
   ) {
     return this.gpsGatewayService.getRouteStudents(routeId, req.user);
+  }
+
+  /**
+   * POST /api/v1/routes/device-locations
+   *
+   * Pass-through endpoint for dedicated GPS hardware devices.
+   * The device's Bearer token is extracted from the Authorization header and
+   * forwarded to the GPS tracking service, which performs all validation:
+   *   - device token authenticity and active status
+   *   - GPS_TRACKING_SOURCE enforcement
+   *   - active route resolution for the vehicle
+   *
+   * This endpoint does NOT require a user JWT — it is intended for hardware devices.
+   * The GPS service's own device token middleware provides the auth boundary.
+   */
+  @Post('device-locations')
+  async ingestDeviceLocation(
+    @Body()
+    dto: {
+      timestamp: string;
+      lat: number;
+      lng: number;
+      speedKph?: number;
+      headingDeg?: number;
+      accuracyMeters?: number;
+    },
+    @Headers('authorization') authorizationHeader: string | undefined,
+  ) {
+    if (!authorizationHeader || !authorizationHeader.startsWith('Bearer ')) {
+      throw new UnauthorizedException(
+        'Missing or malformed device Authorization header',
+      );
+    }
+    const deviceToken = authorizationHeader.slice('Bearer '.length).trim();
+    return this.gpsGatewayService.ingestDeviceLocation(dto, deviceToken);
   }
 }

@@ -180,6 +180,33 @@ export class GpsGatewayService {
     });
   }
 
+  /**
+   * Forwards a dedicated GPS hardware device location payload to the GPS service.
+   * The deviceBearerToken is extracted from the client's Authorization header and
+   * forwarded verbatim — the GPS service performs all device token validation,
+   * GPS source enforcement, and route resolution.
+   *
+   * This method intentionally bypasses service JWT auth for the downstream call
+   * because the GPS service's /device-locations endpoint uses device token auth.
+   */
+  async ingestDeviceLocation(
+    payload: {
+      timestamp: string;
+      lat: number;
+      lng: number;
+      speedKph?: number;
+      headingDeg?: number;
+      accuracyMeters?: number;
+    },
+    deviceBearerToken: string,
+  ): Promise<{ status: string }> {
+    const url = `${this.gpsServiceUrl}/api/v1/device-locations`;
+    // Override Authorization header with the device token (not the service JWT)
+    return this.httpClient.post<{ status: string }>(url, payload, {
+      headers: { Authorization: `Bearer ${deviceBearerToken}` },
+    });
+  }
+
   async recordRouteLifecycleEvent(
     dto: RouteLifecycleEventDto,
     user: RequestUser,
