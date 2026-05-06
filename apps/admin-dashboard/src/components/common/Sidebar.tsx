@@ -18,6 +18,7 @@ import {
   CalendarOff,
   Truck,
   Sliders,
+  Cpu,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
@@ -39,14 +40,24 @@ const navItems: NavItem[] = [
     labelKey: 'nav.dashboard',
     allowedRoles: ALL_ADMIN_ROLES,
   },
-  { path: '/alerts', icon: <Bell size={20} />, labelKey: 'nav.alerts', allowedRoles: ALL_ADMIN_ROLES },
+  {
+    path: '/alerts',
+    icon: <Bell size={20} />,
+    labelKey: 'nav.alerts',
+    allowedRoles: ALL_ADMIN_ROLES,
+  },
   {
     path: '/alerts/operational',
     icon: <ClipboardList size={20} />,
     labelKey: 'nav.operational',
     allowedRoles: ALL_ADMIN_ROLES,
   },
-  { path: '/routes', icon: <Route size={20} />, labelKey: 'nav.routes', allowedRoles: ALL_ADMIN_ROLES },
+  {
+    path: '/routes',
+    icon: <Route size={20} />,
+    labelKey: 'nav.routes',
+    allowedRoles: ALL_ADMIN_ROLES,
+  },
   {
     path: '/routes/planner',
     icon: <Wand2 size={20} />,
@@ -95,12 +106,23 @@ const navItems: NavItem[] = [
     labelKey: 'nav.schools',
     allowedRoles: ['SUPER_ADMIN', 'OSTA_ADMIN', 'BOARD_ADMIN'],
   },
-  { path: '/users', icon: <UserCog size={20} />, labelKey: 'nav.users', allowedRoles: ['SUPER_ADMIN'] },
+  {
+    path: '/users',
+    icon: <UserCog size={20} />,
+    labelKey: 'nav.users',
+    allowedRoles: ['SUPER_ADMIN'],
+  },
   {
     path: '/alert-config',
     icon: <Sliders size={20} />,
     labelKey: 'nav.alertConfig',
     allowedRoles: ALL_ADMIN_ROLES,
+  },
+  {
+    path: '/settings/gps-source',
+    icon: <Cpu size={20} />,
+    labelKey: 'nav.gpsSource',
+    allowedRoles: ['SUPER_ADMIN'],
   },
   {
     path: '/settings',

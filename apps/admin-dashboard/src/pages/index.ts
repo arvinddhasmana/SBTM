@@ -22,3 +22,4 @@ export { default as NotificationRoutingConfigPage } from './NotificationRoutingC
 export { default as WorkflowConfigPage } from './WorkflowConfigPage';
 export { default as ChangeRequestsPage } from './ChangeRequestsPage';
 export { default as ConfigAuditLogPage } from './ConfigAuditLogPage';
+export { default as GpsSourceSettingsPage } from './GpsSourceSettingsPage';

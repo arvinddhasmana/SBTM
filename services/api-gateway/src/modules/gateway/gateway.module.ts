@@ -18,6 +18,7 @@ import { OrganizationGatewayService } from './services/organization.gateway.serv
 import { FleetAssignmentGatewayService } from './services/fleet-assignment.gateway.service';
 import { PdfGeneratorService } from './services/pdf-generator.service';
 import { RouteChangeNotifierService } from './services/route-change-notifier.service';
+import { SystemSettingsGatewayService } from './services/system-settings.gateway.service';
 import { GpsController } from './controllers/gps.controller';
 import { AlertsController } from './controllers/alerts.controller';
 import { AlertConfigController } from './controllers/alert-config.controller';
@@ -32,6 +33,7 @@ import { NotificationSettingsController } from './controllers/notification-setti
 import { OrganizationController } from './controllers/organization.controller';
 import { FleetAssignmentController } from './controllers/fleet-assignment.controller';
 import { DocumentController } from './controllers/document.controller';
+import { SystemSettingsController } from './controllers/system-settings.controller';
 import { School } from '../auth/entities/school.entity';
 import { SchoolBoard } from '../auth/entities/school-board.entity';
 import { Route } from '../auth/entities/route.entity';
@@ -64,6 +66,7 @@ import { FleetAssignment } from './entities/fleet-assignment.entity';
     OrganizationController,
     FleetAssignmentController,
     DocumentController,
+    SystemSettingsController,
   ],
   providers: [
     GpsGatewayService,
@@ -83,6 +86,7 @@ import { FleetAssignment } from './entities/fleet-assignment.entity';
     FleetAssignmentGatewayService,
     PdfGeneratorService,
     RouteChangeNotifierService,
+    SystemSettingsGatewayService,
   ],
   exports: [
     GpsGatewayService,
@@ -101,6 +105,7 @@ import { FleetAssignment } from './entities/fleet-assignment.entity';
     FleetAssignmentGatewayService,
     PdfGeneratorService,
     RouteChangeNotifierService,
+    SystemSettingsGatewayService,
   ],
 })
 export class GatewayModule {}
