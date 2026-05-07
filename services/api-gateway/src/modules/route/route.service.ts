@@ -86,8 +86,6 @@ export class RouteService {
         }
       }
 
-      await this.syncRouteToReference(queryRunner, savedRoute.id);
-
       await queryRunner.commitTransaction();
       return this.findOne(savedRoute.id, schoolId);
     } catch (err) {
@@ -123,31 +121,7 @@ export class RouteService {
     schoolId: string,
     updateRouteDto: UpdateRouteDto,
   ): Promise<Route> {
-    let operationalId = id;
-    let originalName: string | null = null;
-
-    if (id.startsWith('ROUTE-')) {
-      const refRows = await this.dataSource.query(
-        `SELECT name FROM routes_reference WHERE id = $1 AND "schoolId" = $2 LIMIT 1`,
-        [id, schoolId],
-      );
-      if (refRows.length > 0) {
-        originalName = refRows[0].name;
-        const opRows = await this.routeRepository.findOne({
-          where: { name: refRows[0].name, schoolId },
-        });
-        if (opRows) {
-          operationalId = opRows.id;
-        }
-      }
-    } else {
-      const opRows = await this.routeRepository.findOne({
-        where: { id, schoolId },
-      });
-      if (opRows) originalName = opRows.name;
-    }
-
-    const route = await this.findOne(operationalId, schoolId);
+    const route = await this.findOne(id, schoolId);
 
     if (updateRouteDto.name && updateRouteDto.name !== route.name) {
       const existing = await this.routeRepository.findOne({
@@ -170,7 +144,7 @@ export class RouteService {
         newVehicleId,
         newStartTime,
         newDuration,
-        operationalId,
+        id,
       );
     }
 
@@ -185,12 +159,10 @@ export class RouteService {
         await queryRunner.manager.save(route);
         await queryRunner.query(
           `DELETE FROM route_stops WHERE "routeId" = $1`,
-          [operationalId],
+          [id],
         );
         for (const stop of stops) {
           if (stop.id && !stop.id.startsWith('draft-')) {
-            // Keep the same ID if it is a valid UUID. If it's a legacy STOP-... we can't save it as UUID in operational, but wait
-            // Operational route_stops table requires UUID! If stop.id is 'STOP-...', it fails!
             const isValidUuid =
               /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
                 stop.id,
@@ -201,7 +173,7 @@ export class RouteService {
                  VALUES ($1, $2, $3, $4, ST_GeomFromText($5, 4326))`,
                 [
                   stop.id,
-                  operationalId,
+                  id,
                   stop.sequence,
                   stop.address,
                   stop.location,
@@ -211,22 +183,17 @@ export class RouteService {
               await queryRunner.query(
                 `INSERT INTO route_stops ("routeId", sequence, address, location)
                  VALUES ($1, $2, $3, ST_GeomFromText($4, 4326))`,
-                [operationalId, stop.sequence, stop.address, stop.location],
+                [id, stop.sequence, stop.address, stop.location],
               );
             }
           } else {
             await queryRunner.query(
               `INSERT INTO route_stops ("routeId", sequence, address, location)
                VALUES ($1, $2, $3, ST_GeomFromText($4, 4326))`,
-              [operationalId, stop.sequence, stop.address, stop.location],
+              [id, stop.sequence, stop.address, stop.location],
             );
           }
         }
-        await this.syncRouteToReference(
-          queryRunner,
-          operationalId,
-          originalName,
-        );
         await queryRunner.commitTransaction();
       } catch (err) {
         await queryRunner.rollbackTransaction();
@@ -236,16 +203,9 @@ export class RouteService {
       }
     } else {
       await this.routeRepository.save(route);
-      const qr = this.dataSource.createQueryRunner();
-      await qr.connect();
-      try {
-        await this.syncRouteToReference(qr, operationalId, originalName);
-      } finally {
-        await qr.release();
-      }
     }
 
-    const updated = await this.findOne(operationalId, schoolId);
+    const updated = await this.findOne(id, schoolId);
 
     void this.routeChangeNotifier.notifyRouteChange(
       id, // Send back original request id
@@ -291,122 +251,7 @@ export class RouteService {
 
   async remove(id: string, schoolId: string): Promise<void> {
     const route = await this.findOne(id, schoolId);
-    const qr = this.dataSource.createQueryRunner();
-    await qr.connect();
-    try {
-      // Resolve reference id by name+school before deleting operational row
-      const refRows = await qr.query(
-        `SELECT id FROM routes_reference WHERE name = $1 AND "schoolId" = $2 LIMIT 1`,
-        [route.name, route.schoolId],
-      );
-      const refId: string | undefined = refRows[0]?.id;
-      await this.routeRepository.remove(route);
-      if (refId) {
-        await qr.query(
-          `DELETE FROM route_stops_reference WHERE "routeId" = $1`,
-          [refId],
-        );
-        await qr.query(`DELETE FROM routes_reference WHERE id = $1`, [refId]);
-      }
-    } finally {
-      await qr.release();
-    }
+    await this.routeRepository.remove(route);
   }
 
-  /**
-   * Mirror operational route + stops into the legacy reference tables
-   * (routes_reference, route_stops_reference) used by Driver App and Parent Portal.
-   * Match strategy: (schoolId, name) — unique per the routes table constraint.
-   * If no reference row exists, one is created using the operational route id.
-   */
-  private async syncRouteToReference(
-    qr: any,
-    operationalRouteId: string,
-    originalName: string | null = null,
-  ): Promise<void> {
-    const routeRows = await qr.query(
-      `SELECT id, name, "schoolId", direction, "vehicleId", "startTime", polyline
-       FROM routes WHERE id = $1`,
-      [operationalRouteId],
-    );
-    const route = routeRows[0];
-    if (!route) return;
-
-    // Use originalName to find the record in routes_reference, if name was updated
-    const searchName = originalName || route.name;
-
-    const existing = await qr.query(
-      `SELECT id FROM routes_reference WHERE name = $1 AND "schoolId" = $2 LIMIT 1`,
-      [searchName, route.schoolId],
-    );
-    const refId: string = existing[0]?.id ?? route.id;
-    const schedule = JSON.stringify({
-      startTime: (route.startTime || '').slice(0, 5),
-    });
-
-    if (existing[0]) {
-      await qr.query(
-        `UPDATE routes_reference
-         SET name = $1, "vehicleId" = $2, schedule = $3::jsonb,
-             polyline = $4, direction = $5
-         WHERE id = $6`,
-        [
-          route.name,
-          route.vehicleId,
-          schedule,
-          route.polyline,
-          route.direction,
-          refId,
-        ],
-      );
-    } else {
-      await qr.query(
-        `INSERT INTO routes_reference
-           (id, name, "vehicleId", schedule, polyline, "schoolId", direction)
-         VALUES ($1, $2, $3, $4::jsonb, $5, $6, $7)`,
-        [
-          refId,
-          route.name,
-          route.vehicleId,
-          schedule,
-          route.polyline,
-          route.schoolId,
-          route.direction,
-        ],
-      );
-    }
-
-    const stops = await qr.query(
-      `SELECT id, sequence, address,
-              ST_Y(location::geometry) AS lat,
-              ST_X(location::geometry) AS lng
-       FROM route_stops WHERE "routeId" = $1 ORDER BY sequence ASC`,
-      [operationalRouteId],
-    );
-
-    // To prevent assigned students from disappearing, we preserve the old legacy STOP- UUIDs
-    // by matching on sequence order.
-    const oldStops = await qr.query(
-      `SELECT id, "sequenceOrder" FROM route_stops_reference WHERE "routeId" = $1`,
-      [refId],
-    );
-
-    await qr.query(`DELETE FROM route_stops_reference WHERE "routeId" = $1`, [
-      refId,
-    ]);
-    for (const s of stops) {
-      // Find matching old stop by sequence
-      const oldStop = oldStops.find(
-        (os: any) => os.sequenceOrder === s.sequence,
-      );
-      const finalId = oldStop ? oldStop.id : s.id;
-
-      await qr.query(
-        `INSERT INTO route_stops_reference
-           (id, "routeId", "sequenceOrder", "stopName", lat, lng)
-         VALUES ($1, $2, $3, $4, $5, $6)`,
-        [finalId, refId, s.sequence, s.address, s.lat, s.lng],
-      );
-    }
-  }
 }
