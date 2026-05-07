@@ -30,6 +30,7 @@ import StopMarkerView from '../components/map/StopMarker';
 import SchoolMarkerView from '../components/map/SchoolMarker';
 import CollapsibleBottomPanel from '../components/CollapsibleBottomPanel';
 import PanicCountdownModal from '../components/PanicCountdownModal';
+import StopRosterModal from '../components/StopRosterModal';
 import { SpeedIndicator, NextStopBanner, RouteProgressBar } from '../components/map/MapOverlays';
 import DashedPolyline from '../components/map/DashedPolyline';
 
@@ -62,6 +63,9 @@ export default function ActiveRouteScreen({ navigation }: any) {
     heading: number;
     speed: number;
   } | null>(null);
+
+  // Stop Popup state
+  const [arrivedStopIdForPopup, setArrivedStopIdForPopup] = useState<string | null>(null);
 
   // Panel expanded state
   const [panelExpanded, setPanelExpanded] = useState(false);
@@ -280,6 +284,7 @@ export default function ActiveRouteScreen({ navigation }: any) {
         );
         if (dist < 30) {
           markStopVisited(stop.id);
+          setArrivedStopIdForPopup(stop.id); // Auto-open stop popup
         }
       }
     }
@@ -606,6 +611,12 @@ export default function ActiveRouteScreen({ navigation }: any) {
           firePanic();
         }}
         onCancel={() => setPanicModalVisible(false)}
+      />
+
+      {/* Auto Stop Roster Modal */}
+      <StopRosterModal
+        stopId={arrivedStopIdForPopup}
+        onClose={() => setArrivedStopIdForPopup(null)}
       />
     </View>
   );
