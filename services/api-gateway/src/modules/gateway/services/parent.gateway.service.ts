@@ -22,19 +22,6 @@ interface StudentRecord {
   pm_route_id?: string;
 }
 
-interface ReferenceStudentRow {
-  id: string;
-  firstName: string;
-  lastName: string;
-  parentId: string;
-  schoolId: string | null;
-  assignedRouteId: string | null;
-  amRouteId: string | null;
-  pmRouteId: string | null;
-  amStopId: string | null;
-  pmStopId: string | null;
-}
-
 interface ParentChildDto {
   id: string;
   name: string;
@@ -82,80 +69,7 @@ export class ParentGatewayService {
   }
 
   async getChildrenForParent(user: ParentUser): Promise<ParentChildDto[]> {
-    // Demo-first behavior: use seeded reference tables for parent portal.
-    // This keeps IDs consistent with GPS/presence demo data (ROUTE-A, BUS-001, etc.).
-    let refStudents: ReferenceStudentRow[] = [];
-    try {
-      refStudents = await this.dataSource.query(
-        `SELECT id, "firstName" as "firstName", "lastName" as "lastName", "parentId" as "parentId", "schoolId" as "schoolId", "assignedRouteId" as "assignedRouteId", "amRouteId" as "amRouteId", "pmRouteId" as "pmRouteId", "amStopId" as "amStopId", "pmStopId" as "pmStopId"
-                 FROM students_reference
-                 WHERE "parentId" = $1
-                 ORDER BY id ASC`,
-        [user.id],
-      );
-    } catch {
-      refStudents = [];
-    }
-
-    if (refStudents.length > 0) {
-      const schoolIds = Array.from(
-        new Set(refStudents.map((s) => s.schoolId).filter(Boolean) as string[]),
-      );
-      const routeIds = Array.from(
-        new Set(
-          refStudents
-            .flatMap((s) => [s.amRouteId, s.pmRouteId, s.assignedRouteId])
-            .filter(Boolean) as string[],
-        ),
-      );
-
-      const schools = schoolIds.length
-        ? await this.schoolRepository.findBy({ id: In(schoolIds) })
-        : [];
-      const schoolMap = new Map(schools.map((s) => [s.id, s]));
-
-      const routeVehicleRows = routeIds.length
-        ? ((await this.dataSource.query(
-            `SELECT id, "vehicleId" as "vehicleId" FROM routes_reference WHERE id = ANY($1)`,
-            [routeIds],
-          )) as Array<{ id: string; vehicleId: string | null }>)
-        : [];
-      const routeToVehicle = new Map(
-        routeVehicleRows.map((r) => [r.id, r.vehicleId || undefined]),
-      );
-
-      // Determine student status from latest presence events
-      const studentIds = refStudents.map((s) => s.id);
-      const statusMap = await this.getStudentStatuses(studentIds);
-
-      return refStudents.map((student) => {
-        const school = student.schoolId
-          ? schoolMap.get(student.schoolId)
-          : undefined;
-        const amRouteId =
-          student.amRouteId || student.assignedRouteId || undefined;
-        const pmRouteId = student.pmRouteId || undefined;
-        const routeId = amRouteId; // primary route for backward compat
-        const vehicleId = amRouteId ? routeToVehicle.get(amRouteId) : undefined;
-        const name = `${student.firstName} ${student.lastName}`.trim();
-
-        return {
-          id: student.id,
-          name,
-          schoolName: school?.name,
-          routeId,
-          amRouteId,
-          pmRouteId,
-          amStopId: student.amStopId || undefined,
-          pmStopId: student.pmStopId || undefined,
-          vehicleId,
-          status: statusMap.get(student.id) || ('unknown' as const),
-          avatarUrl: this.getKidAvatarUrl(student.id),
-        };
-      });
-    }
-
-    // Fallback: if reference data isn't present, use student-management service
+    // Query students table directly using operational schema
     const url = `${this.studentServiceUrl}/students`;
     const students = await this.httpClient.get<StudentRecord[]>(url, {
       params: { parent_id: user.id },
