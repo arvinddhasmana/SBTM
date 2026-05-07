@@ -78,12 +78,12 @@ export class DriverGatewayService {
       return [];
     }
 
-    // Query routes_reference since assignedRouteIds contains reference IDs (e.g., ROUTE-STBERN-R01-AM)
+    // Query routes table with UUID route IDs from assignedRouteIds
     const routes = await this.dataSource.query(
-      `SELECT r.id, r.name, r.direction, r.schedule, r."vehicleId", r."schoolId",
+      `SELECT r.id, r.name, r.direction, r."startTime", r."vehicleId", r."schoolId",
               r.polyline,
               s.lat AS "schoolLat", s.lng AS "schoolLng", s.name AS "schoolName"
-       FROM routes_reference r
+       FROM routes r
        LEFT JOIN schools s ON r."schoolId" = s.id
        WHERE r.id = ANY($1)
        ORDER BY r.id ASC`,
@@ -91,15 +91,12 @@ export class DriverGatewayService {
     );
 
     return routes.map((r: any) => {
-      const schedule =
-        typeof r.schedule === 'string' ? JSON.parse(r.schedule) : r.schedule;
-      const direction =
-        r.direction || (r.id.toUpperCase().includes('PM') ? 'PM' : 'AM');
+      const direction = r.direction || (r.id.toUpperCase().includes('PM') ? 'PM' : 'AM');
       return {
         routeId: r.id,
         name: r.name,
         direction,
-        startTime: schedule?.startTime || '07:30',
+        startTime: r.startTime || '07:30',
         vehicleId: r.vehicleId || undefined,
         schoolId: r.schoolId,
         polyline: r.polyline || undefined,
@@ -122,7 +119,7 @@ export class DriverGatewayService {
    * Return the full student roster for a route with server-confirmed presence states,
    * grouped by stop with stop metadata.
    *
-   * Students are sourced from the students_reference table (route assignment data).
+   * Students are sourced from the students table (operational data).
    * Current presence state is merged from the presence service.
    * Students with no presence events default to NOT_BOARDED.
    *
@@ -142,7 +139,7 @@ export class DriverGatewayService {
 
     // Determine route direction
     const routeRows: Array<{ direction: string }> = await this.dataSource.query(
-      `SELECT direction FROM routes_reference WHERE id = $1`,
+      `SELECT direction FROM routes WHERE id = $1`,
       [routeId],
     );
     const direction =
@@ -150,35 +147,38 @@ export class DriverGatewayService {
       (routeId.toUpperCase().includes('PM') ? 'PM' : 'AM');
     const isAm = direction === 'AM';
 
-    // Fetch enrolled students for this route (T4 data – scoped by schoolId)
+    // Fetch enrolled students for this route from students table
     const enrolled: Array<{
       id: string;
-      firstName: string;
-      lastName: string;
-      amStopId: string | null;
-      pmStopId: string | null;
+      first_name: string;
+      last_name: string;
+      am_stop_id: string | null;
+      pm_stop_id: string | null;
     }> = await this.dataSource.query(
-      `SELECT id, "firstName", "lastName", "amStopId", "pmStopId"
-               FROM students_reference
-               WHERE ("assignedRouteId" = $1 OR "amRouteId" = $1 OR "pmRouteId" = $1)
-                 AND "schoolId" = $2
-               ORDER BY "lastName" ASC, "firstName" ASC`,
+      `SELECT id, first_name, last_name, am_stop_id, pm_stop_id
+               FROM students
+               WHERE (am_route_id = $1 OR pm_route_id = $1)
+                 AND school_id = $2
+               ORDER BY last_name ASC, first_name ASC`,
       [routeId, user.schoolId],
     );
 
-    // Fetch stops for this route
+    // Fetch stops for this route from route_stops table
     const stops: Array<{
       id: string;
-      sequenceOrder: number;
-      stopName: string;
+      sequence: number;
+      address: string;
       lat: number;
       lng: number;
       arrivalTime: string;
     }> = await this.dataSource.query(
-      `SELECT id, "sequenceOrder", "stopName", lat, lng, "arrivalTime"
-               FROM route_stops_reference
+      `SELECT id, sequence, address,
+              ST_Y(location::geometry) AS lat,
+              ST_X(location::geometry) AS lng,
+              "arrivalTime"
+               FROM route_stops
                WHERE "routeId" = $1
-               ORDER BY "sequenceOrder" ASC`,
+               ORDER BY sequence ASC`,
       [routeId],
     );
 
@@ -188,8 +188,8 @@ export class DriverGatewayService {
       return {
         stops: stops.map((s) => ({
           id: s.id,
-          stopName: s.stopName,
-          sequence: s.sequenceOrder,
+          stopName: s.address,
+          sequence: s.sequence,
           arrivalTime: s.arrivalTime,
           lat: s.lat != null ? Number(s.lat) : undefined,
           lng: s.lng != null ? Number(s.lng) : undefined,
@@ -232,24 +232,24 @@ export class DriverGatewayService {
     return {
       stops: stops.map((s) => ({
         id: s.id,
-        stopName: s.stopName,
-        sequence: s.sequenceOrder,
+        stopName: s.address,
+        sequence: s.sequence,
         arrivalTime: s.arrivalTime,
         lat: s.lat != null ? Number(s.lat) : undefined,
         lng: s.lng != null ? Number(s.lng) : undefined,
       })),
       students: enrolled.map((student) => {
         const presence = presenceByStudentId.get(student.id);
-        const stopId = isAm ? student.amStopId : student.pmStopId;
+        const stopId = isAm ? student.am_stop_id : student.pm_stop_id;
         const stop = stopId ? stopMap.get(stopId) : undefined;
         return {
           id: student.id,
-          name: `${student.firstName} ${student.lastName}`,
+          name: `${student.first_name} ${student.last_name}`,
           status: presence?.status ?? 'NOT_BOARDED',
           lastSeen: presence?.lastSeen,
           stopId: stopId ?? undefined,
-          stopName: stop?.stopName ?? undefined,
-          stopSequence: stop?.sequenceOrder ?? undefined,
+          stopName: stop?.address ?? undefined,
+          stopSequence: stop?.sequence ?? undefined,
           avatarUrl: this.getStudentAvatarUrl(student.id),
         };
       }),
