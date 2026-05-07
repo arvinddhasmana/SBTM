@@ -253,6 +253,7 @@ export class OptimizationService {
         overview: 'full',
         geometries: 'polyline',
         source: 'first',
+        destination: 'last',
         roundtrip: false,
       },
       timeout: OptimizationService.OSRM_REQUEST_TIMEOUT_MS,

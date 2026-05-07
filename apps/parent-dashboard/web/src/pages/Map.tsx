@@ -265,7 +265,8 @@ const MapPage: React.FC = () => {
     queryKey: queryKeys.route.details(activeRouteId),
     queryFn: () => parentApi.getRouteDetails(activeRouteId),
     enabled: !!activeRouteId,
-    staleTime: 5 * 60_000,
+    staleTime: 30_000,
+    refetchInterval: 60_000,
   });
 
   // Decode polyline to coordinates

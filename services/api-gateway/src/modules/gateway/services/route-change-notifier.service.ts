@@ -13,8 +13,9 @@ export class RouteChangeNotifierService {
     private readonly configService: ConfigService,
     private readonly dataSource: DataSource,
   ) {
-    this.notificationServiceUrl = this.configService.getOrThrow<string>(
+    this.notificationServiceUrl = this.configService.get<string>(
       'NOTIFICATION_SERVICE_URL',
+      '',
     );
   }
 
@@ -34,6 +35,13 @@ export class RouteChangeNotifierService {
       changeDescription,
       action: 'route-change.notify',
     });
+
+    if (!this.notificationServiceUrl) {
+      this.logger.debug(
+        'NOTIFICATION_SERVICE_URL not configured, skipping route change notification',
+      );
+      return;
+    }
 
     // Find all distinct parent user IDs for students on this route
     const rows: Array<{ parentId: string }> = await this.dataSource.query(

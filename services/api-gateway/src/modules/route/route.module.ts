@@ -7,14 +7,17 @@ import { OptimizationService } from './optimization.service';
 import { Route } from '../auth/entities/route.entity';
 import { RouteStop } from '../auth/entities/route-stop.entity';
 import { Vehicle } from '../auth/entities/vehicle.entity';
+import { CommonModule } from '../../common/common.module';
+import { RouteChangeNotifierService } from '../gateway/services/route-change-notifier.service';
 
 @Module({
-    imports: [
-        ConfigModule,
-        TypeOrmModule.forFeature([Route, RouteStop, Vehicle]),
-    ],
-    providers: [RouteService, OptimizationService],
-    controllers: [RouteController],
-    exports: [RouteService],
+  imports: [
+    ConfigModule,
+    CommonModule,
+    TypeOrmModule.forFeature([Route, RouteStop, Vehicle]),
+  ],
+  providers: [RouteService, OptimizationService, RouteChangeNotifierService],
+  controllers: [RouteController],
+  exports: [RouteService],
 })
-export class RouteModule { }
+export class RouteModule {}

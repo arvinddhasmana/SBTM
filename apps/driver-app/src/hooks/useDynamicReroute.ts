@@ -12,6 +12,7 @@ export function useDynamicReroute(
   currentLocation: { latitude: number; longitude: number } | null,
   routePath: LatLng[],
   stops: Stop[],
+  visitedStopIds: string[],
 ) {
   const [divertedPolyline, setDivertedPolyline] = useState<LatLng[]>([]);
   const [isDiverted, setIsDiverted] = useState(false);
@@ -19,6 +20,7 @@ export function useDynamicReroute(
 
   const lastRerouteTime = useRef<number>(0);
   const lastRerouteLocation = useRef<{ latitude: number; longitude: number } | null>(null);
+  const lastVisitedCount = useRef<number>(visitedStopIds.length);
   const isFetching = useRef(false);
 
   useEffect(() => {
@@ -37,101 +39,77 @@ export function useDynamicReroute(
     // Expose distance for debug overlay
     setDistFromRoute(Math.round(distToRoute));
 
-    if (distToRoute > DIVERSION_THRESHOLD_METERS) {
-      console.log(`🔀 [Reroute] DIVERTED – dist from route: ${Math.round(distToRoute)}m`);
-      setIsDiverted(true);
+    // ALWAYS SHOW ASSISTANCE TO NEXT STOP
+    setIsDiverted(true);
 
-      const now = Date.now();
-      const timeSinceLast = now - lastRerouteTime.current;
+    const now = Date.now();
+    const timeSinceLast = now - lastRerouteTime.current;
 
-      let movedEnough = false;
-      if (lastRerouteLocation.current) {
-        const distFromLast = haversineMeters(
-          currentLocation.latitude,
-          currentLocation.longitude,
-          lastRerouteLocation.current.latitude,
-          lastRerouteLocation.current.longitude,
-        );
-        movedEnough = distFromLast > 30;
-        console.log(
-          `🔀 [Reroute] timeSinceLast=${Math.round(timeSinceLast / 1000)}s, movedSinceLast=${Math.round(distFromLast)}m`,
-        );
-      } else {
-        movedEnough = true; // first time
-        console.log(`🔀 [Reroute] First diversion – will fetch immediately`);
-      }
+    const targetChanged = visitedStopIds.length !== lastVisitedCount.current;
+    if (targetChanged) {
+      lastVisitedCount.current = visitedStopIds.length;
+    }
 
-      if (timeSinceLast > REROUTE_INTERVAL_MS && movedEnough && !isFetching.current) {
-        lastRerouteTime.current = now;
-        lastRerouteLocation.current = currentLocation;
-        isFetching.current = true;
-
-        // Find next stop ahead
-        const sortedStops = [...stops]
-          .filter((s) => s.lat != null && s.lng != null)
-          .sort((a, b) => a.sequence - b.sequence);
-
-        let targetStop = sortedStops[sortedStops.length - 1];
-        for (const stop of sortedStops) {
-          const distToStop = haversineMeters(
-            currentLocation.latitude,
-            currentLocation.longitude,
-            stop.lat!,
-            stop.lng!,
-          );
-          if (distToStop > 50) {
-            targetStop = stop;
-            break;
-          }
-        }
-
-        console.log(
-          `🔀 [Reroute] Fetching path to stop "${targetStop?.stopName}" (seq ${targetStop?.sequence})`,
-        );
-
-        if (targetStop && targetStop.lat && targetStop.lng) {
-          NavigationService.getRoutePath([
-            { lat: currentLocation.latitude, lng: currentLocation.longitude },
-            { lat: targetStop.lat, lng: targetStop.lng },
-          ])
-            .then((polyline) => {
-              isFetching.current = false;
-              if (polyline && polyline.length > 0) {
-                const decoded = decodePolyline(polyline).map(([lat, lng]) => ({
-                  latitude: lat,
-                  longitude: lng,
-                }));
-                console.log(`✅ [Reroute] Got ${decoded.length} points for divert polyline`);
-                setDivertedPolyline(decoded);
-              } else {
-                console.warn('⚠️ [Reroute] API returned empty polyline');
-              }
-            })
-            .catch((err) => {
-              isFetching.current = false;
-              console.error('❌ [Reroute] API call failed:', err?.message ?? err);
-            });
-        } else {
-          isFetching.current = false;
-          console.warn('⚠️ [Reroute] No valid target stop found');
-        }
-      } else if (divertedPolyline.length === 0 && !isFetching.current) {
-        // Still diverted but throttled – use last fetched polyline (kept in state)
-        console.log(
-          `🔀 [Reroute] Still diverted – waiting for interval (${Math.round((REROUTE_INTERVAL_MS - timeSinceLast) / 1000)}s left)`,
-        );
-      }
+    let movedEnough = false;
+    if (lastRerouteLocation.current) {
+      const distFromLast = haversineMeters(
+        currentLocation.latitude,
+        currentLocation.longitude,
+        lastRerouteLocation.current.latitude,
+        lastRerouteLocation.current.longitude,
+      );
+      movedEnough = distFromLast > 30;
     } else {
-      if (isDiverted) {
-        console.log(`✅ [Reroute] Back on route – dist: ${Math.round(distToRoute)}m`);
+      movedEnough = true; // first time
+    }
+
+    if (
+      (timeSinceLast > REROUTE_INTERVAL_MS && movedEnough && !isFetching.current) ||
+      (targetChanged && !isFetching.current)
+    ) {
+      lastRerouteTime.current = now;
+      lastRerouteLocation.current = currentLocation;
+      isFetching.current = true;
+
+      // Find next stop ahead based on visited list
+      const sortedStops = [...stops]
+        .filter((s) => s.lat != null && s.lng != null)
+        .sort((a, b) => a.sequence - b.sequence);
+
+      let targetStop = null;
+      for (const stop of sortedStops) {
+        if (!visitedStopIds.includes(stop.id)) {
+          targetStop = stop;
+          break;
+        }
       }
-      setIsDiverted(false);
-      setDivertedPolyline([]);
-      lastRerouteLocation.current = null;
-      lastRerouteTime.current = 0; // reset so next diversion fetches immediately
+
+      if (targetStop && targetStop.lat && targetStop.lng) {
+        NavigationService.getRoutePath([
+          { lat: currentLocation.latitude, lng: currentLocation.longitude },
+          { lat: targetStop.lat, lng: targetStop.lng },
+        ])
+          .then((polyline) => {
+            isFetching.current = false;
+            if (polyline && polyline.length > 0) {
+              const decoded = decodePolyline(polyline).map(([lat, lng]) => ({
+                latitude: lat,
+                longitude: lng,
+              }));
+              setDivertedPolyline(decoded);
+            }
+          })
+          .catch((err) => {
+            isFetching.current = false;
+          });
+      } else {
+        isFetching.current = false;
+        setDivertedPolyline([]);
+        setIsDiverted(false); // No target stop found, disable
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentLocation, routePath, stops]);
+  }, [currentLocation, routePath, stops, visitedStopIds]);
 
   return { isDiverted, divertedPolyline, distFromRoute };
 }

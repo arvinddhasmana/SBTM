@@ -23,6 +23,8 @@ interface Section {
   title: string;
   arrivalTime: string;
   data: Student[];
+  stopId?: string;
+  isVisited?: boolean;
 }
 
 function StudentAvatar({ name, avatarUrl }: { name: string; avatarUrl?: string }) {
@@ -52,7 +54,12 @@ function StudentAvatar({ name, avatarUrl }: { name: string; avatarUrl?: string }
   );
 }
 
-function buildSections(students: Student[], stops: Stop[], t: (key: string, options?: any) => string): Section[] {
+function buildSections(
+  students: Student[],
+  stops: Stop[],
+  visitedStopIds: string[],
+  t: (key: string, options?: any) => string,
+): Section[] {
   const stopStudents = new Map<string, Student[]>();
   const unassigned: Student[] = [];
 
@@ -73,8 +80,9 @@ function buildSections(students: Student[], stops: Stop[], t: (key: string, opti
       title: t('roster.stop', { number: stop.sequence, name: stop.stopName }),
       arrivalTime: stop.arrivalTime ?? '',
       data: stopStudents.get(stop.id) ?? [],
-    }))
-    .filter((section) => section.data.length > 0);
+      stopId: stop.id,
+      isVisited: visitedStopIds.includes(stop.id),
+    }));
 
   if (unassigned.length > 0) {
     sections.push({ title: t('roster.otherStudents'), arrivalTime: '', data: unassigned });
@@ -96,8 +104,14 @@ export default function RosterScreen() {
   const routeDirection = useDriverStore((state) => state.routeDirection);
   const boardAll = useDriverStore((state) => state.boardAll);
   const alightAll = useDriverStore((state) => state.alightAll);
+  const visitedStopIds = useDriverStore((state) => state.visitedStopIds);
+  const markStopVisited = useDriverStore((state) => state.markStopVisited);
 
-  const sections = useMemo(() => buildSections(students, stops, t), [students, stops, t]);
+  const sections = useMemo(
+    () => buildSections(students, stops, visitedStopIds, t),
+    [students, stops, visitedStopIds, t],
+  );
+  const nextStop = useMemo(() => sections.find((s) => s.stopId && !s.isVisited), [sections]);
 
   const hasNotBoarded = students.some((s) => s.status === 'NOT_BOARDED');
   const hasBoarded = students.some((s) => s.status === 'BOARDED');
@@ -117,11 +131,51 @@ export default function RosterScreen() {
   };
 
   const renderSectionHeader = ({ section }: { section: Section }) => (
-    <View style={styles.sectionHeader}>
-      <Text style={styles.sectionTitle} numberOfLines={1}>
-        {section.title}
-      </Text>
-      {section.arrivalTime ? <Text style={styles.arrivalTime}>{section.arrivalTime}</Text> : null}
+    <View
+      style={[
+        styles.sectionHeader,
+        { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+      ]}
+    >
+      <View style={{ flex: 1 }}>
+        <Text style={styles.sectionTitle} numberOfLines={1}>
+          {section.title}
+        </Text>
+        {section.arrivalTime ? <Text style={styles.arrivalTime}>{section.arrivalTime}</Text> : null}
+      </View>
+      {section.stopId && !section.isVisited && (
+        <TouchableOpacity
+          style={[
+            styles.actionButton,
+            {
+              paddingHorizontal: 12,
+              paddingVertical: 6,
+              backgroundColor: '#3b82f6',
+              alignSelf: 'flex-start',
+              marginTop: 4,
+            },
+          ]}
+          onPress={() => markStopVisited(section.stopId!)}
+        >
+          <Text style={{ color: '#fff', fontSize: 12, fontWeight: 'bold' }}>
+            {t('roster.markVisited', { defaultValue: 'Mark Visited' })}
+          </Text>
+        </TouchableOpacity>
+      )}
+      {section.stopId && section.isVisited && (
+        <View
+          style={{
+            backgroundColor: 'rgba(34,197,94,0.2)',
+            paddingHorizontal: 8,
+            paddingVertical: 4,
+            borderRadius: 12,
+          }}
+        >
+          <Text style={{ color: '#22c55e', fontSize: 10, fontWeight: 'bold' }}>
+            {t('roster.visited', { defaultValue: 'VISITED' })}
+          </Text>
+        </View>
+      )}
     </View>
   );
 
@@ -143,7 +197,9 @@ export default function RosterScreen() {
         <View style={styles.studentInfo}>
           <Text style={styles.name}>{item.name}</Text>
           <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
-            <Text style={styles.statusText}>{t(`roster.status.${item.status}`, { defaultValue: item.status.replace('_', ' ') })}</Text>
+            <Text style={styles.statusText}>
+              {t(`roster.status.${item.status}`, { defaultValue: item.status.replace('_', ' ') })}
+            </Text>
           </View>
         </View>
         <TouchableOpacity
@@ -172,6 +228,20 @@ export default function RosterScreen() {
     <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
       <Text style={styles.header}>{t('roster.title')}</Text>
+
+      {nextStop && (
+        <Text
+          style={{
+            color: '#00ff88',
+            fontSize: 16,
+            fontWeight: 'bold',
+            marginLeft: 16,
+            marginBottom: 12,
+          }}
+        >
+          Next Stop: {nextStop.title}
+        </Text>
+      )}
 
       {routeDirection === 'PM' && hasNotBoarded && (
         <TouchableOpacity style={styles.bulkBtn} onPress={handleBoardAll}>

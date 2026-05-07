@@ -17,6 +17,10 @@ const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export class CreateRouteStopDto {
+  @IsOptional()
+  @IsString()
+  id?: string;
+
   @IsInt()
   @Min(0)
   sequence: number;
@@ -101,4 +105,10 @@ export class UpdateRouteDto {
   @IsString()
   @IsOptional()
   polyline?: string;
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateRouteStopDto)
+  @IsOptional()
+  stops?: CreateRouteStopDto[];
 }

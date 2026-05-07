@@ -59,22 +59,30 @@ interface NextStopProps {
   currentLat: number | null;
   currentLng: number | null;
   direction: string;
+  visitedStopIds: string[];
 }
 
-export function NextStopBanner({ stops, currentLat, currentLng, direction }: NextStopProps) {
+export function NextStopBanner({
+  stops,
+  currentLat,
+  currentLng,
+  direction,
+  visitedStopIds,
+}: NextStopProps) {
   const nextStop = useMemo(() => {
     if (currentLat == null || currentLng == null || stops.length === 0) return null;
     const sorted = [...stops]
       .filter((s) => s.lat != null && s.lng != null)
       .sort((a, b) => a.sequence - b.sequence);
+
     for (const stop of sorted) {
-      const dist = haversineMeters(currentLat, currentLng, stop.lat!, stop.lng!);
-      if (dist > 50) {
+      if (!visitedStopIds.includes(stop.id)) {
+        const dist = haversineMeters(currentLat, currentLng, stop.lat!, stop.lng!);
         return { stop, distance: dist };
       }
     }
     return null;
-  }, [stops, currentLat, currentLng]);
+  }, [stops, currentLat, currentLng, visitedStopIds]);
 
   if (!nextStop) return null;
 

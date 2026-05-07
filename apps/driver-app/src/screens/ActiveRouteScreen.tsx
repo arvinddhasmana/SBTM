@@ -23,6 +23,7 @@ import { useRouteStatus } from '../hooks/useRouteStatus';
 import { usePanicDetection } from '../hooks/usePanicDetection';
 import { useDynamicReroute } from '../hooks/useDynamicReroute';
 import { decodePolyline } from '../utils/polyline';
+import { closestIndexToPolyline, haversineMeters } from '../utils/geo';
 import { DARK_MAP_STYLE } from '../constants/mapStyles';
 import BusNavigationMarker from '../components/map/BusNavigationMarker';
 import StopMarkerView from '../components/map/StopMarker';
@@ -42,6 +43,8 @@ export default function ActiveRouteScreen({ navigation }: any) {
   const driver = useDriverStore((state) => state.driver);
   const endRoute = useDriverStore((state) => state.endRoute);
   const stops = useDriverStore((state) => state.stops);
+  const visitedStopIds = useDriverStore((state) => state.visitedStopIds);
+  const markStopVisited = useDriverStore((state) => state.markStopVisited);
   const routeDirection = useDriverStore((state) => state.routeDirection);
 
   const mapRef = useRef<MapView>(null);
@@ -73,36 +76,36 @@ export default function ActiveRouteScreen({ navigation }: any) {
   const [incidentDescription, setIncidentDescription] = useState('');
   const [isRecording, setIsRecording] = useState(false);
 
-  const startVoiceInput = useCallback((setter: (v: string) => void, current: string) => {
-    if (Platform.OS === 'android') {
-      try {
-        // Use Android's built-in speech recognizer via expo intent
-        const IntentLauncher = require('expo-intent-launcher');
-        IntentLauncher.startActivityAsync('android.speech.action.RECOGNIZE_SPEECH', {
-          extra: {
-            'android.speech.extra.LANGUAGE_MODEL': 'free_form',
-            'android.speech.extra.PROMPT': t('activeRoute.voice.prompt'),
-          },
-        })
-          .then((result: any) => {
-            if (result.resultCode === -1 && result.data) {
-              const text = result.data?.extras?.['android.speech.extra.RESULTS']?.[0];
-              if (text) setter(current ? `${current} ${text}` : text);
-            }
+  const startVoiceInput = useCallback(
+    (setter: (v: string) => void, current: string) => {
+      if (Platform.OS === 'android') {
+        try {
+          // Use Android's built-in speech recognizer via expo intent
+          const IntentLauncher = require('expo-intent-launcher');
+          IntentLauncher.startActivityAsync('android.speech.action.RECOGNIZE_SPEECH', {
+            extra: {
+              'android.speech.extra.LANGUAGE_MODEL': 'free_form',
+              'android.speech.extra.PROMPT': t('activeRoute.voice.prompt'),
+            },
           })
-          .catch(() => {
-            Alert.alert(t('activeRoute.voice.title'), t('activeRoute.voice.unavailable'));
-          });
-      } catch {
-        Alert.alert(t('activeRoute.voice.title'), t('activeRoute.voice.notSupported'));
+            .then((result: any) => {
+              if (result.resultCode === -1 && result.data) {
+                const text = result.data?.extras?.['android.speech.extra.RESULTS']?.[0];
+                if (text) setter(current ? `${current} ${text}` : text);
+              }
+            })
+            .catch(() => {
+              Alert.alert(t('activeRoute.voice.title'), t('activeRoute.voice.unavailable'));
+            });
+        } catch {
+          Alert.alert(t('activeRoute.voice.title'), t('activeRoute.voice.notSupported'));
+        }
+      } else {
+        Alert.alert(t('activeRoute.voice.title'), t('activeRoute.voice.iosHint'));
       }
-    } else {
-      Alert.alert(
-        t('activeRoute.voice.title'),
-        t('activeRoute.voice.iosHint'),
-      );
-    }
-  }, [t]);
+    },
+    [t],
+  );
 
   // Default region — null until first GPS fix; map will center on route once GPS resolves
   const [region, setRegion] = useState<{
@@ -120,6 +123,30 @@ export default function ActiveRouteScreen({ navigation }: any) {
       longitude: lng,
     }));
   }, [activeRoute?.polyline]);
+
+  // Split the route polyline into visited and unvisited parts based on nearest point to bus
+  const { visitedRoutePath, unvisitedRoutePath } = useMemo(() => {
+    if (routePath.length === 0 || !currentLocation) {
+      return { visitedRoutePath: [], unvisitedRoutePath: routePath };
+    }
+
+    // If the entire route is considered finished tracking, etc. you could also check logic here
+    const closestIdx = closestIndexToPolyline(
+      currentLocation.latitude,
+      currentLocation.longitude,
+      routePath,
+    );
+
+    if (closestIdx <= 0) {
+      return { visitedRoutePath: [], unvisitedRoutePath: routePath };
+    }
+
+    // Split roughly at the closest index
+    const visited = routePath.slice(0, closestIdx + 1);
+    const unvisited = routePath.slice(closestIdx);
+
+    return { visitedRoutePath: visited, unvisitedRoutePath: unvisited };
+  }, [routePath, currentLocation]);
 
   // BLE scanning
   const { scanState } = useBleScanning(
@@ -141,6 +168,7 @@ export default function ActiveRouteScreen({ navigation }: any) {
     currentLocation,
     routePath,
     stops,
+    visitedStopIds,
   );
 
   // ── Panic detection (multi-tap + drop) ─────────────────────────
@@ -239,6 +267,24 @@ export default function ActiveRouteScreen({ navigation }: any) {
     }
   };
 
+  // Auto-visit geofence check (30 meters)
+  useEffect(() => {
+    if (!currentLocation) return;
+    for (const stop of stops) {
+      if (stop.lat && stop.lng && !visitedStopIds.includes(stop.id)) {
+        const dist = haversineMeters(
+          currentLocation.latitude,
+          currentLocation.longitude,
+          stop.lat,
+          stop.lng,
+        );
+        if (dist < 30) {
+          markStopVisited(stop.id);
+        }
+      }
+    }
+  }, [currentLocation, stops, visitedStopIds, markStopVisited]);
+
   // ── Handlers ─────────────────────────────────────────────────────
 
   const handleRecenter = useCallback(() => {
@@ -317,21 +363,17 @@ export default function ActiveRouteScreen({ navigation }: any) {
   };
 
   const handleEndRoute = () => {
-    Alert.alert(
-      t('activeRoute.endRoute.title'),
-      t('activeRoute.endRoute.message'),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('activeRoute.endRoute.confirm'),
-          style: 'destructive',
-          onPress: async () => {
-            await endRoute();
-            navigation.popToTop();
-          },
+    Alert.alert(t('activeRoute.endRoute.title'), t('activeRoute.endRoute.message'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('activeRoute.endRoute.confirm'),
+        style: 'destructive',
+        onPress: async () => {
+          await endRoute();
+          navigation.popToTop();
         },
-      ],
-    );
+      },
+    ]);
   };
 
   if (!activeRoute)
@@ -436,23 +478,31 @@ export default function ActiveRouteScreen({ navigation }: any) {
           />
         )}
 
-        {/* Route polyline */}
-        {routePath.length > 0 && (
+        {/* Visited portion of Route polyline (Dimmed) */}
+        {visitedRoutePath.length > 0 && (
           <Polyline
-            coordinates={routePath}
+            coordinates={visitedRoutePath}
             strokeColor={
               routeDirection === 'AM'
-                ? isDiverted
-                  ? 'rgba(59, 130, 246, 0.4)'
-                  : '#3b82f6'
-                : isDiverted
-                  ? 'rgba(245, 158, 11, 0.4)'
-                  : '#f59e0b'
+                ? 'rgba(59, 130, 246, 0.3)' // Dim blue
+                : 'rgba(245, 158, 11, 0.3)' // Dim amber
             }
-            strokeWidth={isDiverted ? 2 : 3}
+            strokeWidth={6}
             lineJoin="round"
             lineCap="round"
             zIndex={1}
+          />
+        )}
+
+        {/* Unvisited portion of Route polyline (Highlighted) */}
+        {unvisitedRoutePath.length > 0 && (
+          <Polyline
+            coordinates={unvisitedRoutePath}
+            strokeColor={routeDirection === 'AM' ? '#3b82f6' : '#f59e0b'}
+            strokeWidth={6}
+            lineJoin="round"
+            lineCap="round"
+            zIndex={2}
           />
         )}
 
@@ -464,7 +514,9 @@ export default function ActiveRouteScreen({ navigation }: any) {
               key={stop.id}
               coordinate={{ latitude: stop.lat!, longitude: stop.lng! }}
               title={t('activeRoute.stop', { number: stop.sequence, name: stop.stopName })}
-              description={stop.arrivalTime ? t('activeRoute.arrival', { time: stop.arrivalTime }) : undefined}
+              description={
+                stop.arrivalTime ? t('activeRoute.arrival', { time: stop.arrivalTime }) : undefined
+              }
               zIndex={10}
             >
               <StopMarkerView sequence={stop.sequence} direction={routeDirection} />
@@ -492,6 +544,7 @@ export default function ActiveRouteScreen({ navigation }: any) {
         currentLat={currentLocation?.latitude ?? null}
         currentLng={currentLocation?.longitude ?? null}
         direction={routeDirection}
+        visitedStopIds={visitedStopIds}
       />
 
       {/* Reset Button – glassmorphic */}

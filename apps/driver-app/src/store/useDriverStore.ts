@@ -1,4 +1,6 @@
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Driver, Route, Student, Stop } from '../types';
 import { AuthService } from '../services/auth.service';
 import { PresenceService } from '../services/presence.service';
@@ -17,6 +19,7 @@ interface DriverState {
   rosterLoadState: RosterLoadState;
   rosterError: string | null;
   isOffline: boolean;
+  visitedStopIds: string[];
   login: (email: string, pass: string) => Promise<void>;
   logout: () => void;
   setActiveRoute: (route: Route) => Promise<void>;
@@ -26,28 +29,15 @@ interface DriverState {
   alightAll: () => Promise<void>;
   setStudents: (students: Student[]) => void;
   refreshRoster: () => Promise<void>;
+  refreshSchedule: () => Promise<void>;
   setOffline: (offline: boolean) => void;
+  markStopVisited: (stopId: string) => void;
+  resumeRoute: () => void;
 }
 
-export const useDriverStore = create<DriverState>((set, get) => ({
-  driver: null,
-  isAuthenticated: false,
-  activeRoute: null,
-  students: [],
-  stops: [],
-  routeDirection: 'AM',
-  rosterLoadState: 'idle',
-  rosterError: null,
-  isOffline: false,
-
-  login: async (email, pass) => {
-    const driver = await AuthService.login(email, pass);
-    set({ driver, isAuthenticated: true });
-  },
-
-  logout: () => {
-    AuthService.logout();
-    set({
+export const useDriverStore = create<DriverState>()(
+  persist(
+    (set, get) => ({
       driver: null,
       isAuthenticated: false,
       activeRoute: null,
@@ -55,209 +45,273 @@ export const useDriverStore = create<DriverState>((set, get) => ({
       stops: [],
       routeDirection: 'AM',
       rosterLoadState: 'idle',
-    });
-  },
-
-  setOffline: (offline) => set({ isOffline: offline }),
-
-  setActiveRoute: async (route) => {
-    const { driver } = get();
-    set({
-      activeRoute: route,
-      students: [],
-      stops: [],
-      rosterLoadState: 'loading',
       rosterError: null,
-    });
+      isOffline: false,
+      visitedStopIds: [],
 
-    // Record route start lifecycle event (fire-and-forget; logged on failure)
-    if (driver) {
-      void RouteLifecycleService.startRoute(route.id, route.vehicleId, driver.id);
-    }
+      markStopVisited: (stopId: string) =>
+        set((state) => ({ visitedStopIds: [...state.visitedStopIds, stopId] })),
 
-    // Fetch server-confirmed roster with stop data
-    try {
-      const { students, stops, direction } = await RosterService.getRouteRoster(route.id);
+      resumeRoute: () => {
+        // Simple action to trigger re-render if needed, but mainly used for navigating logic
+      },
 
-      // Reset students to the default state for this route direction:
-      //   AM Route → all students NOT_BOARDED (driver picks them up)
-      //   PM Route → first set all to NOT_BOARDED, then boardAll() transitions to BOARDED with server sync
-      const resetStudents = students.map((s) => ({
-        ...s,
-        status: 'NOT_BOARDED' as const,
-        serverConfirmed: false,
-        pendingSync: false,
-      }));
+      login: async (email, pass) => {
+        const driver = await AuthService.login(email, pass);
+        set({ driver, isAuthenticated: true });
+      },
 
-      set({ students: resetStudents, stops, routeDirection: direction, rosterLoadState: 'loaded' });
+      logout: () => {
+        AuthService.logout();
+        set({
+          driver: null,
+          isAuthenticated: false,
+          activeRoute: null,
+          students: [],
+          stops: [],
+          routeDirection: 'AM',
+          rosterLoadState: 'idle',
+          visitedStopIds: [],
+        });
+      },
 
-      // PM route: board all students (they board at school before departure)
-      if (direction === 'PM') {
-        await get().boardAll();
-      }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to load roster';
-      console.warn('Roster load failed, running offline', { routeId: route.id });
-      set({ rosterLoadState: 'error', rosterError: message });
-    }
-  },
+      setOffline: (offline) => set({ isOffline: offline }),
 
-  refreshRoster: async () => {
-    const { activeRoute } = get();
-    if (!activeRoute) return;
+      refreshSchedule: async () => {
+        const { isAuthenticated } = get();
+        if (!isAuthenticated) return;
+        try {
+          const driver = await AuthService.restoreSession();
+          set((state) => ({ driver: { ...driver, name: state.driver?.name ?? driver.name } }));
+        } catch {
+          // Network failure — keep existing schedule
+        }
+      },
 
-    set({ rosterLoadState: 'loading', rosterError: null });
-    try {
-      const { students, stops, direction } = await RosterService.getRouteRoster(activeRoute.id);
-      set({ students, stops, routeDirection: direction, rosterLoadState: 'loaded' });
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to load roster';
-      set({ rosterLoadState: 'error', rosterError: message });
-    }
-  },
+      setActiveRoute: async (route) => {
+        const { driver } = get();
+        set({
+          activeRoute: route,
+          students: [],
+          stops: [],
+          rosterLoadState: 'loading',
+          rosterError: null,
+          visitedStopIds: [],
+        });
 
-  endRoute: async () => {
-    const { activeRoute, driver, students } = get();
-    if (activeRoute && driver) {
-      // Auto-alight all remaining boarded students (both AM and PM)
-      if (students.some((s) => s.status === 'BOARDED')) {
-        await get().alightAll();
-      }
-      await RouteLifecycleService.completeRoute(activeRoute.id, activeRoute.vehicleId, driver.id);
-    }
-    // Reset all route state back to defaults
-    set({
-      activeRoute: null,
-      students: [],
-      stops: [],
-      routeDirection: 'AM',
-      rosterLoadState: 'idle',
-      rosterError: null,
-    });
-  },
+        // Record route start lifecycle event (fire-and-forget; logged on failure)
+        if (driver) {
+          void RouteLifecycleService.startRoute(route.id, route.vehicleId, driver.id);
+        }
 
-  setStudents: (students) => set({ students }),
+        // Fetch server-confirmed roster with stop data
+        try {
+          const { students, stops, direction } = await RosterService.getRouteRoster(route.id);
 
-  toggleStudentStatus: async (studentId: string) => {
-    const { students, activeRoute, driver } = get();
+          // Reset students to the default state for this route direction:
+          //   AM Route → all students NOT_BOARDED (driver picks them up)
+          //   PM Route → first set all to NOT_BOARDED, then boardAll() transitions to BOARDED with server sync
+          const resetStudents = students.map((s) => ({
+            ...s,
+            status: 'NOT_BOARDED' as const,
+            serverConfirmed: false,
+            pendingSync: false,
+          }));
 
-    const target = students.find((s) => s.id === studentId);
-    if (!target || !activeRoute || !driver) return;
+          set({
+            students: resetStudents,
+            stops,
+            routeDirection: direction,
+            rosterLoadState: 'loaded',
+          });
 
-    const nextStatus: Student['status'] =
-      target.status === 'NOT_BOARDED'
-        ? 'BOARDED'
-        : target.status === 'BOARDED'
-          ? 'ALIGHTED'
-          : 'NOT_BOARDED';
+          // PM route: board all students (they board at school before departure)
+          if (direction === 'PM') {
+            await get().boardAll();
+          }
+        } catch (err) {
+          const message = err instanceof Error ? err.message : 'Failed to load roster';
+          console.warn('Roster load failed, running offline', { routeId: route.id });
+          set({ rosterLoadState: 'error', rosterError: message });
+        }
+      },
 
-    if (nextStatus === 'NOT_BOARDED') {
-      // Cycling back to NOT_BOARDED is local-only; no backend event
-      set({
-        students: students.map((s) =>
-          s.id === studentId ? { ...s, status: 'NOT_BOARDED', serverConfirmed: false } : s,
-        ),
-      });
-      return;
-    }
+      refreshRoster: async () => {
+        const { activeRoute } = get();
+        if (!activeRoute) return;
 
-    // Optimistic update with pending sync flag
-    set({
-      students: students.map((s) =>
-        s.id === studentId
-          ? { ...s, status: nextStatus, serverConfirmed: false, pendingSync: true }
-          : s,
-      ),
-    });
+        set({ rosterLoadState: 'loading', rosterError: null });
+        try {
+          const { students, stops, direction } = await RosterService.getRouteRoster(activeRoute.id);
+          set({ students, stops, routeDirection: direction, rosterLoadState: 'loaded' });
+        } catch (err) {
+          const message = err instanceof Error ? err.message : 'Failed to load roster';
+          set({ rosterLoadState: 'error', rosterError: message });
+        }
+      },
 
-    const result = await PresenceService.sendPresenceEvent({
-      studentId,
-      vehicleId: activeRoute.vehicleId,
-      routeId: activeRoute.id,
-      schoolId: activeRoute.schoolId,
-      eventType: nextStatus === 'BOARDED' ? 'BOARD' : 'ALIGHT',
-      source: 'MANUAL',
-      timestamp: new Date().toISOString(),
-    });
+      endRoute: async () => {
+        const { activeRoute, driver, students } = get();
+        if (activeRoute && driver) {
+          // Auto-alight all remaining boarded students (both AM and PM)
+          if (students.some((s) => s.status === 'BOARDED')) {
+            await get().alightAll();
+          }
+          await RouteLifecycleService.completeRoute(
+            activeRoute.id,
+            activeRoute.vehicleId,
+            driver.id,
+          );
+        }
+        // Reset all route state back to defaults
+        set({
+          activeRoute: null,
+          students: [],
+          stops: [],
+          routeDirection: 'AM',
+          rosterLoadState: 'idle',
+          rosterError: null,
+          visitedStopIds: [],
+        });
+      },
 
-    // Mark server-confirmed (or leave pendingSync:true for offline queue)
-    const serverConfirmed = result.presenceEventId !== undefined;
-    set({
-      students: get().students.map((s) =>
-        s.id === studentId ? { ...s, serverConfirmed, pendingSync: !serverConfirmed } : s,
-      ),
-    });
-  },
+      setStudents: (students) => set({ students }),
 
-  boardAll: async () => {
-    const { students, activeRoute, driver } = get();
-    if (!activeRoute || !driver) return;
-    const notBoarded = students.filter((s) => s.status === 'NOT_BOARDED');
-    if (notBoarded.length === 0) return;
+      toggleStudentStatus: async (studentId: string) => {
+        const { students, activeRoute, driver } = get();
 
-    // Optimistic update
-    set({
-      students: students.map((s) =>
-        s.status === 'NOT_BOARDED'
-          ? { ...s, status: 'BOARDED' as const, serverConfirmed: false, pendingSync: true }
-          : s,
-      ),
-    });
+        const target = students.find((s) => s.id === studentId);
+        if (!target || !activeRoute || !driver) return;
 
-    const ids = notBoarded.map((s) => s.id);
-    const timestamp = new Date().toISOString();
-    for (const student of notBoarded) {
-      await PresenceService.sendPresenceEvent({
-        studentId: student.id,
-        vehicleId: activeRoute.vehicleId,
-        routeId: activeRoute.id,
-        schoolId: activeRoute.schoolId,
-        eventType: 'BOARD',
-        source: 'MANUAL',
-        timestamp,
-      });
-    }
+        const nextStatus: Student['status'] =
+          target.status === 'NOT_BOARDED'
+            ? 'BOARDED'
+            : target.status === 'BOARDED'
+              ? 'ALIGHTED'
+              : 'NOT_BOARDED';
 
-    set({
-      students: get().students.map((s) =>
-        ids.includes(s.id) ? { ...s, serverConfirmed: true, pendingSync: false } : s,
-      ),
-    });
-  },
+        if (nextStatus === 'NOT_BOARDED') {
+          // Cycling back to NOT_BOARDED is local-only; no backend event
+          set({
+            students: students.map((s) =>
+              s.id === studentId ? { ...s, status: 'NOT_BOARDED', serverConfirmed: false } : s,
+            ),
+          });
+          return;
+        }
 
-  alightAll: async () => {
-    const { students, activeRoute, driver } = get();
-    if (!activeRoute || !driver) return;
-    const boarded = students.filter((s) => s.status === 'BOARDED');
-    if (boarded.length === 0) return;
+        // Optimistic update with pending sync flag
+        set({
+          students: students.map((s) =>
+            s.id === studentId
+              ? { ...s, status: nextStatus, serverConfirmed: false, pendingSync: true }
+              : s,
+          ),
+        });
 
-    // Optimistic update
-    set({
-      students: students.map((s) =>
-        s.status === 'BOARDED'
-          ? { ...s, status: 'ALIGHTED' as const, serverConfirmed: false, pendingSync: true }
-          : s,
-      ),
-    });
+        const result = await PresenceService.sendPresenceEvent({
+          studentId,
+          vehicleId: activeRoute.vehicleId,
+          routeId: activeRoute.id,
+          schoolId: activeRoute.schoolId,
+          eventType: nextStatus === 'BOARDED' ? 'BOARD' : 'ALIGHT',
+          source: 'MANUAL',
+          timestamp: new Date().toISOString(),
+        });
 
-    const ids = boarded.map((s) => s.id);
-    const timestamp = new Date().toISOString();
-    for (const student of boarded) {
-      await PresenceService.sendPresenceEvent({
-        studentId: student.id,
-        vehicleId: activeRoute.vehicleId,
-        routeId: activeRoute.id,
-        schoolId: activeRoute.schoolId,
-        eventType: 'ALIGHT',
-        source: 'MANUAL',
-        timestamp,
-      });
-    }
+        // Mark server-confirmed (or leave pendingSync:true for offline queue)
+        const serverConfirmed = result.presenceEventId !== undefined;
+        set({
+          students: get().students.map((s) =>
+            s.id === studentId ? { ...s, serverConfirmed, pendingSync: !serverConfirmed } : s,
+          ),
+        });
+      },
 
-    set({
-      students: get().students.map((s) =>
-        ids.includes(s.id) ? { ...s, serverConfirmed: true, pendingSync: false } : s,
-      ),
-    });
-  },
-}));
+      boardAll: async () => {
+        const { students, activeRoute, driver } = get();
+        if (!activeRoute || !driver) return;
+        const notBoarded = students.filter((s) => s.status === 'NOT_BOARDED');
+        if (notBoarded.length === 0) return;
+
+        // Optimistic update
+        set({
+          students: students.map((s) =>
+            s.status === 'NOT_BOARDED'
+              ? { ...s, status: 'BOARDED' as const, serverConfirmed: false, pendingSync: true }
+              : s,
+          ),
+        });
+
+        const ids = notBoarded.map((s) => s.id);
+        const timestamp = new Date().toISOString();
+        for (const student of notBoarded) {
+          await PresenceService.sendPresenceEvent({
+            studentId: student.id,
+            vehicleId: activeRoute.vehicleId,
+            routeId: activeRoute.id,
+            schoolId: activeRoute.schoolId,
+            eventType: 'BOARD',
+            source: 'MANUAL',
+            timestamp,
+          });
+        }
+
+        set({
+          students: get().students.map((s) =>
+            ids.includes(s.id) ? { ...s, serverConfirmed: true, pendingSync: false } : s,
+          ),
+        });
+      },
+
+      alightAll: async () => {
+        const { students, activeRoute, driver } = get();
+        if (!activeRoute || !driver) return;
+        const boarded = students.filter((s) => s.status === 'BOARDED');
+        if (boarded.length === 0) return;
+
+        // Optimistic update
+        set({
+          students: students.map((s) =>
+            s.status === 'BOARDED'
+              ? { ...s, status: 'ALIGHTED' as const, serverConfirmed: false, pendingSync: true }
+              : s,
+          ),
+        });
+
+        const ids = boarded.map((s) => s.id);
+        const timestamp = new Date().toISOString();
+        for (const student of boarded) {
+          await PresenceService.sendPresenceEvent({
+            studentId: student.id,
+            vehicleId: activeRoute.vehicleId,
+            routeId: activeRoute.id,
+            schoolId: activeRoute.schoolId,
+            eventType: 'ALIGHT',
+            source: 'MANUAL',
+            timestamp,
+          });
+        }
+
+        set({
+          students: get().students.map((s) =>
+            ids.includes(s.id) ? { ...s, serverConfirmed: true, pendingSync: false } : s,
+          ),
+        });
+      },
+    }),
+    {
+      name: 'driver-storage',
+      storage: createJSONStorage(() => AsyncStorage),
+      partialize: (state) => ({
+        activeRoute: state.activeRoute,
+        students: state.students,
+        stops: state.stops,
+        routeDirection: state.routeDirection,
+        visitedStopIds: state.visitedStopIds,
+        driver: state.driver,
+        isAuthenticated: state.isAuthenticated,
+      }),
+    },
+  ),
+);

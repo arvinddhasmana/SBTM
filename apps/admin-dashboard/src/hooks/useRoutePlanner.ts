@@ -157,34 +157,46 @@ export function useRoutePlanner() {
   }, [optimizationResult, stops]);
 
   // --- Snap-to-road helper (debounced) ---
-  const snapRouteToRoad = useCallback((stopsToSnap: PlannerStop[]) => {
-    if (snapTimerRef.current) {
-      clearTimeout(snapTimerRef.current);
-    }
-    snapTimerRef.current = setTimeout(async () => {
-      const validStops = stopsToSnap.filter((s) => s.lat !== 0 && s.lng !== 0);
-      if (validStops.length < 2) return;
-
-      try {
-        setIsSnapping(true);
-        const waypoints = validStops.map((s) => ({ lat: s.lat, lng: s.lng }));
-        const result = await routesApi.snapToRoad(waypoints);
-        if (result.polylineGeoJson) {
-          setOptimizationResult((prev) => ({
-            optimizedStops: prev?.optimizedStops ?? [],
-            polyline: result.polyline,
-            polylineGeoJson: result.polylineGeoJson,
-            totalDistance: result.totalDistance,
-            totalDuration: result.totalDuration,
-          }));
-        }
-      } catch {
-        // Snap unavailable; keep current state
-      } finally {
-        setIsSnapping(false);
+  const snapRouteToRoad = useCallback(
+    (stopsToSnap: PlannerStop[]) => {
+      if (snapTimerRef.current) {
+        clearTimeout(snapTimerRef.current);
       }
-    }, 300);
-  }, []);
+      snapTimerRef.current = setTimeout(async () => {
+        const validStops = stopsToSnap.filter((s) => s.lat !== 0 && s.lng !== 0);
+        if (validStops.length < 2) return;
+
+        try {
+          setIsSnapping(true);
+          const waypoints = validStops.map((s) => ({ lat: s.lat, lng: s.lng }));
+
+          if (schoolLocation) {
+            if (direction === 'AM') {
+              waypoints.push({ lat: schoolLocation.lat, lng: schoolLocation.lng });
+            } else {
+              waypoints.unshift({ lat: schoolLocation.lat, lng: schoolLocation.lng });
+            }
+          }
+
+          const result = await routesApi.snapToRoad(waypoints);
+          if (result.polylineGeoJson) {
+            setOptimizationResult((prev) => ({
+              optimizedStops: prev?.optimizedStops ?? [],
+              polyline: result.polyline,
+              polylineGeoJson: result.polylineGeoJson,
+              totalDistance: result.totalDistance,
+              totalDuration: result.totalDuration,
+            }));
+          }
+        } catch {
+          // Snap unavailable; keep current state
+        } finally {
+          setIsSnapping(false);
+        }
+      }, 300);
+    },
+    [schoolLocation, direction],
+  );
 
   // --- Actions ---
   const resetForm = useCallback(() => {
@@ -227,7 +239,7 @@ export function useRoutePlanner() {
     setFormSchoolId(route.schoolId);
     setRouteName(route.name);
     setDirection(route.direction);
-    setStartTime(route.startTime);
+    setStartTime(route.startTime.slice(0, 5));
     setNumberOfStops(route.stops.length);
 
     const plannerStops: PlannerStop[] = route.stops.map((s) => {
@@ -462,16 +474,43 @@ export function useRoutePlanner() {
     try {
       setIsOptimizing(true);
       const apiStops = plannerStops.map((s) => ({
+        id: s.id.startsWith('draft-') ? undefined : s.id,
         sequence: s.sequence,
         address: s.address,
         location: toWktPoint(s.lat, s.lng),
       }));
+
+      // Inject school
+      if (schoolLocation) {
+        const schoolStop = {
+          id: undefined,
+          sequence: direction === 'AM' ? 99999 : 0,
+          address: 'School',
+          location: toWktPoint(schoolLocation.lat, schoolLocation.lng),
+        };
+        if (direction === 'AM') {
+          apiStops.push(schoolStop);
+        } else {
+          apiStops.unshift(schoolStop);
+        }
+      }
+
       const result = await routesApi.optimizeRoute(apiStops);
+      if (result.optimizedStops) {
+        result.optimizedStops = result.optimizedStops.filter((s) => s.address !== 'School');
+      }
       setOptimizationResult(result);
     } catch {
       // Optimization unavailable; try snap-to-road as fallback
       try {
         const waypoints = plannerStops.map((s) => ({ lat: s.lat, lng: s.lng }));
+        if (schoolLocation) {
+          if (direction === 'AM') {
+            waypoints.push({ lat: schoolLocation.lat, lng: schoolLocation.lng });
+          } else {
+            waypoints.unshift({ lat: schoolLocation.lat, lng: schoolLocation.lng });
+          }
+        }
         const snapResult = await routesApi.snapToRoad(waypoints);
         if (snapResult.polylineGeoJson) {
           setOptimizationResult({
@@ -497,47 +536,78 @@ export function useRoutePlanner() {
     setIsOptimizing(true);
     try {
       const apiStops = validStops.map((s) => ({
+        id: s.id.startsWith('draft-') ? undefined : s.id,
         sequence: s.sequence,
         address: s.address,
         location: toWktPoint(s.lat, s.lng),
       }));
+
+      // Inject school for accurate route line to/from school
+      if (schoolLocation) {
+        const schoolStop = {
+          id: undefined,
+          sequence: direction === 'AM' ? 99999 : 0,
+          address: 'School',
+          location: toWktPoint(schoolLocation.lat, schoolLocation.lng),
+        };
+        if (direction === 'AM') {
+          apiStops.push(schoolStop);
+        } else {
+          apiStops.unshift(schoolStop);
+        }
+      }
+
       const result = await routesApi.optimizeRoute(apiStops);
+
+      // Filter out the injected school from the returned stops to prevent it appearing as a student stop
+      if (result.optimizedStops) {
+        result.optimizedStops = result.optimizedStops.filter((s) => s.address !== 'School');
+      }
+
       setOptimizationResult(result);
     } catch {
       // keep existing state
     } finally {
       setIsOptimizing(false);
     }
-  }, [stops]);
+  }, [stops, schoolLocation, direction]);
 
   const saveRoute = useCallback(async () => {
     const validStops = stops.filter((s) => s.lat !== 0 && s.lng !== 0);
     if (!routeName || !formSchoolId || validStops.length === 0) return;
 
-    const routeData = {
-      name: routeName,
-      direction,
-      schoolId: formSchoolId,
-      startTime,
-      estimatedDuration: Math.max(1, Math.round(optimizationResult?.totalDuration || 60)),
-      polyline: optimizationResult?.polyline || undefined,
-      stops: validStops.map((s) => ({
-        sequence: s.sequence,
-        address: s.address,
-        location: toWktPoint(s.lat, s.lng),
-      })),
-    };
+    const stopPayload = validStops.map((s) => ({
+      id: s.id.startsWith('draft-') ? undefined : s.id,
+      sequence: s.sequence,
+      address: s.address,
+      location: toWktPoint(s.lat, s.lng),
+    }));
 
     setIsSaving(true);
     try {
       if (editingRouteId) {
-        await routesApi.updateRoute(editingRouteId, routeData);
+        await routesApi.updateRoute(editingRouteId, {
+          name: routeName,
+          direction,
+          startTime,
+          estimatedDuration: Math.max(1, Math.round(optimizationResult?.totalDuration || 60)),
+          polyline: optimizationResult?.polyline || undefined,
+          stops: stopPayload,
+        });
       } else {
-        await routesApi.createRoute(routeData);
+        await routesApi.createRoute({
+          name: routeName,
+          direction,
+          schoolId: formSchoolId,
+          startTime,
+          estimatedDuration: Math.max(1, Math.round(optimizationResult?.totalDuration || 60)),
+          polyline: optimizationResult?.polyline || undefined,
+          stops: stopPayload,
+        });
       }
       resetForm();
       setMode('list');
-      queryClient.invalidateQueries({ queryKey: queryKeys.routes.active() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.routes.all });
     } catch (error) {
       console.error('Failed to save route:', error);
     } finally {
@@ -562,7 +632,7 @@ export function useRoutePlanner() {
         resetForm();
         setMode('list');
         setSelectedRoute(null);
-        queryClient.invalidateQueries({ queryKey: queryKeys.routes.active() });
+        queryClient.invalidateQueries({ queryKey: queryKeys.routes.all });
       } catch (error) {
         console.error('Failed to delete route:', error);
       }

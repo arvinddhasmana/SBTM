@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
@@ -38,9 +38,32 @@ export default function RouteSelectScreen({ navigation }: any) {
   const { t } = useTranslation('common');
   const insets = useSafeAreaInsets();
   const driver = useDriverStore((state) => state.driver);
+  const activeRoute = useDriverStore((state) => state.activeRoute);
   const setActiveRoute = useDriverStore((state) => state.setActiveRoute);
+  const refreshSchedule = useDriverStore((state) => state.refreshSchedule);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      void refreshSchedule();
+    }, 60_000);
+    return () => clearInterval(id);
+  }, [refreshSchedule]);
 
   const handleSelectRoute = (route: Route) => {
+    // If it's already the active route, just resume
+    if (activeRoute?.id === route.id) {
+      Alert.alert('Resume Route', `Do you want to resume ${route.name}?`, [
+        { text: t('routes.cancel'), style: 'cancel' },
+        {
+          text: 'Resume',
+          onPress: () => {
+            navigation.navigate('ActiveRoute');
+          },
+        },
+      ]);
+      return;
+    }
+
     Alert.alert(
       t('routes.startRoute'),
       t('routes.startRouteConfirm', { name: route.name, direction: route.direction }),
@@ -57,38 +80,56 @@ export default function RouteSelectScreen({ navigation }: any) {
     );
   };
 
-  const renderItem = ({ item }: { item: Route }) => (
-    <TouchableOpacity
-      style={styles.card}
-      onPress={() => handleSelectRoute(item)}
-      activeOpacity={0.7}
-    >
-      <View style={styles.cardContent}>
-        <View style={styles.cardLeft}>
-          <View style={styles.cardHeader}>
-            <Text style={styles.routeName}>{item.name}</Text>
+  const renderItem = ({ item }: { item: Route }) => {
+    const isInProgress = activeRoute?.id === item.id;
+    return (
+      <TouchableOpacity
+        style={[styles.card, isInProgress && { borderColor: '#00ff88', borderWidth: 2 }]}
+        onPress={() => handleSelectRoute(item)}
+        activeOpacity={0.7}
+      >
+        <View style={styles.cardContent}>
+          <View style={styles.cardLeft}>
+            <View style={styles.cardHeader}>
+              <Text style={styles.routeName}>{item.name}</Text>
+              {isInProgress && (
+                <View
+                  style={{
+                    backgroundColor: '#00ff88',
+                    paddingHorizontal: 6,
+                    paddingVertical: 2,
+                    borderRadius: 4,
+                    marginLeft: 8,
+                  }}
+                >
+                  <Text style={{ color: '#000', fontSize: 10, fontWeight: 'bold' }}>
+                    In-Progress
+                  </Text>
+                </View>
+              )}
+            </View>
+            <Text style={styles.details}>
+              {t('routes.school')}: {item.schoolName || item.schoolId}
+            </Text>
+            <Text style={styles.details}>
+              {t('routes.start')}: {formatStartTime(item.startTime)}
+            </Text>
           </View>
-          <Text style={styles.details}>
-            {t('routes.school')}: {item.schoolName || item.schoolId}
-          </Text>
-          <Text style={styles.details}>
-            {t('routes.start')}: {formatStartTime(item.startTime)}
-          </Text>
-        </View>
-        <View style={styles.cardRight}>
-          <MaterialCommunityIcons
-            name="map-marker-path"
-            size={48}
-            color={item.direction === 'AM' ? '#3b82f6' : '#f59e0b'}
-            style={{ opacity: 0.6 }}
-          />
-          <View style={[styles.dirBadge, item.direction === 'AM' ? styles.dirAM : styles.dirPM]}>
-            <Text style={styles.dirText}>{item.direction}</Text>
+          <View style={styles.cardRight}>
+            <MaterialCommunityIcons
+              name="map-marker-path"
+              size={48}
+              color={item.direction === 'AM' ? '#3b82f6' : '#f59e0b'}
+              style={{ opacity: 0.6 }}
+            />
+            <View style={[styles.dirBadge, item.direction === 'AM' ? styles.dirAM : styles.dirPM]}>
+              <Text style={styles.dirText}>{item.direction}</Text>
+            </View>
           </View>
         </View>
-      </View>
-    </TouchableOpacity>
-  );
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <LinearGradient
@@ -191,6 +232,8 @@ const styles = StyleSheet.create({
   },
   cardHeader: {
     marginBottom: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   routeName: {
     fontSize: 19,

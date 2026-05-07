@@ -89,3 +89,28 @@ export function distanceToPolyline(
   }
   return minDist;
 }
+
+/**
+ * Returns the index of the closest segment in a polyline.
+ */
+export function closestIndexToPolyline(
+  lat: number,
+  lng: number,
+  polylineCoords: { latitude: number; longitude: number }[],
+): number {
+  if (polylineCoords.length === 0) return -1;
+  if (polylineCoords.length === 1) return 0;
+
+  let minDist = Infinity;
+  let bestIndex = 0;
+  for (let i = 0; i < polylineCoords.length - 1; i++) {
+    const p1 = polylineCoords[i];
+    const p2 = polylineCoords[i + 1];
+    const dist = distanceToSegment(lat, lng, p1.latitude, p1.longitude, p2.latitude, p2.longitude);
+    if (dist < minDist) {
+      minDist = dist;
+      bestIndex = i; // using the start of the closest segment
+    }
+  }
+  return bestIndex;
+}
