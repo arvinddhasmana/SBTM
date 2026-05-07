@@ -436,7 +436,7 @@ export class GpsGatewayService {
     const params: any[] = routeIds && routeIds.length ? [routeIds] : [];
 
     const routes = (await this.dataSource.query(
-      `SELECT r.id FROM routes_reference r ${whereClause} ORDER BY r.id ASC`,
+      `SELECT r.id FROM routes r ${whereClause} ORDER BY r.id ASC`,
       params,
     )) as Array<{ id: string }>;
 
