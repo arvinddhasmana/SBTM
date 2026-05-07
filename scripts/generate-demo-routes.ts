@@ -659,7 +659,7 @@ function generateSql(allSchools: SchoolData[]): string {
   // --- Drivers ---
   lines.push('-- ===================== Drivers =====================');
   for (const sd of allSchools) {
-    const assignedRouteIds = sd.routes.map((r) => r.refId).join(',');
+    const assignedRouteIds = sd.routes.map((r) => r.opId).join(',');
     lines.push(
       `INSERT INTO users (id, email, "passwordHash", role, "firstName", "lastName", "driverId", "assignedRouteIds", "schoolId", "boardId") VALUES`,
     );
@@ -675,17 +675,14 @@ function generateSql(allSchools: SchoolData[]): string {
     for (const vehicle of sd.vehicles) {
       lines.push(`INSERT INTO vehicles (id, "schoolId", "licensePlate", status) VALUES`);
       lines.push(`    ('${vehicle.id}', '${sd.schoolUuid}', '${vehicle.plate}', 'ACTIVE');`);
-      lines.push(`INSERT INTO vehicles_reference (id, "plateNumber", capacity, status) VALUES`);
-      lines.push(`    ('${vehicle.id}', '${vehicle.plate}', 48, 'ACTIVE');`);
     }
   }
   lines.push('');
 
-  // --- Routes (operational + reference) ---
+  // --- Routes ---
   lines.push('-- ===================== Routes =====================');
   for (const sd of allSchools) {
     for (const route of sd.routes) {
-      // Operational route
       const polylineEsc = route.polyline ? `'${escSql(route.polyline)}'` : 'NULL';
       lines.push(
         `INSERT INTO routes (id, "schoolId", name, direction, "vehicleId", "startTime", polyline) VALUES`,
@@ -693,45 +690,20 @@ function generateSql(allSchools: SchoolData[]): string {
       lines.push(
         `    ('${route.opId}', '${sd.schoolUuid}', '${escSql(route.name)}', '${route.direction}', '${route.vehicleId}', '${route.startTime}', ${polylineEsc});`,
       );
-
-      // Reference route
-      const schedule = JSON.stringify({
-        startTime: route.startTime,
-        days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
-      });
-      lines.push(
-        `INSERT INTO routes_reference (id, name, "vehicleId", "driverId", schedule, polyline, "schoolId", direction) VALUES`,
-      );
-      lines.push(
-        `    ('${route.refId}', '${escSql(route.name)}', '${route.vehicleId}', '${route.driverRefId}', '${escSql(schedule)}', ${polylineEsc}, '${sd.schoolUuid}', '${route.direction}');`,
-      );
     }
   }
   lines.push('');
 
-  // --- Route Stops (operational + reference) ---
+  // --- Route Stops ---
   lines.push('-- ===================== Route Stops =====================');
   for (const sd of allSchools) {
     for (const route of sd.routes) {
       for (const stop of route.stops) {
-        // Operational stop
         lines.push(
           `INSERT INTO route_stops (id, "routeId", "sequence", "address", lat, lng, "location") VALUES`,
         );
         lines.push(
           `    ('${stop.opId}', '${route.opId}', ${stop.sequence}, '${escSql(stop.label)}', ${stop.lat}, ${stop.lng}, ST_SetSRID(ST_MakePoint(${stop.lng}, ${stop.lat}), 4326)::geography);`,
-        );
-
-        // Reference stop
-        const arrivalMinutes =
-          route.direction === 'AM'
-            ? `${String(7 + Math.floor((stop.sequence * 5) / 60)).padStart(2, '0')}:${String((parseInt(route.startTime.split(':')[1]) + stop.sequence * 5) % 60).padStart(2, '0')}`
-            : `${String(15 + Math.floor((stop.sequence * 5) / 60)).padStart(2, '0')}:${String((parseInt(route.startTime.split(':')[1]) + stop.sequence * 5) % 60).padStart(2, '0')}`;
-        lines.push(
-          `INSERT INTO route_stops_reference (id, "routeId", "sequenceOrder", "stopName", lat, lng, "arrivalTime") VALUES`,
-        );
-        lines.push(
-          `    ('${stop.refId}', '${route.refId}', ${stop.sequence}, '${escSql(stop.label)}', ${stop.lat}, ${stop.lng}, '${arrivalMinutes}');`,
         );
       }
     }
@@ -742,13 +714,13 @@ function generateSql(allSchools: SchoolData[]): string {
   lines.push('-- ===================== Parents =====================');
   for (const sd of allSchools) {
     for (const parent of sd.parents) {
-      // Collect all route ref IDs for the parent's children
+      // Collect all operational route UUIDs for the parent's children
       const childRouteIdSet = new Set<string>();
       for (const childId of parent.studentIds) {
         const student = sd.students.find((st) => st.id === childId);
         if (student) {
-          childRouteIdSet.add(sd.routes[student.amRouteIdx].refId);
-          childRouteIdSet.add(sd.routes[student.pmRouteIdx].refId);
+          childRouteIdSet.add(sd.routes[student.amRouteIdx].opId);
+          childRouteIdSet.add(sd.routes[student.pmRouteIdx].opId);
         }
       }
       const childRouteIds = [...childRouteIdSet].join(',');
@@ -771,20 +743,14 @@ function generateSql(allSchools: SchoolData[]): string {
       const pmRoute = sd.routes[student.pmRouteIdx];
       const parentUser = sd.parents.find((p) => p.studentIds.includes(student.id));
 
-      // Operational students table
+      const amStopId = student.amStopRefId ? findOpStopId(amRoute, student.amStopRefId) : null;
+      const pmStopId = student.pmStopRefId ? findOpStopId(pmRoute, student.pmStopRefId) : null;
+
       lines.push(
         `INSERT INTO students (id, first_name, last_name, grade, school_id, parent_user_id, am_route_id, pm_route_id, am_stop_id, pm_stop_id, external_student_id) VALUES`,
       );
       lines.push(
-        `    ('${student.id}', '${escSql(student.firstName)}', '${escSql(student.lastName)}', '${student.grade}', '${sd.schoolUuid}', ${parentUser ? `'${parentUser.id}'` : 'NULL'}, '${amRoute.opId}', '${pmRoute.opId}', '${student.amStopRefId ? findOpStopId(amRoute, student.amStopRefId) : 'NULL'}', '${student.pmStopRefId ? findOpStopId(pmRoute, student.pmStopRefId) : 'NULL'}', '${student.id}');`,
-      );
-
-      // Reference students table
-      lines.push(
-        `INSERT INTO students_reference (id, "firstName", "lastName", grade, "parentId", "schoolId", "assignedRouteId", "amRouteId", "pmRouteId", "amStopId", "pmStopId") VALUES`,
-      );
-      lines.push(
-        `    ('${student.id}', '${escSql(student.firstName)}', '${escSql(student.lastName)}', ${parseInt(student.grade)}, '${parentUser?.id || ''}', '${sd.schoolUuid}', '${amRoute.refId}', '${amRoute.refId}', '${pmRoute.refId}', '${student.amStopRefId}', '${student.pmStopRefId}');`,
+        `    ('${student.id}', '${escSql(student.firstName)}', '${escSql(student.lastName)}', '${student.grade}', '${sd.schoolUuid}', ${parentUser ? `'${parentUser.id}'` : 'NULL'}, '${amRoute.opId}', '${pmRoute.opId}', ${amStopId ? `'${amStopId}'` : 'NULL'}, ${pmStopId ? `'${pmStopId}'` : 'NULL'}, '${student.id}');`,
       );
     }
   }
@@ -823,13 +789,13 @@ function generateSql(allSchools: SchoolData[]): string {
         `INSERT INTO location_points (id, school_id, vehicle_id, route_id, timestamp, lat, lng, speed_kph, heading_deg) VALUES`,
       );
       lines.push(
-        `    ('seed-loc-${sd.school.abbrev.toLowerCase()}-r${r + 1}-am', '${sd.schoolUuid}', '${amRoute.vehicleId}', '${amRoute.refId}', NOW(), ${amLat}, ${amLng}, 0, 0);`,
+        `    ('seed-loc-${sd.school.abbrev.toLowerCase()}-r${r + 1}-am', '${sd.schoolUuid}', '${amRoute.vehicleId}', '${amRoute.opId}', NOW(), ${amLat}, ${amLng}, 0, 0);`,
       );
       lines.push(
         `INSERT INTO location_points (id, school_id, vehicle_id, route_id, timestamp, lat, lng, speed_kph, heading_deg) VALUES`,
       );
       lines.push(
-        `    ('seed-loc-${sd.school.abbrev.toLowerCase()}-r${r + 1}-pm', '${sd.schoolUuid}', '${pmRoute.vehicleId}', '${pmRoute.refId}', NOW(), ${pmLat}, ${pmLng}, 0, 0);`,
+        `    ('seed-loc-${sd.school.abbrev.toLowerCase()}-r${r + 1}-pm', '${sd.schoolUuid}', '${pmRoute.vehicleId}', '${pmRoute.opId}', NOW(), ${pmLat}, ${pmLng}, 0, 0);`,
       );
     }
   }

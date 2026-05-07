@@ -169,7 +169,6 @@ interface RouteCfg {
   name: string;
   direction: 'AM' | 'PM';
   vehicleId: string;
-  driverId: string;
   decoded: [number, number][];
   stops: Stop[];
   students: Student[]; // all students assigned to this lap
@@ -182,19 +181,19 @@ interface BusCfg {
 
 function loadRoute(routeId: string): RouteCfg {
   const rows = psqlRows(
-    `SELECT id, name, direction, "vehicleId", "driverId", polyline FROM routes_reference WHERE id = '${routeId}';`,
+    `SELECT id, name, direction, "vehicleId", polyline FROM routes WHERE id = '${routeId}';`,
   );
   if (rows.length === 0) throw new Error(`Route ${routeId} not found`);
-  const [id, name, direction, vehicleId, driverId, polyline] = rows[0];
+  const [id, name, direction, vehicleId, polyline] = rows[0];
   if (!polyline) throw new Error(`Route ${routeId} has no polyline`);
 
   const stopRows = psqlRows(
-    `SELECT id, "stopName", lat, lng FROM route_stops_reference WHERE "routeId" = '${routeId}' ORDER BY "sequenceOrder";`,
+    `SELECT id, address, lat, lng FROM route_stops WHERE "routeId" = '${routeId}' ORDER BY sequence;`,
   );
-  const colStop = direction === 'AM' ? '"amStopId"' : '"pmStopId"';
-  const colRoute = direction === 'AM' ? '"amRouteId"' : '"pmRouteId"';
+  const colStop = direction === 'AM' ? 'am_stop_id' : 'pm_stop_id';
+  const colRoute = direction === 'AM' ? 'am_route_id' : 'pm_route_id';
   const studentRows = psqlRows(
-    `SELECT id, "firstName", "lastName", ${colStop} FROM students_reference WHERE ${colRoute} = '${routeId}' ORDER BY id;`,
+    `SELECT id, first_name, last_name, ${colStop} FROM students WHERE ${colRoute} = '${routeId}' ORDER BY id;`,
   );
 
   const studentsByStop = new Map<string, string[]>();
@@ -220,7 +219,6 @@ function loadRoute(routeId: string): RouteCfg {
     name,
     direction: direction as 'AM' | 'PM',
     vehicleId,
-    driverId,
     decoded: decodePolyline(polyline),
     stops,
     students,
