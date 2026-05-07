@@ -304,27 +304,12 @@ export class AlertsProcessor extends WorkerHost {
   // ---------------------------------------------------------------------------
 
   /**
-   * Look up all parent user IDs assigned to a given route.
-   * Tries students_reference first (demo data), falls back to students table.
+   * Look up all parent user IDs assigned to a given route from the students table.
    */
   private async findParentsForRoute(
     routeId: string,
     schoolId?: string,
   ): Promise<ParentRow[]> {
-    try {
-      const rows: ParentRow[] = await this.dataSource.query(
-        `SELECT DISTINCT "parentId" AS "parentId", "schoolId" AS "schoolId"
-                 FROM students_reference
-                 WHERE "assignedRouteId" = $1 AND "parentId" IS NOT NULL`,
-        [routeId],
-      );
-      if (rows.length > 0) {
-        return rows;
-      }
-    } catch {
-      // students_reference table may not exist; fall through to students table
-    }
-
     try {
       const query = schoolId
         ? `SELECT DISTINCT parent_user_id AS "parentId", school_id AS "schoolId"
@@ -342,7 +327,7 @@ export class AlertsProcessor extends WorkerHost {
       return rows ?? [];
     } catch {
       this.logger.warn(
-        `Could not query parent lookup tables for routeId=${routeId}`,
+        `Could not query students table for routeId=${routeId}`,
       );
       return [];
     }
