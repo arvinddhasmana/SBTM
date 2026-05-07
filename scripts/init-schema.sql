@@ -34,10 +34,6 @@ DROP TABLE IF EXISTS route_lifecycle_events CASCADE;
 DROP TABLE IF EXISTS location_points CASCADE;
 DROP TABLE IF EXISTS presence_event CASCADE;
 DROP TABLE IF EXISTS student_tag CASCADE;
-DROP TABLE IF EXISTS route_stops_reference CASCADE;
-DROP TABLE IF EXISTS routes_reference CASCADE;
-DROP TABLE IF EXISTS vehicles_reference CASCADE;
-DROP TABLE IF EXISTS students_reference CASCADE;
 DROP TABLE IF EXISTS route_stops CASCADE;
 DROP TABLE IF EXISTS routes CASCADE;
 DROP TABLE IF EXISTS vehicles CASCADE;
@@ -485,53 +481,8 @@ CREATE INDEX "IDX_video_access_user_ts" ON video_access_logs (user_id, "timestam
 
 
 -- --------------------------------------------------------------------------
--- 3. Reference Schema (Demo/Driver App)
+-- 3. GPS Tracking Tables
 -- --------------------------------------------------------------------------
-
-CREATE TABLE vehicles_reference (
-    id VARCHAR(255) PRIMARY KEY,
-    "plateNumber" VARCHAR(20),
-    capacity INT,
-    status VARCHAR(50),
-    "createdAt" TIMESTAMP DEFAULT NOW()
-);
-
-CREATE TABLE routes_reference (
-    id VARCHAR(255) PRIMARY KEY,
-    name VARCHAR(255),
-    "vehicleId" TEXT,
-    "driverId" TEXT,
-    "schedule" JSONB,
-    "polyline" TEXT,
-    "schoolId" UUID,
-    direction TEXT,
-    "createdAt" TIMESTAMP DEFAULT NOW()
-);
-
-CREATE TABLE route_stops_reference (
-    id VARCHAR(255) PRIMARY KEY,
-    "routeId" VARCHAR(255),
-    "sequenceOrder" INT,
-    "stopName" VARCHAR(255),
-    lat FLOAT,
-    lng FLOAT,
-    "arrivalTime" TIME
-);
-
-CREATE TABLE students_reference (
-    id VARCHAR(255) PRIMARY KEY,
-    "firstName" VARCHAR(255),
-    "lastName" VARCHAR(255),
-    grade INT,
-    "parentId" VARCHAR(255),
-    "schoolId" VARCHAR(255),
-    "assignedRouteId" VARCHAR(255),
-    "amRouteId" VARCHAR(255),
-    "pmRouteId" VARCHAR(255),
-    "amStopId" VARCHAR(255),
-    "pmStopId" VARCHAR(255),
-    "createdAt" TIMESTAMP DEFAULT NOW()
-);
 
 -- Route deviation events (GPS tracking)
 CREATE TABLE route_deviation_events (
