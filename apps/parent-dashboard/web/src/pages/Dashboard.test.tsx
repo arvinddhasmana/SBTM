@@ -159,4 +159,108 @@ describe('Dashboard Page', () => {
     });
     expect(screen.getByText("Emergency reported on your child's bus.")).toBeInTheDocument();
   });
+
+  it('displays different status types correctly', () => {
+    const mockUser = {
+      id: '1',
+      name: 'Test Parent',
+      email: 'test@test.com',
+      children: [
+        {
+          id: 'c1',
+          name: 'Child At School',
+          schoolName: 'School A',
+          routeId: 'r1',
+          vehicleId: 'v1',
+          status: 'at_school' as const,
+          avatarUrl: 'http://test.com/1.png',
+        },
+        {
+          id: 'c2',
+          name: 'Child At Home',
+          schoolName: 'School B',
+          routeId: 'r2',
+          vehicleId: 'v2',
+          status: 'at_home' as const,
+          avatarUrl: 'http://test.com/2.png',
+        },
+        {
+          id: 'c3',
+          name: 'Child Unknown',
+          schoolName: 'School C',
+          routeId: 'r3',
+          vehicleId: 'v3',
+          status: 'unknown' as const,
+          avatarUrl: 'http://test.com/3.png',
+        },
+      ],
+    };
+
+    vi.mocked(AuthContext.useAuth).mockReturnValue({
+      user: mockUser,
+      isAuthenticated: true,
+      login: vi.fn(),
+      logout: vi.fn(),
+      isLoading: false,
+    });
+
+    render(
+      <QueryClientProvider
+        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      >
+        <BrowserRouter>
+          <Dashboard />
+        </BrowserRouter>
+      </QueryClientProvider>,
+    );
+
+    expect(screen.getByText('At School')).toBeInTheDocument();
+    expect(screen.getByText('At Home')).toBeInTheDocument();
+    expect(screen.getByText('Status Unknown')).toBeInTheDocument();
+  });
+
+  it('displays route information for children', () => {
+    const mockUser = {
+      id: '1',
+      name: 'Test Parent',
+      email: 'test@test.com',
+      children: [
+        {
+          id: 'c1',
+          name: 'Child One',
+          schoolName: 'School A',
+          routeId: 'r1',
+          amRouteId: 'r1',
+          pmRouteId: 'r2',
+          amRouteName: 'Route AM-1',
+          pmRouteName: 'Route PM-2',
+          vehicleId: 'BUS-101',
+          status: 'on_bus' as const,
+          avatarUrl: 'http://test.com/1.png',
+        },
+      ],
+    };
+
+    vi.mocked(AuthContext.useAuth).mockReturnValue({
+      user: mockUser,
+      isAuthenticated: true,
+      login: vi.fn(),
+      logout: vi.fn(),
+      isLoading: false,
+    });
+
+    render(
+      <QueryClientProvider
+        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      >
+        <BrowserRouter>
+          <Dashboard />
+        </BrowserRouter>
+      </QueryClientProvider>,
+    );
+
+    expect(screen.getByText('Route AM-1')).toBeInTheDocument();
+    expect(screen.getByText('Route PM-2')).toBeInTheDocument();
+    expect(screen.getByText('BUS-101')).toBeInTheDocument();
+  });
 });
