@@ -91,6 +91,7 @@ Detailed documentation is available in the `docs/` folder. Start with the docume
 - **[Security and Privacy Architecture](./docs/Design/SecurityPrivacyArchitecture.md)**: Identity, tenant isolation, privacy, and trust boundaries.
 - **[Event Catalog](./docs/Design/EventCatalog.md)**: Cross-service event definitions and intended integration model.
 - **[Technical Specifications](./docs/Design/TechnicalSpecifications.md)**: Technology baseline and architectural constraints.
+- **[ADR-001: Route Identity](./docs/Design/ADR-001-route-identity.md)**: Architectural decision to eliminate dual-ID system and adopt UUID-only route identifiers.
 - **[API Reference](./docs/Reference/APIReference.md)**: Formal gateway-facing endpoint reference.
 - **[Service Contracts](./docs/Reference/ServiceContracts.md)**: Gateway-to-service contract and payload reference.
 - **[User Guides](./docs/UserGuide/README.md)**: Role-based guidance for Parent, Driver, Admin, School Operator, and Compliance/Support workflows.

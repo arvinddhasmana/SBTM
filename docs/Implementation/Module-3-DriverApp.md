@@ -50,6 +50,7 @@ Implemented with live gateway integration (Phase 2 complete).
 - Presence events (both manual toggles and BLE detections) use gateway `POST /student-presence-events` and `POST /presence-events` respectively.
 - Route lifecycle events use gateway `POST /routes/lifecycle-events`.
 - Roster is fetched from `GET /driver/me/routes/:routeId/students`; `schoolId` is always sourced from the authenticated JWT, never from the client payload.
+- **JWT Token Structure**: The `assignedRouteIds` field in the JWT payload contains an array of UUID route identifiers (not string-based route codes). Driver schedule and route access control is enforced based on these UUIDs.
 - BLE permissions: iOS requires `NSBluetoothAlwaysUsageDescription`; Android requires `BLUETOOTH_SCAN`, `BLUETOOTH_CONNECT`, `ACCESS_FINE_LOCATION`.
 
 ## Services
