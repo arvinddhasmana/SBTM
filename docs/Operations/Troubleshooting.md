@@ -22,6 +22,92 @@
 
 ## Common Symptoms
 
+### Admin Portal: 502 Bad Gateway on Alert Config Endpoints
+
+**Symptom:**
+```
+GET http://localhost:3001/api/v1/alert-config/escalation-timing/TIER_2 502 (Bad Gateway)
+```
+
+**Root Cause:** API Gateway cannot reach the `emergency-alerts` service.
+
+**Resolution Steps:**
+
+1. **Verify service is running:**
+   ```bash
+   docker ps | grep emergency-alerts
+   docker logs emergency-alerts --tail=50
+   ```
+
+2. **Check service health:**
+   ```bash
+   curl http://localhost:3003/api/v1/alert-config/escalation-timing
+   ```
+
+3. **Restart service if needed:**
+   ```bash
+   docker-compose restart emergency-alerts
+   # Or full restart:
+   ./scripts/schema-seed/reset-demo-db.sh
+   ```
+
+4. **Verify environment configuration:**
+   - Confirm `ALERTS_SERVICE_URL=http://emergency-alerts:3003` in api-gateway
+   - Check database credentials are correct
+   - Verify Redis is accessible
+
+5. **Test network connectivity:**
+   ```bash
+   docker exec api-gateway curl http://emergency-alerts:3003/health
+   ```
+
+### Parent Portal: Student Cards Show "Status Unknown"
+
+**Symptom:** All student cards display "Status Unknown" instead of "On the Bus", "At School", or "At Home".
+
+**Root Cause:** No presence events exist in the `presence_event` table for the students.
+
+**Resolution Steps:**
+
+1. **Check if presence events exist:**
+   ```bash
+   docker exec -it postgres psql -U postgres -d sbms -c "SELECT COUNT(*) FROM presence_event;"
+   docker exec -it postgres psql -U postgres -d sbms -c "SELECT * FROM presence_event LIMIT 10;"
+   ```
+
+2. **Start GPS simulation to generate events:**
+   ```bash
+   ./scripts/simulation/SimulationOnlyOnSeededDB.sh
+   ```
+
+3. **Check API gateway logs for errors:**
+   ```bash
+   docker logs api-gateway | grep -i "presence\|status"
+   ```
+
+4. **Time-based fallback (as of latest update):**
+   - If no presence events exist, the system defaults to:
+     - **School hours (8 AM - 3 PM)**: "At School"
+     - **After hours**: "At Home"
+   - Check `parent.gateway.service.ts:getStudentStatuses()` for implementation
+
+5. **Manually create test presence events:**
+   ```sql
+   INSERT INTO presence_event (
+     id, "schoolId", "studentId", "vehicleId", "routeId",
+     "eventType", "timestamp", "source"
+   ) VALUES (
+     gen_random_uuid(),
+     'your-school-id',
+     'your-student-id',
+     'your-vehicle-id',
+     'your-route-id',
+     'BOARD',
+     NOW(),
+     'SMARTTAG'
+   );
+   ```
+
 ### Parent app shows stale or missing live location
 
 Possible causes:

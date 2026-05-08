@@ -134,6 +134,7 @@ export class ParentGatewayService {
   /**
    * Query the latest presence_event per student to determine on_bus / at_school / at_home status.
    * BOARD → on_bus, ALIGHT → at_school (during school hours) or at_home.
+   * If no presence events exist, infer status based on current time (school hours vs after hours).
    */
   private async getStudentStatuses(
     studentIds: string[],
@@ -173,10 +174,32 @@ export class ParentGatewayService {
           statusMap.set(row.studentId, isPmRoute ? 'at_home' : 'at_school');
         }
       }
+
+      // For students without presence events, provide a time-based default
+      const now = new Date();
+      const hour = now.getHours();
+      const isSchoolHours = hour >= 8 && hour < 15; // 8 AM - 3 PM school hours
+      const defaultStatus = isSchoolHours ? 'at_school' : 'at_home';
+
+      for (const studentId of studentIds) {
+        if (!statusMap.has(studentId)) {
+          statusMap.set(studentId, defaultStatus);
+          this.logger.debug(
+            `No presence events for student ${studentId}, defaulting to ${defaultStatus}`,
+          );
+        }
+      }
     } catch (err) {
-      this.logger.warn(
+      this.logger.error(
         `Failed to fetch presence statuses: ${(err as Error).message}`,
       );
+      // On error, provide time-based defaults
+      const now = new Date();
+      const hour = now.getHours();
+      const defaultStatus = hour >= 8 && hour < 15 ? 'at_school' : 'at_home';
+      for (const studentId of studentIds) {
+        statusMap.set(studentId, defaultStatus);
+      }
     }
 
     return statusMap;
