@@ -20,6 +20,11 @@ describe('NotificationSettingsGatewayService', () => {
         return 'http://notification-service:3008';
       return defaultValue;
     }),
+    getOrThrow: jest.fn().mockImplementation((key: string) => {
+      if (key === 'NOTIFICATION_SERVICE_URL')
+        return 'http://notification-service:3008';
+      throw new Error(`Config key ${key} not found`);
+    }),
   };
 
   beforeEach(async () => {

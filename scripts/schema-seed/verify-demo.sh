@@ -96,17 +96,17 @@ run_query "Users by role:" \
 run_query "Seeded demo users (sample):" \
   "SELECT email, role, \"schoolId\" FROM users WHERE email LIKE '%@sbtm.demo' ORDER BY email LIMIT 30;"
 
-run_query "Route references (60 expected):" \
-  "SELECT COUNT(*) AS route_count FROM routes_reference;"
+run_query "Route counts by school (60 expected total):" \
+  "SELECT s.name, COUNT(r.id) AS route_count FROM routes r JOIN schools s ON r.\"schoolId\" = s.id GROUP BY s.name ORDER BY s.name;"
 
-run_query "Route reference sample:" \
-  "SELECT id, name, \"vehicleId\", \"schoolId\", direction FROM routes_reference ORDER BY id LIMIT 12;"
+run_query "Route sample (UUID ids):" \
+  "SELECT id, name, \"vehicleId\", \"schoolId\", direction FROM routes ORDER BY name LIMIT 12;"
 
 run_query "Students (90 expected):" \
-  "SELECT COUNT(*) AS student_count FROM students_reference;"
+  "SELECT COUNT(*) AS student_count FROM students;"
 
 run_query "Route stops (expected ~300-400):" \
-  "SELECT COUNT(*) AS stop_count FROM route_stops_reference;"
+  "SELECT COUNT(*) AS stop_count FROM route_stops;"
 
 # --- Login Checks ---
 
@@ -157,8 +157,13 @@ if [ -n "$PARENT_TOKEN" ]; then
   if ! test_api_get "Parent (stbern): /parent/children" "$API_BASE/parent/children" "$PARENT_TOKEN"; then
     ALL_PASSED=false
   fi
-  if ! test_api_get "Parent (stbern): /routes/ROUTE-STBERN-R01-AM/live-location" "$API_BASE/routes/ROUTE-STBERN-R01-AM/live-location" "$PARENT_TOKEN"; then
-    ALL_PASSED=false
+  # Resolve a real route UUID from the DB for the live-location smoke test
+  STBERN_ROUTE_UUID=$(docker exec "$CONTAINER_NAME" psql -U "$DATABASE_USER" -d "$DATABASE_NAME" -t -A -c \
+    "SELECT r.id FROM routes r JOIN schools s ON r.\"schoolId\" = s.id WHERE s.name ILIKE '%bernadette%' AND r.direction = 'AM' LIMIT 1;" 2>/dev/null || true)
+  if [ -n "$STBERN_ROUTE_UUID" ]; then
+    if ! test_api_get "Parent (stbern): /routes/$STBERN_ROUTE_UUID/live-location" "$API_BASE/routes/$STBERN_ROUTE_UUID/live-location" "$PARENT_TOKEN" 200; then
+      ALL_PASSED=false
+    fi
   fi
 fi
 

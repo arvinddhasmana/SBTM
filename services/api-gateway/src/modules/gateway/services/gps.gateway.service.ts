@@ -56,6 +56,7 @@ interface ReferenceRouteRow {
   vehicleId: string | null;
   driverId: string | null;
   schedule: any;
+  startTime: string | null;
   polyline: string | null;
   schoolId: string | null;
   schoolName: string | null;

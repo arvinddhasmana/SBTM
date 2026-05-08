@@ -17,6 +17,10 @@ describe('VideoGatewayService', () => {
       if (key === 'VIDEO_SERVICE_URL') return 'http://video-service:3005';
       return defaultValue;
     }),
+    getOrThrow: jest.fn().mockImplementation((key: string) => {
+      if (key === 'VIDEO_SERVICE_URL') return 'http://video-service:3005';
+      throw new Error(`Config key ${key} not found`);
+    }),
   };
 
   beforeEach(async () => {

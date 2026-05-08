@@ -140,15 +140,18 @@ export class ParentGatewayService {
 
     try {
       // Get the latest presence event for each student using DISTINCT ON
+      // Join routes to read direction so AM/PM detection works with UUID route IDs
       const rows: Array<{
         studentId: string;
         eventType: string;
         routeId: string;
+        direction: string | null;
       }> = await this.dataSource.query(
-        `SELECT DISTINCT ON ("studentId") "studentId", "eventType", "routeId"
-                     FROM presence_event
-                     WHERE "studentId" = ANY($1)
-                     ORDER BY "studentId", "timestamp" DESC`,
+        `SELECT DISTINCT ON (pe."studentId") pe."studentId", pe."eventType", pe."routeId", r.direction
+                     FROM presence_event pe
+                     LEFT JOIN routes r ON pe."routeId" = r.id
+                     WHERE pe."studentId" = ANY($1)
+                     ORDER BY pe."studentId", pe."timestamp" DESC`,
         [studentIds],
       );
 
@@ -156,8 +159,11 @@ export class ParentGatewayService {
         if (row.eventType === 'BOARD') {
           statusMap.set(row.studentId, 'on_bus');
         } else if (row.eventType === 'ALIGHT') {
-          // If alighted on AM route → at_school; if PM route → at_home
-          const isPmRoute = row.routeId?.includes('PM');
+          // Use route direction (UUID-safe); fall back to case-insensitive ID match for legacy IDs
+          const isPmRoute =
+            row.direction === 'PM' ||
+            (row.direction == null &&
+              row.routeId?.toUpperCase().includes('PM'));
           statusMap.set(row.studentId, isPmRoute ? 'at_home' : 'at_school');
         }
       }

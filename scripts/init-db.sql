@@ -37,10 +37,6 @@ DROP TABLE IF EXISTS route_lifecycle_events CASCADE;
 DROP TABLE IF EXISTS location_points CASCADE;
 DROP TABLE IF EXISTS presence_event CASCADE;
 DROP TABLE IF EXISTS student_tag CASCADE;
-DROP TABLE IF EXISTS route_stops_reference CASCADE;
-DROP TABLE IF EXISTS routes_reference CASCADE;
-DROP TABLE IF EXISTS vehicles_reference CASCADE;
-DROP TABLE IF EXISTS students_reference CASCADE;
 DROP TABLE IF EXISTS route_stops CASCADE;
 DROP TABLE IF EXISTS routes CASCADE;
 DROP TABLE IF EXISTS vehicles CASCADE;
@@ -487,55 +483,6 @@ CREATE INDEX "IDX_video_access_video_ts" ON video_access_logs (video_event_id, "
 CREATE INDEX "IDX_video_access_user_ts" ON video_access_logs (user_id, "timestamp");
 
 
--- --------------------------------------------------------------------------
--- 3. Create Reference Schema (Demo)
--- --------------------------------------------------------------------------
-
-CREATE TABLE vehicles_reference (
-    id VARCHAR(255) PRIMARY KEY,
-    "plateNumber" VARCHAR(20),
-    capacity INT,
-    status VARCHAR(50),
-    "createdAt" TIMESTAMP DEFAULT NOW()
-);
-
-CREATE TABLE routes_reference (
-    id VARCHAR(255) PRIMARY KEY,
-    name VARCHAR(255),
-    "vehicleId" TEXT,
-    "driverId" TEXT,
-    "schedule" JSONB,
-    "polyline" TEXT,
-    "schoolId" UUID,
-    direction TEXT,
-    "createdAt" TIMESTAMP DEFAULT NOW()
-);
-
-CREATE TABLE route_stops_reference (
-    id VARCHAR(255) PRIMARY KEY,
-    "routeId" VARCHAR(255),
-    "sequenceOrder" INT,
-    "stopName" VARCHAR(255),
-    lat FLOAT,
-    lng FLOAT,
-    "arrivalTime" TIME
-);
-
-CREATE TABLE students_reference (
-    id VARCHAR(255) PRIMARY KEY,
-    "firstName" VARCHAR(255),
-    "lastName" VARCHAR(255),
-    grade INT,
-    "parentId" VARCHAR(255),
-    "schoolId" VARCHAR(255),
-    "assignedRouteId" VARCHAR(255),
-    "amRouteId" VARCHAR(255),
-    "pmRouteId" VARCHAR(255),
-    "amStopId" VARCHAR(255),
-    "pmStopId" VARCHAR(255),
-    "createdAt" TIMESTAMP DEFAULT NOW()
-);
-
 
 -- --------------------------------------------------------------------------
 -- 4. Seed Data — Single-Bus Demo
@@ -588,14 +535,7 @@ INSERT INTO users (id, email, "passwordHash", role, "firstName", "lastName", "ch
 INSERT INTO vehicles (id, "schoolId", "licensePlate", status) VALUES
     ('BUS-01', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'ON-1001', 'ACTIVE');
 
-INSERT INTO vehicles_reference (id, "plateNumber", capacity, status) VALUES
-    ('BUS-01', 'ON-1001', 40, 'ACTIVE');
-
 -- ===================== Routes (AM + PM, same bus) =====================
-
-INSERT INTO routes_reference (id, name, "vehicleId", "driverId", schedule, "schoolId", direction) VALUES
-    ('ROUTE-SingleBus-AM', 'Single Bus AM', 'BUS-01', 'driver-001', '{"startTime":"07:15","days":["Mon","Tue","Wed","Thu","Fri"]}', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'AM'),
-    ('ROUTE-SingleBus-PM', 'Single Bus PM', 'BUS-01', 'driver-001', '{"startTime":"15:00","days":["Mon","Tue","Wed","Thu","Fri"]}', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'PM');
 
 -- Operational routes with UUID PKs — these are what assignedRouteIds references
 INSERT INTO routes (id, "schoolId", name, direction, "vehicleId", "startTime") VALUES
@@ -614,15 +554,6 @@ INSERT INTO students (id, first_name, last_name, grade, school_id, parent_user_i
     ('10000000-0000-0000-0000-000000000006', 'Fiona',   'Miller', '1', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', '10000000-0000-0000-0000-000000000205', NULL, NULL, '10000000-0000-0000-0000-000000000006'),
     ('10000000-0000-0000-0000-000000000007', 'George',  'Davis',  '1', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', '10000000-0000-0000-0000-000000000205', NULL, NULL, '10000000-0000-0000-0000-000000000007');
 
-INSERT INTO students_reference (id, "firstName", "lastName", grade, "parentId", "schoolId", "assignedRouteId", "amRouteId", "pmRouteId") VALUES
-    ('10000000-0000-0000-0000-000000000001', 'Alice',   'Smith',   1, '10000000-0000-0000-0000-000000000201', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'ROUTE-SingleBus-AM', 'ROUTE-SingleBus-AM', 'ROUTE-SingleBus-PM'),
-    ('10000000-0000-0000-0000-000000000002', 'Bob',     'Johnson', 1, '10000000-0000-0000-0000-000000000201', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'ROUTE-SingleBus-AM', 'ROUTE-SingleBus-AM', 'ROUTE-SingleBus-PM'),
-    ('10000000-0000-0000-0000-000000000003', 'Charlie', 'Brown',   1, '10000000-0000-0000-0000-000000000202', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'ROUTE-SingleBus-AM', 'ROUTE-SingleBus-AM', 'ROUTE-SingleBus-PM'),
-    ('10000000-0000-0000-0000-000000000004', 'Diana',   'Garcia',  1, '10000000-0000-0000-0000-000000000204', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'ROUTE-SingleBus-AM', 'ROUTE-SingleBus-AM', 'ROUTE-SingleBus-PM'),
-    ('10000000-0000-0000-0000-000000000005', 'Ethan',   'Wilson',  1, '10000000-0000-0000-0000-000000000204', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'ROUTE-SingleBus-AM', 'ROUTE-SingleBus-AM', 'ROUTE-SingleBus-PM'),
-    ('10000000-0000-0000-0000-000000000006', 'Fiona',   'Miller',  1, '10000000-0000-0000-0000-000000000205', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'ROUTE-SingleBus-AM', 'ROUTE-SingleBus-AM', 'ROUTE-SingleBus-PM'),
-    ('10000000-0000-0000-0000-000000000007', 'George',  'Davis',   1, '10000000-0000-0000-0000-000000000205', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'ROUTE-SingleBus-AM', 'ROUTE-SingleBus-AM', 'ROUTE-SingleBus-PM');
-
 -- ===================== Student Tags (sample for presence demo) =====================
 
 INSERT INTO student_tag ("schoolId", "studentId", "tagId", "tagType") VALUES
@@ -634,7 +565,7 @@ INSERT INTO student_tag ("schoolId", "studentId", "tagId", "tagType") VALUES
 -- Seed one recent location point per route so /routes/:routeId/live-location works before simulation runs.
 
 INSERT INTO location_points (id, school_id, vehicle_id, route_id, timestamp, lat, lng, speed_kph, heading_deg) VALUES
-    ('seed-loc-am', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'BUS-01', 'ROUTE-SingleBus-AM', NOW(), 45.3876, -75.6960, 0, 0),
-    ('seed-loc-pm', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'BUS-01', 'ROUTE-SingleBus-PM', NOW(), 45.3876, -75.6960, 0, 0);
+    ('seed-loc-am', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'BUS-01', 'a0000001-0000-0000-0000-000000000001', NOW(), 45.3876, -75.6960, 0, 0),
+    ('seed-loc-pm', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'BUS-01', 'a0000001-0000-0000-0000-000000000002', NOW(), 45.3876, -75.6960, 0, 0);
 
 COMMIT;

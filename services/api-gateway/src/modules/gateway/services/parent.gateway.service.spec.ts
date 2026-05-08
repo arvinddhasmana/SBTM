@@ -22,6 +22,11 @@ describe('ParentGatewayService', () => {
       if (key === 'ALERTS_SERVICE_URL') return 'http://alerts-service:3003';
       return defaultValue;
     }),
+    getOrThrow: jest.fn().mockImplementation((key: string) => {
+      if (key === 'STUDENT_SERVICE_URL') return 'http://student-service:3006';
+      if (key === 'ALERTS_SERVICE_URL') return 'http://alerts-service:3003';
+      throw new Error(`Config key ${key} not found`);
+    }),
   };
 
   const mockSchoolRepository = {
@@ -102,7 +107,11 @@ describe('ParentGatewayService', () => {
 
       // presence events query (for getStudentStatuses)
       mockDataSource.query.mockResolvedValueOnce([
-        { studentId: 'student-1', eventType: 'BOARD', routeId: 'route-uuid-am' },
+        {
+          studentId: 'student-1',
+          eventType: 'BOARD',
+          routeId: 'route-uuid-am',
+        },
       ]);
 
       const result = await service.getChildrenForParent(parentUser);
@@ -188,6 +197,7 @@ describe('ParentGatewayService', () => {
           studentId: 'student-1',
           eventType: 'ALIGHT',
           routeId: 'route-uuid-a-am',
+          direction: 'AM',
         },
       ]);
 
@@ -221,6 +231,7 @@ describe('ParentGatewayService', () => {
           studentId: 'student-1',
           eventType: 'ALIGHT',
           routeId: 'route-uuid-a-pm',
+          direction: 'PM',
         },
       ]);
 

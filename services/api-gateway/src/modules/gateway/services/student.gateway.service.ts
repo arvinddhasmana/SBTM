@@ -72,7 +72,7 @@ export class StudentGatewayService {
               am_route_id as "amRouteId",
               pm_route_id as "pmRouteId"
             FROM students
-            WHERE ($1::text IS NULL OR school_id = $1)
+            WHERE ($1::text IS NULL OR school_id = $1::uuid)
             ORDER BY id ASC
             `,
       [targetSchoolId],
@@ -177,7 +177,7 @@ export class StudentGatewayService {
           ? ''
           : String(student.grade),
       status: 'ENROLLED',
-      am_route_id: student.amRouteId || student.assignedRouteId || null,
+      am_route_id: student.amRouteId || null,
       pm_route_id: student.pmRouteId || null,
     };
   }

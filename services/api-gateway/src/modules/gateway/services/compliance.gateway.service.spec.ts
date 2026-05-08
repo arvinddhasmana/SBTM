@@ -22,6 +22,11 @@ describe('ComplianceGatewayService', () => {
         return 'http://compliance-service:3007';
       return defaultValue;
     }),
+    getOrThrow: jest.fn().mockImplementation((key: string) => {
+      if (key === 'COMPLIANCE_SERVICE_URL')
+        return 'http://compliance-service:3007';
+      throw new Error(`Config key ${key} not found`);
+    }),
   };
 
   beforeEach(async () => {

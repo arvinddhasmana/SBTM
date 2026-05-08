@@ -21,6 +21,10 @@ describe('DriverGatewayService', () => {
       if (key === 'PRESENCE_SERVICE_URL') return 'http://presence-service:3004';
       return defaultValue;
     }),
+    getOrThrow: jest.fn().mockImplementation((key: string) => {
+      if (key === 'PRESENCE_SERVICE_URL') return 'http://presence-service:3004';
+      throw new Error(`Config key ${key} not found`);
+    }),
   };
 
   const mockRouteRepository = {
@@ -134,7 +138,7 @@ describe('DriverGatewayService', () => {
           id: 'ROUTE-A-AM',
           name: 'Route A AM',
           direction: 'AM',
-          schedule: { startTime: '08:00' },
+          startTime: '08:00',
           vehicleId: null,
           schoolId: 'school-1',
           polyline: null,
@@ -200,8 +204,8 @@ describe('DriverGatewayService', () => {
           // stops
           {
             id: 'stop-1',
-            sequenceOrder: 1,
-            stopName: 'Main St',
+            sequence: 1,
+            address: 'Main St',
             lat: 45.42,
             lng: -75.69,
             arrivalTime: '07:35',
@@ -223,18 +227,18 @@ describe('DriverGatewayService', () => {
           // enrolled students
           {
             id: 'student-1',
-            firstName: 'Alice',
-            lastName: 'Smith',
-            amStopId: 'stop-1',
-            pmStopId: 'stop-2',
+            first_name: 'Alice',
+            last_name: 'Smith',
+            am_stop_id: 'stop-1',
+            pm_stop_id: 'stop-2',
           },
         ])
         .mockResolvedValueOnce([
           // stops
           {
             id: 'stop-1',
-            sequenceOrder: 1,
-            stopName: 'Main St',
+            sequence: 1,
+            address: 'Main St',
             lat: 45.42,
             lng: -75.69,
             arrivalTime: '07:35',
@@ -266,17 +270,17 @@ describe('DriverGatewayService', () => {
         .mockResolvedValueOnce([
           {
             id: 'student-1',
-            firstName: 'Bob',
-            lastName: 'Jones',
-            amStopId: 'stop-1',
-            pmStopId: null,
+            first_name: 'Bob',
+            last_name: 'Jones',
+            am_stop_id: 'stop-1',
+            pm_stop_id: null,
           },
         ])
         .mockResolvedValueOnce([
           {
             id: 'stop-1',
-            sequenceOrder: 1,
-            stopName: 'Elm St',
+            sequence: 1,
+            address: 'Elm St',
             lat: null,
             lng: null,
             arrivalTime: '07:40',
@@ -296,17 +300,17 @@ describe('DriverGatewayService', () => {
         .mockResolvedValueOnce([
           {
             id: 'student-1',
-            firstName: 'Alice',
-            lastName: 'Smith',
-            amStopId: 'stop-1',
-            pmStopId: 'stop-2',
+            first_name: 'Alice',
+            last_name: 'Smith',
+            am_stop_id: 'stop-1',
+            pm_stop_id: 'stop-2',
           },
         ])
         .mockResolvedValueOnce([
           {
             id: 'stop-2',
-            sequenceOrder: 1,
-            stopName: 'Oak Ave',
+            sequence: 1,
+            address: 'Oak Ave',
             lat: 45.5,
             lng: -75.7,
             arrivalTime: '15:10',

@@ -21,6 +21,10 @@ describe('StudentGatewayService', () => {
       if (key === 'STUDENT_SERVICE_URL') return 'http://student-service:3006';
       return defaultValue;
     }),
+    getOrThrow: jest.fn().mockImplementation((key: string) => {
+      if (key === 'STUDENT_SERVICE_URL') return 'http://student-service:3006';
+      throw new Error(`Config key ${key} not found`);
+    }),
   };
 
   const mockDataSource = {
@@ -158,32 +162,26 @@ describe('StudentGatewayService', () => {
       expect(result[0].am_route_id).toBe('ROUTE-A');
     });
 
-    it('should enrich student data from reference when routes are missing', async () => {
-      // Service returns students without route data
+    it('should return route data from student service response', async () => {
+      // Student service returns students with UUID route IDs
       mockHttpClient.get.mockResolvedValue([
         {
           id: 's1',
           first_name: 'Bob',
           last_name: 'Jones',
-          am_route_id: null,
-          pm_route_id: null,
-        },
-      ]);
-
-      // Reference data has routes
-      mockDataSource.query.mockResolvedValue([
-        {
-          id: 's1',
-          amRouteId: 'ROUTE-B-AM',
-          pmRouteId: 'ROUTE-B-PM',
-          assignedRouteId: null,
+          am_route_id: 'a0000000-0000-0000-0000-000000000b01',
+          pm_route_id: 'a0000000-0000-0000-0000-000000000b02',
         },
       ]);
 
       const result = await service.getStudents({}, adminUser);
 
-      expect(result[0].am_route_id).toBe('ROUTE-B-AM');
-      expect(result[0].pm_route_id).toBe('ROUTE-B-PM');
+      expect(result[0].am_route_id).toBe(
+        'a0000000-0000-0000-0000-000000000b01',
+      );
+      expect(result[0].pm_route_id).toBe(
+        'a0000000-0000-0000-0000-000000000b02',
+      );
     });
   });
 
@@ -223,8 +221,7 @@ describe('StudentGatewayService', () => {
           firstName: 'Alice',
           lastName: 'Smith',
           grade: 3,
-          assignedRouteId: 'ROUTE-A',
-          amRouteId: null,
+          amRouteId: 'a0000000-0000-0000-0000-000000000a01',
           pmRouteId: null,
           schoolId: 'school-1',
           parentId: 'parent-1',
@@ -234,7 +231,7 @@ describe('StudentGatewayService', () => {
       const result = await service.getStudentById('s1', parentUser);
 
       expect(result.first_name).toBe('Alice');
-      expect(result.am_route_id).toBe('ROUTE-A');
+      expect(result.am_route_id).toBe('a0000000-0000-0000-0000-000000000a01');
     });
   });
 

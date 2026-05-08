@@ -5,6 +5,7 @@ import { Route, RouteDirection } from '../auth/entities/route.entity';
 import { Vehicle } from '../auth/entities/vehicle.entity';
 import { Repository, DataSource } from 'typeorm';
 import { ConflictException } from '@nestjs/common';
+import { RouteChangeNotifierService } from '../gateway/services/route-change-notifier.service';
 
 describe('RouteService (Unit)', () => {
   let service: RouteService;
@@ -38,6 +39,11 @@ describe('RouteService (Unit)', () => {
     }),
   };
 
+  const mockRouteChangeNotifier = {
+    notifyRouteUpdated: jest.fn(),
+    notifyRouteDeleted: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -45,6 +51,10 @@ describe('RouteService (Unit)', () => {
         { provide: getRepositoryToken(Route), useValue: mockRouteRepo },
         { provide: getRepositoryToken(Vehicle), useValue: mockVehicleRepo },
         { provide: DataSource, useValue: mockDataSource },
+        {
+          provide: RouteChangeNotifierService,
+          useValue: mockRouteChangeNotifier,
+        },
       ],
     }).compile();
 
