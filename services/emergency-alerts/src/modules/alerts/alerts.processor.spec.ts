@@ -96,7 +96,7 @@ describe('AlertsProcessor', () => {
       expect(result).toEqual({ processed: false, recipientCount: 0 });
     });
 
-    it('should fan-out to parents found via students_reference', async () => {
+    it('should fan-out to parents found via students table', async () => {
       mockDataSource.query.mockResolvedValueOnce([
         { parentId: 'parent-aaa', schoolId: 'school-001' },
         { parentId: 'parent-bbb', schoolId: 'school-001' },
@@ -122,14 +122,10 @@ describe('AlertsProcessor', () => {
       );
     });
 
-    it('should fall back to students table when students_reference is unavailable', async () => {
-      mockDataSource.query
-        .mockRejectedValueOnce(
-          new Error('relation "students_reference" does not exist'),
-        )
-        .mockResolvedValueOnce([
-          { parentId: 'parent-ccc', schoolId: 'school-002' },
-        ]);
+    it('should query students table for parents', async () => {
+      mockDataSource.query.mockResolvedValueOnce([
+        { parentId: 'parent-ccc', schoolId: 'school-002' },
+      ]);
 
       const job = {
         id: 'job-4',
@@ -162,10 +158,9 @@ describe('AlertsProcessor', () => {
       expect(mockLogRepo.save).not.toHaveBeenCalled();
     });
 
-    it('should return zero recipients gracefully when both lookups fail', async () => {
+    it('should return zero recipients gracefully when query fails', async () => {
       mockDataSource.query
-        .mockRejectedValueOnce(new Error('students_reference missing'))
-        .mockRejectedValueOnce(new Error('students missing'));
+        .mockRejectedValueOnce(new Error('database error'));
 
       const job = {
         id: 'job-6',
