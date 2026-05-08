@@ -12,7 +12,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ROOT="$(dirname "$SCRIPT_DIR")"
+ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 NO_BUILD=false
 SKIP_VERIFY=false
 
@@ -30,6 +30,19 @@ echo -e "\033[36m--- SBTM Demo DB Reset (DESTRUCTIVE) ---\033[0m"
 echo -e "\033[33mStopping stack and deleting volumes...\033[0m"
 
 docker compose down -v
+
+# Kill any locally-running processes that hold the ports Docker services need.
+# These are typically dev processes started via dev-hybrid.sh that survive
+# docker compose down because they run on the host, not in containers.
+echo -e "\033[33mFreeing application ports...\033[0m"
+for port in 3001 3002 3003 3004 3005 3006 3007 3008; do
+  pid=$(ss -tlnp 2>/dev/null | grep ":$port " | grep -oP 'pid=\K[0-9]+' | head -1) || true
+  if [ -n "$pid" ]; then
+    echo -e "\033[90m  Killing process $pid on port $port\033[0m"
+    kill "$pid" 2>/dev/null || true
+  fi
+done
+sleep 2
 
 echo -e "\033[33mStarting stack...\033[0m"
 if [ "$NO_BUILD" = true ]; then
