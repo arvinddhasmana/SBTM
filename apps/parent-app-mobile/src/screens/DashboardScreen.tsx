@@ -111,6 +111,15 @@ export default function DashboardScreen() {
     });
   }, []);
 
+  const routeNames = useMemo<Record<string, string>>(() => {
+    const map: Record<string, string> = {};
+    for (const c of children) {
+      if (c.amRouteId && c.amRouteName) map[c.amRouteId] = c.amRouteName;
+      if (c.pmRouteId && c.pmRouteName) map[c.pmRouteId] = c.pmRouteName;
+    }
+    return map;
+  }, [children]);
+
   const alertCount = activeAlerts.length;
 
   const renderAlertBanner = (alert: Alert) => {
@@ -143,7 +152,7 @@ export default function DashboardScreen() {
           {!!alert.routeId && (
             <View style={styles.alertChipSmall}>
               <Text style={styles.alertChipSmallText}>
-                {t('notifications.routeLabel', { id: alert.routeId })}
+                {routeNames[alert.routeId] || alert.routeId}
               </Text>
             </View>
           )}

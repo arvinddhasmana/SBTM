@@ -74,12 +74,23 @@ const Dashboard: React.FC = () => {
         routesData.map((route) => route.id),
       );
 
-      return { locations: locationsData, routes: routesData, students: studentsData };
+      const routeNameMap = new Map(routesData.map((r) => [r.id, r.name]));
+      const enrichedStudents = studentsData.map((s: any) => ({
+        ...s,
+        routeName: s.routeId ? routeNameMap.get(s.routeId) : undefined,
+      }));
+
+      return { locations: locationsData, routes: routesData, students: enrichedStudents };
     },
     refetchInterval: 2_000,
   });
 
   const isLoading = alertsLoading || fleetLoading;
+
+  const { data: allRoutesData = [] } = useQuery({
+    queryKey: queryKeys.routes.all,
+    queryFn: () => routesApi.getAllRoutes(),
+  });
 
   const allAlerts = alertsData ?? [];
   const allLocations = (fleetData?.locations ?? []).filter(
@@ -87,6 +98,11 @@ const Dashboard: React.FC = () => {
   );
   const allRoutes = fleetData?.routes ?? [];
   const allStudents = fleetData?.students ?? [];
+
+  const routeNames = useMemo<Record<string, string>>(
+    () => Object.fromEntries(allRoutesData.map((r) => [r.id, r.name])),
+    [allRoutesData],
+  );
 
   // Only show bus markers for routes that are currently active
   const activeRouteIds = useMemo(() => new Set(allRoutes.map((r) => r.id)), [allRoutes]);
@@ -308,6 +324,7 @@ const Dashboard: React.FC = () => {
           selectedRoute={selectedRoute}
           onReset={() => setSelectedRoute(null)}
           className="w-full h-full"
+          routeNames={routeNames}
         />
       </div>
 
@@ -431,7 +448,12 @@ const Dashboard: React.FC = () => {
                 alerts={filteredAlerts}
                 onAlertClick={(alert) => handleSelection(alert.routeId)}
                 onAlertAction={handleAlertAction}
-                emptyMessage={mode === 'action' ? t('dashboard:empty.noActionableAlerts') : t('dashboard:empty.noActiveAlerts')}
+                emptyMessage={
+                  mode === 'action'
+                    ? t('dashboard:empty.noActionableAlerts')
+                    : t('dashboard:empty.noActiveAlerts')
+                }
+                routeNames={routeNames}
               />
             </div>
           </div>
@@ -481,10 +503,12 @@ const Dashboard: React.FC = () => {
                 <div className="w-2 h-2 rounded-full bg-green-500" /> {t('dashboard:legend.normal')}
               </div>
               <div className="flex items-center gap-2 text-[8px] font-bold text-slate-300">
-                <div className="w-2 h-2 rounded-full bg-yellow-500" /> {t('dashboard:legend.delayed')}
+                <div className="w-2 h-2 rounded-full bg-yellow-500" />{' '}
+                {t('dashboard:legend.delayed')}
               </div>
               <div className="flex items-center gap-2 text-[8px] font-bold text-slate-300">
-                <div className="w-2 h-2 rounded-full bg-red-500" /> {t('dashboard:legend.emergency')}
+                <div className="w-2 h-2 rounded-full bg-red-500" />{' '}
+                {t('dashboard:legend.emergency')}
               </div>
             </div>
           </div>
@@ -495,7 +519,10 @@ const Dashboard: React.FC = () => {
               {[
                 { name: t('dashboard:missionHealth.gps'), status: t('dashboard:missionHealth.ok') },
                 { name: t('dashboard:missionHealth.hub'), status: t('dashboard:missionHealth.ok') },
-                { name: t('dashboard:missionHealth.telem'), status: t('dashboard:missionHealth.ok') },
+                {
+                  name: t('dashboard:missionHealth.telem'),
+                  status: t('dashboard:missionHealth.ok'),
+                },
               ].map((service, idx) => (
                 <div
                   key={idx}
@@ -564,6 +591,7 @@ const Dashboard: React.FC = () => {
           auditTrail={selectedAlertAudit}
           isResolving={isResolving}
           isActing={isActing}
+          routeName={routeNames[selectedAlert.routeId]}
         />
       )}
     </div>

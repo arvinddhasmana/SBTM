@@ -18,6 +18,7 @@ interface PresenceTableProps {
   limit: number;
   onPageChange: (page: number) => void;
   loading?: boolean;
+  routeNames?: Record<string, string>;
 }
 
 export const PresenceTable: React.FC<PresenceTableProps> = ({
@@ -27,6 +28,7 @@ export const PresenceTable: React.FC<PresenceTableProps> = ({
   limit,
   onPageChange,
   loading,
+  routeNames = {},
 }) => {
   const { t } = useTranslation(['students']);
   const totalPages = Math.ceil(total / limit);
@@ -98,7 +100,9 @@ export const PresenceTable: React.FC<PresenceTableProps> = ({
                   <td className="px-6 py-4 text-sm text-slate-300">{event.grade}</td>
                   <td className="px-6 py-4">{getStatusBadge(event.eventType)}</td>
                   <td className="px-6 py-4">
-                    <p className="text-sm text-slate-300">{event.routeId}</p>
+                    <p className="text-sm text-slate-300">
+                      {routeNames[event.routeId] || event.routeId}
+                    </p>
                     <p className="text-xs text-slate-500">{event.vehicleId}</p>
                   </td>
                   <td className="px-6 py-4 text-sm text-slate-400">

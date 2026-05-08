@@ -13,6 +13,8 @@ export default () => ({
   corsOrigins: process.env.CORS_ORIGINS?.split(',') || [
     'http://localhost:3000',
     'http://localhost:5173',
+    'http://localhost:5174',
+    'http://localhost:5175',
   ],
   redisHost: process.env.REDIS_HOST || 'localhost',
   redisPort: parseInt(process.env.REDIS_PORT || '6379', 10),

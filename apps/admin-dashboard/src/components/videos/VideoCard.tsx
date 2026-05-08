@@ -1,15 +1,15 @@
 import React from 'react';
 import { Video, Clock, Truck } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 import type { VideoEvent } from '../../types';
 import { formatRelativeTime, formatEventType } from '../../utils/formatters';
 
 interface VideoCardProps {
   video: VideoEvent;
   onClick?: () => void;
+  routeName?: string;
 }
 
-const VideoCard: React.FC<VideoCardProps> = ({ video, onClick }) => {
+const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, routeName }) => {
   const { t } = useTranslation(['routes']);
   return (
     <div
@@ -54,7 +54,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick }) => {
               <Truck size={12} />
               {video.vehicleId}
             </span>
-            <span>{t('routes:videoCard.routeLabel', { id: video.routeId })}</span>
+            <span>{routeName || video.routeId}</span>
           </div>
           <div className="flex items-center gap-1 text-xs text-slate-500">
             <Clock size={12} />

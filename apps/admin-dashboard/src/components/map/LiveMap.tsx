@@ -13,6 +13,7 @@ interface LiveMapProps {
   onMarkerClick?: (location: LiveLocation) => void;
   onReset?: () => void;
   className?: string;
+  routeNames?: Record<string, string>;
 }
 
 const LiveMap: React.FC<LiveMapProps> = ({
@@ -22,6 +23,7 @@ const LiveMap: React.FC<LiveMapProps> = ({
   onMarkerClick,
   onReset,
   className = '',
+  routeNames = {},
 }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
@@ -308,7 +310,7 @@ const LiveMap: React.FC<LiveMapProps> = ({
         marker.bindPopup(`
         <div style="min-width: 150px;">
           <strong>Vehicle: ${location.vehicleId}</strong><br/>
-          <span>Route: ${location.routeId}</span><br/>
+          <span>Route: ${routeNames[location.routeId] || location.routeId}</span><br/>
           <span>ETA: ${location.etaToNextStopMinutes} min</span>
         </div>
       `);
@@ -341,7 +343,7 @@ const LiveMap: React.FC<LiveMapProps> = ({
     }
 
     lastSelectedRouteIdRef.current = selectedRoute?.id;
-  }, [locations, selectedRoute, plannedRoute, onMarkerClick]);
+  }, [locations, selectedRoute, plannedRoute, onMarkerClick, routeNames]);
 
   return (
     <div

@@ -11,6 +11,7 @@ interface AlertConfirmationModalProps {
   onFalseAlarm: (id: string, notes?: string) => Promise<void>;
   onRequestInfo: (id: string) => Promise<void>;
   onClose: () => void;
+  routeName?: string;
 }
 
 /**
@@ -33,6 +34,7 @@ const AlertConfirmationModal: React.FC<AlertConfirmationModalProps> = ({
   onFalseAlarm,
   onRequestInfo,
   onClose,
+  routeName,
 }) => {
   const { t } = useTranslation(['alerts']);
   const confirmationWindowMs = useConfirmationTimeoutMs(alert.tier ?? 'TIER_1');
@@ -201,7 +203,7 @@ const AlertConfirmationModal: React.FC<AlertConfirmationModalProps> = ({
           <div className="grid grid-cols-2 gap-3">
             <div className="p-3 bg-dashboard-bg rounded-xl">
               <p className="text-xs text-slate-500 mb-0.5">{t('alerts:confirmationModal.route')}</p>
-              <p className="text-sm font-semibold text-white">{alert.routeId}</p>
+              <p className="text-sm font-semibold text-white">{routeName || alert.routeId}</p>
             </div>
             <div className="p-3 bg-dashboard-bg rounded-xl">
               <p className="text-xs text-slate-500 mb-0.5">

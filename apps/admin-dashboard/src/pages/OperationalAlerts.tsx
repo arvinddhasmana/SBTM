@@ -4,10 +4,10 @@ import { Filter } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Header, Card, LoadingSpinner } from '../components/common';
 import { AlertList, AlertDetail } from '../components/alerts';
-import { alertsApi } from '../services/api';
+import { alertsApi, routesApi } from '../services/api';
 import { queryKeys } from '../services/query-keys';
 import { alertsWs } from '../services/websocket/alerts.ws';
-import type { Alert, AlertEventType } from '../types';
+import type { Alert, AlertEventType, Route } from '../types';
 
 type EventFilter = 'all' | AlertEventType;
 
@@ -35,6 +35,15 @@ const OperationalAlerts: React.FC = () => {
     queryKey: queryKeys.alerts.all,
     queryFn: () => alertsApi.getAllAlerts(),
   });
+
+  const { data: routes = [] } = useQuery({
+    queryKey: queryKeys.routes.all,
+    queryFn: () => routesApi.getAllRoutes(),
+  });
+
+  const routeNames: Record<string, string> = Object.fromEntries(
+    routes.map((r: Route) => [r.id, r.name]),
+  );
 
   // Audit trail with auto-refresh
   const { data: selectedAlertAudit = [] } = useQuery({
@@ -136,6 +145,7 @@ const OperationalAlerts: React.FC = () => {
             alerts={filteredAlerts}
             onAlertClick={setSelectedAlert}
             emptyMessage={t('alerts:operational.empty')}
+            routeNames={routeNames}
           />
         </Card>
       </div>
@@ -147,6 +157,7 @@ const OperationalAlerts: React.FC = () => {
           onResolve={handleResolve}
           auditTrail={selectedAlertAudit}
           isResolving={isResolving}
+          routeName={routeNames[selectedAlert.routeId]}
         />
       )}
     </>

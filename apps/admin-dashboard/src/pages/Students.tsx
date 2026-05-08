@@ -75,6 +75,15 @@ const Students: React.FC = () => {
     enabled: activeTab === 'management',
   });
 
+  const { data: allRoutes = [] } = useQuery({
+    queryKey: queryKeys.routes.all,
+    queryFn: () => routesApi.getAllRoutes(),
+  });
+
+  const routeNames: Record<string, string> = Object.fromEntries(
+    allRoutes.map((r: Route) => [r.id, r.name]),
+  );
+
   const isLoading = activeTab === 'presence' ? isPresenceLoading : isManagementLoading;
 
   // WebSocket for real-time presence updates
@@ -127,9 +136,7 @@ const Students: React.FC = () => {
       <Header
         title={t('students:studentPresence')}
         subtitle={
-          activeTab === 'presence'
-            ? t('students:liveMonitoring')
-            : t('students:manageEnrollments')
+          activeTab === 'presence' ? t('students:liveMonitoring') : t('students:manageEnrollments')
         }
       />
 
@@ -165,7 +172,9 @@ const Students: React.FC = () => {
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold text-white">{t('students:recentEvents')}</h3>
               {isRefreshing && (
-                <div className="text-xs text-blue-400 animate-pulse">{t('students:refreshing')}</div>
+                <div className="text-xs text-blue-400 animate-pulse">
+                  {t('students:refreshing')}
+                </div>
               )}
             </div>
 
@@ -178,6 +187,7 @@ const Students: React.FC = () => {
               limit={10}
               onPageChange={setPage}
               loading={isRefreshing}
+              routeNames={routeNames}
             />
           </div>
         ) : (
@@ -205,6 +215,7 @@ const Students: React.FC = () => {
             <div className="glass-card p-0 overflow-hidden">
               <StudentTable
                 students={managedStudents}
+                routeNames={routeNames}
                 onEdit={(s) => {
                   setSelectedStudent(s);
                   setIsEditModalOpen(true);

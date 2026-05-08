@@ -110,13 +110,18 @@ const Videos: React.FC = () => {
             videos={filteredVideos}
             onVideoClick={setSelectedVideo}
             emptyMessage={t('videos:empty')}
+            routeNames={Object.fromEntries(routes.map((r: Route) => [r.id, r.name]))}
           />
         </Card>
       </div>
 
       {/* Video Player Modal */}
       {selectedVideo && (
-        <VideoPlayer video={selectedVideo} onClose={() => setSelectedVideo(null)} />
+        <VideoPlayer
+          video={selectedVideo}
+          onClose={() => setSelectedVideo(null)}
+          routeName={routes.find((r: Route) => r.id === selectedVideo.routeId)?.name}
+        />
       )}
     </>
   );

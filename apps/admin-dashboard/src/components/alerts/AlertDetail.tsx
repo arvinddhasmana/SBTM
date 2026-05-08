@@ -30,6 +30,7 @@ interface AlertDetailProps {
   isActing?: boolean;
   /** kept for API compat — panel is always floating overlay now */
   variant?: 'modal' | 'overlay';
+  routeName?: string;
 }
 
 function getAuditDotColor(eventType: string): string {
@@ -81,6 +82,7 @@ const AlertDetail: React.FC<AlertDetailProps> = ({
   auditTrail,
   isResolving,
   isActing,
+  routeName,
 }) => {
   const { t } = useTranslation(['alerts']);
   const [showUpdateInput, setShowUpdateInput] = useState(false);
@@ -353,7 +355,7 @@ const AlertDetail: React.FC<AlertDetailProps> = ({
               <MapPin size={14} className="text-primary-500" />
               <div>
                 <p className="text-[10px] text-slate-500">{t('alerts:detail.routeLabel')}</p>
-                <p className="text-xs font-semibold text-white">{alert.routeId}</p>
+                <p className="text-xs font-semibold text-white">{routeName || alert.routeId}</p>
               </div>
             </div>
             <div className="col-span-2 flex items-center gap-2 p-3 bg-dashboard-bg rounded-xl">

@@ -16,12 +16,19 @@ interface Student {
 
 interface StudentTableProps {
   students: Student[];
+  routeNames?: Record<string, string>;
   onEdit: (student: Student) => void;
   onDelete: (id: string) => void;
   onAssign: (student: Student) => void;
 }
 
-const StudentTable: React.FC<StudentTableProps> = ({ students, onEdit, onDelete, onAssign }) => {
+const StudentTable: React.FC<StudentTableProps> = ({
+  students,
+  routeNames = {},
+  onEdit,
+  onDelete,
+  onAssign,
+}) => {
   const { t } = useTranslation(['students']);
 
   return (
@@ -64,13 +71,13 @@ const StudentTable: React.FC<StudentTableProps> = ({ students, onEdit, onDelete,
                   {student.am_route_id && (
                     <div className="text-xs text-green-400 flex items-center gap-1">
                       <Bus size={10} /> {t('students:table.amLabel')}:{' '}
-                      {student.am_route_id.substring(0, 8)}
+                      {routeNames[student.am_route_id] || student.am_route_id.substring(0, 8)}
                     </div>
                   )}
                   {student.pm_route_id && (
                     <div className="text-xs text-blue-400 flex items-center gap-1">
                       <Bus size={10} /> {t('students:table.pmLabel')}:{' '}
-                      {student.pm_route_id.substring(0, 8)}
+                      {routeNames[student.pm_route_id] || student.pm_route_id.substring(0, 8)}
                     </div>
                   )}
                   {!student.am_route_id && !student.pm_route_id && (

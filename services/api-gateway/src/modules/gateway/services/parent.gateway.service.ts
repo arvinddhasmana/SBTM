@@ -29,6 +29,8 @@ interface ParentChildDto {
   routeId?: string;
   amRouteId?: string;
   pmRouteId?: string;
+  amRouteName?: string;
+  pmRouteName?: string;
   amStopId?: string;
   pmStopId?: string;
   vehicleId?: string;
@@ -107,7 +109,9 @@ export class ParentGatewayService {
       const amRouteId = student.am_route_id || undefined;
       const pmRouteId = student.pm_route_id || undefined;
       const routeId = amRouteId || pmRouteId;
-      const route = routeId ? routeMap.get(routeId) : undefined;
+      const amRoute = amRouteId ? routeMap.get(amRouteId) : undefined;
+      const pmRoute = pmRouteId ? routeMap.get(pmRouteId) : undefined;
+      const route = amRoute || pmRoute;
       const school = schoolMap.get(student.school_id);
       const name = `${student.first_name} ${student.last_name}`.trim();
 
@@ -118,6 +122,8 @@ export class ParentGatewayService {
         routeId,
         amRouteId,
         pmRouteId,
+        amRouteName: amRoute?.name,
+        pmRouteName: pmRoute?.name,
         vehicleId: route?.vehicleId,
         status: statusMap.get(student.id) || ('unknown' as const),
         avatarUrl: this.getKidAvatarUrl(student.id),

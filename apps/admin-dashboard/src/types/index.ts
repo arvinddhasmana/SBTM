@@ -89,6 +89,7 @@ export interface StudentPresence {
   status: PresenceStatus;
   lastSeen: string;
   routeId?: string;
+  routeName?: string;
   vehicleId?: string;
 }
 

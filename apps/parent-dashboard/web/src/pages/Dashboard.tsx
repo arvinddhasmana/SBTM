@@ -45,6 +45,15 @@ const Dashboard: React.FC = () => {
   ];
   const { alerts } = useAlerts(routeIds);
 
+  // Build a route name lookup from children's known route names
+  const routeNames: Record<string, string> = {};
+  for (const c of children) {
+    if (c.amRouteId && c.amRouteName) routeNames[c.amRouteId] = c.amRouteName;
+    if (c.pmRouteId && c.pmRouteName) routeNames[c.pmRouteId] = c.pmRouteName;
+    if (c.routeId && (c.amRouteName || c.pmRouteName))
+      routeNames[c.routeId] = c.amRouteName || c.pmRouteName || c.routeId;
+  }
+
   if (!user) return null;
 
   /** Check if a child has any active alert */
@@ -100,7 +109,9 @@ const Dashboard: React.FC = () => {
         <div className="mb-8 space-y-3">
           {alerts.map((alert) => {
             const names = affectedChildNames(children, alert);
-            const label = t(`tracking.alerts.eventTypes.${alert.eventType}`, { defaultValue: alert.eventType });
+            const label = t(`tracking.alerts.eventTypes.${alert.eventType}`, {
+              defaultValue: alert.eventType,
+            });
             return (
               <div
                 key={alert.id}
@@ -117,13 +128,14 @@ const Dashboard: React.FC = () => {
                       {alert.vehicleId}
                     </span>
                     <span className="text-xs bg-pink-500/20 text-pink-300 px-2 py-0.5 rounded-full">
-                      {alert.routeId}
+                      {routeNames[alert.routeId] || alert.routeId}
                     </span>
                   </div>
                   <p className="mt-1 text-slate-200">{alert.message}</p>
                   {names.length > 0 && (
                     <p className="mt-1 text-sm text-pink-300">
-                      {t('tracking.alerts.affected')}: <span className="font-semibold text-white">{names.join(', ')}</span>
+                      {t('tracking.alerts.affected')}:{' '}
+                      <span className="font-semibold text-white">{names.join(', ')}</span>
                     </p>
                   )}
                 </div>
@@ -175,7 +187,7 @@ const Dashboard: React.FC = () => {
                         {t('children.details.amRoute')}
                       </dt>
                       <dd className="mt-1 text-sm font-semibold text-emerald-400">
-                        {child.amRouteId || child.routeId || '—'}
+                        {child.amRouteName || child.amRouteId || child.routeId || '—'}
                       </dd>
                     </div>
                     <div>
@@ -183,7 +195,7 @@ const Dashboard: React.FC = () => {
                         {t('children.details.pmRoute')}
                       </dt>
                       <dd className="mt-1 text-sm font-semibold text-blue-400">
-                        {child.pmRouteId || '—'}
+                        {child.pmRouteName || child.pmRouteId || '—'}
                       </dd>
                     </div>
                     <div className="col-span-2">

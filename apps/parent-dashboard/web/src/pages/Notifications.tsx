@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import {
   AlertTriangle,
@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { parentApi, type AlertHistoryRecord, type AlertAuditEntry } from '../services/api';
 import { queryKeys } from '../services/query-keys';
+import type { Child } from '../types';
 
 const EVENT_TYPE_COLORS: Record<string, string> = {
   LATE_ARRIVAL: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
@@ -103,7 +104,9 @@ const AlertTimeline: React.FC<{ alertId: string }> = ({ alertId }) => {
             <div className="flex-1 min-w-0 pb-1">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className={`text-sm font-semibold ${getAuditLabelColor(entry.eventType)}`}>
-                  {t(`notifications.auditEvents.${entry.eventType}`, { defaultValue: entry.eventType.replace(/_/g, ' ') })}
+                  {t(`notifications.auditEvents.${entry.eventType}`, {
+                    defaultValue: entry.eventType.replace(/_/g, ' '),
+                  })}
                 </span>
                 <span className="flex items-center gap-1 text-xs text-slate-500">
                   <Clock className="h-3 w-3" />
@@ -136,6 +139,19 @@ const Notifications: React.FC = () => {
     refetchInterval: 30_000,
   });
 
+  const { data: children = [] } = useQuery({
+    queryKey: queryKeys.children.all,
+    queryFn: () => parentApi.getChildren(),
+  });
+
+  const routeNames: Record<string, string> = {};
+  for (const c of children as Child[]) {
+    if (c.amRouteId && c.amRouteName) routeNames[c.amRouteId] = c.amRouteName;
+    if (c.pmRouteId && c.pmRouteName) routeNames[c.pmRouteId] = c.pmRouteName;
+    if (c.routeId && (c.amRouteName || c.pmRouteName))
+      routeNames[c.routeId] = c.amRouteName || c.pmRouteName || c.routeId;
+  }
+
   const error = queryError ? t('notifications.unableToLoad') : null;
 
   const formatTimestamp = (ts: string): string => {
@@ -153,7 +169,9 @@ const Notifications: React.FC = () => {
   return (
     <div className="px-4 sm:px-0">
       <div className="flex items-center justify-between mb-2">
-        <h1 className="text-3xl font-bold text-white tracking-tight">{t('notifications.alertHistory')}</h1>
+        <h1 className="text-3xl font-bold text-white tracking-tight">
+          {t('notifications.alertHistory')}
+        </h1>
         <button
           onClick={() => refetch()}
           disabled={loading}
@@ -181,17 +199,19 @@ const Notifications: React.FC = () => {
       {!loading && alerts.length === 0 && !error && (
         <div className="text-center py-16">
           <ShieldAlert className="mx-auto h-14 w-14 text-slate-600" />
-          <p className="mt-4 text-lg text-slate-400 font-medium">{t('notifications.noAlertsYet')}</p>
-          <p className="text-sm text-slate-500 mt-1">
-            {t('notifications.alertsWillAppear')}
+          <p className="mt-4 text-lg text-slate-400 font-medium">
+            {t('notifications.noAlertsYet')}
           </p>
+          <p className="text-sm text-slate-500 mt-1">{t('notifications.alertsWillAppear')}</p>
         </div>
       )}
 
       {alerts.length > 0 && (
         <div className="space-y-4">
           {alerts.map((alert: AlertHistoryRecord) => {
-            const label = t(`tracking.alerts.eventTypes.${alert.eventType}`, { defaultValue: alert.eventType });
+            const label = t(`tracking.alerts.eventTypes.${alert.eventType}`, {
+              defaultValue: alert.eventType,
+            });
             const colorClass =
               EVENT_TYPE_COLORS[alert.eventType] ||
               'bg-slate-500/20 text-slate-400 border-slate-500/30';
@@ -236,10 +256,14 @@ const Notifications: React.FC = () => {
                       )}
                       <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
                         <span>
-                          {t('notifications.route')}: <span className="text-slate-300 font-medium">{alert.routeId}</span>
+                          {t('notifications.route')}:{' '}
+                          <span className="text-slate-300 font-medium">
+                            {routeNames[alert.routeId] || alert.routeId}
+                          </span>
                         </span>
                         <span>
-                          {t('notifications.bus')}: <span className="text-slate-300 font-medium">{alert.vehicleId}</span>
+                          {t('notifications.bus')}:{' '}
+                          <span className="text-slate-300 font-medium">{alert.vehicleId}</span>
                         </span>
                         <span>{formatTimestamp(alert.createdAt)}</span>
                       </div>
