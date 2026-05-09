@@ -35,7 +35,7 @@ const Dashboard: React.FC = () => {
 
   const children = freshChildren ?? user?.children ?? [];
 
-  // Collect unique route IDs across all children (AM + PM) to detect any active alert
+  // Collect unique route names across all children (AM + PM) to detect any active alert
   const routeIds = [
     ...new Set(
       children

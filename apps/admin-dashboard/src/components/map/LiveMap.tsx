@@ -181,7 +181,7 @@ const LiveMap: React.FC<LiveMapProps> = ({
             <div style="min-width: 140px; font-family: sans-serif;">
               <strong style="color:#1e293b; display:block; border-bottom:1px solid #e2e8f0; padding-bottom:4px; margin-bottom:4px;">Stop ${seq}: ${stop.address}</strong>
               <div style="font-size:11px; display:flex; flex-direction:column; gap:2px;">
-                <span style="color:#64748b">Route ID: <span style="color:#1e293b; font-weight:600">${selectedRoute.id}</span></span>
+                <span style="color:#64748b">Route Name: <span style="color:#1e293b; font-weight:600">${selectedRoute.name || selectedRoute.id}</span></span>
                 <span style="color:#64748b">Vehicle ID: <span style="color:#1e293b; font-weight:600">${selectedRoute.vehicleId || 'N/A'}</span></span>
               </div>
             </div>

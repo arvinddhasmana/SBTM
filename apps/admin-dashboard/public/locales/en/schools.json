@@ -11,7 +11,7 @@
   "selectBoardRequired": "Please select a board.",
   "columns": {
     "name": "Name",
-    "boardId": "Board ID",
+    "boardId": "Board Name",
     "actions": "Actions"
   },
   "loading": "Loading…",

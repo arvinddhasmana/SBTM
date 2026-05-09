@@ -37,7 +37,7 @@ export const SchoolsList: React.FC = () => {
       const boardId = isBoardAdmin && user?.boardId ? user.boardId : undefined;
       const [schoolsData, boardsData] = await Promise.all([
         organizationApi.listSchools(boardId),
-        isOstaAdmin ? organizationApi.listBoards() : Promise.resolve([]),
+        organizationApi.listBoards(),
       ]);
       return { schools: schoolsData, boards: boardsData };
     },
@@ -105,6 +105,8 @@ export const SchoolsList: React.FC = () => {
       setError(t('schools:errors.deleteFailed'));
     }
   };
+
+  const boardNames = Object.fromEntries(boards.map((b) => [b.id, b.name]));
 
   return (
     <div className="p-8">
@@ -198,7 +200,7 @@ export const SchoolsList: React.FC = () => {
               {schools.map((school) => (
                 <tr key={school.id} className="hover:bg-white/5 transition-colors">
                   <td className="px-6 py-4">{school.name}</td>
-                  <td className="px-6 py-4 font-mono text-xs text-white/60">{school.boardId}</td>
+                  <td className="px-6 py-4">{boardNames[school.boardId] || school.boardId}</td>
                   {canManage && (
                     <td className="px-6 py-4">
                       <div className="flex gap-2">

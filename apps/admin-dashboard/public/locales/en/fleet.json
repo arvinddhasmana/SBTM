@@ -32,8 +32,8 @@
     "form": {
       "schoolId": "School ID",
       "schoolIdPlaceholder": "Enter school ID",
-      "routeId": "Route ID",
-      "routeIdPlaceholder": "Enter route ID",
+      "routeId": "Route Name",
+      "routeIdPlaceholder": "Enter route name",
       "vehicleId": "Vehicle ID",
       "vehicleIdPlaceholder": "Enter vehicle ID",
       "effectiveDate": "Effective Date",

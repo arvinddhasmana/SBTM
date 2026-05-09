@@ -16,7 +16,7 @@
     "completed": "Completed"
   },
   "details": {
-    "routeId": "Route ID",
+    "routeId": "Route Name",
     "name": "Route Name",
     "type": "Type",
     "direction": "Direction",

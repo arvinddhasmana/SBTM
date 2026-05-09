@@ -156,7 +156,7 @@ export class ParentGatewayService {
       }> = await this.dataSource.query(
         `SELECT DISTINCT ON (pe."studentId") pe."studentId", pe."eventType", pe."routeId", r.direction
                      FROM presence_event pe
-                     LEFT JOIN routes r ON pe."routeId" = r.id
+                     LEFT JOIN routes r ON pe."routeId"::uuid = r.id
                      WHERE pe."studentId" = ANY($1)
                      ORDER BY pe."studentId", pe."timestamp" DESC`,
         [studentIds],

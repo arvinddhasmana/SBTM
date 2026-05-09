@@ -31,6 +31,8 @@ DROP TYPE IF EXISTS notification_channel_enum CASCADE;
 DROP TYPE IF EXISTS notification_status_enum CASCADE;
 DROP TYPE IF EXISTS delivery_channel_enum CASCADE;
 DROP TYPE IF EXISTS delivery_status_enum CASCADE;
+DROP TABLE IF EXISTS gps_device_tokens CASCADE;
+DROP TABLE IF EXISTS system_settings CASCADE;
 DROP TABLE IF EXISTS route_deviation_events CASCADE;
 DROP TABLE IF EXISTS route_geofences CASCADE;
 DROP TABLE IF EXISTS route_lifecycle_events CASCADE;
@@ -153,8 +155,8 @@ CREATE TABLE students (
     parent_user_id UUID,
     am_route_id UUID,
     pm_route_id UUID,
-    am_stop_id UUID,
-    pm_stop_id UUID,
+    am_stop_id UUID REFERENCES route_stops(id) ON DELETE SET NULL,
+    pm_stop_id UUID REFERENCES route_stops(id) ON DELETE SET NULL,
     external_student_id VARCHAR,
     status VARCHAR DEFAULT 'ENROLLED',
     "createdAt" TIMESTAMP DEFAULT NOW(),
@@ -233,6 +235,47 @@ CREATE TABLE route_geofences (
   updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 CREATE INDEX "IDX_route_geofences_school" ON route_geofences(school_id);
+
+-- Route Deviation Events (GPS tracking)
+CREATE TABLE route_deviation_events (
+    id TEXT PRIMARY KEY,
+    school_id TEXT NOT NULL,
+    route_id TEXT NOT NULL,
+    vehicle_id TEXT NOT NULL,
+    timestamp TIMESTAMP(3) NOT NULL,
+    lat DOUBLE PRECISION NOT NULL,
+    lng DOUBLE PRECISION NOT NULL,
+    deviation_meters DOUBLE PRECISION NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+CREATE INDEX "IDX_route_deviation_route" ON route_deviation_events(route_id);
+CREATE INDEX "IDX_route_deviation_school" ON route_deviation_events(school_id);
+
+-- GPS System Settings (platform-wide key/value config — managed by gps-tracking service)
+CREATE TABLE system_settings (
+    id   TEXT        NOT NULL,
+    key  TEXT        NOT NULL,
+    value TEXT       NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_by TEXT,
+    CONSTRAINT system_settings_pkey PRIMARY KEY (id)
+);
+CREATE UNIQUE INDEX "system_settings_key_key" ON system_settings(key);
+
+-- GPS Device Tokens (hardware GPS device authentication)
+CREATE TABLE gps_device_tokens (
+    id          TEXT        NOT NULL,
+    token       TEXT        NOT NULL,
+    vehicle_id  TEXT        NOT NULL,
+    school_id   TEXT        NOT NULL,
+    description TEXT,
+    is_active   BOOLEAN     NOT NULL DEFAULT TRUE,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    last_seen_at TIMESTAMPTZ,
+    CONSTRAINT gps_device_tokens_pkey PRIMARY KEY (id)
+);
+CREATE UNIQUE INDEX "gps_device_tokens_token_key" ON gps_device_tokens(token);
+CREATE INDEX "gps_device_tokens_school_id_idx" ON gps_device_tokens(school_id);
 
 -- Emergency Alerts (Matching emergency-alerts entity — Phase B governance)
 CREATE TYPE emergency_event_type_enum AS ENUM (
@@ -567,5 +610,11 @@ INSERT INTO student_tag ("schoolId", "studentId", "tagId", "tagType") VALUES
 INSERT INTO location_points (id, school_id, vehicle_id, route_id, timestamp, lat, lng, speed_kph, heading_deg) VALUES
     ('seed-loc-am', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'BUS-01', 'a0000001-0000-0000-0000-000000000001', NOW(), 45.3876, -75.6960, 0, 0),
     ('seed-loc-pm', 'c0a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c', 'BUS-01', 'a0000001-0000-0000-0000-000000000002', NOW(), 45.3876, -75.6960, 0, 0);
+
+-- ===================== System Settings =====================
+
+INSERT INTO system_settings (id, key, value, updated_at)
+VALUES (gen_random_uuid()::TEXT, 'GPS_TRACKING_SOURCE', 'DRIVER_APP', NOW())
+ON CONFLICT (key) DO NOTHING;
 
 COMMIT;

@@ -28,6 +28,8 @@ DROP TYPE IF EXISTS notification_channel_enum CASCADE;
 DROP TYPE IF EXISTS notification_status_enum CASCADE;
 DROP TYPE IF EXISTS delivery_channel_enum CASCADE;
 DROP TYPE IF EXISTS delivery_status_enum CASCADE;
+DROP TABLE IF EXISTS gps_device_tokens CASCADE;
+DROP TABLE IF EXISTS system_settings CASCADE;
 DROP TABLE IF EXISTS route_deviation_events CASCADE;
 DROP TABLE IF EXISTS route_geofences CASCADE;
 DROP TABLE IF EXISTS route_lifecycle_events CASCADE;
@@ -154,8 +156,8 @@ CREATE TABLE students (
     parent_user_id UUID,
     am_route_id UUID,
     pm_route_id UUID,
-    am_stop_id UUID,
-    pm_stop_id UUID,
+    am_stop_id UUID REFERENCES route_stops(id) ON DELETE SET NULL,
+    pm_stop_id UUID REFERENCES route_stops(id) ON DELETE SET NULL,
     external_student_id VARCHAR,
     status VARCHAR DEFAULT 'ENROLLED',
     "createdAt" TIMESTAMP DEFAULT NOW(),
@@ -502,3 +504,29 @@ CREATE TABLE route_deviation_events (
 );
 CREATE INDEX "IDX_route_deviation_route" ON route_deviation_events(route_id);
 CREATE INDEX "IDX_route_deviation_school" ON route_deviation_events(school_id);
+
+-- GPS System Settings (platform-wide key/value config — managed by gps-tracking service)
+CREATE TABLE system_settings (
+    id   TEXT        NOT NULL,
+    key  TEXT        NOT NULL,
+    value TEXT       NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_by TEXT,
+    CONSTRAINT system_settings_pkey PRIMARY KEY (id)
+);
+CREATE UNIQUE INDEX "system_settings_key_key" ON system_settings(key);
+
+-- GPS Device Tokens (hardware GPS device authentication)
+CREATE TABLE gps_device_tokens (
+    id          TEXT        NOT NULL,
+    token       TEXT        NOT NULL,
+    vehicle_id  TEXT        NOT NULL,
+    school_id   TEXT        NOT NULL,
+    description TEXT,
+    is_active   BOOLEAN     NOT NULL DEFAULT TRUE,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    last_seen_at TIMESTAMPTZ,
+    CONSTRAINT gps_device_tokens_pkey PRIMARY KEY (id)
+);
+CREATE UNIQUE INDEX "gps_device_tokens_token_key" ON gps_device_tokens(token);
+CREATE INDEX "gps_device_tokens_school_id_idx" ON gps_device_tokens(school_id);
