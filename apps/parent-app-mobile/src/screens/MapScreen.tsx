@@ -158,7 +158,36 @@ export default function MapScreen() {
     if (routeDetails?.polyline) {
       const coords = decodePolyline(routeDetails.polyline);
       if (coords.length > 0) {
-        return coords.map(([lat, lng]) => ({ latitude: lat, longitude: lng }));
+        let pathCoords = coords.map(([lat, lng]) => ({ latitude: lat, longitude: lng }));
+
+        // CRITICAL FIX: Ensure route path includes connection to school
+        // This handles both new routes (with school in polyline) and legacy routes (without)
+        if (routeDetails.schoolLat != null && routeDetails.schoolLng != null) {
+          const schoolPos = { latitude: routeDetails.schoolLat, longitude: routeDetails.schoolLng };
+          const lastPoint = pathCoords[pathCoords.length - 1];
+          const firstPoint = pathCoords[0];
+
+          // Check if path already connects to school (within 50 meters)
+          const distanceToSchoolFromEnd = Math.sqrt(
+            Math.pow((lastPoint.latitude - schoolPos.latitude) * 111000, 2) +
+            Math.pow((lastPoint.longitude - schoolPos.longitude) * 111000, 2)
+          );
+          const distanceToSchoolFromStart = Math.sqrt(
+            Math.pow((firstPoint.latitude - schoolPos.latitude) * 111000, 2) +
+            Math.pow((firstPoint.longitude - schoolPos.longitude) * 111000, 2)
+          );
+
+          // For AM routes: if path doesn't end at school, add the connection
+          if (routeDetails.direction === 'AM' && distanceToSchoolFromEnd > 50) {
+            pathCoords = [...pathCoords, schoolPos];
+          }
+          // For PM routes: if path doesn't start at school, add the connection
+          else if (routeDetails.direction === 'PM' && distanceToSchoolFromStart > 50) {
+            pathCoords = [schoolPos, ...pathCoords];
+          }
+        }
+
+        return pathCoords;
       }
     }
     if (routeDetails?.stops && routeDetails.stops.length > 1) {

@@ -122,11 +122,40 @@ export default function ActiveRouteScreen({ navigation }: any) {
   // Decode route polyline
   const routePath: LatLng[] = useMemo(() => {
     if (!activeRoute?.polyline) return [];
-    return decodePolyline(activeRoute.polyline).map(([lat, lng]) => ({
+    const coords = decodePolyline(activeRoute.polyline).map(([lat, lng]) => ({
       latitude: lat,
       longitude: lng,
     }));
-  }, [activeRoute?.polyline]);
+
+    // CRITICAL FIX: Ensure route path includes connection to school
+    // This handles both new routes (with school in polyline) and legacy routes (without)
+    if (coords.length > 0 && activeRoute.schoolLat != null && activeRoute.schoolLng != null) {
+      const schoolPos = { latitude: activeRoute.schoolLat, longitude: activeRoute.schoolLng };
+      const lastPoint = coords[coords.length - 1];
+      const firstPoint = coords[0];
+
+      // Check if path already connects to school (within 50 meters)
+      const distanceToSchoolFromEnd = Math.sqrt(
+        Math.pow((lastPoint.latitude - schoolPos.latitude) * 111000, 2) +
+        Math.pow((lastPoint.longitude - schoolPos.longitude) * 111000, 2)
+      );
+      const distanceToSchoolFromStart = Math.sqrt(
+        Math.pow((firstPoint.latitude - schoolPos.latitude) * 111000, 2) +
+        Math.pow((firstPoint.longitude - schoolPos.longitude) * 111000, 2)
+      );
+
+      // For AM routes: if path doesn't end at school, add the connection
+      if (routeDirection === 'AM' && distanceToSchoolFromEnd > 50) {
+        return [...coords, schoolPos];
+      }
+      // For PM routes: if path doesn't start at school, add the connection
+      else if (routeDirection === 'PM' && distanceToSchoolFromStart > 50) {
+        return [schoolPos, ...coords];
+      }
+    }
+
+    return coords;
+  }, [activeRoute?.polyline, activeRoute?.schoolLat, activeRoute?.schoolLng, routeDirection]);
 
   // Split the route polyline into visited and unvisited parts based on nearest point to bus
   const { visitedRoutePath, unvisitedRoutePath } = useMemo(() => {

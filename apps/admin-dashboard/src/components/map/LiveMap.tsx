@@ -120,7 +120,35 @@ const LiveMap: React.FC<LiveMapProps> = ({
     }
 
     // 2. Render Planned/Selected Route Path
-    const pathData = selectedRoute?.path || plannedRoute;
+    let pathData = selectedRoute?.path || plannedRoute;
+
+    // CRITICAL FIX: Ensure route path includes connection to school
+    // This handles both new routes (with school in polyline) and legacy routes (without)
+    if (pathData && pathData.length > 0 && selectedRoute?.schoolLat && selectedRoute?.schoolLng) {
+      const schoolPos: [number, number] = [selectedRoute.schoolLat, selectedRoute.schoolLng];
+      const lastPoint = pathData[pathData.length - 1] as [number, number];
+      const firstPoint = pathData[0] as [number, number];
+
+      // Check if path already connects to school (within 50 meters)
+      const distanceToSchoolFromEnd = Math.sqrt(
+        Math.pow((lastPoint[0] - schoolPos[0]) * 111000, 2) +
+        Math.pow((lastPoint[1] - schoolPos[1]) * 111000, 2)
+      );
+      const distanceToSchoolFromStart = Math.sqrt(
+        Math.pow((firstPoint[0] - schoolPos[0]) * 111000, 2) +
+        Math.pow((firstPoint[1] - schoolPos[1]) * 111000, 2)
+      );
+
+      // For AM routes: if path doesn't end at school, add the connection
+      if (selectedRoute.direction === 'AM' && distanceToSchoolFromEnd > 50) {
+        pathData = [...pathData, schoolPos];
+      }
+      // For PM routes: if path doesn't start at school, add the connection
+      else if (selectedRoute.direction === 'PM' && distanceToSchoolFromStart > 50) {
+        pathData = [schoolPos, ...pathData];
+      }
+    }
+
     if (pathData && pathData.length > 0) {
       const color = selectedRoute?.direction === 'AM' ? '#3b82f6' : '#f59e0b';
       routePolylineRef.current = L.polyline(pathData as L.LatLngExpression[], {

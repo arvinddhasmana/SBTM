@@ -271,7 +271,38 @@ const MapPage: React.FC = () => {
 
   // Decode polyline to coordinates
   const routePath = useMemo(() => {
-    if (routeDetails?.polyline) return decodePolyline(routeDetails.polyline);
+    if (routeDetails?.polyline) {
+      const decodedPath = decodePolyline(routeDetails.polyline);
+
+      // CRITICAL FIX: Ensure route path includes connection to school
+      // This handles both new routes (with school in polyline) and legacy routes (without)
+      if (decodedPath.length > 0 && routeDetails.schoolLat && routeDetails.schoolLng) {
+        const schoolPos: [number, number] = [routeDetails.schoolLat, routeDetails.schoolLng];
+        const lastPoint = decodedPath[decodedPath.length - 1];
+        const firstPoint = decodedPath[0];
+
+        // Check if path already connects to school (within 50 meters)
+        const distanceToSchoolFromEnd = Math.sqrt(
+          Math.pow((lastPoint[0] - schoolPos[0]) * 111000, 2) +
+          Math.pow((lastPoint[1] - schoolPos[1]) * 111000, 2)
+        );
+        const distanceToSchoolFromStart = Math.sqrt(
+          Math.pow((firstPoint[0] - schoolPos[0]) * 111000, 2) +
+          Math.pow((firstPoint[1] - schoolPos[1]) * 111000, 2)
+        );
+
+        // For AM routes: if path doesn't end at school, add the connection
+        if (routeDetails.direction === 'AM' && distanceToSchoolFromEnd > 50) {
+          return [...decodedPath, schoolPos];
+        }
+        // For PM routes: if path doesn't start at school, add the connection
+        else if (routeDetails.direction === 'PM' && distanceToSchoolFromStart > 50) {
+          return [schoolPos, ...decodedPath];
+        }
+      }
+
+      return decodedPath;
+    }
     return null;
   }, [routeDetails]);
 
