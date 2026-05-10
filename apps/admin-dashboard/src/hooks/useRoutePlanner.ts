@@ -170,6 +170,9 @@ export function useRoutePlanner() {
           setIsSnapping(true);
           const waypoints = validStops.map((s) => ({ lat: s.lat, lng: s.lng }));
 
+          // CRITICAL: Always include school in waypoints to ensure route line renders between all stops and school
+          // AM routes: stops → school (school is the destination)
+          // PM routes: school → stops (school is the origin)
           if (schoolLocation) {
             if (direction === 'AM') {
               waypoints.push({ lat: schoolLocation.lat, lng: schoolLocation.lng });
@@ -382,6 +385,15 @@ export function useRoutePlanner() {
         }
       }
 
+      // CRITICAL: Include school to ensure complete route line
+      if (schoolLocation) {
+        if (direction === 'AM') {
+          waypoints.push({ lat: schoolLocation.lat, lng: schoolLocation.lng });
+        } else {
+          waypoints.unshift({ lat: schoolLocation.lat, lng: schoolLocation.lng });
+        }
+      }
+
       try {
         setIsSnapping(true);
         const result = await routesApi.snapToRoad(waypoints);
@@ -400,7 +412,7 @@ export function useRoutePlanner() {
         setIsSnapping(false);
       }
     },
-    [stops],
+    [stops, schoolLocation, direction],
   );
 
   /** Force snap entire route to road. */
@@ -411,6 +423,16 @@ export function useRoutePlanner() {
     setIsSnapping(true);
     try {
       const waypoints = validStops.map((s) => ({ lat: s.lat, lng: s.lng }));
+
+      // CRITICAL: Include school to ensure complete route line
+      if (schoolLocation) {
+        if (direction === 'AM') {
+          waypoints.push({ lat: schoolLocation.lat, lng: schoolLocation.lng });
+        } else {
+          waypoints.unshift({ lat: schoolLocation.lat, lng: schoolLocation.lng });
+        }
+      }
+
       const result = await routesApi.snapToRoad(waypoints);
       if (result.polylineGeoJson) {
         setOptimizationResult((prev) => ({
@@ -426,7 +448,7 @@ export function useRoutePlanner() {
     } finally {
       setIsSnapping(false);
     }
-  }, [stops]);
+  }, [stops, schoolLocation, direction]);
 
   const autoGenerate = useCallback(async () => {
     if (!schoolLocation) {
