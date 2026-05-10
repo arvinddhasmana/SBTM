@@ -26,4 +26,12 @@ export class RouteStop {
         srid: 4326,
     })
     location: string; // Will store as "POINT(lng lat)"
+
+    // Add lat/lng columns for easier access by frontend
+    // These are redundant with location but improve compatibility
+    @Column({ type: 'double precision', nullable: true })
+    lat?: number;
+
+    @Column({ type: 'double precision', nullable: true })
+    lng?: number;
 }

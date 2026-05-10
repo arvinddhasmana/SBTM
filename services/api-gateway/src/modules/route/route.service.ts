@@ -12,6 +12,18 @@ import { Vehicle } from '../auth/entities/vehicle.entity';
 import { CreateRouteDto, UpdateRouteDto } from './dto/route.dto';
 import { RouteChangeNotifierService } from '../gateway/services/route-change-notifier.service';
 
+/**
+ * Extract lat/lng from WKT POINT string "POINT(lng lat)"
+ */
+function parseWktToLatLng(wkt: string): { lat: number; lng: number } | null {
+  const match = wkt.match(/POINT\s*\(\s*([-\d.]+)\s+([-\d.]+)\s*\)/i);
+  if (!match) return null;
+  const lng = parseFloat(match[1]);
+  const lat = parseFloat(match[2]);
+  if (isNaN(lat) || isNaN(lng)) return null;
+  return { lat, lng };
+}
+
 @Injectable()
 export class RouteService {
   constructor(
@@ -62,25 +74,31 @@ export class RouteService {
 
       if (stops && stops.length > 0) {
         for (const stop of stops) {
+          const coords = parseWktToLatLng(stop.location);
+          const lat = coords?.lat ?? null;
+          const lng = coords?.lng ?? null;
+
           if (stop.id) {
             await queryRunner.query(
               `INSERT INTO route_stops (
-                              id, "routeId", sequence, address, location
-                          ) VALUES ($1, $2, $3, $4, ST_GeomFromText($5, 4326))`,
+                              id, "routeId", sequence, address, location, lat, lng
+                          ) VALUES ($1, $2, $3, $4, ST_GeomFromText($5, 4326), $6, $7)`,
               [
                 stop.id,
                 savedRoute.id,
                 stop.sequence,
                 stop.address,
                 stop.location,
+                lat,
+                lng,
               ],
             );
           } else {
             await queryRunner.query(
               `INSERT INTO route_stops (
-                              "routeId", sequence, address, location
-                          ) VALUES ($1, $2, $3, ST_GeomFromText($4, 4326))`,
-              [savedRoute.id, stop.sequence, stop.address, stop.location],
+                              "routeId", sequence, address, location, lat, lng
+                          ) VALUES ($1, $2, $3, ST_GeomFromText($4, 4326), $5, $6)`,
+              [savedRoute.id, stop.sequence, stop.address, stop.location, lat, lng],
             );
           }
         }
@@ -162,6 +180,10 @@ export class RouteService {
           [id],
         );
         for (const stop of stops) {
+          const coords = parseWktToLatLng(stop.location);
+          const lat = coords?.lat ?? null;
+          const lng = coords?.lng ?? null;
+
           if (stop.id && !stop.id.startsWith('draft-')) {
             const isValidUuid =
               /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
@@ -169,28 +191,30 @@ export class RouteService {
               );
             if (isValidUuid) {
               await queryRunner.query(
-                `INSERT INTO route_stops (id, "routeId", sequence, address, location)
-                 VALUES ($1, $2, $3, $4, ST_GeomFromText($5, 4326))`,
+                `INSERT INTO route_stops (id, "routeId", sequence, address, location, lat, lng)
+                 VALUES ($1, $2, $3, $4, ST_GeomFromText($5, 4326), $6, $7)`,
                 [
                   stop.id,
                   id,
                   stop.sequence,
                   stop.address,
                   stop.location,
+                  lat,
+                  lng,
                 ],
               );
             } else {
               await queryRunner.query(
-                `INSERT INTO route_stops ("routeId", sequence, address, location)
-                 VALUES ($1, $2, $3, ST_GeomFromText($4, 4326))`,
-                [id, stop.sequence, stop.address, stop.location],
+                `INSERT INTO route_stops ("routeId", sequence, address, location, lat, lng)
+                 VALUES ($1, $2, $3, ST_GeomFromText($4, 4326), $5, $6)`,
+                [id, stop.sequence, stop.address, stop.location, lat, lng],
               );
             }
           } else {
             await queryRunner.query(
-              `INSERT INTO route_stops ("routeId", sequence, address, location)
-               VALUES ($1, $2, $3, ST_GeomFromText($4, 4326))`,
-              [id, stop.sequence, stop.address, stop.location],
+              `INSERT INTO route_stops ("routeId", sequence, address, location, lat, lng)
+               VALUES ($1, $2, $3, ST_GeomFromText($4, 4326), $5, $6)`,
+              [id, stop.sequence, stop.address, stop.location, lat, lng],
             );
           }
         }
