@@ -175,10 +175,89 @@ export class RouteService {
       await queryRunner.startTransaction();
       try {
         await queryRunner.manager.save(route);
+
+        // Before deleting stops, collect IDs of stops that will be removed
+        const existingStops = await queryRunner.query(
+          `SELECT id FROM route_stops WHERE "routeId" = $1`,
+          [id],
+        );
+        const existingStopIds = new Set(existingStops.map((s: any) => s.id));
+        const newStopIds = new Set(
+          stops
+            .filter(
+              (s) =>
+                s.id &&
+                !s.id.startsWith('draft-') &&
+                /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+                  s.id,
+                ),
+            )
+            .map((s) => s.id),
+        );
+
+        // Identify stops that will be deleted (exist in DB but not in new stops list)
+        const deletedStopIds = [...existingStopIds].filter(
+          (id) => !newStopIds.has(id),
+        );
+
+        // If stops are being deleted, reassign affected students to the first stop
+        if (deletedStopIds.length > 0 && stops.length > 0) {
+          // Get the first stop ID (will be either existing or newly created)
+          const firstStopId =
+            stops[0].id &&
+            !stops[0].id.startsWith('draft-') &&
+            /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+              stops[0].id,
+            )
+              ? stops[0].id
+              : null;
+
+          if (firstStopId) {
+            // Update students whose stops are being deleted
+            for (const deletedStopId of deletedStopIds) {
+              // Update AM stop assignments
+              await queryRunner.query(
+                `UPDATE students
+                 SET am_stop_id = $1
+                 WHERE am_route_id = $2 AND am_stop_id = $3`,
+                [firstStopId, id, deletedStopId],
+              );
+
+              // Update PM stop assignments
+              await queryRunner.query(
+                `UPDATE students
+                 SET pm_stop_id = $1
+                 WHERE pm_route_id = $2 AND pm_stop_id = $3`,
+                [firstStopId, id, deletedStopId],
+              );
+            }
+          } else {
+            // No valid first stop - set orphaned students to NULL
+            for (const deletedStopId of deletedStopIds) {
+              await queryRunner.query(
+                `UPDATE students
+                 SET am_stop_id = NULL
+                 WHERE am_route_id = $1 AND am_stop_id = $2`,
+                [id, deletedStopId],
+              );
+
+              await queryRunner.query(
+                `UPDATE students
+                 SET pm_stop_id = NULL
+                 WHERE pm_route_id = $1 AND pm_stop_id = $2`,
+                [id, deletedStopId],
+              );
+            }
+          }
+        }
+
+        // Now delete old stops
         await queryRunner.query(
           `DELETE FROM route_stops WHERE "routeId" = $1`,
           [id],
         );
+
+        // Insert new/updated stops
         for (const stop of stops) {
           const coords = parseWktToLatLng(stop.location);
           const lat = coords?.lat ?? null;
