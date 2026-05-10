@@ -101,9 +101,9 @@ const AlertDetail: React.FC<AlertDetailProps> = ({
   // Persisted size
   const [overlaySize] = useState<{ width: number; height: number }>(readOverlaySize);
 
-  // Elapsed-time timer for PENDING_CONFIRMATION — counts UP from the moment the
-  // alert was created so the panel always restores the actual elapsed time when
-  // reopened, rather than resetting to the full configured window.
+  // Countdown timer for PENDING_CONFIRMATION — counts DOWN from configured window to 0:00
+  // so the panel always shows remaining time until auto-escalation, with full progress bar
+  // that gradually empties as time runs out (matching DemoV0.0.2 behavior).
   const isPendingConfirmation = alert.status === 'PENDING_CONFIRMATION';
   const confirmationWindowMs = useConfirmationTimeoutMs(alert.tier ?? 'TIER_1');
   const confirmationWindowSec = Math.floor(confirmationWindowMs / 1000);
@@ -233,21 +233,27 @@ const AlertDetail: React.FC<AlertDetailProps> = ({
     onResolve(alert.id, resolveNotes.trim() || undefined);
   };
 
-  // Timer display — elapsed time counting up from 0:00
-  const timerMinutes = Math.floor(secondsElapsed / 60);
-  const timerSeconds = secondsElapsed % 60;
+  // Timer display — remaining time counting down from configured window to 0:00
+  // Progress bar moves from full (100%) to empty (0%) as time runs out
+  const secondsRemaining = Math.max(0, confirmationWindowSec - secondsElapsed);
+  const timerMinutes = Math.floor(secondsRemaining / 60);
+  const timerSeconds = secondsRemaining % 60;
   const formattedTime = `${timerMinutes}:${String(timerSeconds).padStart(2, '0')}`;
+
+  // Progress bar percentage - starts at 100% (full) and decreases to 0% (empty)
   const timerPct =
-    confirmationWindowSec > 0 ? Math.min(100, (secondsElapsed / confirmationWindowSec) * 100) : 0;
+    confirmationWindowSec > 0 ? Math.max(0, (secondsRemaining / confirmationWindowSec) * 100) : 0;
   const isOverdue = secondsElapsed >= confirmationWindowSec && confirmationWindowSec > 0;
+
+  // Color changes based on remaining time (green -> amber -> red)
   const timerColor = isOverdue
     ? 'text-red-400'
-    : secondsElapsed > confirmationWindowSec * 0.75
+    : secondsRemaining < confirmationWindowSec * 0.25
       ? 'text-amber-400'
       : 'text-green-400';
   const barColor = isOverdue
     ? 'bg-red-400'
-    : secondsElapsed > confirmationWindowSec * 0.75
+    : secondsRemaining < confirmationWindowSec * 0.25
       ? 'bg-amber-400'
       : 'bg-green-400';
 
@@ -288,7 +294,7 @@ const AlertDetail: React.FC<AlertDetailProps> = ({
       {/* Scrollable Content */}
       <div className="flex-1 overflow-y-auto min-h-0">
         <div className="px-5 py-4 space-y-4">
-          {/* Elapsed timer (PENDING_CONFIRMATION only) */}
+          {/* Countdown timer (PENDING_CONFIRMATION only) */}
           {isPendingConfirmation && (
             <div>
               <div className="flex items-center justify-between mb-1.5">
@@ -299,8 +305,8 @@ const AlertDetail: React.FC<AlertDetailProps> = ({
                       ? t('alerts:detail.autoEscalationOverdue', {
                           defaultValue: 'Auto-escalation overdue',
                         })
-                      : t('alerts:detail.elapsedSinceAlert', {
-                          defaultValue: 'Elapsed since alert',
+                      : t('alerts:detail.timeRemaining', {
+                          defaultValue: 'Time remaining',
                         })}
                   </span>
                 </div>
