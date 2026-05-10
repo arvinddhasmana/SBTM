@@ -29,6 +29,25 @@ if [ -f "$ALERT_CONFIG_MIGRATION" ]; then
   docker exec "$CONTAINER_NAME" psql -U postgres -d sbms -v ON_ERROR_STOP=1 -f "/tmp/001-create-alert-config-tables.sql"
 fi
 
+# Apply data fix migrations to handle any data integrity issues from previous versions
+echo -e "\033[36mApplying data fix migrations...\033[0m"
+
+# Migration 001: Populate route-stop lat/lng from PostGIS geometry
+MIGRATION_001="$SCRIPT_DIR/../migrations/001-populate-route-stop-lat-lng.sql"
+if [ -f "$MIGRATION_001" ]; then
+  echo -e "\033[33m  Running migration: 001-populate-route-stop-lat-lng.sql ...\033[0m"
+  docker cp "$MIGRATION_001" "$CONTAINER_NAME:/tmp/001-populate-route-stop-lat-lng.sql"
+  docker exec "$CONTAINER_NAME" psql -U postgres -d sbms -v ON_ERROR_STOP=1 -f "/tmp/001-populate-route-stop-lat-lng.sql" 2>&1 | grep -v "NOTICE" || true
+fi
+
+# Migration 002: Fix orphaned student-stop associations after route updates
+MIGRATION_002="$SCRIPT_DIR/../migrations/002-fix-orphaned-student-stops.sql"
+if [ -f "$MIGRATION_002" ]; then
+  echo -e "\033[33m  Running migration: 002-fix-orphaned-student-stops.sql ...\033[0m"
+  docker cp "$MIGRATION_002" "$CONTAINER_NAME:/tmp/002-fix-orphaned-student-stops.sql"
+  docker exec "$CONTAINER_NAME" psql -U postgres -d sbms -v ON_ERROR_STOP=1 -f "/tmp/002-fix-orphaned-student-stops.sql" 2>&1 | grep -v "NOTICE" || true
+fi
+
 # Some services (e.g., emergency-alerts) eagerly load configuration from the
 # database during onModuleInit and crash if their tables don't exist when the
 # stack first comes up. Restart any exited services now that the schema and
