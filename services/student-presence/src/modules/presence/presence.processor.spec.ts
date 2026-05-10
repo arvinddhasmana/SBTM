@@ -144,9 +144,8 @@ describe('PresenceProcessor', () => {
     );
   });
 
-  it('should fall back to students table when students_reference unavailable', async () => {
+  it('should query students table for parent information', async () => {
     mockDataSource.query
-      .mockRejectedValueOnce(new Error('students_reference missing'))
       .mockResolvedValueOnce([{ parentId: 'parent-ccc', schoolId: 'school-001' }]);
 
     const job = {
@@ -170,9 +169,7 @@ describe('PresenceProcessor', () => {
   });
 
   it('should return notified=false when no parent is found', async () => {
-    mockDataSource.query
-      .mockResolvedValueOnce([]) // students_reference empty
-      .mockResolvedValueOnce([]); // students table also empty
+    mockDataSource.query.mockResolvedValueOnce([]);
 
     const job = {
       id: 'job-6',

@@ -223,7 +223,7 @@ export const parentApi = {
   },
 
   async getRouteDetails(routeId: string): Promise<RouteDetails> {
-    const response = await apiClient.get<RouteDetails>(`/api/v1/routes/reference/${routeId}`);
+    const response = await apiClient.get<RouteDetails>(`/api/v1/routes/${routeId}`);
     return response.data;
   },
 

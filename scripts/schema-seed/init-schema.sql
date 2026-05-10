@@ -28,6 +28,8 @@ DROP TYPE IF EXISTS notification_channel_enum CASCADE;
 DROP TYPE IF EXISTS notification_status_enum CASCADE;
 DROP TYPE IF EXISTS delivery_channel_enum CASCADE;
 DROP TYPE IF EXISTS delivery_status_enum CASCADE;
+DROP TABLE IF EXISTS gps_device_tokens CASCADE;
+DROP TABLE IF EXISTS system_settings CASCADE;
 DROP TABLE IF EXISTS route_deviation_events CASCADE;
 DROP TABLE IF EXISTS route_geofences CASCADE;
 DROP TABLE IF EXISTS route_lifecycle_events CASCADE;
@@ -154,8 +156,8 @@ CREATE TABLE students (
     parent_user_id UUID,
     am_route_id UUID,
     pm_route_id UUID,
-    am_stop_id UUID,
-    pm_stop_id UUID,
+    am_stop_id UUID REFERENCES route_stops(id) ON DELETE SET NULL,
+    pm_stop_id UUID REFERENCES route_stops(id) ON DELETE SET NULL,
     external_student_id VARCHAR,
     status VARCHAR DEFAULT 'ENROLLED',
     "createdAt" TIMESTAMP DEFAULT NOW(),
@@ -485,53 +487,8 @@ CREATE INDEX "IDX_video_access_user_ts" ON video_access_logs (user_id, "timestam
 
 
 -- --------------------------------------------------------------------------
--- 3. Reference Schema (Demo/Driver App)
+-- 3. GPS Tracking Tables
 -- --------------------------------------------------------------------------
-
-CREATE TABLE vehicles_reference (
-    id VARCHAR(255) PRIMARY KEY,
-    "plateNumber" VARCHAR(20),
-    capacity INT,
-    status VARCHAR(50),
-    "createdAt" TIMESTAMP DEFAULT NOW()
-);
-
-CREATE TABLE routes_reference (
-    id VARCHAR(255) PRIMARY KEY,
-    name VARCHAR(255),
-    "vehicleId" TEXT,
-    "driverId" TEXT,
-    "schedule" JSONB,
-    "polyline" TEXT,
-    "schoolId" UUID,
-    direction TEXT,
-    "createdAt" TIMESTAMP DEFAULT NOW()
-);
-
-CREATE TABLE route_stops_reference (
-    id VARCHAR(255) PRIMARY KEY,
-    "routeId" VARCHAR(255),
-    "sequenceOrder" INT,
-    "stopName" VARCHAR(255),
-    lat FLOAT,
-    lng FLOAT,
-    "arrivalTime" TIME
-);
-
-CREATE TABLE students_reference (
-    id VARCHAR(255) PRIMARY KEY,
-    "firstName" VARCHAR(255),
-    "lastName" VARCHAR(255),
-    grade INT,
-    "parentId" VARCHAR(255),
-    "schoolId" VARCHAR(255),
-    "assignedRouteId" VARCHAR(255),
-    "amRouteId" VARCHAR(255),
-    "pmRouteId" VARCHAR(255),
-    "amStopId" VARCHAR(255),
-    "pmStopId" VARCHAR(255),
-    "createdAt" TIMESTAMP DEFAULT NOW()
-);
 
 -- Route deviation events (GPS tracking)
 CREATE TABLE route_deviation_events (
@@ -547,3 +504,29 @@ CREATE TABLE route_deviation_events (
 );
 CREATE INDEX "IDX_route_deviation_route" ON route_deviation_events(route_id);
 CREATE INDEX "IDX_route_deviation_school" ON route_deviation_events(school_id);
+
+-- GPS System Settings (platform-wide key/value config — managed by gps-tracking service)
+CREATE TABLE system_settings (
+    id   TEXT        NOT NULL,
+    key  TEXT        NOT NULL,
+    value TEXT       NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_by TEXT,
+    CONSTRAINT system_settings_pkey PRIMARY KEY (id)
+);
+CREATE UNIQUE INDEX "system_settings_key_key" ON system_settings(key);
+
+-- GPS Device Tokens (hardware GPS device authentication)
+CREATE TABLE gps_device_tokens (
+    id          TEXT        NOT NULL,
+    token       TEXT        NOT NULL,
+    vehicle_id  TEXT        NOT NULL,
+    school_id   TEXT        NOT NULL,
+    description TEXT,
+    is_active   BOOLEAN     NOT NULL DEFAULT TRUE,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    last_seen_at TIMESTAMPTZ,
+    CONSTRAINT gps_device_tokens_pkey PRIMARY KEY (id)
+);
+CREATE UNIQUE INDEX "gps_device_tokens_token_key" ON gps_device_tokens(token);
+CREATE INDEX "gps_device_tokens_school_id_idx" ON gps_device_tokens(school_id);

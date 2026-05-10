@@ -34,4 +34,11 @@ INSERT INTO users (id, email, "passwordHash", role, "firstName", "lastName", "bo
     ('10000000-0000-0000-0000-000000000004', 'ocsb.admin@sbtm.demo',  crypt('Admin123!', gen_salt('bf')), 'BOARD_ADMIN', 'OCSB',  'Admin', 'b1a2b3c4-d5e6-4f7a-8b9c-1d2e3f4a5b6c')
 ON CONFLICT DO NOTHING;
 
+-- ===================== System Settings =====================
+
+-- Default GPS tracking source (preserves driver-app behaviour on fresh installs)
+INSERT INTO system_settings (id, key, value, updated_at)
+VALUES (gen_random_uuid()::TEXT, 'GPS_TRACKING_SOURCE', 'DRIVER_APP', NOW())
+ON CONFLICT (key) DO NOTHING;
+
 COMMIT;

@@ -6,16 +6,16 @@
 
 services:
   # Infrastructure services — these start normally
-  postgres:
+  postgres: {}
     # Inherits from docker-compose.yml
 
-  redis:
+  redis: {}
     # Inherits from docker-compose.yml
 
-  osrm:
+  osrm: {}
     # Inherits from docker-compose.yml
 
-  jaeger:
+  jaeger: {}
     # Inherits from docker-compose.yml
 
   # Application services — disabled via scale: 0

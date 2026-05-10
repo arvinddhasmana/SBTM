@@ -22,6 +22,11 @@ describe('ParentGatewayService', () => {
       if (key === 'ALERTS_SERVICE_URL') return 'http://alerts-service:3003';
       return defaultValue;
     }),
+    getOrThrow: jest.fn().mockImplementation((key: string) => {
+      if (key === 'STUDENT_SERVICE_URL') return 'http://student-service:3006';
+      if (key === 'ALERTS_SERVICE_URL') return 'http://alerts-service:3003';
+      throw new Error(`Config key ${key} not found`);
+    }),
   };
 
   const mockSchoolRepository = {
@@ -79,37 +84,34 @@ describe('ParentGatewayService', () => {
   });
 
   describe('getChildrenForParent', () => {
-    it('should return children from reference tables when data exists', async () => {
-      const refStudents = [
+    it('should return children from student service with operational tables', async () => {
+      const studentServiceResponse = [
         {
           id: 'student-1',
-          firstName: 'Alice',
-          lastName: 'Smith',
-          parentId: 'parent-1',
-          schoolId: 'school-1',
-          assignedRouteId: 'ROUTE-A-AM',
-          amRouteId: 'ROUTE-A-AM',
-          pmRouteId: 'ROUTE-A-PM',
-          amStopId: 'stop-1',
-          pmStopId: 'stop-2',
+          first_name: 'Alice',
+          last_name: 'Smith',
+          school_id: 'school-1',
+          am_route_id: 'route-uuid-am',
+          pm_route_id: 'route-uuid-pm',
         },
       ];
-
-      // students_reference query
-      mockDataSource.query
-        .mockResolvedValueOnce(refStudents)
-        // route vehicle query
-        .mockResolvedValueOnce([
-          { id: 'ROUTE-A-AM', vehicleId: 'BUS-01' },
-          { id: 'ROUTE-A-PM', vehicleId: 'BUS-01' },
-        ])
-        // presence events query (for getStudentStatuses)
-        .mockResolvedValueOnce([
-          { studentId: 'student-1', eventType: 'BOARD', routeId: 'ROUTE-A-AM' },
-        ]);
+      mockHttpClient.get.mockResolvedValue(studentServiceResponse);
 
       mockSchoolRepository.findBy.mockResolvedValue([
         { id: 'school-1', name: 'Greenfield Elementary' },
+      ]);
+      mockRouteRepository.findBy.mockResolvedValue([
+        { id: 'route-uuid-am', vehicleId: 'BUS-01' },
+        { id: 'route-uuid-pm', vehicleId: 'BUS-01' },
+      ]);
+
+      // presence events query (for getStudentStatuses)
+      mockDataSource.query.mockResolvedValueOnce([
+        {
+          studentId: 'student-1',
+          eventType: 'BOARD',
+          routeId: 'route-uuid-am',
+        },
       ]);
 
       const result = await service.getChildrenForParent(parentUser);
@@ -117,17 +119,18 @@ describe('ParentGatewayService', () => {
       expect(result).toHaveLength(1);
       expect(result[0].name).toBe('Alice Smith');
       expect(result[0].schoolName).toBe('Greenfield Elementary');
-      expect(result[0].amRouteId).toBe('ROUTE-A-AM');
-      expect(result[0].pmRouteId).toBe('ROUTE-A-PM');
+      expect(result[0].amRouteId).toBe('route-uuid-am');
+      expect(result[0].pmRouteId).toBe('route-uuid-pm');
       expect(result[0].vehicleId).toBe('BUS-01');
       expect(result[0].status).toBe('on_bus');
       expect(result[0].avatarUrl).toBeDefined();
+      expect(httpClient.get).toHaveBeenCalledWith(
+        'http://student-service:3006/students',
+        { params: { parent_id: 'parent-1' } },
+      );
     });
 
-    it('should return empty array when no children found in reference or service', async () => {
-      // No reference students
-      mockDataSource.query.mockResolvedValueOnce([]);
-      // Student service returns empty
+    it('should return empty array when no children found in student service', async () => {
       mockHttpClient.get.mockResolvedValue([]);
 
       const result = await service.getChildrenForParent(parentUser);
@@ -135,17 +138,14 @@ describe('ParentGatewayService', () => {
       expect(result).toEqual([]);
     });
 
-    it('should fall back to student service when reference data is empty', async () => {
-      // No reference students
-      mockDataSource.query.mockResolvedValueOnce([]);
-
+    it('should query student service for children', async () => {
       const studentServiceResponse = [
         {
           id: 'student-1',
           first_name: 'Bob',
           last_name: 'Jones',
           school_id: 'school-1',
-          am_route_id: 'ROUTE-B-AM',
+          am_route_id: 'route-uuid-b-am',
           pm_route_id: null,
         },
       ];
@@ -155,7 +155,7 @@ describe('ParentGatewayService', () => {
         { id: 'school-1', name: 'School B' },
       ]);
       mockRouteRepository.findBy.mockResolvedValue([
-        { id: 'ROUTE-B-AM', vehicleId: 'BUS-02' },
+        { id: 'route-uuid-b-am', vehicleId: 'BUS-02' },
       ]);
 
       // getStudentStatuses
@@ -172,48 +172,33 @@ describe('ParentGatewayService', () => {
       );
     });
 
-    it('should handle reference query failure and fall through to service', async () => {
-      // Reference table query fails
-      mockDataSource.query.mockRejectedValueOnce(
-        new Error('Table does not exist'),
-      );
-      // Student service returns empty
-      mockHttpClient.get.mockResolvedValue([]);
-
-      const result = await service.getChildrenForParent(parentUser);
-
-      expect(result).toEqual([]);
-    });
-
     it('should set status to at_school for ALIGHT on AM route', async () => {
-      const refStudents = [
+      const studentServiceResponse = [
         {
           id: 'student-1',
-          firstName: 'Charlie',
-          lastName: 'Brown',
-          parentId: 'parent-1',
-          schoolId: 'school-1',
-          assignedRouteId: 'ROUTE-A-AM',
-          amRouteId: 'ROUTE-A-AM',
-          pmRouteId: null,
-          amStopId: null,
-          pmStopId: null,
+          first_name: 'Charlie',
+          last_name: 'Brown',
+          school_id: 'school-1',
+          am_route_id: 'route-uuid-a-am',
+          pm_route_id: null,
         },
       ];
-
-      mockDataSource.query
-        .mockResolvedValueOnce(refStudents)
-        .mockResolvedValueOnce([{ id: 'ROUTE-A-AM', vehicleId: null }])
-        .mockResolvedValueOnce([
-          {
-            studentId: 'student-1',
-            eventType: 'ALIGHT',
-            routeId: 'ROUTE-A-AM',
-          },
-        ]);
+      mockHttpClient.get.mockResolvedValue(studentServiceResponse);
 
       mockSchoolRepository.findBy.mockResolvedValue([
         { id: 'school-1', name: 'School A' },
+      ]);
+      mockRouteRepository.findBy.mockResolvedValue([
+        { id: 'route-uuid-a-am', vehicleId: null },
+      ]);
+
+      mockDataSource.query.mockResolvedValueOnce([
+        {
+          studentId: 'student-1',
+          eventType: 'ALIGHT',
+          routeId: 'route-uuid-a-am',
+          direction: 'AM',
+        },
       ]);
 
       const result = await service.getChildrenForParent(parentUser);
@@ -222,34 +207,32 @@ describe('ParentGatewayService', () => {
     });
 
     it('should set status to at_home for ALIGHT on PM route', async () => {
-      const refStudents = [
+      const studentServiceResponse = [
         {
           id: 'student-1',
-          firstName: 'Dana',
-          lastName: 'White',
-          parentId: 'parent-1',
-          schoolId: 'school-1',
-          assignedRouteId: null,
-          amRouteId: null,
-          pmRouteId: 'ROUTE-A-PM',
-          amStopId: null,
-          pmStopId: null,
+          first_name: 'Dana',
+          last_name: 'White',
+          school_id: 'school-1',
+          am_route_id: null,
+          pm_route_id: 'route-uuid-a-pm',
         },
       ];
-
-      mockDataSource.query
-        .mockResolvedValueOnce(refStudents)
-        .mockResolvedValueOnce([{ id: 'ROUTE-A-PM', vehicleId: null }])
-        .mockResolvedValueOnce([
-          {
-            studentId: 'student-1',
-            eventType: 'ALIGHT',
-            routeId: 'ROUTE-A-PM',
-          },
-        ]);
+      mockHttpClient.get.mockResolvedValue(studentServiceResponse);
 
       mockSchoolRepository.findBy.mockResolvedValue([
         { id: 'school-1', name: 'School A' },
+      ]);
+      mockRouteRepository.findBy.mockResolvedValue([
+        { id: 'route-uuid-a-pm', vehicleId: null },
+      ]);
+
+      mockDataSource.query.mockResolvedValueOnce([
+        {
+          studentId: 'student-1',
+          eventType: 'ALIGHT',
+          routeId: 'route-uuid-a-pm',
+          direction: 'PM',
+        },
       ]);
 
       const result = await service.getChildrenForParent(parentUser);

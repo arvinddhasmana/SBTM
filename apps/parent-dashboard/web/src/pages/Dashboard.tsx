@@ -35,7 +35,7 @@ const Dashboard: React.FC = () => {
 
   const children = freshChildren ?? user?.children ?? [];
 
-  // Collect unique route IDs across all children (AM + PM) to detect any active alert
+  // Collect unique route names across all children (AM + PM) to detect any active alert
   const routeIds = [
     ...new Set(
       children
@@ -44,6 +44,15 @@ const Dashboard: React.FC = () => {
     ),
   ];
   const { alerts } = useAlerts(routeIds);
+
+  // Build a route name lookup from children's known route names
+  const routeNames: Record<string, string> = {};
+  for (const c of children) {
+    if (c.amRouteId && c.amRouteName) routeNames[c.amRouteId] = c.amRouteName;
+    if (c.pmRouteId && c.pmRouteName) routeNames[c.pmRouteId] = c.pmRouteName;
+    if (c.routeId && (c.amRouteName || c.pmRouteName))
+      routeNames[c.routeId] = c.amRouteName || c.pmRouteName || 'Unknown Route';
+  }
 
   if (!user) return null;
 
@@ -100,7 +109,9 @@ const Dashboard: React.FC = () => {
         <div className="mb-8 space-y-3">
           {alerts.map((alert) => {
             const names = affectedChildNames(children, alert);
-            const label = t(`tracking.alerts.eventTypes.${alert.eventType}`, { defaultValue: alert.eventType });
+            const label = t(`tracking.alerts.eventTypes.${alert.eventType}`, {
+              defaultValue: alert.eventType,
+            });
             return (
               <div
                 key={alert.id}
@@ -113,17 +124,21 @@ const Dashboard: React.FC = () => {
                     <p className="font-bold text-lg uppercase tracking-wider text-pink-500">
                       {label}
                     </p>
-                    <span className="text-xs bg-pink-500/20 text-pink-300 px-2 py-0.5 rounded-full">
-                      {alert.vehicleId}
-                    </span>
-                    <span className="text-xs bg-pink-500/20 text-pink-300 px-2 py-0.5 rounded-full">
-                      {alert.routeId}
-                    </span>
+                    {alert.vehicleId && (
+                      <span className="text-xs bg-pink-500/20 text-pink-300 px-2 py-0.5 rounded-full">
+                        {alert.vehicleId}
+                      </span>
+                    )}
+                    {(routeNames[alert.routeId] || alert.routeName) && (
+                      <span className="text-xs bg-pink-500/20 text-pink-300 px-2 py-0.5 rounded-full">
+                        {routeNames[alert.routeId] || alert.routeName}
+                      </span>
+                    )}
                   </div>
-                  <p className="mt-1 text-slate-200">{alert.message}</p>
                   {names.length > 0 && (
                     <p className="mt-1 text-sm text-pink-300">
-                      {t('tracking.alerts.affected')}: <span className="font-semibold text-white">{names.join(', ')}</span>
+                      {t('tracking.alerts.affected')}:{' '}
+                      <span className="font-semibold text-white">{names.join(', ')}</span>
                     </p>
                   )}
                 </div>
@@ -175,7 +190,7 @@ const Dashboard: React.FC = () => {
                         {t('children.details.amRoute')}
                       </dt>
                       <dd className="mt-1 text-sm font-semibold text-emerald-400">
-                        {child.amRouteId || child.routeId || '—'}
+                        {child.amRouteName || '—'}
                       </dd>
                     </div>
                     <div>
@@ -183,7 +198,7 @@ const Dashboard: React.FC = () => {
                         {t('children.details.pmRoute')}
                       </dt>
                       <dd className="mt-1 text-sm font-semibold text-blue-400">
-                        {child.pmRouteId || '—'}
+                        {child.pmRouteName || '—'}
                       </dd>
                     </div>
                     <div className="col-span-2">

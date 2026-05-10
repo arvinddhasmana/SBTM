@@ -111,6 +111,15 @@ export default function DashboardScreen() {
     });
   }, []);
 
+  const routeNames = useMemo<Record<string, string>>(() => {
+    const map: Record<string, string> = {};
+    for (const c of children) {
+      if (c.amRouteId && c.amRouteName) map[c.amRouteId] = c.amRouteName;
+      if (c.pmRouteId && c.pmRouteName) map[c.pmRouteId] = c.pmRouteName;
+    }
+    return map;
+  }, [children]);
+
   const alertCount = activeAlerts.length;
 
   const renderAlertBanner = (alert: Alert) => {
@@ -143,16 +152,11 @@ export default function DashboardScreen() {
           {!!alert.routeId && (
             <View style={styles.alertChipSmall}>
               <Text style={styles.alertChipSmallText}>
-                {t('notifications.routeLabel', { id: alert.routeId })}
+                {routeNames[alert.routeId] || 'Unknown Route'}
               </Text>
             </View>
           )}
         </View>
-        {!!alert.description && (
-          <Text style={styles.alertBannerDesc} numberOfLines={3}>
-            {alert.description}
-          </Text>
-        )}
         {affected.length > 0 && (
           <Text style={styles.alertBannerAffected}>
             {t('children.affectedLabel', {
@@ -299,8 +303,10 @@ export default function DashboardScreen() {
               <Text style={styles.userAvatarText}>{greetingName[0]?.toUpperCase()}</Text>
             </View>
             <View>
-              <Text style={styles.greeting}>{t('children.greeting', { name: greetingName })}</Text>
-              <Text style={styles.dateLabel}>{todayLabel}</Text>
+              <Text style={styles.greeting}>{user?.name || user?.firstName}</Text>
+              <Text style={styles.dateLabel}>
+                {t('navigation.parent', { defaultValue: 'Parent' })}
+              </Text>
             </View>
           </View>
           <View style={styles.iconRow}>

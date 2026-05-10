@@ -202,7 +202,7 @@ const AlertCard: React.FC<AlertCardProps> = ({
       minute: '2-digit',
       second: '2-digit',
     });
-    const displayRoute = routeName || alert.routeId;
+    const displayRoute = routeName || 'Unknown Route';
 
     return (
       <button
@@ -409,7 +409,7 @@ const AlertCard: React.FC<AlertCardProps> = ({
               )}
               <div className="flex items-center gap-0.5 px-1 bg-white/10 rounded text-[7px] font-black text-slate-300 uppercase">
                 <RouteIcon size={7} />
-                <span>{alert.routeId.split('-').pop()}</span>
+                <span>{routeName || 'Unknown Route'.split('-').pop()}</span>
               </div>
             </div>
           </div>

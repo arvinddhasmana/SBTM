@@ -56,6 +56,7 @@ interface ReferenceRouteRow {
   vehicleId: string | null;
   driverId: string | null;
   schedule: any;
+  startTime: string | null;
   polyline: string | null;
   schoolId: string | null;
   schoolName: string | null;
@@ -286,10 +287,10 @@ export class GpsGatewayService {
     const params: any[] = routeIds && routeIds.length ? [routeIds] : [];
 
     const routes = (await this.dataSource.query(
-      `SELECT r.id, r.name, r."vehicleId" as "vehicleId", r.schedule, r.polyline,
+      `SELECT r.id, r.name, r."vehicleId" as "vehicleId", r."startTime", r.polyline,
               r."schoolId" as "schoolId", r.direction, s.name as "schoolName",
               s.lat as "schoolLat", s.lng as "schoolLng"
-             FROM routes_reference r
+             FROM routes r
              LEFT JOIN schools s ON r."schoolId" = s.id
              ${whereClause}
              ORDER BY r.id ASC`,
@@ -319,8 +320,8 @@ export class GpsGatewayService {
     const activeRoutes = routes.filter((r) => activeRouteIds.has(r.id));
 
     const stops = (await this.dataSource.query(
-      `SELECT s.id, s."routeId" as "routeId", s."sequenceOrder" as "sequenceOrder", s."stopName" as "stopName", s.lat, s.lng, s."arrivalTime" as "arrivalTime"
-             FROM route_stops_reference s`,
+      `SELECT s.id, s."routeId" as "routeId", s.sequence as "sequenceOrder", s.address as "stopName", s.lat, s.lng
+             FROM route_stops s`,
     )) as ReferenceRouteStopRow[];
 
     const stopsByRoute = new Map<string, ReferenceRouteStopRow[]>();
@@ -373,10 +374,10 @@ export class GpsGatewayService {
     this.checkRouteAccess(routeId, user);
 
     const routes = (await this.dataSource.query(
-      `SELECT r.id, r.name, r."vehicleId" as "vehicleId", r.schedule, r.polyline,
+      `SELECT r.id, r.name, r."vehicleId" as "vehicleId", r."startTime", r.polyline,
               r."schoolId" as "schoolId", r.direction, s.name as "schoolName",
               s.lat as "schoolLat", s.lng as "schoolLng"
-             FROM routes_reference r
+             FROM routes r
              LEFT JOIN schools s ON r."schoolId" = s.id
              WHERE r.id = $1`,
       [routeId],
@@ -390,15 +391,13 @@ export class GpsGatewayService {
     const r = routes[0];
 
     const stops = (await this.dataSource.query(
-      `SELECT s.id, s."routeId" as "routeId", s."sequenceOrder" as "sequenceOrder", s."stopName" as "stopName", s.lat, s.lng, s."arrivalTime" as "arrivalTime"
-             FROM route_stops_reference s
+      `SELECT s.id, s."routeId" as "routeId", s.sequence as "sequenceOrder", s.address as "stopName", s.lat, s.lng
+             FROM route_stops s
              WHERE s."routeId" = $1`,
       [routeId],
     )) as ReferenceRouteStopRow[];
 
-    const schedule =
-      typeof r.schedule === 'string' ? JSON.parse(r.schedule) : r.schedule;
-    const startTime = schedule?.startTime || '07:30';
+    const startTime = r.startTime || '07:30';
     const routeStops = stops
       .slice()
       .sort((a, b) => a.sequenceOrder - b.sequenceOrder)
@@ -438,7 +437,7 @@ export class GpsGatewayService {
     const params: any[] = routeIds && routeIds.length ? [routeIds] : [];
 
     const routes = (await this.dataSource.query(
-      `SELECT r.id FROM routes_reference r ${whereClause} ORDER BY r.id ASC`,
+      `SELECT r.id FROM routes r ${whereClause} ORDER BY r.id ASC`,
       params,
     )) as Array<{ id: string }>;
 

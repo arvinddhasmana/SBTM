@@ -25,6 +25,7 @@
     },
     "android": {
       "package": "com.sbtm.driver",
+      "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"

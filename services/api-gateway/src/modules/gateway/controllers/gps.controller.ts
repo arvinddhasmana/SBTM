@@ -37,6 +37,12 @@ export class GpsController {
     return this.gpsGatewayService.getActiveRoutes(req.user);
   }
 
+  @Get('locations')
+  async getAllLiveLocations(@Request() req: { user: any }) {
+    return this.gpsGatewayService.getAllLiveLocations(req.user);
+  }
+
+  // Deprecated: Use /:routeId instead
   @Get('reference/:routeId')
   async getReferenceRouteById(
     @Param('routeId') routeId: string,
@@ -45,9 +51,12 @@ export class GpsController {
     return this.gpsGatewayService.getReferenceRouteById(routeId, req.user);
   }
 
-  @Get('locations')
-  async getAllLiveLocations(@Request() req: { user: any }) {
-    return this.gpsGatewayService.getAllLiveLocations(req.user);
+  @Get(':routeId')
+  async getRouteById(
+    @Param('routeId') routeId: string,
+    @Request() req: { user: any },
+  ) {
+    return this.gpsGatewayService.getReferenceRouteById(routeId, req.user);
   }
 
   @Get(':routeId/live-location')

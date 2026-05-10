@@ -38,12 +38,19 @@ export default function LoginScreen() {
     try {
       await login(email, password);
     } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        console.error(
+          '[Login] HTTP error',
+          error.response?.status,
+          error.config?.url,
+          error.response?.data,
+        );
+      } else {
+        console.error('[Login] error', error);
+      }
       const isNetworkError = axios.isAxiosError(error) && !error.response;
       if (isNetworkError) {
-        Alert.alert(
-          t('auth.errors.networkTitle'),
-          t('auth.errors.network'),
-        );
+        Alert.alert(t('auth.errors.networkTitle'), t('auth.errors.network'));
       } else {
         const message = axios.isAxiosError(error)
           ? (error.response?.data?.message ?? error.message)

@@ -21,7 +21,7 @@ export class RouteChangeNotifierService {
 
   /**
    * Notify all parents of students on a given route about a route change.
-   * Queries students_reference for students with am_route_id or pm_route_id matching routeId,
+   * Queries operational students table for students with am_route_id or pm_route_id matching routeId,
    * then sends a notification to each distinct parent.
    */
   async notifyRouteChange(
@@ -45,10 +45,10 @@ export class RouteChangeNotifierService {
 
     // Find all distinct parent user IDs for students on this route
     const rows: Array<{ parentId: string }> = await this.dataSource.query(
-      `SELECT DISTINCT "parentId" as "parentId"
-       FROM students_reference
-       WHERE ("amRouteId" = $1 OR "pmRouteId" = $1)
-         AND "parentId" IS NOT NULL`,
+      `SELECT DISTINCT parent_user_id as "parentId"
+       FROM students
+       WHERE (am_route_id = $1 OR pm_route_id = $1)
+         AND parent_user_id IS NOT NULL`,
       [routeId],
     );
 

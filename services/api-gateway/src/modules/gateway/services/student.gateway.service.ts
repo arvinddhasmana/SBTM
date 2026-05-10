@@ -46,65 +46,33 @@ export class StudentGatewayService {
     try {
       const res: any = await this.httpClient.get(url, { params: query });
       if (Array.isArray(res) && res.length > 0) {
-        // Enrich with route data from students_reference if microservice routes are null
-        const needsEnrichment = res.some(
-          (s: any) => !s.am_route_id && !s.pm_route_id,
-        );
-        if (needsEnrichment) {
-          const studentIds = res.map((s: any) => s.id);
-          try {
-            const refRows: Array<{
-              id: string;
-              amRouteId: string | null;
-              pmRouteId: string | null;
-              assignedRouteId: string | null;
-            }> = await this.dataSource.query(
-              `SELECT id, "amRouteId" as "amRouteId", "pmRouteId" as "pmRouteId", "assignedRouteId" as "assignedRouteId" FROM students_reference WHERE id = ANY($1)`,
-              [studentIds],
-            );
-            const refMap = new Map(refRows.map((r) => [r.id, r]));
-            for (const s of res) {
-              if (!s.am_route_id && !s.pm_route_id) {
-                const ref = refMap.get(s.id);
-                if (ref) {
-                  s.am_route_id = ref.amRouteId || ref.assignedRouteId || null;
-                  s.pm_route_id = ref.pmRouteId || null;
-                }
-              }
-            }
-          } catch {
-            // Enrichment is best-effort
-          }
-        }
         return res;
       }
     } catch {
-      // Fall through to demo-reference fallback.
+      // Fall through to operational students table fallback.
     }
 
-    // Demo fallback: serve from students_reference (used elsewhere in demo flows).
+    // Fallback: serve from operational students table (demo flows).
     // Shape matches Admin Dashboard expectations (snake_case).
     const targetSchoolId = query?.school_id || user.schoolId || null;
     const rows: Array<{
       id: string;
       firstName: string;
       lastName: string;
-      grade: number | null;
-      assignedRouteId: string | null;
+      grade: string | null;
       amRouteId: string | null;
       pmRouteId: string | null;
     }> = await this.dataSource.query(
       `
             SELECT
               id,
-              "firstName" as "firstName",
-              "lastName" as "lastName",
+              first_name as "firstName",
+              last_name as "lastName",
               grade,
-              "assignedRouteId" as "assignedRouteId",
-              "amRouteId" as "amRouteId",
-              "pmRouteId" as "pmRouteId"
-            FROM students_reference
-            WHERE ($1::text IS NULL OR "schoolId" = $1)
+              am_route_id as "amRouteId",
+              pm_route_id as "pmRouteId"
+            FROM students
+            WHERE ($1::text IS NULL OR school_id = $1::uuid)
             ORDER BY id ASC
             `,
       [targetSchoolId],
@@ -114,9 +82,9 @@ export class StudentGatewayService {
       id: r.id,
       first_name: r.firstName,
       last_name: r.lastName,
-      grade: r.grade === null || r.grade === undefined ? '' : String(r.grade),
+      grade: r.grade || '',
       status: 'ENROLLED',
-      am_route_id: r.amRouteId || r.assignedRouteId || null,
+      am_route_id: r.amRouteId || null,
       pm_route_id: r.pmRouteId || null,
     }));
   }
@@ -155,8 +123,7 @@ export class StudentGatewayService {
       id: string;
       firstName: string;
       lastName: string;
-      grade: number | null;
-      assignedRouteId: string | null;
+      grade: string | null;
       amRouteId: string | null;
       pmRouteId: string | null;
       schoolId: string | null;
@@ -165,15 +132,14 @@ export class StudentGatewayService {
       `
             SELECT
               id,
-              "firstName" as "firstName",
-              "lastName" as "lastName",
+              first_name as "firstName",
+              last_name as "lastName",
               grade,
-              "assignedRouteId" as "assignedRouteId",
-              "amRouteId" as "amRouteId",
-              "pmRouteId" as "pmRouteId",
-              "schoolId" as "schoolId",
-              "parentId" as "parentId"
-            FROM students_reference
+              am_route_id as "amRouteId",
+              pm_route_id as "pmRouteId",
+              school_id as "schoolId",
+              parent_user_id as "parentId"
+            FROM students
             WHERE id = $1
             LIMIT 1
             `,
@@ -211,7 +177,7 @@ export class StudentGatewayService {
           ? ''
           : String(student.grade),
       status: 'ENROLLED',
-      am_route_id: student.amRouteId || student.assignedRouteId || null,
+      am_route_id: student.amRouteId || null,
       pm_route_id: student.pmRouteId || null,
     };
   }

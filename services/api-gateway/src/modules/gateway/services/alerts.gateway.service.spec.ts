@@ -18,6 +18,10 @@ describe('AlertsGatewayService', () => {
       if (key === 'ALERTS_SERVICE_URL') return 'http://alerts-service:3003';
       return defaultValue;
     }),
+    getOrThrow: jest.fn().mockImplementation((key: string) => {
+      if (key === 'ALERTS_SERVICE_URL') return 'http://alerts-service:3003';
+      throw new Error(`Config key ${key} not found`);
+    }),
   };
 
   beforeEach(async () => {

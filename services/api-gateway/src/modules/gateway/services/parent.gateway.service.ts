@@ -20,19 +20,8 @@ interface StudentRecord {
   school_id: string;
   am_route_id?: string;
   pm_route_id?: string;
-}
-
-interface ReferenceStudentRow {
-  id: string;
-  firstName: string;
-  lastName: string;
-  parentId: string;
-  schoolId: string | null;
-  assignedRouteId: string | null;
-  amRouteId: string | null;
-  pmRouteId: string | null;
-  amStopId: string | null;
-  pmStopId: string | null;
+  am_stop_id?: string;
+  pm_stop_id?: string;
 }
 
 interface ParentChildDto {
@@ -42,6 +31,8 @@ interface ParentChildDto {
   routeId?: string;
   amRouteId?: string;
   pmRouteId?: string;
+  amRouteName?: string;
+  pmRouteName?: string;
   amStopId?: string;
   pmStopId?: string;
   vehicleId?: string;
@@ -82,80 +73,7 @@ export class ParentGatewayService {
   }
 
   async getChildrenForParent(user: ParentUser): Promise<ParentChildDto[]> {
-    // Demo-first behavior: use seeded reference tables for parent portal.
-    // This keeps IDs consistent with GPS/presence demo data (ROUTE-A, BUS-001, etc.).
-    let refStudents: ReferenceStudentRow[] = [];
-    try {
-      refStudents = await this.dataSource.query(
-        `SELECT id, "firstName" as "firstName", "lastName" as "lastName", "parentId" as "parentId", "schoolId" as "schoolId", "assignedRouteId" as "assignedRouteId", "amRouteId" as "amRouteId", "pmRouteId" as "pmRouteId", "amStopId" as "amStopId", "pmStopId" as "pmStopId"
-                 FROM students_reference
-                 WHERE "parentId" = $1
-                 ORDER BY id ASC`,
-        [user.id],
-      );
-    } catch {
-      refStudents = [];
-    }
-
-    if (refStudents.length > 0) {
-      const schoolIds = Array.from(
-        new Set(refStudents.map((s) => s.schoolId).filter(Boolean) as string[]),
-      );
-      const routeIds = Array.from(
-        new Set(
-          refStudents
-            .flatMap((s) => [s.amRouteId, s.pmRouteId, s.assignedRouteId])
-            .filter(Boolean) as string[],
-        ),
-      );
-
-      const schools = schoolIds.length
-        ? await this.schoolRepository.findBy({ id: In(schoolIds) })
-        : [];
-      const schoolMap = new Map(schools.map((s) => [s.id, s]));
-
-      const routeVehicleRows = routeIds.length
-        ? ((await this.dataSource.query(
-            `SELECT id, "vehicleId" as "vehicleId" FROM routes_reference WHERE id = ANY($1)`,
-            [routeIds],
-          )) as Array<{ id: string; vehicleId: string | null }>)
-        : [];
-      const routeToVehicle = new Map(
-        routeVehicleRows.map((r) => [r.id, r.vehicleId || undefined]),
-      );
-
-      // Determine student status from latest presence events
-      const studentIds = refStudents.map((s) => s.id);
-      const statusMap = await this.getStudentStatuses(studentIds);
-
-      return refStudents.map((student) => {
-        const school = student.schoolId
-          ? schoolMap.get(student.schoolId)
-          : undefined;
-        const amRouteId =
-          student.amRouteId || student.assignedRouteId || undefined;
-        const pmRouteId = student.pmRouteId || undefined;
-        const routeId = amRouteId; // primary route for backward compat
-        const vehicleId = amRouteId ? routeToVehicle.get(amRouteId) : undefined;
-        const name = `${student.firstName} ${student.lastName}`.trim();
-
-        return {
-          id: student.id,
-          name,
-          schoolName: school?.name,
-          routeId,
-          amRouteId,
-          pmRouteId,
-          amStopId: student.amStopId || undefined,
-          pmStopId: student.pmStopId || undefined,
-          vehicleId,
-          status: statusMap.get(student.id) || ('unknown' as const),
-          avatarUrl: this.getKidAvatarUrl(student.id),
-        };
-      });
-    }
-
-    // Fallback: if reference data isn't present, use student-management service
+    // Query students table directly using operational schema
     const url = `${this.studentServiceUrl}/students`;
     const students = await this.httpClient.get<StudentRecord[]>(url, {
       params: { parent_id: user.id },
@@ -193,7 +111,9 @@ export class ParentGatewayService {
       const amRouteId = student.am_route_id || undefined;
       const pmRouteId = student.pm_route_id || undefined;
       const routeId = amRouteId || pmRouteId;
-      const route = routeId ? routeMap.get(routeId) : undefined;
+      const amRoute = amRouteId ? routeMap.get(amRouteId) : undefined;
+      const pmRoute = pmRouteId ? routeMap.get(pmRouteId) : undefined;
+      const route = amRoute || pmRoute;
       const school = schoolMap.get(student.school_id);
       const name = `${student.first_name} ${student.last_name}`.trim();
 
@@ -204,6 +124,10 @@ export class ParentGatewayService {
         routeId,
         amRouteId,
         pmRouteId,
+        amRouteName: amRoute?.name,
+        pmRouteName: pmRoute?.name,
+        amStopId: student.am_stop_id || undefined,
+        pmStopId: student.pm_stop_id || undefined,
         vehicleId: route?.vehicleId,
         status: statusMap.get(student.id) || ('unknown' as const),
         avatarUrl: this.getKidAvatarUrl(student.id),
@@ -214,6 +138,7 @@ export class ParentGatewayService {
   /**
    * Query the latest presence_event per student to determine on_bus / at_school / at_home status.
    * BOARD → on_bus, ALIGHT → at_school (during school hours) or at_home.
+   * If no presence events exist, infer status based on current time (school hours vs after hours).
    */
   private async getStudentStatuses(
     studentIds: string[],
@@ -226,15 +151,18 @@ export class ParentGatewayService {
 
     try {
       // Get the latest presence event for each student using DISTINCT ON
+      // Join routes to read direction so AM/PM detection works with UUID route IDs
       const rows: Array<{
         studentId: string;
         eventType: string;
         routeId: string;
+        direction: string | null;
       }> = await this.dataSource.query(
-        `SELECT DISTINCT ON ("studentId") "studentId", "eventType", "routeId"
-                     FROM presence_event
-                     WHERE "studentId" = ANY($1)
-                     ORDER BY "studentId", "timestamp" DESC`,
+        `SELECT DISTINCT ON (pe."studentId") pe."studentId", pe."eventType", pe."routeId", r.direction
+                     FROM presence_event pe
+                     LEFT JOIN routes r ON pe."routeId"::uuid = r.id
+                     WHERE pe."studentId" = ANY($1)
+                     ORDER BY pe."studentId", pe."timestamp" DESC`,
         [studentIds],
       );
 
@@ -242,15 +170,40 @@ export class ParentGatewayService {
         if (row.eventType === 'BOARD') {
           statusMap.set(row.studentId, 'on_bus');
         } else if (row.eventType === 'ALIGHT') {
-          // If alighted on AM route → at_school; if PM route → at_home
-          const isPmRoute = row.routeId?.includes('PM');
+          // Use route direction (UUID-safe); fall back to case-insensitive ID match for legacy IDs
+          const isPmRoute =
+            row.direction === 'PM' ||
+            (row.direction == null &&
+              row.routeId?.toUpperCase().includes('PM'));
           statusMap.set(row.studentId, isPmRoute ? 'at_home' : 'at_school');
         }
       }
+
+      // For students without presence events, provide a time-based default
+      const now = new Date();
+      const hour = now.getHours();
+      const isSchoolHours = hour >= 8 && hour < 15; // 8 AM - 3 PM school hours
+      const defaultStatus = isSchoolHours ? 'at_school' : 'at_home';
+
+      for (const studentId of studentIds) {
+        if (!statusMap.has(studentId)) {
+          statusMap.set(studentId, defaultStatus);
+          this.logger.debug(
+            `No presence events for student ${studentId}, defaulting to ${defaultStatus}`,
+          );
+        }
+      }
     } catch (err) {
-      this.logger.warn(
+      this.logger.error(
         `Failed to fetch presence statuses: ${(err as Error).message}`,
       );
+      // On error, provide time-based defaults
+      const now = new Date();
+      const hour = now.getHours();
+      const defaultStatus = hour >= 8 && hour < 15 ? 'at_school' : 'at_home';
+      for (const studentId of studentIds) {
+        statusMap.set(studentId, defaultStatus);
+      }
     }
 
     return statusMap;

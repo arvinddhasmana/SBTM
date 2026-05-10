@@ -355,7 +355,7 @@ export const NotificationRoutingConfigPage: React.FC = () => {
                           {config.eventType || t('alertConfig:notificationRouting.table.allEvents')}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                          {config.recipientRole}
+                          {config.recipientRole?.replace(/_/g, ' ')}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                           {config.notificationTiming}

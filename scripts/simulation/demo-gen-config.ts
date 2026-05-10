@@ -71,6 +71,12 @@ const DRIVER_IDS: Record<string, string> = {
   ayjack: 'driver-ayjack-01',
 };
 
+// Operational route UUID generators - match generate-demo-routes.ts
+function operationalRouteId(s: number, r: number, direction: 'AM' | 'PM'): string {
+  const d = direction === 'AM' ? 1 : 2;
+  return `a0000000-000${s}-00${String(r).padStart(2, '0')}-0000-00000000000${d}`;
+}
+
 function main() {
   const selectedSchools = (process.argv[2] || 'stbern').split(' ');
   const routesPerSchool = parseInt(process.argv[3] || '1', 10);
@@ -102,20 +108,23 @@ function main() {
         return { id, email, firstName, lastName };
       });
 
+    // Get school index from schoolId (e.g., "30000000-0000-0000-0001-..." -> 1)
+    const schoolIdx = parseInt(schoolId.split('-')[3], 10);
+
     const routes: any[] = [];
     for (let r = 1; r <= routesPerSchool; r++) {
       const rPad = String(r).padStart(2, '0');
-      const amRefId = `ROUTE-${abbr}-R${rPad}-AM`;
-      const pmRefId = `ROUTE-${abbr}-R${rPad}-PM`;
+      const amOpId = operationalRouteId(schoolIdx, r, 'AM');
+      const pmOpId = operationalRouteId(schoolIdx, r, 'PM');
       const busId = `BUS-${abbr}-${rPad}`;
 
-      // Get polylines
-      const amPoly = pgQuery(`SELECT polyline FROM routes_reference WHERE id = '${amRefId}'`);
-      const pmPoly = pgQuery(`SELECT polyline FROM routes_reference WHERE id = '${pmRefId}'`);
+      // Get polylines from operational routes table
+      const amPoly = pgQuery(`SELECT polyline FROM routes WHERE id = '${amOpId}'`);
+      const pmPoly = pgQuery(`SELECT polyline FROM routes WHERE id = '${pmOpId}'`);
 
-      // Get AM stops
+      // Get AM stops from operational route_stops table
       const amStopsRaw = pgQuery(
-        `SELECT id, "sequenceOrder", "stopName", lat, lng FROM route_stops_reference WHERE "routeId" = '${amRefId}' ORDER BY "sequenceOrder"`,
+        `SELECT id, sequence, address, lat, lng FROM route_stops WHERE "routeId" = '${amOpId}' ORDER BY sequence`,
       );
       const amStops = amStopsRaw
         .split('\n')
@@ -125,9 +134,9 @@ function main() {
           return { id, sequence: parseInt(seq), name, lat: parseFloat(lat), lng: parseFloat(lng) };
         });
 
-      // Get PM stops
+      // Get PM stops from operational route_stops table
       const pmStopsRaw = pgQuery(
-        `SELECT id, "sequenceOrder", "stopName", lat, lng FROM route_stops_reference WHERE "routeId" = '${pmRefId}' ORDER BY "sequenceOrder"`,
+        `SELECT id, sequence, address, lat, lng FROM route_stops WHERE "routeId" = '${pmOpId}' ORDER BY sequence`,
       );
       const pmStops = pmStopsRaw
         .split('\n')
@@ -137,9 +146,9 @@ function main() {
           return { id, sequence: parseInt(seq), name, lat: parseFloat(lat), lng: parseFloat(lng) };
         });
 
-      // Get students assigned to these routes
+      // Get students assigned to these routes from operational students table
       const studentsRaw = pgQuery(
-        `SELECT id, "firstName", "lastName", "amStopId", "pmStopId" FROM students_reference WHERE "amRouteId" = '${amRefId}' ORDER BY id`,
+        `SELECT id, first_name, last_name, am_stop_id, pm_stop_id FROM students WHERE am_route_id = '${amOpId}' ORDER BY id`,
       );
       const students = studentsRaw
         .split('\n')
@@ -152,8 +161,8 @@ function main() {
       routes.push({
         routeNumber: r,
         busId,
-        am: { routeRefId: amRefId, polyline: amPoly, stops: amStops },
-        pm: { routeRefId: pmRefId, polyline: pmPoly, stops: pmStops },
+        am: { routeId: amOpId, polyline: amPoly, stops: amStops },
+        pm: { routeId: pmOpId, polyline: pmPoly, stops: pmStops },
         students,
       });
     }

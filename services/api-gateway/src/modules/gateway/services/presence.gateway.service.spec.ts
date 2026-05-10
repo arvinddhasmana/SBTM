@@ -17,6 +17,10 @@ describe('PresenceGatewayService', () => {
       if (key === 'PRESENCE_SERVICE_URL') return 'http://presence-service:3004';
       return defaultValue;
     }),
+    getOrThrow: jest.fn().mockImplementation((key: string) => {
+      if (key === 'PRESENCE_SERVICE_URL') return 'http://presence-service:3004';
+      throw new Error(`Config key ${key} not found`);
+    }),
   };
 
   const adminUser = { id: 'admin-1', schoolId: 'school-1' };

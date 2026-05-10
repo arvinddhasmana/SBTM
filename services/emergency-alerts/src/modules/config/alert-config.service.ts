@@ -107,7 +107,9 @@ export class AlertConfigService implements OnModuleInit {
       this.logger.log('Alert configuration cache initialized successfully');
     } catch (error) {
       this.logger.error('Failed to initialize configuration cache', error);
-      throw error;
+      // Don't re-throw — allow the service to start with an empty cache.
+      // cacheInitialized remains false so per-method fallbacks will retry on
+      // the first real request, after init-db has created the tables.
     }
   }
 

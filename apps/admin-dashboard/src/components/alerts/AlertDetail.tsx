@@ -30,6 +30,7 @@ interface AlertDetailProps {
   isActing?: boolean;
   /** kept for API compat — panel is always floating overlay now */
   variant?: 'modal' | 'overlay';
+  routeName?: string;
 }
 
 function getAuditDotColor(eventType: string): string {
@@ -81,6 +82,7 @@ const AlertDetail: React.FC<AlertDetailProps> = ({
   auditTrail,
   isResolving,
   isActing,
+  routeName,
 }) => {
   const { t } = useTranslation(['alerts']);
   const [showUpdateInput, setShowUpdateInput] = useState(false);
@@ -99,35 +101,37 @@ const AlertDetail: React.FC<AlertDetailProps> = ({
   // Persisted size
   const [overlaySize] = useState<{ width: number; height: number }>(readOverlaySize);
 
-  // Auto-escalation countdown for PENDING_CONFIRMATION — driven by the configured
-  // tier escalation timing so this UI never disagrees with the backend escheduler.
+  // Elapsed-time timer for PENDING_CONFIRMATION — counts UP from the moment the
+  // alert was created so the panel always restores the actual elapsed time when
+  // reopened, rather than resetting to the full configured window.
   const isPendingConfirmation = alert.status === 'PENDING_CONFIRMATION';
   const confirmationWindowMs = useConfirmationTimeoutMs(alert.tier ?? 'TIER_1');
   const confirmationWindowSec = Math.floor(confirmationWindowMs / 1000);
 
-  const computeRemaining = useCallback((): number => {
-    if (!isPendingConfirmation) return 0;
-    const createdAt = new Date(alert.createdAt ?? alert.timestamp).getTime();
-    // Clamp elapsed >= 0 so demo / future-timestamped data does not produce
-    // a remaining value larger than the configured window.
-    const elapsed = Math.max(0, Math.floor((Date.now() - createdAt) / 1000));
-    return Math.max(0, confirmationWindowSec - elapsed);
-  }, [isPendingConfirmation, alert.createdAt, alert.timestamp, confirmationWindowSec]);
+  const computeElapsed = useCallback((): number => {
+    // Use the driver-supplied event timestamp (always close to actual creation time).
+    // Avoid alert.createdAt which reflects the DB server clock and may have a
+    // timezone offset if the Postgres container is configured differently from UTC.
+    const alertTime = new Date(alert.timestamp).getTime();
+    if (isNaN(alertTime)) return 0;
+    return Math.max(0, Math.floor((Date.now() - alertTime) / 1000));
+  }, [alert.timestamp]);
 
-  const [secondsRemaining, setSecondsRemaining] = useState<number>(computeRemaining);
+  const [secondsElapsed, setSecondsElapsed] = useState<number>(computeElapsed);
 
-  // Recompute when the tier-config response arrives or the alert changes.
+  // Recompute when alert data changes (e.g. after a refetch).
   useEffect(() => {
-    setSecondsRemaining(computeRemaining());
-  }, [computeRemaining]);
+    setSecondsElapsed(computeElapsed());
+  }, [computeElapsed]);
 
+  // Increment every second while the alert is still pending.
   useEffect(() => {
-    if (!isPendingConfirmation || secondsRemaining <= 0) return;
+    if (!isPendingConfirmation) return;
     const interval = setInterval(() => {
-      setSecondsRemaining((prev) => (prev <= 1 ? 0 : prev - 1));
+      setSecondsElapsed(computeElapsed());
     }, 1000);
     return () => clearInterval(interval);
-  }, [isPendingConfirmation, secondsRemaining]);
+  }, [isPendingConfirmation, computeElapsed]);
 
   const isActive = alert.status === 'ACTIVE';
   const isConfirmed = alert.status === 'CONFIRMED';
@@ -229,19 +233,23 @@ const AlertDetail: React.FC<AlertDetailProps> = ({
     onResolve(alert.id, resolveNotes.trim() || undefined);
   };
 
-  // Timer display
-  const timerMinutes = Math.floor(secondsRemaining / 60);
-  const timerSeconds = secondsRemaining % 60;
+  // Timer display — elapsed time counting up from 0:00
+  const timerMinutes = Math.floor(secondsElapsed / 60);
+  const timerSeconds = secondsElapsed % 60;
   const formattedTime = `${timerMinutes}:${String(timerSeconds).padStart(2, '0')}`;
-  const timerPct = confirmationWindowSec > 0 ? (secondsRemaining / confirmationWindowSec) * 100 : 0;
-  const timerColor =
-    secondsRemaining > 60
-      ? 'text-green-400'
-      : secondsRemaining > 30
-        ? 'text-amber-400'
-        : 'text-red-400';
-  const barColor =
-    secondsRemaining > 60 ? 'bg-green-400' : secondsRemaining > 30 ? 'bg-amber-400' : 'bg-red-400';
+  const timerPct =
+    confirmationWindowSec > 0 ? Math.min(100, (secondsElapsed / confirmationWindowSec) * 100) : 0;
+  const isOverdue = secondsElapsed >= confirmationWindowSec && confirmationWindowSec > 0;
+  const timerColor = isOverdue
+    ? 'text-red-400'
+    : secondsElapsed > confirmationWindowSec * 0.75
+      ? 'text-amber-400'
+      : 'text-green-400';
+  const barColor = isOverdue
+    ? 'bg-red-400'
+    : secondsElapsed > confirmationWindowSec * 0.75
+      ? 'bg-amber-400'
+      : 'bg-green-400';
 
   // Sort audit trail descending (latest first)
   const sortedAudit = auditTrail
@@ -280,14 +288,20 @@ const AlertDetail: React.FC<AlertDetailProps> = ({
       {/* Scrollable Content */}
       <div className="flex-1 overflow-y-auto min-h-0">
         <div className="px-5 py-4 space-y-4">
-          {/* Auto-escalation countdown (PENDING_CONFIRMATION only) */}
-          {isPendingConfirmation && secondsRemaining > 0 && (
+          {/* Elapsed timer (PENDING_CONFIRMATION only) */}
+          {isPendingConfirmation && (
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <div className="flex items-center gap-2 text-slate-400">
                   <Clock size={13} />
                   <span className="text-[11px] font-semibold uppercase tracking-wide">
-                    {t('alerts:detail.autoEscalatesIn')}
+                    {isOverdue
+                      ? t('alerts:detail.autoEscalationOverdue', {
+                          defaultValue: 'Auto-escalation overdue',
+                        })
+                      : t('alerts:detail.elapsedSinceAlert', {
+                          defaultValue: 'Elapsed since alert',
+                        })}
                   </span>
                 </div>
                 <span className={`text-xl font-black tabular-nums ${timerColor}`}>
@@ -300,9 +314,11 @@ const AlertDetail: React.FC<AlertDetailProps> = ({
                   style={{ width: `${timerPct}%` }}
                 />
               </div>
-              <p className="mt-1 text-[11px] text-slate-500">
-                {t('alerts:detail.noActionWarning')}
-              </p>
+              {!isOverdue && (
+                <p className="mt-1 text-[11px] text-slate-500">
+                  {t('alerts:detail.noActionWarning')}
+                </p>
+              )}
             </div>
           )}
 
@@ -353,7 +369,7 @@ const AlertDetail: React.FC<AlertDetailProps> = ({
               <MapPin size={14} className="text-primary-500" />
               <div>
                 <p className="text-[10px] text-slate-500">{t('alerts:detail.routeLabel')}</p>
-                <p className="text-xs font-semibold text-white">{alert.routeId}</p>
+                <p className="text-xs font-semibold text-white">{routeName || 'Unknown Route'}</p>
               </div>
             </div>
             <div className="col-span-2 flex items-center gap-2 p-3 bg-dashboard-bg rounded-xl">

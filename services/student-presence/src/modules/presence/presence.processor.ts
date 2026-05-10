@@ -76,28 +76,12 @@ export class PresenceProcessor extends WorkerHost {
   }
 
   /**
-   * Look up the parent user ID for a given student.
-   * Tries students_reference first (demo data), falls back to students table.
+   * Look up the parent user ID for a given student from the students table.
    */
   private async findParentForStudent(
     studentId: string,
     schoolId: string,
   ): Promise<ParentRow | null> {
-    try {
-      const rows: ParentRow[] = await this.dataSource.query(
-        `SELECT "parentId" AS "parentId", "schoolId" AS "schoolId"
-                 FROM students_reference
-                 WHERE id = $1 AND "schoolId" = $2 AND "parentId" IS NOT NULL
-                 LIMIT 1`,
-        [studentId, schoolId],
-      );
-      if (rows && rows.length > 0) {
-        return rows[0];
-      }
-    } catch {
-      // students_reference may not exist; fall through
-    }
-
     try {
       const rows: ParentRow[] = await this.dataSource.query(
         `SELECT parent_user_id AS "parentId", school_id AS "schoolId"

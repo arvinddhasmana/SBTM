@@ -108,7 +108,7 @@ describe('FleetAssignments Page', () => {
 
     expect(screen.getByText('New Assignment Proposal')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Enter school ID')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Enter route ID')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Enter route name')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Enter vehicle ID')).toBeInTheDocument();
   });
 

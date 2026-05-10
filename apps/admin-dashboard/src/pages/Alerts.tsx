@@ -300,9 +300,7 @@ const Alerts: React.FC = () => {
             compact={false}
             routeNames={routeNames}
             emptyMessage={
-              filter === 'all'
-                ? t('alerts:empty')
-                : t('alerts:emptyFiltered', { filter })
+              filter === 'all' ? t('alerts:empty') : t('alerts:emptyFiltered', { filter })
             }
             expandedTimelineAlertId={expandedTimelineAlertId}
             expandedTimelineAudit={expandedTimelineAudit}
@@ -319,6 +317,7 @@ const Alerts: React.FC = () => {
           onFalseAlarm={handleFalseAlarm}
           onRequestInfo={handleRequestInfo}
           onClose={() => setConfirmationAlert(null)}
+          routeName={routeNames[confirmationAlert.routeId]}
         />
       )}
 
@@ -336,6 +335,7 @@ const Alerts: React.FC = () => {
           auditTrail={selectedAlertAudit}
           isResolving={isResolving}
           isActing={isActing}
+          routeName={routeNames[selectedAlert.routeId]}
         />
       )}
     </>

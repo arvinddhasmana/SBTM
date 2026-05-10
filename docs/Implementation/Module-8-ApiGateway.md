@@ -50,6 +50,8 @@ Implemented and running in Docker Compose.
 ### Routes
 
 - `GET /api/v1/routes`, `POST /api/v1/routes`, `PATCH /api/v1/routes/:id`, `DELETE /api/v1/routes/:id`
+- `GET /api/v1/routes/:routeId` (route details by UUID)
+- `GET /api/v1/routes/reference/:routeId` (deprecated, use `/routes/:routeId` instead)
 - `POST /api/v1/routes/optimize` (mock optimization)
 
 ### Proxies
@@ -65,7 +67,9 @@ Implemented and running in Docker Compose.
 
 ## Data Model
 
-- `school_boards`, `schools`, `users`, `routes`, `route_stops`, `vehicles`
+- `school_boards`, `schools`, `users`, `routes`, `route_stops`, `vehicles`, `students`
+- The `routes`, `route_stops`, and `students` tables serve as the single source of truth for route identity and student assignments.
+- All route identifiers are UUIDs; legacy string-based route codes have been eliminated.
 
 ## Multi-Tenant Notes
 

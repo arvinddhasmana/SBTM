@@ -13,6 +13,7 @@ interface LiveMapProps {
   onMarkerClick?: (location: LiveLocation) => void;
   onReset?: () => void;
   className?: string;
+  routeNames?: Record<string, string>;
 }
 
 const LiveMap: React.FC<LiveMapProps> = ({
@@ -22,6 +23,7 @@ const LiveMap: React.FC<LiveMapProps> = ({
   onMarkerClick,
   onReset,
   className = '',
+  routeNames = {},
 }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
@@ -179,7 +181,7 @@ const LiveMap: React.FC<LiveMapProps> = ({
             <div style="min-width: 140px; font-family: sans-serif;">
               <strong style="color:#1e293b; display:block; border-bottom:1px solid #e2e8f0; padding-bottom:4px; margin-bottom:4px;">Stop ${seq}: ${stop.address}</strong>
               <div style="font-size:11px; display:flex; flex-direction:column; gap:2px;">
-                <span style="color:#64748b">Route ID: <span style="color:#1e293b; font-weight:600">${selectedRoute.id}</span></span>
+                <span style="color:#64748b">Route Name: <span style="color:#1e293b; font-weight:600">${selectedRoute.name || selectedRoute.id}</span></span>
                 <span style="color:#64748b">Vehicle ID: <span style="color:#1e293b; font-weight:600">${selectedRoute.vehicleId || 'N/A'}</span></span>
               </div>
             </div>
@@ -308,7 +310,7 @@ const LiveMap: React.FC<LiveMapProps> = ({
         marker.bindPopup(`
         <div style="min-width: 150px;">
           <strong>Vehicle: ${location.vehicleId}</strong><br/>
-          <span>Route: ${location.routeId}</span><br/>
+          <span>Route: ${routeNames[location.routeId] || 'Unknown Route'}</span><br/>
           <span>ETA: ${location.etaToNextStopMinutes} min</span>
         </div>
       `);
@@ -341,7 +343,7 @@ const LiveMap: React.FC<LiveMapProps> = ({
     }
 
     lastSelectedRouteIdRef.current = selectedRoute?.id;
-  }, [locations, selectedRoute, plannedRoute, onMarkerClick]);
+  }, [locations, selectedRoute, plannedRoute, onMarkerClick, routeNames]);
 
   return (
     <div

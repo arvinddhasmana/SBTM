@@ -145,8 +145,8 @@ export default function RouteSelectScreen({ navigation }: any) {
           <MaterialCommunityIcons name="account" size={32} color="#fff" />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={styles.header}>{t('routes.welcome', { name: driver?.name })}</Text>
-          <Text style={styles.subHeader}>{t('routes.selectYourRoute')}</Text>
+          <Text style={styles.header}>{driver?.name}</Text>
+          <Text style={styles.subHeader}>Driver</Text>
         </View>
         <LanguageSwitcher />
       </View>

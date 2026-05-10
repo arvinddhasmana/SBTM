@@ -40,6 +40,7 @@ Implemented with live gateway integration.
 ## Integration Notes
 
 - Uses `VITE_API_URL` and calls `/api/v1/auth/login`, `/api/v1/parent/children`, and `/api/v1/routes/:routeId/live-location`.
+- Route details are fetched from `/api/v1/routes/:routeId` (previously `/api/v1/routes/reference/:routeId`). The legacy endpoint is maintained for backward compatibility but will be removed in a future release.
 
 ## Gaps / Next Steps
 

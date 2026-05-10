@@ -62,6 +62,7 @@ export interface Alert {
   confirmedAt?: string;
   escalationLevel?: string;
   createdAt?: string;
+  routeName?: string;
 }
 
 // Live Location Types
@@ -89,6 +90,7 @@ export interface StudentPresence {
   status: PresenceStatus;
   lastSeen: string;
   routeId?: string;
+  routeName?: string;
   vehicleId?: string;
 }
 

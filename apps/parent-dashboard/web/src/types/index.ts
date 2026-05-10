@@ -5,6 +5,8 @@ export interface Child {
   routeId: string;
   amRouteId?: string;
   pmRouteId?: string;
+  amRouteName?: string;
+  pmRouteName?: string;
   amStopId?: string;
   pmStopId?: string;
   vehicleId: string;

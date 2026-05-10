@@ -16,6 +16,7 @@ import { Alert, AlertAuditEntry } from '../types';
 import { AuroraBackground, IconButton, LoadingSpinner } from '../components';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { auditEventLabel, auditEventColor } from '../utils/alerts';
+import { useParentStore } from '../store/useParentStore';
 
 type Severity = 'crit' | 'warn' | 'info' | 'ok';
 
@@ -62,6 +63,7 @@ function timeAgo(ts: string): string {
 export default function NotificationsScreen() {
   const { t } = useTranslation();
   const navigation = useNavigation();
+  const { children } = useParentStore();
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -69,6 +71,15 @@ export default function NotificationsScreen() {
   const [auditTrails, setAuditTrails] = useState<Record<string, AlertAuditEntry[]>>({});
   const [loadingTrailFor, setLoadingTrailFor] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'active' | 'today' | 'week'>('all');
+
+  const routeNames = useMemo<Record<string, string>>(() => {
+    const map: Record<string, string> = {};
+    for (const c of children) {
+      if (c.amRouteId && c.amRouteName) map[c.amRouteId] = c.amRouteName;
+      if (c.pmRouteId && c.pmRouteName) map[c.pmRouteId] = c.pmRouteName;
+    }
+    return map;
+  }, [children]);
 
   const toggleTimeline = useCallback(
     async (alertId: string) => {
@@ -176,9 +187,7 @@ export default function NotificationsScreen() {
           <Text style={styles.notifDesc}>{item.description}</Text>
           <View style={styles.notifMeta}>
             <View style={styles.metaChip}>
-              <Text style={styles.metaChipText}>
-                {t('notifications.routeLabel', { id: item.routeId })}
-              </Text>
+              <Text style={styles.metaChipText}>{routeNames[item.routeId] || 'Unknown Route'}</Text>
             </View>
             <View style={styles.metaChip}>
               <Text style={styles.metaChipText}>

@@ -162,7 +162,7 @@ export default function AlertMessagesScreen() {
               hour: '2-digit',
               minute: '2-digit',
             })}
-            {entry.actorRole ? ` · ${entry.actorRole}` : ''}
+            {entry.actorRole ? ` · ${entry.actorRole.replace(/_/g, ' ')}` : ''}
           </Text>
         </View>
       </View>
