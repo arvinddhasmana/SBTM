@@ -342,7 +342,7 @@ export const WorkflowConfigPage: React.FC = () => {
                           {config.allowedForStatus}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                          {config.requiredRole}
+                          {config.requiredRole?.replace(/_/g, ' ')}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                           {config.statusTransition || '-'}

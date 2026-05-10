@@ -268,7 +268,9 @@ export default function MapScreen() {
 
   const matchingAlerts = activeAlerts.filter(
     (a) =>
-      a.routeId === activeRouteId || a.routeId === child.amRouteId || a.routeId === child.pmRouteId,
+      a.routeId === activeRouteId ||
+      'Unknown Route' === child.amRouteId ||
+      'Unknown Route' === child.pmRouteId,
   );
   const hasEmergency = matchingAlerts.some((a) => EMERGENCY_EVENT_TYPES.has(a.eventType));
   const hasDelay = matchingAlerts.some((a) => DELAY_EVENT_TYPES.has(a.eventType));

@@ -187,7 +187,7 @@ export default function NotificationsScreen() {
           <Text style={styles.notifDesc}>{item.description}</Text>
           <View style={styles.notifMeta}>
             <View style={styles.metaChip}>
-              <Text style={styles.metaChipText}>{routeNames[item.routeId] || item.routeId}</Text>
+              <Text style={styles.metaChipText}>{routeNames[item.routeId] || 'Unknown Route'}</Text>
             </View>
             <View style={styles.metaChip}>
               <Text style={styles.metaChipText}>

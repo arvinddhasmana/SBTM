@@ -8,6 +8,7 @@ export interface AlertDto {
   routeId: string;
   vehicleId: string;
   timestamp: string;
+  createdAt?: string;
   eventType: string;
   description?: string;
   status:

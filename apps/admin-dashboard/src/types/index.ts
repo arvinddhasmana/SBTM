@@ -62,6 +62,7 @@ export interface Alert {
   confirmedAt?: string;
   escalationLevel?: string;
   createdAt?: string;
+  routeName?: string;
 }
 
 // Live Location Types

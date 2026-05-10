@@ -20,6 +20,8 @@ interface StudentRecord {
   school_id: string;
   am_route_id?: string;
   pm_route_id?: string;
+  am_stop_id?: string;
+  pm_stop_id?: string;
 }
 
 interface ParentChildDto {
@@ -124,6 +126,8 @@ export class ParentGatewayService {
         pmRouteId,
         amRouteName: amRoute?.name,
         pmRouteName: pmRoute?.name,
+        amStopId: student.am_stop_id || undefined,
+        pmStopId: student.pm_stop_id || undefined,
         vehicleId: route?.vehicleId,
         status: statusMap.get(student.id) || ('unknown' as const),
         avatarUrl: this.getKidAvatarUrl(student.id),

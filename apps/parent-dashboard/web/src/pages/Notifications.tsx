@@ -149,7 +149,7 @@ const Notifications: React.FC = () => {
     if (c.amRouteId && c.amRouteName) routeNames[c.amRouteId] = c.amRouteName;
     if (c.pmRouteId && c.pmRouteName) routeNames[c.pmRouteId] = c.pmRouteName;
     if (c.routeId && (c.amRouteName || c.pmRouteName))
-      routeNames[c.routeId] = c.amRouteName || c.pmRouteName || c.routeId;
+      routeNames[c.routeId] = c.amRouteName || c.pmRouteName || 'Unknown Route';
   }
 
   const error = queryError ? t('notifications.unableToLoad') : null;
@@ -258,7 +258,7 @@ const Notifications: React.FC = () => {
                         <span>
                           {t('notifications.route')}:{' '}
                           <span className="text-slate-300 font-medium">
-                            {routeNames[alert.routeId] || alert.routeId}
+                            {routeNames[alert.routeId] || 'Unknown Route'}
                           </span>
                         </span>
                         <span>

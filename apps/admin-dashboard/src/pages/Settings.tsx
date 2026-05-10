@@ -27,7 +27,7 @@ const Settings: React.FC = () => {
               </h3>
               <p className="text-slate-400">{user?.email || t('settings:profile.defaultEmail')}</p>
               <span className="inline-block mt-2 px-3 py-1 bg-primary-500/20 text-primary-400 rounded-full text-sm font-medium">
-                {user?.role || t('settings:profile.role')}
+                {user?.role?.replace(/_/g, ' ') || t('settings:profile.role')}
               </span>
             </div>
           </div>

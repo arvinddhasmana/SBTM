@@ -299,7 +299,7 @@ const MapPage: React.FC = () => {
   // Determine student's assigned stop for the active route
   const childStopId = useMemo(() => {
     if (!child) return undefined;
-    return activeRouteId.includes('AM') ? child.amStopId : child.pmStopId;
+    return activeRouteId === child.amRouteId ? child.amStopId : child.pmStopId;
   }, [child, activeRouteId]);
 
   // Fetch alerts for the route to determine bus status color
@@ -610,7 +610,7 @@ const MapPage: React.FC = () => {
                 </p>
                 <p>
                   {t('tracking.map.route')}
-                  {routeDetails?.name || busLocation.routeId}
+                  {routeDetails?.name || 'Unknown Route'}
                 </p>
                 <p className="text-xs mt-1" style={{ color: BUS_STATUS_COLORS[busStatus] }}>
                   {t('tracking.status')}: {statusLabel}

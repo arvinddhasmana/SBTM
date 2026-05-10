@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Video, Clock, Truck } from 'lucide-react';
 import type { VideoEvent } from '../../types';
 import { formatRelativeTime, formatEventType } from '../../utils/formatters';
@@ -54,7 +55,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, routeName }) => {
               <Truck size={12} />
               {video.vehicleId}
             </span>
-            <span>{routeName || video.routeId}</span>
+            <span>{routeName || 'Unknown Route'}</span>
           </div>
           <div className="flex items-center gap-1 text-xs text-slate-500">
             <Clock size={12} />

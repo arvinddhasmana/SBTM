@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { PresenceEvent } from '../../services/api/presence.api';
+import type { PresenceEvent } from '../../services/api/presence.api';
 
 const dateFormatter = new Intl.DateTimeFormat('en-US', {
   month: 'short',
@@ -101,7 +101,7 @@ export const PresenceTable: React.FC<PresenceTableProps> = ({
                   <td className="px-6 py-4">{getStatusBadge(event.eventType)}</td>
                   <td className="px-6 py-4">
                     <p className="text-sm text-slate-300">
-                      {routeNames[event.routeId] || event.routeId}
+                      {routeNames[event.routeId] || 'Unknown Route'}
                     </p>
                     <p className="text-xs text-slate-500">{event.vehicleId}</p>
                   </td>

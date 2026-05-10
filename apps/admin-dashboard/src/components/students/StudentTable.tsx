@@ -71,13 +71,13 @@ const StudentTable: React.FC<StudentTableProps> = ({
                   {student.am_route_id && (
                     <div className="text-xs text-green-400 flex items-center gap-1">
                       <Bus size={10} /> {t('students:table.amLabel')}:{' '}
-                      {routeNames[student.am_route_id] || student.am_route_id.substring(0, 8)}
+                      {routeNames[student.am_route_id] || 'Unknown Route'}
                     </div>
                   )}
                   {student.pm_route_id && (
                     <div className="text-xs text-blue-400 flex items-center gap-1">
                       <Bus size={10} /> {t('students:table.pmLabel')}:{' '}
-                      {routeNames[student.pm_route_id] || student.pm_route_id.substring(0, 8)}
+                      {routeNames[student.pm_route_id] || 'Unknown Route'}
                     </div>
                   )}
                   {!student.am_route_id && !student.pm_route_id && (

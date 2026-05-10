@@ -203,7 +203,7 @@ const AlertConfirmationModal: React.FC<AlertConfirmationModalProps> = ({
           <div className="grid grid-cols-2 gap-3">
             <div className="p-3 bg-dashboard-bg rounded-xl">
               <p className="text-xs text-slate-500 mb-0.5">{t('alerts:confirmationModal.route')}</p>
-              <p className="text-sm font-semibold text-white">{routeName || alert.routeId}</p>
+              <p className="text-sm font-semibold text-white">{routeName || 'Unknown Route'}</p>
             </div>
             <div className="p-3 bg-dashboard-bg rounded-xl">
               <p className="text-xs text-slate-500 mb-0.5">

@@ -310,7 +310,7 @@ const LiveMap: React.FC<LiveMapProps> = ({
         marker.bindPopup(`
         <div style="min-width: 150px;">
           <strong>Vehicle: ${location.vehicleId}</strong><br/>
-          <span>Route: ${routeNames[location.routeId] || location.routeId}</span><br/>
+          <span>Route: ${routeNames[location.routeId] || 'Unknown Route'}</span><br/>
           <span>ETA: ${location.etaToNextStopMinutes} min</span>
         </div>
       `);

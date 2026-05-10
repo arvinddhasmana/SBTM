@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Settings, Bell, Clock, GitBranch, FileText, TrendingUp, Shield } from 'lucide-react';
+import Header from '../components/common/Header';
 import { alertConfigApi } from '../services/api/alert-config.api';
 import { useAuth } from '../context/AuthContext';
 
@@ -106,14 +107,12 @@ export const AlertConfigDashboard: React.FC = () => {
   ];
 
   return (
-    <div className="p-6">
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-3">
-            <Shield className="h-8 w-8 text-blue-400" />
-            <h1 className="text-3xl font-bold text-white">{t('alertConfig:title')}</h1>
-          </div>
-          {isSuperAdmin && cacheStatus && (
+    <>
+      <Header
+        title={t('alertConfig:title')}
+        action={
+          isSuperAdmin &&
+          cacheStatus && (
             <div className="bg-gray-800 px-4 py-2 rounded-lg border border-gray-700">
               <div className="text-sm text-gray-400">{t('alertConfig:cacheStatus')}</div>
               <div className="text-white font-medium">
@@ -128,86 +127,90 @@ export const AlertConfigDashboard: React.FC = () => {
                 })}
               </div>
             </div>
-          )}
+          )
+        }
+      />
+      <div className="p-6">
+        <div className="mb-8">
+          <p className="text-gray-400">
+            {isSuperAdmin ? t('alertConfig:subtitle.admin') : t('alertConfig:subtitle.readOnly')}
+          </p>
         </div>
-        <p className="text-gray-400">
-          {isSuperAdmin ? t('alertConfig:subtitle.admin') : t('alertConfig:subtitle.readOnly')}
-        </p>
-      </div>
 
-      {!isSuperAdmin && (
-        <div className="mb-6 bg-yellow-900/20 border border-yellow-600/30 rounded-lg p-4">
-          <div className="flex items-start gap-3">
-            <Shield className="h-5 w-5 text-yellow-400 mt-0.5" />
-            <div>
-              <h3 className="text-yellow-400 font-semibold">{t('alertConfig:readOnlyAccess')}</h3>
-              <p className="text-gray-400 text-sm mt-1">{t('alertConfig:readOnlyDescription')}</p>
+        {!isSuperAdmin && (
+          <div className="mb-6 bg-yellow-900/20 border border-yellow-600/30 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <Shield className="h-5 w-5 text-yellow-400 mt-0.5" />
+              <div>
+                <h3 className="text-yellow-400 font-semibold">{t('alertConfig:readOnlyAccess')}</h3>
+                <p className="text-gray-400 text-sm mt-1">{t('alertConfig:readOnlyDescription')}</p>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {configSections
-          .filter((section) => section.enabled)
-          .map((section) => (
-            <Link
-              key={section.path}
-              to={section.path}
-              className="bg-gray-800 rounded-lg p-6 border border-gray-700 hover:border-gray-600 transition-colors group"
-            >
-              <div className="flex items-start justify-between mb-4">
-                <div
-                  className={`${section.color} p-3 rounded-lg group-hover:scale-110 transition-transform`}
-                >
-                  <section.icon className="h-6 w-6 text-white" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {configSections
+            .filter((section) => section.enabled)
+            .map((section) => (
+              <Link
+                key={section.path}
+                to={section.path}
+                className="bg-gray-800 rounded-lg p-6 border border-gray-700 hover:border-gray-600 transition-colors group"
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <div
+                    className={`${section.color} p-3 rounded-lg group-hover:scale-110 transition-transform`}
+                  >
+                    <section.icon className="h-6 w-6 text-white" />
+                  </div>
+                  {section.count !== null && (
+                    <div className="bg-gray-700 px-3 py-1 rounded-full">
+                      <span className="text-white font-semibold">{section.count}</span>
+                    </div>
+                  )}
+                  {section.badge && (
+                    <div className="bg-yellow-500 px-3 py-1 rounded-full">
+                      <span className="text-gray-900 font-semibold text-sm">{section.badge}</span>
+                    </div>
+                  )}
                 </div>
-                {section.count !== null && (
-                  <div className="bg-gray-700 px-3 py-1 rounded-full">
-                    <span className="text-white font-semibold">{section.count}</span>
-                  </div>
-                )}
-                {section.badge && (
-                  <div className="bg-yellow-500 px-3 py-1 rounded-full">
-                    <span className="text-gray-900 font-semibold text-sm">{section.badge}</span>
-                  </div>
-                )}
-              </div>
-              <h3 className="text-xl font-semibold text-white mb-2 group-hover:text-blue-400 transition-colors">
-                {section.title}
-              </h3>
-              <p className="text-gray-400 text-sm">{section.description}</p>
-            </Link>
-          ))}
-      </div>
-
-      {isSuperAdmin && (
-        <div className="mt-8 bg-gray-800 rounded-lg p-6 border border-gray-700">
-          <h2 className="text-xl font-semibold text-white mb-4">
-            {t('alertConfig:quickActions.title')}
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <button
-              onClick={async () => {
-                if (confirm(t('alertConfig:quickActions.invalidateCacheConfirm'))) {
-                  await alertConfigApi.invalidateCache();
-                  window.location.reload();
-                }
-              }}
-              className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg transition-colors"
-            >
-              {t('alertConfig:quickActions.invalidateCache')}
-            </button>
-            <Link
-              to="/alert-config/audit"
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-colors text-center"
-            >
-              {t('alertConfig:quickActions.viewAuditLog')}
-            </Link>
-          </div>
+                <h3 className="text-xl font-semibold text-white mb-2 group-hover:text-blue-400 transition-colors">
+                  {section.title}
+                </h3>
+                <p className="text-gray-400 text-sm">{section.description}</p>
+              </Link>
+            ))}
         </div>
-      )}
-    </div>
+
+        {isSuperAdmin && (
+          <div className="mt-8 bg-gray-800 rounded-lg p-6 border border-gray-700">
+            <h2 className="text-xl font-semibold text-white mb-4">
+              {t('alertConfig:quickActions.title')}
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <button
+                onClick={async () => {
+                  if (confirm(t('alertConfig:quickActions.invalidateCacheConfirm'))) {
+                    await alertConfigApi.invalidateCache();
+                    window.location.reload();
+                  }
+                }}
+                className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg transition-colors"
+              >
+                {t('alertConfig:quickActions.invalidateCache')}
+              </button>
+              <Link
+                to="/alert-config/audit"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-colors text-center"
+              >
+                {t('alertConfig:quickActions.viewAuditLog')}
+              </Link>
+            </div>
+          </div>
+        )}
+      </div>
+    </>
   );
 };
 

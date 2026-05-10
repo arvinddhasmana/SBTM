@@ -31,7 +31,7 @@ const PresenceCard: React.FC<PresenceCardProps> = ({ student, onClick }) => {
           <div className="flex items-center gap-1.5 ml-2">
             <div className="flex items-center gap-0.5 px-1 bg-blue-500/10 rounded text-[7px] font-black text-blue-400 uppercase">
               <RouteIcon size={8} />
-              <span>{student.routeName || student.routeId?.split('-').pop()}</span>
+              <span>{student.routeName || 'Unknown Route'?.split('-').pop()}</span>
             </div>
           </div>
         </div>

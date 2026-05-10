@@ -143,7 +143,7 @@ export const ConfigAuditLogPage: React.FC = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                           <span className="px-2 py-1 bg-gray-700 rounded text-xs">
-                            {log.changedByRole}
+                            {log.changedByRole?.replace(/_/g, ' ')}
                           </span>
                         </td>
                       </tr>
