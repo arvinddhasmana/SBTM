@@ -29,6 +29,7 @@ graph TD
         TS[05_testing/<br/>Strategy, Security, Performance]
         CI[06_integration_cicd/<br/>Pipeline, Branching, Artifacts]
         DO[07_deployment_operations/<br/>Deploy, Monitoring, Incidents]
+        UI[ui_design/<br/>Web & Mobile UI/UX Guidelines]
     end
 
     subgraph "Tier 4 — Technology-Specific"
@@ -48,11 +49,13 @@ graph TD
     SC --> DO
     RE --> AD
     AD --> CS
+    AD --> UI
     CS --> TS
     TS --> CI
     CI --> DO
     AD --> TECH
     CS --> TECH
+    UI --> TECH
     TECH --> GOV
     DO --> GOV
 
@@ -64,6 +67,7 @@ graph TD
     style TS fill:#1976d2,color:#fff
     style CI fill:#1976d2,color:#fff
     style DO fill:#1976d2,color:#fff
+    style UI fill:#1976d2,color:#fff
     style TECH fill:#388e3c,color:#fff
     style GOV fill:#7b1fa2,color:#fff
 ```
@@ -86,6 +90,7 @@ graph TD
 | **React Native** | + `08_tech_specific/react_native_expo.md` |
 | **Socket.IO/SSE** | + `08_tech_specific/socketio_sse.md` |
 | **Docker** | + `development/docker_development.md` → `08_tech_specific/docker_guidelines.md` |
+| **UI Design** | + `ui_design/ui_design_guidelines.md` |
 | **Review/Governance** | + `09_governance/agent_governance.md` → `review_checklists.md` |
 
 ## Directory Structure
@@ -133,6 +138,8 @@ docs/sdlc_guidelines/
 │   ├── agent_governance.md                  ← AI coding agent guardrails
 │   ├── review_checklists.md                 ← PR review, security, privacy checklists
 │   └── documentation_standards.md           ← Documentation conventions
+├── ui_design/
+│   └── ui_design_guidelines.md              ← UI/UX standards for web and mobile apps
 └── development/
     └── docker_development.md                ← Local development with Docker Compose
 ```
