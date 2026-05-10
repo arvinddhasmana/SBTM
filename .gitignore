@@ -49,4 +49,6 @@ docs/UiDesign/parent-mobile-mockups/previews/
 .env.production
 .env.demo
 .env.*
+# Exception: .env.infra contains safe development defaults
+!.env.infra
 pnpm-lock.yaml

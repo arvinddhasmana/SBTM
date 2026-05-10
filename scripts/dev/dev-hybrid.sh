@@ -125,6 +125,23 @@ echo -e "${CYAN}║        SBTM • Hybrid Development Mode            ║${NC}"
 echo -e "${CYAN}╚═══════════════════════════════════════════════════╝${NC}"
 echo ""
 
+# ─── Step 0: Load Environment Variables ───────────────────────────────────────
+# Load default development environment variables if .env doesn't exist
+if [[ ! -f "$PROJECT_ROOT/.env" ]]; then
+    if [[ -f "$PROJECT_ROOT/.env.infra" ]]; then
+        echo -e "${DIM}Using .env.infra for default development environment variables${NC}"
+        set -a  # automatically export all variables
+        # Source the file, filtering out comments and empty lines
+        while IFS= read -r line || [[ -n "$line" ]]; do
+            # Skip comments and empty lines
+            [[ "$line" =~ ^[[:space:]]*# ]] || [[ -z "$line" ]] && continue
+            # Export the variable
+            eval "export $line"
+        done < "$PROJECT_ROOT/.env.infra"
+        set +a
+    fi
+fi
+
 # ─── Step 1: Start Docker Infrastructure ──────────────────────────────────────
 echo -e "${CYAN}[1/3] Starting Docker infrastructure...${NC}"
 (cd "$PROJECT_ROOT" && docker compose -f docker-compose.yml -f docker-compose.infra.yml up -d 2>&1) || {

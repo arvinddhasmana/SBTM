@@ -3,6 +3,9 @@
 #
 # This starts ONLY the infrastructure containers (Postgres, Redis, OSRM)
 # for Hybrid Development mode where app services run on the host.
+#
+# Note: Requires environment variables (DB_PASSWORD, JWT_SECRET, INTERNAL_SERVICE_SECRET).
+# The dev-hybrid.sh script automatically loads .env.infra if .env doesn't exist.
 
 services:
   # Infrastructure services — these start normally
