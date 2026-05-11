@@ -121,7 +121,26 @@ export default function ActiveRouteScreen({ navigation }: any) {
 
   // Decode route polyline
   const routePath: LatLng[] = useMemo(() => {
-    if (!activeRoute?.polyline) return [];
+    if (!activeRoute?.polyline) {
+      // Fallback for seeded/legacy routes with no polyline: build path from stops + school
+      if (stops && stops.length > 0) {
+        const stopPath: LatLng[] = stops
+          .slice()
+          .sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0))
+          .filter((s) => s.lat != null && s.lng != null)
+          .map((s) => ({ latitude: s.lat as number, longitude: s.lng as number }));
+        if (
+          stopPath.length > 0 &&
+          activeRoute?.schoolLat != null &&
+          activeRoute?.schoolLng != null
+        ) {
+          const schoolPos = { latitude: activeRoute.schoolLat, longitude: activeRoute.schoolLng };
+          return routeDirection === 'PM' ? [schoolPos, ...stopPath] : [...stopPath, schoolPos];
+        }
+        return stopPath;
+      }
+      return [];
+    }
     const coords = decodePolyline(activeRoute.polyline).map(([lat, lng]) => ({
       latitude: lat,
       longitude: lng,
@@ -137,11 +156,11 @@ export default function ActiveRouteScreen({ navigation }: any) {
       // Check if path already connects to school (within 50 meters)
       const distanceToSchoolFromEnd = Math.sqrt(
         Math.pow((lastPoint.latitude - schoolPos.latitude) * 111000, 2) +
-        Math.pow((lastPoint.longitude - schoolPos.longitude) * 111000, 2)
+          Math.pow((lastPoint.longitude - schoolPos.longitude) * 111000, 2),
       );
       const distanceToSchoolFromStart = Math.sqrt(
         Math.pow((firstPoint.latitude - schoolPos.latitude) * 111000, 2) +
-        Math.pow((firstPoint.longitude - schoolPos.longitude) * 111000, 2)
+          Math.pow((firstPoint.longitude - schoolPos.longitude) * 111000, 2),
       );
 
       // For AM routes: if path doesn't end at school, add the connection
@@ -155,7 +174,13 @@ export default function ActiveRouteScreen({ navigation }: any) {
     }
 
     return coords;
-  }, [activeRoute?.polyline, activeRoute?.schoolLat, activeRoute?.schoolLng, routeDirection]);
+  }, [
+    activeRoute?.polyline,
+    activeRoute?.schoolLat,
+    activeRoute?.schoolLng,
+    routeDirection,
+    stops,
+  ]);
 
   // Split the route polyline into visited and unvisited parts based on nearest point to bus
   const { visitedRoutePath, unvisitedRoutePath } = useMemo(() => {

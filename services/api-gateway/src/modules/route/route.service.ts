@@ -98,7 +98,14 @@ export class RouteService {
               `INSERT INTO route_stops (
                               "routeId", sequence, address, location, lat, lng
                           ) VALUES ($1, $2, $3, ST_GeomFromText($4, 4326), $5, $6)`,
-              [savedRoute.id, stop.sequence, stop.address, stop.location, lat, lng],
+              [
+                savedRoute.id,
+                stop.sequence,
+                stop.address,
+                stop.location,
+                lat,
+                lng,
+              ],
             );
           }
         }
@@ -176,127 +183,121 @@ export class RouteService {
       try {
         await queryRunner.manager.save(route);
 
-        // Before deleting stops, collect IDs of stops that will be removed
-        const existingStops = await queryRunner.query(
-          `SELECT id FROM route_stops WHERE "routeId" = $1`,
+        type StopMeta = {
+          id: string;
+          address: string;
+          sequence: number;
+          lat: number | null;
+          lng: number | null;
+        };
+
+        const oldStops = (await queryRunner.query(
+          `SELECT id, address, sequence, lat, lng FROM route_stops WHERE "routeId" = $1`,
           [id],
+        )) as StopMeta[];
+        const oldStopById = new Map(oldStops.map((s) => [s.id, s]));
+
+        const isValidUuid = (sid: string | undefined): sid is string =>
+          !!sid &&
+          !sid.startsWith('draft-') &&
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+            sid,
+          );
+
+        // Partition incoming stops: those that update an existing row vs. new ones
+        const toUpdate = stops.filter(
+          (s) => isValidUuid(s.id) && oldStopById.has(s.id!),
         );
-        const existingStopIds = new Set(existingStops.map((s: any) => s.id));
-        const newStopIds = new Set(
-          stops
-            .filter(
-              (s) =>
-                s.id &&
-                !s.id.startsWith('draft-') &&
-                /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-                  s.id,
-                ),
-            )
-            .map((s) => s.id),
+        const toInsert = stops.filter(
+          (s) => !isValidUuid(s.id) || !oldStopById.has(s.id!),
         );
+        const incomingIds = new Set(toUpdate.map((s) => s.id!));
+        // Stops in DB but not sent back by the client — admin deliberately removed them
+        const removedStopIds = oldStops
+          .map((s) => s.id)
+          .filter((sid) => !incomingIds.has(sid));
 
-        // Identify stops that will be deleted (exist in DB but not in new stops list)
-        const deletedStopIds = [...existingStopIds].filter(
-          (id) => !newStopIds.has(id),
-        );
-
-        // If stops are being deleted, reassign affected students to the first stop
-        if (deletedStopIds.length > 0 && stops.length > 0) {
-          // Get the first stop ID (will be either existing or newly created)
-          const firstStopId =
-            stops[0].id &&
-            !stops[0].id.startsWith('draft-') &&
-            /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-              stops[0].id,
-            )
-              ? stops[0].id
-              : null;
-
-          if (firstStopId) {
-            // Update students whose stops are being deleted
-            for (const deletedStopId of deletedStopIds) {
-              // Update AM stop assignments
-              await queryRunner.query(
-                `UPDATE students
-                 SET am_stop_id = $1
-                 WHERE am_route_id = $2 AND am_stop_id = $3`,
-                [firstStopId, id, deletedStopId],
-              );
-
-              // Update PM stop assignments
-              await queryRunner.query(
-                `UPDATE students
-                 SET pm_stop_id = $1
-                 WHERE pm_route_id = $2 AND pm_stop_id = $3`,
-                [firstStopId, id, deletedStopId],
-              );
-            }
-          } else {
-            // No valid first stop - set orphaned students to NULL
-            for (const deletedStopId of deletedStopIds) {
-              await queryRunner.query(
-                `UPDATE students
-                 SET am_stop_id = NULL
-                 WHERE am_route_id = $1 AND am_stop_id = $2`,
-                [id, deletedStopId],
-              );
-
-              await queryRunner.query(
-                `UPDATE students
-                 SET pm_stop_id = NULL
-                 WHERE pm_route_id = $1 AND pm_stop_id = $2`,
-                [id, deletedStopId],
-              );
-            }
-          }
+        // UPDATE existing stops in-place — UUID never changes, so student FKs stay valid
+        for (const stop of toUpdate) {
+          const coords = parseWktToLatLng(stop.location);
+          await queryRunner.query(
+            `UPDATE route_stops
+             SET sequence = $1, address = $2, location = ST_GeomFromText($3, 4326), lat = $4, lng = $5
+             WHERE id = $6 AND "routeId" = $7`,
+            [
+              stop.sequence,
+              stop.address,
+              stop.location,
+              coords?.lat ?? null,
+              coords?.lng ?? null,
+              stop.id,
+              id,
+            ],
+          );
         }
 
-        // Now delete old stops
-        await queryRunner.query(
-          `DELETE FROM route_stops WHERE "routeId" = $1`,
-          [id],
-        );
-
-        // Insert new/updated stops
-        for (const stop of stops) {
+        // INSERT genuinely new stops (no existing UUID)
+        for (const stop of toInsert) {
           const coords = parseWktToLatLng(stop.location);
-          const lat = coords?.lat ?? null;
-          const lng = coords?.lng ?? null;
+          await queryRunner.query(
+            `INSERT INTO route_stops ("routeId", sequence, address, location, lat, lng)
+             VALUES ($1, $2, $3, ST_GeomFromText($4, 4326), $5, $6)`,
+            [
+              id,
+              stop.sequence,
+              stop.address,
+              stop.location,
+              coords?.lat ?? null,
+              coords?.lng ?? null,
+            ],
+          );
+        }
 
-          if (stop.id && !stop.id.startsWith('draft-')) {
-            const isValidUuid =
-              /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-                stop.id,
-              );
-            if (isValidUuid) {
-              await queryRunner.query(
-                `INSERT INTO route_stops (id, "routeId", sequence, address, location, lat, lng)
-                 VALUES ($1, $2, $3, $4, ST_GeomFromText($5, 4326), $6, $7)`,
-                [
-                  stop.id,
-                  id,
-                  stop.sequence,
-                  stop.address,
-                  stop.location,
-                  lat,
-                  lng,
-                ],
-              );
-            } else {
-              await queryRunner.query(
-                `INSERT INTO route_stops ("routeId", sequence, address, location, lat, lng)
-                 VALUES ($1, $2, $3, ST_GeomFromText($4, 4326), $5, $6)`,
-                [id, stop.sequence, stop.address, stop.location, lat, lng],
-              );
-            }
-          } else {
+        // DELETE stops the admin removed, then remap affected students to the
+        // closest remaining stop (by sequence proximity — most stable signal).
+        if (removedStopIds.length > 0) {
+          // Remaining stops = updated-in-place + newly inserted (exclude removed ones).
+          // We compute this BEFORE deleting so we know which stops to remap toward.
+          const remaining = (await queryRunner.query(
+            `SELECT id, sequence FROM route_stops
+             WHERE "routeId" = $1 AND id != ALL($2::uuid[])
+             ORDER BY sequence ASC`,
+            [id, removedStopIds],
+          )) as Array<{ id: string; sequence: number }>;
+          const fallbackStopId = remaining[0]?.id ?? null;
+
+          // Remap students BEFORE deleting — the DB has ON DELETE SET NULL on
+          // am_stop_id/pm_stop_id, so deleting first would null the FK and
+          // prevent matching on the old UUID.
+          for (const removedId of removedStopIds) {
+            const old = oldStopById.get(removedId);
+            if (!old || !fallbackStopId) continue;
+
+            // Pick the remaining stop whose sequence is closest to the removed one
+            const target = remaining.reduce((best, cur) =>
+              Math.abs(cur.sequence - old.sequence) <
+              Math.abs(best.sequence - old.sequence)
+                ? cur
+                : best,
+            );
+
             await queryRunner.query(
-              `INSERT INTO route_stops ("routeId", sequence, address, location, lat, lng)
-               VALUES ($1, $2, $3, ST_GeomFromText($4, 4326), $5, $6)`,
-              [id, stop.sequence, stop.address, stop.location, lat, lng],
+              `UPDATE students SET am_stop_id = $1 WHERE am_route_id = $2 AND am_stop_id = $3`,
+              [target.id, id, removedId],
+            );
+            await queryRunner.query(
+              `UPDATE students SET pm_stop_id = $1 WHERE pm_route_id = $2 AND pm_stop_id = $3`,
+              [target.id, id, removedId],
             );
           }
+
+          // Now safe to delete — students already point to new stop IDs
+          await queryRunner.query(
+            `DELETE FROM route_stops WHERE id = ANY($1::uuid[])`,
+            [removedStopIds],
+          );
         }
+
         await queryRunner.commitTransaction();
       } catch (err) {
         await queryRunner.rollbackTransaction();
@@ -356,5 +357,4 @@ export class RouteService {
     const route = await this.findOne(id, schoolId);
     await this.routeRepository.remove(route);
   }
-
 }

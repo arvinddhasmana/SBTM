@@ -91,7 +91,8 @@ export class DriverGatewayService {
     );
 
     return routes.map((r: any) => {
-      const direction = r.direction || (r.id.toUpperCase().includes('PM') ? 'PM' : 'AM');
+      const direction =
+        r.direction || (r.id.toUpperCase().includes('PM') ? 'PM' : 'AM');
       return {
         routeId: r.id,
         name: r.name,
@@ -183,6 +184,33 @@ export class DriverGatewayService {
     );
 
     const stopMap = new Map(stops.map((s) => [s.id, s]));
+
+    // Self-heal: re-home students whose stopId is null or stale (no longer
+    // points to a stop on this route). This commonly happens after a route
+    // edit deletes/re-creates stops. Assign to lowest-sequence stop and persist.
+    if (stops.length > 0 && enrolled.length > 0) {
+      const fallbackStopId = stops[0].id;
+      const stopIdField = isAm ? 'am_stop_id' : 'pm_stop_id';
+      const orphanedIds: string[] = [];
+      for (const student of enrolled) {
+        const currentStopId = isAm ? student.am_stop_id : student.pm_stop_id;
+        if (!currentStopId || !stopMap.has(currentStopId)) {
+          orphanedIds.push(student.id);
+        }
+      }
+      if (orphanedIds.length > 0) {
+        await this.dataSource.query(
+          `UPDATE students SET ${stopIdField} = $1 WHERE id = ANY($2::uuid[])`,
+          [fallbackStopId, orphanedIds],
+        );
+        for (const student of enrolled) {
+          if (orphanedIds.includes(student.id)) {
+            if (isAm) student.am_stop_id = fallbackStopId;
+            else student.pm_stop_id = fallbackStopId;
+          }
+        }
+      }
+    }
 
     if (enrolled.length === 0) {
       return {

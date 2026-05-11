@@ -62,9 +62,10 @@ function buildSections(
 ): Section[] {
   const stopStudents = new Map<string, Student[]>();
   const unassigned: Student[] = [];
+  const validStopIds = new Set(stops.map((s) => s.id));
 
   for (const student of students) {
-    if (student.stopId) {
+    if (student.stopId && validStopIds.has(student.stopId)) {
       const list = stopStudents.get(student.stopId) ?? [];
       list.push(student);
       stopStudents.set(student.stopId, list);

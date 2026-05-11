@@ -141,9 +141,20 @@ const SCHOOL_ICON = L.divIcon({
 });
 
 /** Parse WKT POINT(lng lat) to [lat, lng] */
-function parseWktPoint(wkt: string): [number, number] | null {
-  const m = wkt.match(/POINT\(([-\d.]+)\s+([-\d.]+)\)/);
-  if (m) return [parseFloat(m[2]), parseFloat(m[1])];
+function parseWktPoint(
+  loc: string | { type?: string; coordinates?: number[] } | null | undefined,
+): [number, number] | null {
+  if (!loc) return null;
+  // GeoJSON Point shape returned by TypeORM geography columns
+  if (typeof loc === 'object' && loc.type === 'Point' && Array.isArray(loc.coordinates)) {
+    const [lng, lat] = loc.coordinates;
+    if (Number.isFinite(lat) && Number.isFinite(lng)) return [lat, lng];
+    return null;
+  }
+  if (typeof loc === 'string') {
+    const m = loc.match(/POINT\s*\(\s*([-\d.]+)\s+([-\d.]+)\s*\)/i);
+    if (m) return [parseFloat(m[2]), parseFloat(m[1])];
+  }
   return null;
 }
 
@@ -284,11 +295,11 @@ const MapPage: React.FC = () => {
         // Check if path already connects to school (within 50 meters)
         const distanceToSchoolFromEnd = Math.sqrt(
           Math.pow((lastPoint[0] - schoolPos[0]) * 111000, 2) +
-          Math.pow((lastPoint[1] - schoolPos[1]) * 111000, 2)
+            Math.pow((lastPoint[1] - schoolPos[1]) * 111000, 2),
         );
         const distanceToSchoolFromStart = Math.sqrt(
           Math.pow((firstPoint[0] - schoolPos[0]) * 111000, 2) +
-          Math.pow((firstPoint[1] - schoolPos[1]) * 111000, 2)
+            Math.pow((firstPoint[1] - schoolPos[1]) * 111000, 2),
         );
 
         // For AM routes: if path doesn't end at school, add the connection
@@ -302,6 +313,27 @@ const MapPage: React.FC = () => {
       }
 
       return decodedPath;
+    }
+
+    // Fallback for seeded/legacy routes with no polyline: build path from stops in sequence
+    if (routeDetails?.stops?.length) {
+      const stopPath: [number, number][] = routeDetails.stops
+        .slice()
+        .sort((a: any, b: any) => (a.sequence ?? 0) - (b.sequence ?? 0))
+        .map((s: any) => {
+          if (s.location) return parseWktPoint(s.location);
+          if (s.lat != null && s.lng != null)
+            return [Number(s.lat), Number(s.lng)] as [number, number];
+          return null;
+        })
+        .filter((p): p is [number, number] => !!p && (p[0] !== 0 || p[1] !== 0));
+      if (stopPath.length > 0 && routeDetails.schoolLat && routeDetails.schoolLng) {
+        const schoolPos: [number, number] = [routeDetails.schoolLat, routeDetails.schoolLng];
+        return routeDetails.direction === 'PM'
+          ? [schoolPos, ...stopPath]
+          : [...stopPath, schoolPos];
+      }
+      return stopPath.length > 0 ? stopPath : null;
     }
     return null;
   }, [routeDetails]);

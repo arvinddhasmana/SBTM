@@ -122,6 +122,24 @@ const LiveMap: React.FC<LiveMapProps> = ({
     // 2. Render Planned/Selected Route Path
     let pathData = selectedRoute?.path || plannedRoute;
 
+    // Fallback for seeded/legacy routes with no polyline: build path from stops in sequence
+    if ((!pathData || pathData.length === 0) && selectedRoute?.stops?.length) {
+      const stopPoints: [number, number][] = selectedRoute.stops
+        .slice()
+        .sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0))
+        .map((s) => {
+          if (s.location) return parseWktPoint(s.location);
+          if ((s as any).lat != null && (s as any).lng != null) {
+            return [Number((s as any).lat), Number((s as any).lng)] as [number, number];
+          }
+          return [0, 0] as [number, number];
+        })
+        .filter((p) => p[0] !== 0 || p[1] !== 0);
+      if (stopPoints.length > 0) {
+        pathData = stopPoints;
+      }
+    }
+
     // CRITICAL FIX: Ensure route path includes connection to school
     // This handles both new routes (with school in polyline) and legacy routes (without)
     if (pathData && pathData.length > 0 && selectedRoute?.schoolLat && selectedRoute?.schoolLng) {
@@ -132,11 +150,11 @@ const LiveMap: React.FC<LiveMapProps> = ({
       // Check if path already connects to school (within 50 meters)
       const distanceToSchoolFromEnd = Math.sqrt(
         Math.pow((lastPoint[0] - schoolPos[0]) * 111000, 2) +
-        Math.pow((lastPoint[1] - schoolPos[1]) * 111000, 2)
+          Math.pow((lastPoint[1] - schoolPos[1]) * 111000, 2),
       );
       const distanceToSchoolFromStart = Math.sqrt(
         Math.pow((firstPoint[0] - schoolPos[0]) * 111000, 2) +
-        Math.pow((firstPoint[1] - schoolPos[1]) * 111000, 2)
+          Math.pow((firstPoint[1] - schoolPos[1]) * 111000, 2),
       );
 
       // For AM routes: if path doesn't end at school, add the connection

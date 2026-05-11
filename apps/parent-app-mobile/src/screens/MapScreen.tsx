@@ -170,11 +170,11 @@ export default function MapScreen() {
           // Check if path already connects to school (within 50 meters)
           const distanceToSchoolFromEnd = Math.sqrt(
             Math.pow((lastPoint.latitude - schoolPos.latitude) * 111000, 2) +
-            Math.pow((lastPoint.longitude - schoolPos.longitude) * 111000, 2)
+              Math.pow((lastPoint.longitude - schoolPos.longitude) * 111000, 2),
           );
           const distanceToSchoolFromStart = Math.sqrt(
             Math.pow((firstPoint.latitude - schoolPos.latitude) * 111000, 2) +
-            Math.pow((firstPoint.longitude - schoolPos.longitude) * 111000, 2)
+              Math.pow((firstPoint.longitude - schoolPos.longitude) * 111000, 2),
           );
 
           // For AM routes: if path doesn't end at school, add the connection
@@ -191,7 +191,18 @@ export default function MapScreen() {
       }
     }
     if (routeDetails?.stops && routeDetails.stops.length > 1) {
-      return routeDetails.stops.map((s) => ({ latitude: s.lat, longitude: s.lng }));
+      const stopPath = routeDetails.stops
+        .slice()
+        .sort((a: any, b: any) => (a.sequence ?? 0) - (b.sequence ?? 0))
+        .map((s: any) => ({ latitude: s.lat, longitude: s.lng }))
+        .filter((p) => Number.isFinite(p.latitude) && Number.isFinite(p.longitude));
+      if (stopPath.length > 0 && routeDetails.schoolLat != null && routeDetails.schoolLng != null) {
+        const schoolPos = { latitude: routeDetails.schoolLat, longitude: routeDetails.schoolLng };
+        return routeDetails.direction === 'PM'
+          ? [schoolPos, ...stopPath]
+          : [...stopPath, schoolPos];
+      }
+      return stopPath.length > 0 ? stopPath : null;
     }
     return null;
   }, [routeDetails]);
@@ -269,6 +280,30 @@ export default function MapScreen() {
     return child.stopId;
   }, [child, activeRouteId]);
 
+  const stops = useMemo(() => {
+    const raw = routeDetails?.stops ?? [];
+    return raw
+      .map((stop: any) => {
+        let lat = stop.lat;
+        let lng = stop.lng;
+        if ((lat == null || lng == null) && stop.location) {
+          const loc = stop.location;
+          if (typeof loc === 'object' && loc?.type === 'Point' && Array.isArray(loc.coordinates)) {
+            lng = loc.coordinates[0];
+            lat = loc.coordinates[1];
+          } else if (typeof loc === 'string') {
+            const m = loc.match(/POINT\s*\(\s*([-\d.]+)\s+([-\d.]+)\s*\)/i);
+            if (m) {
+              lng = parseFloat(m[1]);
+              lat = parseFloat(m[2]);
+            }
+          }
+        }
+        return Number.isFinite(lat) && Number.isFinite(lng) ? { ...stop, lat, lng } : null;
+      })
+      .filter((s: any): s is NonNullable<typeof s> => s !== null);
+  }, [routeDetails]);
+
   if (isLoading) {
     return (
       <AuroraBackground>
@@ -328,8 +363,6 @@ export default function MapScreen() {
           ? 'PM'
           : 'AM';
   const polylineColor = POLYLINE_COLORS[direction];
-
-  const stops = routeDetails?.stops ?? [];
 
   // Route status — a live, fresh GPS signal always wins over the cached
   // presence flag so an actively running PM bus never displays "Completed".
