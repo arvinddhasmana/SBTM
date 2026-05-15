@@ -54,6 +54,7 @@ DROP TABLE IF EXISTS driver_compliance CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 DROP TABLE IF EXISTS schools CASCADE;
 DROP TABLE IF EXISTS school_boards CASCADE;
+DROP TABLE IF EXISTS page_visibility CASCADE;
 
 DROP TYPE IF EXISTS presence_event_eventtype_enum CASCADE;
 DROP TYPE IF EXISTS presence_event_source_enum CASCADE;
@@ -530,3 +531,13 @@ CREATE TABLE gps_device_tokens (
 );
 CREATE UNIQUE INDEX "gps_device_tokens_token_key" ON gps_device_tokens(token);
 CREATE INDEX "gps_device_tokens_school_id_idx" ON gps_device_tokens(school_id);
+
+-- Page Visibility (Admin portal page visibility management)
+CREATE TABLE page_visibility (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    "pageKey" TEXT NOT NULL UNIQUE,
+    "pageName" TEXT NOT NULL,
+    "isVisible" BOOLEAN NOT NULL DEFAULT TRUE,
+    "updatedBy" UUID NULL,
+    "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);

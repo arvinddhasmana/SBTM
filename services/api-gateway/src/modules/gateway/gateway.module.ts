@@ -34,11 +34,14 @@ import { OrganizationController } from './controllers/organization.controller';
 import { FleetAssignmentController } from './controllers/fleet-assignment.controller';
 import { DocumentController } from './controllers/document.controller';
 import { SystemSettingsController } from './controllers/system-settings.controller';
+import { PageVisibilityController } from './controllers/page-visibility.controller';
 import { School } from '../auth/entities/school.entity';
 import { SchoolBoard } from '../auth/entities/school-board.entity';
 import { Route } from '../auth/entities/route.entity';
 import { StudentAbsence } from './entities/student-absence.entity';
 import { FleetAssignment } from './entities/fleet-assignment.entity';
+import { PageVisibility } from './entities/page-visibility.entity';
+import { PageVisibilityService } from './services/page-visibility.service';
 
 @Module({
   imports: [
@@ -49,6 +52,7 @@ import { FleetAssignment } from './entities/fleet-assignment.entity';
       Route,
       StudentAbsence,
       FleetAssignment,
+      PageVisibility,
     ]),
   ],
   controllers: [
@@ -67,6 +71,7 @@ import { FleetAssignment } from './entities/fleet-assignment.entity';
     FleetAssignmentController,
     DocumentController,
     SystemSettingsController,
+    PageVisibilityController,
   ],
   providers: [
     GpsGatewayService,
@@ -87,6 +92,7 @@ import { FleetAssignment } from './entities/fleet-assignment.entity';
     PdfGeneratorService,
     RouteChangeNotifierService,
     SystemSettingsGatewayService,
+    PageVisibilityService,
   ],
   exports: [
     GpsGatewayService,

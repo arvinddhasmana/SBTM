@@ -12,7 +12,7 @@ This document summarizes the persisted data structures currently visible in the 
 
 | Service               | Key Tables or Entities                                                                            | Tenant Anchor                    |
 | --------------------- | ------------------------------------------------------------------------------------------------- | -------------------------------- |
-| API Gateway           | `users`, `school_boards`, `schools`, `routes`, `route_stops`, `vehicles`                          | `boardId`, `schoolId`            |
+| API Gateway           | `users`, `school_boards`, `schools`, `routes`, `route_stops`, `vehicles`, `page_visibility`       | `boardId`, `schoolId`            |
 | GPS Tracking          | `location_points`, `route_lifecycle_events`, `route_geofences`, `route_deviation_events` (Prisma) | `schoolId` in telemetry payloads |
 | Emergency Alerts      | emergency alerts, notification logs                                                               | `schoolId`                       |
 | Student Presence      | presence events, student tags                                                                     | `schoolId`                       |

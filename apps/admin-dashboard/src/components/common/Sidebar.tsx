@@ -19,9 +19,11 @@ import {
   Truck,
   Sliders,
   Cpu,
+  Eye,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
+import { usePageVisibility } from '../../context/PageVisibilityContext';
 import type { UserRole } from '../../types';
 
 interface NavItem {
@@ -29,6 +31,8 @@ interface NavItem {
   icon: React.ReactNode;
   labelKey: string;
   allowedRoles?: UserRole[];
+  /** pageKey used to check visibility. Undefined means always visible (e.g. Settings). */
+  pageKey?: string;
 }
 
 const ALL_ADMIN_ROLES: UserRole[] = ['SUPER_ADMIN', 'OSTA_ADMIN', 'BOARD_ADMIN', 'SCHOOL_ADMIN'];
@@ -39,96 +43,119 @@ const navItems: NavItem[] = [
     icon: <LayoutDashboard size={20} />,
     labelKey: 'nav.dashboard',
     allowedRoles: ALL_ADMIN_ROLES,
+    pageKey: 'dashboard',
   },
   {
     path: '/alerts',
     icon: <Bell size={20} />,
     labelKey: 'nav.alerts',
     allowedRoles: ALL_ADMIN_ROLES,
+    pageKey: 'alerts',
   },
   {
     path: '/alerts/operational',
     icon: <ClipboardList size={20} />,
     labelKey: 'nav.operational',
     allowedRoles: ALL_ADMIN_ROLES,
+    pageKey: 'alerts/operational',
   },
   {
     path: '/routes',
     icon: <Route size={20} />,
     labelKey: 'nav.routes',
     allowedRoles: ALL_ADMIN_ROLES,
+    pageKey: 'routes',
   },
   {
     path: '/routes/planner',
     icon: <Wand2 size={20} />,
     labelKey: 'nav.planner',
     allowedRoles: ALL_ADMIN_ROLES,
+    pageKey: 'routes/planner',
   },
   {
     path: '/vehicles',
     icon: <Bus size={20} />,
     labelKey: 'nav.fleet',
     allowedRoles: ['SUPER_ADMIN', 'OSTA_ADMIN'],
+    pageKey: 'vehicles',
   },
   {
     path: '/compliance',
     icon: <Shield size={20} />,
     labelKey: 'nav.compliance',
     allowedRoles: ALL_ADMIN_ROLES,
+    pageKey: 'compliance',
   },
   {
     path: '/fleet-assignments',
     icon: <Truck size={20} />,
     labelKey: 'nav.assignments',
     allowedRoles: ALL_ADMIN_ROLES,
+    pageKey: 'fleet-assignments',
   },
   {
     path: '/students',
     icon: <Users size={20} />,
     labelKey: 'nav.students',
     allowedRoles: ALL_ADMIN_ROLES,
+    pageKey: 'students',
   },
   {
     path: '/absences',
     icon: <CalendarOff size={20} />,
     labelKey: 'nav.absences',
     allowedRoles: ALL_ADMIN_ROLES,
+    pageKey: 'absences',
   },
   {
     path: '/boards',
     icon: <Building2 size={20} />,
     labelKey: 'nav.boards',
     allowedRoles: ['SUPER_ADMIN', 'OSTA_ADMIN'],
+    pageKey: 'boards',
   },
   {
     path: '/schools',
     icon: <School size={20} />,
     labelKey: 'nav.schools',
     allowedRoles: ['SUPER_ADMIN', 'OSTA_ADMIN', 'BOARD_ADMIN'],
+    pageKey: 'schools',
   },
   {
     path: '/users',
     icon: <UserCog size={20} />,
     labelKey: 'nav.users',
     allowedRoles: ['SUPER_ADMIN'],
+    pageKey: 'users',
   },
   {
     path: '/alert-config',
     icon: <Sliders size={20} />,
     labelKey: 'nav.alertConfig',
     allowedRoles: ALL_ADMIN_ROLES,
+    pageKey: 'alert-config',
   },
   {
     path: '/settings/gps-source',
     icon: <Cpu size={20} />,
     labelKey: 'nav.gpsSource',
     allowedRoles: ['SUPER_ADMIN'],
+    pageKey: 'settings/gps-source',
+  },
+  {
+    path: '/page-visibility',
+    icon: <Eye size={20} />,
+    labelKey: 'nav.pageVisibility',
+    allowedRoles: ['SUPER_ADMIN'],
+    // No pageKey — this item is always visible to Super Admin (not subject to visibility management)
   },
   {
     path: '/settings',
     icon: <Settings size={20} />,
     labelKey: 'nav.settings',
     allowedRoles: ALL_ADMIN_ROLES,
+    // No pageKey — Settings is always visible
   },
 ];
 
@@ -141,6 +168,7 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ width, isCollapsed, onToggleCollapse }) => {
   const { t } = useTranslation('common');
   const { logout, user } = useAuth();
+  const { isPageVisible } = usePageVisibility();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -150,7 +178,8 @@ const Sidebar: React.FC<SidebarProps> = ({ width, isCollapsed, onToggleCollapse 
 
   const visibleItems = navItems.filter(
     (item) =>
-      !item.allowedRoles || (user?.role && item.allowedRoles.includes(user.role as UserRole)),
+      (!item.allowedRoles || (user?.role && item.allowedRoles.includes(user.role as UserRole))) &&
+      (user?.role === 'SUPER_ADMIN' || !item.pageKey || isPageVisible(item.pageKey)),
   );
 
   return (

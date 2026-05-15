@@ -53,6 +53,7 @@ DROP TABLE IF EXISTS driver_compliance CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 DROP TABLE IF EXISTS schools CASCADE;
 DROP TABLE IF EXISTS school_boards CASCADE;
+DROP TABLE IF EXISTS page_visibility CASCADE;
 
 DROP TYPE IF EXISTS presence_event_eventtype_enum CASCADE;
 DROP TYPE IF EXISTS presence_event_source_enum CASCADE;
@@ -276,6 +277,16 @@ CREATE TABLE gps_device_tokens (
 );
 CREATE UNIQUE INDEX "gps_device_tokens_token_key" ON gps_device_tokens(token);
 CREATE INDEX "gps_device_tokens_school_id_idx" ON gps_device_tokens(school_id);
+
+-- Page Visibility (Admin portal page visibility management)
+CREATE TABLE page_visibility (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    "pageKey" TEXT NOT NULL UNIQUE,
+    "pageName" TEXT NOT NULL,
+    "isVisible" BOOLEAN NOT NULL DEFAULT TRUE,
+    "updatedBy" UUID NULL,
+    "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
 
 -- Emergency Alerts (Matching emergency-alerts entity — Phase B governance)
 CREATE TYPE emergency_event_type_enum AS ENUM (
@@ -616,5 +627,27 @@ INSERT INTO location_points (id, school_id, vehicle_id, route_id, timestamp, lat
 INSERT INTO system_settings (id, key, value, updated_at)
 VALUES (gen_random_uuid()::TEXT, 'GPS_TRACKING_SOURCE', 'DRIVER_APP', NOW())
 ON CONFLICT (key) DO NOTHING;
+
+-- ===================== Page Visibility Defaults =====================
+
+INSERT INTO page_visibility ("pageKey", "pageName", "isVisible") VALUES
+    ('dashboard',           'Dashboard',          TRUE),
+    ('alerts',              'Alerts',             TRUE),
+    ('alerts/operational',  'Operational Alerts', TRUE),
+    ('routes',              'Routes',             TRUE),
+    ('routes/planner',      'Route Planner',      TRUE),
+    ('vehicles',            'Fleet',              TRUE),
+    ('compliance',          'Compliance',         TRUE),
+    ('fleet-assignments',   'Fleet Assignments',  TRUE),
+    ('students',            'Students',           TRUE),
+    ('absences',            'Absences',           TRUE),
+    ('boards',              'Boards',             TRUE),
+    ('schools',             'Schools',            TRUE),
+    ('users',               'Users',              TRUE),
+    ('alert-config',        'Alert Config',       TRUE),
+    ('settings/gps-source', 'GPS Tracker',        TRUE),
+    ('tenant-overview',     'Tenant Overview',    TRUE),
+    ('videos',              'Videos',             TRUE)
+ON CONFLICT ("pageKey") DO NOTHING;
 
 COMMIT;
