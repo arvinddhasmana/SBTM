@@ -4,6 +4,7 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
 import { AuthService, JwtPayload } from '../auth.service';
+import { AuthenticatedUser } from '../types/authenticated-user';
 
 /**
  * Extracts the JWT from (in order of priority):
@@ -46,7 +47,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: JwtPayload) {
+  async validate(payload: JwtPayload): Promise<AuthenticatedUser> {
     const user = await this.authService.validateUser(payload);
     if (!user) {
       throw new UnauthorizedException('User not found');
