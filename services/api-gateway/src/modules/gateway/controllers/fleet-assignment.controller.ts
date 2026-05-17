@@ -12,15 +12,9 @@ import { FleetAssignmentGatewayService } from '../services/fleet-assignment.gate
 import { ProposeFleetAssignmentDto } from '../dto/propose-fleet-assignment.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard, Roles, Role } from '@sbtm/common';
+import type { AuthenticatedUser } from '../../auth/types/authenticated-user';
 
-interface AuthenticatedRequest {
-  user: {
-    id: string;
-    role: Role;
-    schoolId?: string;
-    boardId?: string;
-  };
-}
+type AuthenticatedRequest = { user: AuthenticatedUser };
 
 @Controller('fleet-assignments')
 @UseGuards(JwtAuthGuard, RolesGuard)

@@ -15,16 +15,9 @@ import { InviteUserDto } from './dto/invite-user.dto';
 import { ActivateAccountDto } from './dto/activate-account.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RolesGuard, Roles, Role } from '@sbtm/common';
-import type { AnchorKind } from './entities/user.entity';
+import type { AuthenticatedUser } from './types/authenticated-user';
 
-interface AuthenticatedRequest {
-  user: {
-    id: string;
-    role: Role;
-    anchorKind?: AnchorKind | null;
-    anchorId?: string | null;
-  };
-}
+type AuthenticatedRequest = { user: AuthenticatedUser };
 
 @Controller('provisioning')
 export class ProvisioningController {
