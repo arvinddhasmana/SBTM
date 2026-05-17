@@ -63,6 +63,8 @@ Per session decision: **RBAC is strictly scoped by this tree.** A user is anchor
 
 Every domain table carries `tenant_school_id UUID NOT NULL` (or higher node for consortium/board-scoped rows). RLS policies enforce isolation; existing `schoolId` columns in v1 services map directly.
 
+**RLS enforcement boundary.** Postgres RLS is the source of truth for **admin-role** isolation (Super, STA, Board, School, Operator) because their predicates are cheap column-compares against `current_setting('sbtm.user_anchor_kind' / 'sbtm.user_anchor_id')`. **Driver and Parent isolation is enforced in the application layer**, not RLS, because the access path requires multi-hop joins (`stx_drivers.user_id → stx_drivers.id → stx_runs.driver_id → stx_runs.trip_ids[] → …` for drivers; `stx_student_guardians.guardian_id → stx_students.id → …` for parents). Per-row sub-select predicates would bypass the existing `idx_boarding_run`, `idx_ridership_trip_stop`, and `idx_students_school` indexes; an app-layer filter resolves accessible run/student IDs once per request and emits a normal `IN (…)` clause the planner can optimise. **Trade-off**: defence-in-depth is weaker for these two roles — an app bug that forgets the filter is not caught by the database. Mitigation: the Phase E integration pack must include "driver A cannot read driver B's run" and "parent A cannot read parent B's child" assertions against the public HTTP surface.
+
 ## 4. GTFS-Aligned Core Tables
 
 All field names follow GTFS naming exactly. Optional GTFS fields we omit in Phase 1 are noted as `— omit`.

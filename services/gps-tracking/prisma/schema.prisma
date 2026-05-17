@@ -15,6 +15,7 @@ model LocationPoint {
   schoolId        String   @map("school_id")
   vehicleId       String   @map("vehicle_id")
   routeId         String   @map("route_id")
+  runId           String?  @map("run_id")
   timestamp       DateTime
   lat             Float
   lng             Float
@@ -26,6 +27,7 @@ model LocationPoint {
 
   @@index([timestamp])
   @@index([schoolId, routeId])
+  @@index([runId])
   @@map("location_points")
 }
 
@@ -33,6 +35,7 @@ model RouteLifecycleEvent {
   id          String   @id @default(uuid())
   schoolId    String   @map("school_id")
   routeId     String   @map("route_id")
+  runId       String?  @map("run_id")
   vehicleId   String   @map("vehicle_id")
   driverId    String   @map("driver_id")
   eventType   String   @map("event_type")
@@ -41,6 +44,7 @@ model RouteLifecycleEvent {
 
   @@index([routeId])
   @@index([schoolId, routeId])
+  @@index([runId])
   @@map("route_lifecycle_events")
 }
 
@@ -100,6 +104,7 @@ model RouteDeviationEvent {
   id               String   @id @default(uuid())
   schoolId         String   @map("school_id")
   routeId          String   @map("route_id")
+  runId            String?  @map("run_id")
   vehicleId        String   @map("vehicle_id")
   lat              Float
   lng              Float
@@ -108,6 +113,7 @@ model RouteDeviationEvent {
   detectedAt       DateTime @default(now()) @map("detected_at")
 
   @@index([schoolId, routeId])
+  @@index([runId])
   @@index([detectedAt])
   @@map("route_deviation_events")
 }

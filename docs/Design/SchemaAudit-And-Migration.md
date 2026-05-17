@@ -84,7 +84,7 @@ Pre-production posture lets us delete v1 outright. Each phase is sequential — 
 1. **api-gateway TypeORM**: single migration `2026XXXXXXXX-v2-cutover.ts` that
    - `DROP TABLE` in dependency order: `emergency_alerts`, `alert_audit_log`, `alert_notification_log`, `students`, `parents`, `student_parents`, `routes`, `stops`, `schools`, `school_boards`.
    - `CREATE TABLE` v2: `stx_sta`, `stx_boards`, `stx_schools`, `stx_operators`, `stx_operator_contracts`, `stx_vehicles`, `stx_bell_schedules`, `agency`, `routes` (GTFS-shape, includes `stx_sta_id`, `stx_shape_source`), `trips`, `stops`, `stop_times`, `shapes`, `calendar`, `calendar_dates`, `stx_students`, `stx_guardians`, `stx_student_guardians`, `stx_ridership`, `stx_eligibility`, `stx_alerts`, `stx_alert_subscriptions`, `stx_alert_deliveries`, `stx_alert_audit`, `stx_student_absences`, `stx_boarding_events`.
-   - Apply RLS policies keyed on STA → board → school per `DataModel-v2.md` §6.
+   - Apply RLS policies keyed on STA → board → school per `DataModel-v2.md` §6. **Driver and Parent RLS policies are intentionally not created**; their access path requires multi-hop joins that would force per-row sub-selects and bypass tenant indexes. Enforcement for those two roles is in the application layer (Phase B middleware + per-request `IN (…)` filter on resolved run/student IDs). See `DataModel-v2.md` §3.3 "RLS enforcement boundary".
 2. **gps-tracking Prisma**: edit `schema.prisma` — drop `RouteGeofence.polylineSource`, point geofence at the `shapes` table directly. Generate fresh migration; do not preserve legacy rows.
 3. **notification-service**: drop `NotificationPreference`; `DeviceToken` stays (re-keyed FK to v2 users); preferences move to `stx_alert_subscriptions`.
 4. Reset all dev/staging DBs (`docker-compose down -v && up`, helm chart with `persistence.enabled=false`).
@@ -102,7 +102,7 @@ Pre-production posture lets us delete v1 outright. Each phase is sequential — 
 5. **Env / config / queue rename**: `OSTA_*` → `STA_*` across Helm, Compose, `.env.example`. Old names deliberately fail-loud (no fallback reads).
 6. Rewrite admin-dashboard screens that consumed v1 alert/route models. Route Planner saves to `shapes` (not `Route.polyline`).
 
-**Verification B**: `npm run build` green across the monorepo. `npm run test:unit` green. Any v1 type name in source is a compile error.
+**Verification B**: `npm run build` green across the monorepo. `npm run test:unit` green. Any v1 type name in source is a compile error. **Phase B also lands the RLS middleware** (`SET LOCAL sbtm.user_anchor_kind/_id` per request) — the policies created in Phase A are inert until this middleware runs. Driver/parent enforcement is the request-scope resolver in the same middleware that emits `IN (...)` filters on accessible run/student IDs (see `DataModel-v2.md` §3.3).
 
 ### Phase C — Importer + adapters + sample seed
 
