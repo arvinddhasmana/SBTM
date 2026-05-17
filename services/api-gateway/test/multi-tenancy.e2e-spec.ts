@@ -89,7 +89,7 @@ describe('Multi-Tenancy (e2e)', () => {
     schoolA2Id = schoolA2.id;
 
     // 2. Setup Users
-    await authService.createUser('osta@test.com', 'password', Role.OSTA_ADMIN);
+    await authService.createUser('osta@test.com', 'password', Role.STA_ADMIN);
     await authService.createUser(
       'boardA@test.com',
       'password',
@@ -128,8 +128,8 @@ describe('Multi-Tenancy (e2e)', () => {
     await app.close();
   });
 
-  describe('TC-1.1: OSTA Admin Scope', () => {
-    it('should allow OSTA Admin to see all boards', () => {
+  describe('TC-1.1: STA Admin Scope', () => {
+    it('should allow STA Admin to see all boards', () => {
       return request(app.getHttpServer())
         .get('/boards')
         .set('Authorization', `Bearer ${ostaToken}`)
@@ -171,11 +171,11 @@ describe('Multi-Tenancy (e2e)', () => {
         .expect(403);
     });
 
-    it('should allow OSTA Admin to create a school board', () => {
+    it('should allow STA Admin to create a school board', () => {
       return request(app.getHttpServer())
         .post('/boards')
         .set('Authorization', `Bearer ${ostaToken}`)
-        .send({ name: 'New OSTA Board' })
+        .send({ name: 'New STA Board' })
         .expect(201);
     });
   });

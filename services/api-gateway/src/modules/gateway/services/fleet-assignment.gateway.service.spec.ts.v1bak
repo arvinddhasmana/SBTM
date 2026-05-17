@@ -18,7 +18,7 @@ describe('FleetAssignmentGatewayService', () => {
 
   const ostaAdminCaller = {
     id: 'osta-admin-1',
-    role: Role.OSTA_ADMIN,
+    role: Role.STA_ADMIN,
     schoolId: undefined,
     boardId: undefined,
   };
@@ -105,7 +105,7 @@ describe('FleetAssignmentGatewayService', () => {
   });
 
   describe('list', () => {
-    it('should return all assignments for OSTA_ADMIN', async () => {
+    it('should return all assignments for STA_ADMIN', async () => {
       mockAssignmentRepository.find.mockResolvedValue([mockAssignment]);
 
       const result = await service.list(ostaAdminCaller);

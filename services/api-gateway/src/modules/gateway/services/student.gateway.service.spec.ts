@@ -33,7 +33,7 @@ describe('StudentGatewayService', () => {
 
   const adminUser = {
     id: 'admin-1',
-    role: Role.ADMIN,
+    role: Role.STA_ADMIN,
     schoolId: 'school-1',
   };
 

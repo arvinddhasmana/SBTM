@@ -78,8 +78,8 @@ export class GpsController {
   @Sse(':routeId/location/stream')
   @Roles(
     Role.PARENT,
-    Role.ADMIN,
-    Role.OSTA_ADMIN,
+    Role.SUPER_ADMIN,
+    Role.STA_ADMIN,
     Role.BOARD_ADMIN,
     Role.SCHOOL_ADMIN,
     Role.DRIVER,
@@ -111,7 +111,7 @@ export class GpsController {
    * schoolId is derived from the authenticated JWT – never trusted from the body.
    */
   @Post('lifecycle-events')
-  @Roles(Role.DRIVER, Role.ADMIN)
+  @Roles(Role.DRIVER, Role.SUPER_ADMIN, Role.STA_ADMIN)
   async recordLifecycleEvent(
     @Body() dto: RouteLifecycleEventDto,
     @Request() req: { user: any },
@@ -120,7 +120,7 @@ export class GpsController {
   }
 
   @Get(':routeId/students')
-  @Roles(Role.OSTA_ADMIN, Role.ADMIN, Role.SCHOOL_ADMIN)
+  @Roles(Role.SUPER_ADMIN, Role.STA_ADMIN, Role.BOARD_ADMIN, Role.SCHOOL_ADMIN)
   async getRouteStudents(
     @Param('routeId') routeId: string,
     @Request() req: { user: any },

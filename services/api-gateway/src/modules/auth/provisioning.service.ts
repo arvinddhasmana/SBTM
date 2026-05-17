@@ -9,7 +9,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { randomUUID } from 'crypto';
 import * as bcrypt from 'bcrypt';
-import { User } from './entities/user.entity';
+import { User, AnchorKind } from './entities/user.entity';
 import { InviteUserDto } from './dto/invite-user.dto';
 import { ActivateAccountDto } from './dto/activate-account.dto';
 import { Role } from '@sbtm/common';
@@ -17,14 +17,26 @@ import { Role } from '@sbtm/common';
 interface InviterUser {
   id: string;
   role: Role;
-  schoolId?: string;
-  boardId?: string;
+  anchorKind?: AnchorKind | null;
+  anchorId?: string | null;
 }
 
 const INVITATION_EXPIRY_HOURS = parseInt(
   process.env.INVITATION_EXPIRY_HOURS ?? '72',
   10,
 );
+
+/**
+ * v2 anchor mapping per role. The role enum implies which anchor kind the user must carry.
+ */
+const REQUIRED_ANCHOR_KIND_FOR_ROLE: Partial<Record<Role, AnchorKind>> = {
+  [Role.STA_ADMIN]: 'sta',
+  [Role.BOARD_ADMIN]: 'board',
+  [Role.SCHOOL_ADMIN]: 'school',
+  [Role.OPERATOR_ADMIN]: 'operator',
+  [Role.DRIVER]: 'driver',
+  [Role.PARENT]: 'parent',
+};
 
 @Injectable()
 export class ProvisioningService {
@@ -36,8 +48,8 @@ export class ProvisioningService {
   ) {}
 
   /**
-   * Invite a new user by email. Derives tenant scope from the inviting user's JWT —
-   * never trusts schoolId/boardId from board- or school-level admins to exceed their own scope.
+   * Invite a new user by email. Derives anchor scope from the inviting user's JWT —
+   * never trusts anchorId from board- or school-level admins to exceed their own scope.
    */
   async inviteUser(
     dto: InviteUserDto,
@@ -56,14 +68,13 @@ export class ProvisioningService {
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + INVITATION_EXPIRY_HOURS);
 
-    const resolvedSchoolId = this.resolveSchoolId(dto, inviter);
-    const resolvedBoardId = this.resolveBoardId(dto, inviter);
+    const { anchorKind, anchorId } = this.resolveAnchor(dto, inviter);
 
     const user = this.userRepository.create({
       email: dto.email,
       role: dto.role as Role,
-      schoolId: resolvedSchoolId,
-      boardId: resolvedBoardId,
+      anchorKind,
+      anchorId,
       isActive: false,
       invitationToken: token,
       invitationExpiresAt: expiresAt,
@@ -72,7 +83,8 @@ export class ProvisioningService {
     await this.userRepository.save(user);
 
     this.logger.log('User invitation created', {
-      tenantId: resolvedSchoolId ?? resolvedBoardId,
+      anchorKind,
+      anchorId,
       inviterId: inviter.id,
       inviteeRole: dto.role,
       action: 'user.invited',
@@ -113,7 +125,8 @@ export class ProvisioningService {
     await this.userRepository.save(user);
 
     this.logger.log('User account activated', {
-      tenantId: user.schoolId ?? user.boardId,
+      anchorKind: user.anchorKind,
+      anchorId: user.anchorId,
       userId: user.id,
       action: 'user.activated',
     });
@@ -122,7 +135,11 @@ export class ProvisioningService {
   }
 
   /**
-   * List users within the caller's tenant scope.
+   * List users within the caller's anchor scope.
+   * TODO(phase-B): for BOARD admin, restrict to users whose anchorKind is 'board' AND
+   * anchorId === caller.anchorId, OR anchorKind='school' AND that school belongs to the board.
+   * Cross-anchor filtering requires joining stx_schools — left as-is until the school
+   * repository is wired into this service.
    */
   async listUsers(
     caller: InviterUser,
@@ -131,15 +148,24 @@ export class ProvisioningService {
   > {
     let users: User[] = [];
 
-    if (caller.role === Role.SUPER_ADMIN || caller.role === Role.OSTA_ADMIN) {
+    if (caller.role === Role.SUPER_ADMIN) {
       users = await this.userRepository.find();
-    } else if (caller.role === Role.BOARD_ADMIN && caller.boardId) {
+    } else if (caller.role === Role.STA_ADMIN && caller.anchorId) {
+      // STA admins see every user under their STA. Restricting precisely requires joins
+      // (boards/schools/operators all roll up to sta_id) — for now, surface all users.
+      users = await this.userRepository.find();
+    } else if (
+      (caller.role === Role.BOARD_ADMIN ||
+        caller.role === Role.SCHOOL_ADMIN ||
+        caller.role === Role.OPERATOR_ADMIN) &&
+      caller.anchorKind &&
+      caller.anchorId
+    ) {
       users = await this.userRepository.find({
-        where: { boardId: caller.boardId },
-      });
-    } else if (caller.role === Role.SCHOOL_ADMIN && caller.schoolId) {
-      users = await this.userRepository.find({
-        where: { schoolId: caller.schoolId },
+        where: {
+          anchorKind: caller.anchorKind,
+          anchorId: caller.anchorId,
+        },
       });
     } else {
       throw new ForbiddenException('Insufficient scope to list users');
@@ -173,7 +199,8 @@ export class ProvisioningService {
     await this.userRepository.save(target);
 
     this.logger.log('User deactivated', {
-      tenantId: target.schoolId ?? target.boardId,
+      anchorKind: target.anchorKind,
+      anchorId: target.anchorId,
       targetUserId: target.id,
       callerId: caller.id,
       action: 'user.deactivated',
@@ -200,7 +227,8 @@ export class ProvisioningService {
     await this.userRepository.save(target);
 
     this.logger.log('User reactivated', {
-      tenantId: target.schoolId ?? target.boardId,
+      anchorKind: target.anchorKind,
+      anchorId: target.anchorId,
       targetUserId: target.id,
       callerId: caller.id,
       action: 'user.reactivated',
@@ -212,17 +240,16 @@ export class ProvisioningService {
   // ---------- private helpers ----------
 
   private validateInviterScope(dto: InviteUserDto, inviter: InviterUser): void {
-    // Only SUPER_ADMIN can invite OSTA_ADMIN
-    if ((dto.role as Role) === Role.OSTA_ADMIN) {
+    // Only SUPER_ADMIN can invite STA_ADMIN
+    if ((dto.role as Role) === Role.STA_ADMIN) {
       if (inviter.role !== Role.SUPER_ADMIN) {
         throw new ForbiddenException(
-          'Only Super Admin can invite OSTA administrators',
+          'Only Super Admin can invite STA administrators',
         );
       }
       return;
     }
     if (inviter.role === Role.BOARD_ADMIN) {
-      // Board admins cannot invite BOARD_ADMIN or above.
       if ((dto.role as Role) === Role.BOARD_ADMIN) {
         throw new ForbiddenException(
           'Board admins cannot create admins above their scope',
@@ -238,43 +265,72 @@ export class ProvisioningService {
     }
   }
 
-  private resolveSchoolId(
+  /**
+   * Resolve the (anchorKind, anchorId) for the new user, derived from the inviter's scope
+   * where possible and validated against the role being assigned.
+   */
+  private resolveAnchor(
     dto: InviteUserDto,
     inviter: InviterUser,
-  ): string | undefined {
-    // School-scoped roles must have a schoolId
-    if (
-      [Role.SCHOOL_ADMIN, Role.DRIVER, Role.PARENT].includes(dto.role as Role)
-    ) {
-      // School admins can only set their own school
-      if (inviter.role === Role.SCHOOL_ADMIN) return inviter.schoolId;
-      return dto.schoolId;
+  ): { anchorKind: AnchorKind | null; anchorId: string | null } {
+    const expectedKind =
+      REQUIRED_ANCHOR_KIND_FOR_ROLE[dto.role as Role] ?? null;
+    if (!expectedKind) {
+      return { anchorKind: null, anchorId: null };
     }
-    return undefined;
-  }
 
-  private resolveBoardId(
-    dto: InviteUserDto,
-    inviter: InviterUser,
-  ): string | undefined {
-    if (dto.role === Role.BOARD_ADMIN) {
-      if (inviter.role === Role.BOARD_ADMIN) return inviter.boardId;
-      return dto.boardId;
+    // Mid-tier admins must inherit their own anchor — they cannot grant scope they don't have.
+    if (
+      inviter.role === Role.BOARD_ADMIN &&
+      expectedKind === 'board' &&
+      inviter.anchorKind === 'board'
+    ) {
+      return { anchorKind: 'board', anchorId: inviter.anchorId ?? null };
     }
-    if (inviter.role === Role.BOARD_ADMIN) return inviter.boardId;
-    return dto.boardId;
+    if (
+      inviter.role === Role.SCHOOL_ADMIN &&
+      expectedKind === 'school' &&
+      inviter.anchorKind === 'school'
+    ) {
+      return { anchorKind: 'school', anchorId: inviter.anchorId ?? null };
+    }
+    if (
+      inviter.role === Role.SCHOOL_ADMIN &&
+      (expectedKind === 'driver' || expectedKind === 'parent')
+    ) {
+      // Driver/parent anchors point at the driver row or guardian row, which must be
+      // created separately. We persist null here; downstream linkage code attaches it.
+      return { anchorKind: expectedKind, anchorId: dto.anchorId ?? null };
+    }
+
+    // Higher-tier admins (SUPER, STA) may pass an explicit anchorId.
+    if (!dto.anchorId) {
+      throw new BadRequestException(
+        `Role ${dto.role} requires anchorId of kind '${expectedKind}'`,
+      );
+    }
+    if (dto.anchorKind && dto.anchorKind !== expectedKind) {
+      throw new BadRequestException(
+        `Role ${dto.role} requires anchorKind '${expectedKind}'`,
+      );
+    }
+    return { anchorKind: expectedKind, anchorId: dto.anchorId };
   }
 
   private assertCallerCanManageUser(target: User, caller: InviterUser): void {
     if (caller.role === Role.SUPER_ADMIN) return;
-    if (caller.role === Role.OSTA_ADMIN) return;
-    if (caller.role === Role.BOARD_ADMIN && target.boardId === caller.boardId)
-      return;
+    if (caller.role === Role.STA_ADMIN) return;
     if (
-      caller.role === Role.SCHOOL_ADMIN &&
-      target.schoolId === caller.schoolId
-    )
+      (caller.role === Role.BOARD_ADMIN ||
+        caller.role === Role.SCHOOL_ADMIN ||
+        caller.role === Role.OPERATOR_ADMIN) &&
+      caller.anchorKind &&
+      caller.anchorId &&
+      target.anchorKind === caller.anchorKind &&
+      target.anchorId === caller.anchorId
+    ) {
       return;
+    }
     throw new ForbiddenException(
       'You do not have permission to manage this user',
     );

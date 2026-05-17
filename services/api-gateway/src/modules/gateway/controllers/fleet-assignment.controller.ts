@@ -30,7 +30,7 @@ export class FleetAssignmentController {
   ) {}
 
   @Post()
-  @Roles(Role.OSTA_ADMIN)
+  @Roles(Role.STA_ADMIN)
   async propose(
     @Body() dto: ProposeFleetAssignmentDto,
     @Request() req: AuthenticatedRequest,
@@ -39,7 +39,7 @@ export class FleetAssignmentController {
   }
 
   @Get()
-  @Roles(Role.OSTA_ADMIN, Role.BOARD_ADMIN, Role.SCHOOL_ADMIN)
+  @Roles(Role.STA_ADMIN, Role.BOARD_ADMIN, Role.SCHOOL_ADMIN)
   async list(@Request() req: AuthenticatedRequest) {
     return this.fleetAssignmentService.list(req.user);
   }
@@ -67,7 +67,7 @@ export class FleetAssignmentController {
   }
 
   @Get(':id')
-  @Roles(Role.OSTA_ADMIN, Role.BOARD_ADMIN, Role.SCHOOL_ADMIN)
+  @Roles(Role.STA_ADMIN, Role.BOARD_ADMIN, Role.SCHOOL_ADMIN)
   async getById(@Param('id') id: string) {
     return this.fleetAssignmentService.getById(id);
   }

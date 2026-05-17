@@ -1,3 +1,11 @@
+// TODO(phase-B): rewrite for v2 NotificationRouterService.
+// Preserved from v1 (renamed .v1bak so tsc/Jest skip it). Needs rewriting to:
+//   - drop PreferencesService mock (removed in SBTM v2 cutover)
+//   - assert the permissive default channel set (PUSH/EMAIL/SMS, EMERGENCY=PUSH+SMS)
+//   - re-cover push-fallback-to-SMS for EMERGENCY, invalid-token deactivation,
+//     no-token / no-email / no-phone failure paths, EMAIL routing
+//   - update constructor wiring (no preferencesService arg) once subscription
+//     enforcement moves to api-gateway/stx_alert_subscriptions
 import { Test, TestingModule } from '@nestjs/testing';
 import { DataSource } from 'typeorm';
 import { NotificationRouterService } from './notification-router.service';

@@ -6,17 +6,22 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { School } from '../../auth/entities/school.entity';
-import { SchoolBoard } from '../../auth/entities/school-board.entity';
+import { School } from '../../organization/entities/school.entity';
+import { Board } from '../../organization/entities/board.entity';
 import { CreateSchoolDto, UpdateSchoolDto } from '../dto/create-school.dto';
 import { CreateBoardDto, UpdateBoardDto } from '../dto/create-board.dto';
 import { Role } from '@sbtm/common';
+import type { AnchorKind } from '../../auth/entities/user.entity';
 
+/**
+ * v2 caller context — anchor-based (anchorKind + anchorId) replaces v1 schoolId/boardId
+ * on the JWT user.
+ */
 export interface CallerContext {
   id: string;
   role: Role;
-  schoolId?: string;
-  boardId?: string;
+  anchorKind?: AnchorKind | null;
+  anchorId?: string | null;
 }
 
 @Injectable()
@@ -26,32 +31,39 @@ export class OrganizationGatewayService {
   constructor(
     @InjectRepository(School)
     private readonly schoolRepository: Repository<School>,
-    @InjectRepository(SchoolBoard)
-    private readonly boardRepository: Repository<SchoolBoard>,
+    @InjectRepository(Board)
+    private readonly boardRepository: Repository<Board>,
   ) {}
 
   // ---------- Board CRUD ----------
 
-  async listBoards(): Promise<SchoolBoard[]> {
-    return this.boardRepository.find({
-      relations: ['schools'],
-      order: { name: 'ASC' },
-    });
+  async listBoards(): Promise<Board[]> {
+    // TODO(phase-B): boards now belong to STAs; consider scoping by caller's STA anchor.
+    return this.boardRepository.find({ order: { name: 'ASC' } });
   }
 
-  async getBoard(id: string, caller: CallerContext): Promise<SchoolBoard> {
+  async getBoard(id: string, caller: CallerContext): Promise<Board> {
     const board = await this.boardRepository.findOne({ where: { id } });
     if (!board) throw new NotFoundException('Board not found');
 
-    if (caller.role === Role.BOARD_ADMIN && caller.boardId !== id) {
+    if (
+      caller.role === Role.BOARD_ADMIN &&
+      caller.anchorKind === 'board' &&
+      caller.anchorId !== id
+    ) {
       throw new ForbiddenException('You can only view your own board');
     }
 
     return board;
   }
 
-  async createBoard(dto: CreateBoardDto): Promise<SchoolBoard> {
-    const board = this.boardRepository.create({ name: dto.name });
+  async createBoard(dto: CreateBoardDto): Promise<Board> {
+    const board = this.boardRepository.create({
+      name: dto.name,
+      staId: dto.staId,
+      shortCode: dto.shortCode,
+      region: dto.region ?? null,
+    });
     const saved = await this.boardRepository.save(board);
 
     this.logger.log('Board created', {
@@ -62,7 +74,7 @@ export class OrganizationGatewayService {
     return saved;
   }
 
-  async updateBoard(id: string, dto: UpdateBoardDto): Promise<SchoolBoard> {
+  async updateBoard(id: string, dto: UpdateBoardDto): Promise<Board> {
     const board = await this.boardRepository.findOne({ where: { id } });
     if (!board) throw new NotFoundException('Board not found');
 
@@ -81,19 +93,21 @@ export class OrganizationGatewayService {
   }
 
   async deleteBoard(id: string): Promise<{ message: string }> {
-    const board = await this.boardRepository.findOne({
-      where: { id },
-      relations: ['schools'],
-    });
+    const board = await this.boardRepository.findOne({ where: { id } });
     if (!board) throw new NotFoundException('Board not found');
 
-    if (board.schools && board.schools.length > 0) {
+    // TODO(phase-B): re-add school-count guard via a JOIN against stx_schools once we
+    // re-introduce the inverse relation.
+    const schoolCount = await this.schoolRepository.count({
+      where: { boardId: id },
+    });
+    if (schoolCount > 0) {
       throw new ForbiddenException(
         'Cannot delete a board that still has schools. Remove all schools first.',
       );
     }
 
-    await this.boardRepository.remove(board);
+    await this.boardRepository.softRemove(board);
 
     this.logger.log('Board deleted', {
       boardId: id,
@@ -110,26 +124,26 @@ export class OrganizationGatewayService {
     boardId?: string,
   ): Promise<School[]> {
     if (caller.role === Role.SCHOOL_ADMIN) {
-      if (!caller.schoolId) {
-        throw new ForbiddenException('User is not associated with a school');
+      if (caller.anchorKind !== 'school' || !caller.anchorId) {
+        throw new ForbiddenException('User is not anchored to a school');
       }
       return this.schoolRepository.find({
-        where: { id: caller.schoolId },
+        where: { id: caller.anchorId },
         order: { name: 'ASC' },
       });
     }
 
     if (caller.role === Role.BOARD_ADMIN) {
-      if (!caller.boardId) {
-        throw new ForbiddenException('User is not associated with a board');
+      if (caller.anchorKind !== 'board' || !caller.anchorId) {
+        throw new ForbiddenException('User is not anchored to a board');
       }
       return this.schoolRepository.find({
-        where: { boardId: caller.boardId },
+        where: { boardId: caller.anchorId },
         order: { name: 'ASC' },
       });
     }
 
-    // OSTA_ADMIN / SUPER_ADMIN: return all, optionally filtered by boardId
+    // STA_ADMIN / SUPER_ADMIN: return all, optionally filtered by boardId
     const where = boardId ? { boardId } : {};
     return this.schoolRepository.find({ where, order: { name: 'ASC' } });
   }
@@ -147,16 +161,14 @@ export class OrganizationGatewayService {
     dto: CreateSchoolDto,
     caller: CallerContext,
   ): Promise<School> {
-    // BOARD_ADMIN can only create schools within their own board
     if (caller.role === Role.BOARD_ADMIN) {
-      if (dto.boardId !== caller.boardId) {
+      if (caller.anchorKind !== 'board' || dto.boardId !== caller.anchorId) {
         throw new ForbiddenException(
           'You can only create schools within your own board',
         );
       }
     }
 
-    // Verify board exists
     const board = await this.boardRepository.findOne({
       where: { id: dto.boardId },
     });
@@ -202,21 +214,23 @@ export class OrganizationGatewayService {
     return saved;
   }
 
+  /**
+   * TODO(phase-B): the v2 stx_schools table has no `status` column; soft-delete via
+   * deletedAt is the closest equivalent. Kept as a no-op alias until a UI need re-emerges.
+   */
   async deactivateSchool(id: string, caller: CallerContext): Promise<School> {
     const school = await this.schoolRepository.findOne({ where: { id } });
     if (!school) throw new NotFoundException('School not found');
-
     this.assertSchoolScope(school, caller);
 
-    school.status = 'INACTIVE';
-    const saved = await this.schoolRepository.save(school);
+    await this.schoolRepository.softRemove(school);
 
-    this.logger.log('School deactivated', {
-      schoolId: saved.id,
+    this.logger.log('School deactivated (soft-removed)', {
+      schoolId: school.id,
       action: 'school.deactivated',
     });
 
-    return saved;
+    return school;
   }
 
   async deleteSchool(
@@ -228,7 +242,7 @@ export class OrganizationGatewayService {
 
     this.assertSchoolScope(school, caller);
 
-    await this.schoolRepository.remove(school);
+    await this.schoolRepository.softRemove(school);
 
     this.logger.log('School deleted', {
       schoolId: id,
@@ -241,22 +255,18 @@ export class OrganizationGatewayService {
   // ---------- private helpers ----------
 
   private assertSchoolScope(school: School, caller: CallerContext): void {
-    if (
-      caller.role === Role.SUPER_ADMIN ||
-      caller.role === Role.OSTA_ADMIN ||
-      caller.role === Role.ADMIN
-    ) {
+    if (caller.role === Role.SUPER_ADMIN || caller.role === Role.STA_ADMIN) {
       return;
     }
 
     if (caller.role === Role.SCHOOL_ADMIN) {
-      if (school.id !== caller.schoolId) {
+      if (caller.anchorKind !== 'school' || school.id !== caller.anchorId) {
         throw new ForbiddenException('You can only manage your own school');
       }
     }
 
     if (caller.role === Role.BOARD_ADMIN) {
-      if (school.boardId !== caller.boardId) {
+      if (caller.anchorKind !== 'board' || school.boardId !== caller.anchorId) {
         throw new ForbiddenException(
           'You can only manage schools within your board',
         );

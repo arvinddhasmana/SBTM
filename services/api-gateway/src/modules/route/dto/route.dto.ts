@@ -8,13 +8,33 @@ import {
   IsInt,
   Min,
   Matches,
+  IsNumber,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { RouteDirection } from '../../auth/entities/route.entity';
+import { DirectionKind } from '../../gtfs/entities/route.entity';
 
 /** Matches any 8-4-4-4-12 hex UUID pattern regardless of RFC 4122 variant bits. */
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * v2 shape point (GTFS shapes.txt-aligned). Replaces v1 `polyline: string` (Google encoded).
+ */
+export class ShapePointDto {
+  @IsNumber()
+  lat: number;
+
+  @IsNumber()
+  lon: number;
+
+  @IsInt()
+  @Min(0)
+  sequence: number;
+
+  @IsOptional()
+  @IsNumber()
+  distTraveled?: number;
+}
 
 export class CreateRouteStopDto {
   @IsOptional()
@@ -42,9 +62,9 @@ export class CreateRouteDto {
   @IsNotEmpty()
   name: string;
 
-  @IsEnum(RouteDirection)
+  @IsEnum(DirectionKind)
   @IsNotEmpty()
-  direction: RouteDirection;
+  direction: DirectionKind;
 
   @Matches(UUID_PATTERN, { message: 'vehicleId must be a UUID' })
   @IsOptional()
@@ -66,9 +86,20 @@ export class CreateRouteDto {
   @IsOptional()
   estimatedDuration?: number;
 
+  /**
+   * v2: write shape geometry as an array of ShapePointDto rather than a Google-encoded
+   * `polyline`. RouteService persists these rows into the `shapes` table keyed by shape_id.
+   */
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ShapePointDto)
+  @IsOptional()
+  shapePoints?: ShapePointDto[];
+
+  /** Alternatively, reference an existing shape by id (e.g. from a previous import). */
   @IsString()
   @IsOptional()
-  polyline?: string;
+  shapeId?: string;
 
   @IsArray()
   @ValidateNested({ each: true })
@@ -82,9 +113,9 @@ export class UpdateRouteDto {
   @IsOptional()
   name?: string;
 
-  @IsEnum(RouteDirection)
+  @IsEnum(DirectionKind)
   @IsOptional()
-  direction?: RouteDirection;
+  direction?: DirectionKind;
 
   @Matches(UUID_PATTERN, { message: 'vehicleId must be a UUID' })
   @IsOptional()
@@ -102,9 +133,15 @@ export class UpdateRouteDto {
   @IsOptional()
   estimatedDuration?: number;
 
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ShapePointDto)
+  @IsOptional()
+  shapePoints?: ShapePointDto[];
+
   @IsString()
   @IsOptional()
-  polyline?: string;
+  shapeId?: string;
 
   @IsArray()
   @ValidateNested({ each: true })

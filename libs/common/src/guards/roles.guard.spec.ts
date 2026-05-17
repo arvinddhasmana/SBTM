@@ -38,8 +38,8 @@ describe('RolesGuard', () => {
     expect(guard.canActivate(createMockContext(Role.SUPER_ADMIN))).toBe(true);
   });
 
-  it('should allow SUPER_ADMIN to access OSTA_ADMIN-required endpoints', () => {
-    reflector.getAllAndOverride.mockReturnValue([Role.OSTA_ADMIN]);
+  it('should allow SUPER_ADMIN to access STA_ADMIN-required endpoints', () => {
+    reflector.getAllAndOverride.mockReturnValue([Role.STA_ADMIN]);
     expect(guard.canActivate(createMockContext(Role.SUPER_ADMIN))).toBe(true);
   });
 
@@ -53,15 +53,15 @@ describe('RolesGuard', () => {
     expect(guard.canActivate(createMockContext(Role.SUPER_ADMIN))).toBe(true);
   });
 
-  // OSTA_ADMIN hierarchy
-  it('should allow OSTA_ADMIN to access BOARD_ADMIN-required endpoints', () => {
+  // STA_ADMIN hierarchy
+  it('should allow STA_ADMIN to access BOARD_ADMIN-required endpoints', () => {
     reflector.getAllAndOverride.mockReturnValue([Role.BOARD_ADMIN]);
-    expect(guard.canActivate(createMockContext(Role.OSTA_ADMIN))).toBe(true);
+    expect(guard.canActivate(createMockContext(Role.STA_ADMIN))).toBe(true);
   });
 
-  it('should deny OSTA_ADMIN from accessing SUPER_ADMIN-required endpoints', () => {
+  it('should deny STA_ADMIN from accessing SUPER_ADMIN-required endpoints', () => {
     reflector.getAllAndOverride.mockReturnValue([Role.SUPER_ADMIN]);
-    expect(guard.canActivate(createMockContext(Role.OSTA_ADMIN))).toBe(false);
+    expect(guard.canActivate(createMockContext(Role.STA_ADMIN))).toBe(false);
   });
 
   // BOARD_ADMIN hierarchy
@@ -70,8 +70,8 @@ describe('RolesGuard', () => {
     expect(guard.canActivate(createMockContext(Role.BOARD_ADMIN))).toBe(true);
   });
 
-  it('should deny BOARD_ADMIN from accessing OSTA_ADMIN-required endpoints', () => {
-    reflector.getAllAndOverride.mockReturnValue([Role.OSTA_ADMIN]);
+  it('should deny BOARD_ADMIN from accessing STA_ADMIN-required endpoints', () => {
+    reflector.getAllAndOverride.mockReturnValue([Role.STA_ADMIN]);
     expect(guard.canActivate(createMockContext(Role.BOARD_ADMIN))).toBe(false);
   });
 
@@ -107,16 +107,7 @@ describe('RolesGuard', () => {
     expect(guard.canActivate(createMockContext(Role.PARENT))).toBe(false);
   });
 
-  // SYSTEM role
-  it('should allow SYSTEM to access OSTA_ADMIN-required endpoints', () => {
-    reflector.getAllAndOverride.mockReturnValue([Role.OSTA_ADMIN]);
-    expect(guard.canActivate(createMockContext(Role.SYSTEM))).toBe(true);
-  });
-
-  it('should allow SYSTEM to access ADMIN-required endpoints', () => {
-    reflector.getAllAndOverride.mockReturnValue([Role.ADMIN]);
-    expect(guard.canActivate(createMockContext(Role.SYSTEM))).toBe(true);
-  });
+  // SYSTEM role removed in v2 — service-to-service calls now use an internal-token guard.
 
   // Multiple required roles
   it('should pass if user satisfies any of multiple required roles', () => {
@@ -138,8 +129,8 @@ describe('RolesGuard', () => {
   });
 
   it('should use ROLES_KEY when looking up metadata', () => {
-    reflector.getAllAndOverride.mockReturnValue([Role.ADMIN]);
-    const ctx = createMockContext(Role.ADMIN);
+    reflector.getAllAndOverride.mockReturnValue([Role.STA_ADMIN]);
+    const ctx = createMockContext(Role.STA_ADMIN);
     guard.canActivate(ctx);
     expect(reflector.getAllAndOverride).toHaveBeenCalledWith(
       ROLES_KEY,

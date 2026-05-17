@@ -1,16 +1,17 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { SchoolBoard } from '../auth/entities/school-board.entity';
-import { School } from '../auth/entities/school.entity';
+import { Board } from './entities/board.entity';
+import { School } from './entities/school.entity';
+import { Sta } from './entities/sta.entity';
 import { SchoolBoardService } from './school-board.service';
 import { SchoolBoardController } from './school-board.controller';
 import { SchoolService } from './school.service';
 import { SchoolController } from './school.controller';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([SchoolBoard, School])],
-    providers: [SchoolBoardService, SchoolService],
-    controllers: [SchoolBoardController, SchoolController],
-    exports: [SchoolBoardService, SchoolService],
+  imports: [TypeOrmModule.forFeature([Board, School, Sta])],
+  providers: [SchoolBoardService, SchoolService],
+  controllers: [SchoolBoardController, SchoolController],
+  exports: [SchoolBoardService, SchoolService, TypeOrmModule],
 })
-export class OrganizationModule { }
+export class OrganizationModule {}

@@ -4,24 +4,17 @@ import { ROLES_KEY, Role } from '../decorators/roles.decorator';
 
 /**
  * Role hierarchy: higher roles implicitly satisfy lower admin roles.
- * SUPER_ADMIN > OSTA_ADMIN > BOARD_ADMIN > SCHOOL_ADMIN.
- * DRIVER, PARENT, and SYSTEM are peer roles with no hierarchy.
+ * SUPER_ADMIN > STA_ADMIN > BOARD_ADMIN > SCHOOL_ADMIN.
+ * OPERATOR_ADMIN, DRIVER, and PARENT are peer roles with no hierarchy.
  */
 const ROLE_INCLUDES: Record<string, Role[]> = {
-  [Role.SUPER_ADMIN]: [
-    Role.SUPER_ADMIN,
-    Role.OSTA_ADMIN,
-    Role.ADMIN,
-    Role.BOARD_ADMIN,
-    Role.SCHOOL_ADMIN,
-  ],
-  [Role.OSTA_ADMIN]: [Role.OSTA_ADMIN, Role.ADMIN, Role.BOARD_ADMIN, Role.SCHOOL_ADMIN],
-  [Role.ADMIN]: [Role.ADMIN, Role.BOARD_ADMIN, Role.SCHOOL_ADMIN],
+  [Role.SUPER_ADMIN]: [Role.SUPER_ADMIN, Role.STA_ADMIN, Role.BOARD_ADMIN, Role.SCHOOL_ADMIN],
+  [Role.STA_ADMIN]: [Role.STA_ADMIN, Role.BOARD_ADMIN, Role.SCHOOL_ADMIN],
   [Role.BOARD_ADMIN]: [Role.BOARD_ADMIN, Role.SCHOOL_ADMIN],
   [Role.SCHOOL_ADMIN]: [Role.SCHOOL_ADMIN],
+  [Role.OPERATOR_ADMIN]: [Role.OPERATOR_ADMIN],
   [Role.DRIVER]: [Role.DRIVER],
   [Role.PARENT]: [Role.PARENT],
-  [Role.SYSTEM]: [Role.SYSTEM, Role.OSTA_ADMIN, Role.ADMIN],
 };
 
 @Injectable()

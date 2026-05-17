@@ -54,7 +54,7 @@ export class AlertsProcessor extends WorkerHost {
       case 'board-escalation':
         return this.handleBoardEscalation(job);
       case 'osta-escalation':
-        return this.handleOstaEscalation(job);
+        return this.handleStaEscalation(job);
       default:
         return { processed: true, recipientCount: 0 };
     }
@@ -160,7 +160,7 @@ export class AlertsProcessor extends WorkerHost {
     // Update status and record escalation timestamp.
     // escalationLevel=SCHOOL records that this alert is still within the school
     // tier of the escalation chain (auto-escalated to parents, not yet escalated
-    // to Board or OSTA admins). The board-escalation job will advance this to BOARD.
+    // to Board or STA admins). The board-escalation job will advance this to BOARD.
     alert.status = EmergencyAlertStatus.AUTO_ESCALATED;
     alert.autoEscalatedAt = new Date();
     alert.escalationLevel = AlertEscalationLevel.SCHOOL;
@@ -244,10 +244,10 @@ export class AlertsProcessor extends WorkerHost {
   }
 
   /**
-   * Handles the 15-minute OSTA Admin escalation for unacknowledged Tier 1 alerts.
+   * Handles the 15-minute STA Admin escalation for unacknowledged Tier 1 alerts.
    * State guard: only escalates if the alert is still PENDING_CONFIRMATION.
    */
-  private async handleOstaEscalation(
+  private async handleStaEscalation(
     job: Job,
   ): Promise<{ processed: boolean; recipientCount: number }> {
     const { alertId, schoolId } = job.data as {
@@ -270,7 +270,7 @@ export class AlertsProcessor extends WorkerHost {
       return { processed: false, recipientCount: 0 };
     }
 
-    // State guard: OSTA escalation only if still unacknowledged.
+    // State guard: STA escalation only if still unacknowledged.
     if (alert.status !== EmergencyAlertStatus.PENDING_CONFIRMATION) {
       this.logger.log(
         `osta-escalation: alert ${alertId} already handled (status=${alert.status}) — skipping`,
@@ -278,23 +278,23 @@ export class AlertsProcessor extends WorkerHost {
       return { processed: true, recipientCount: 0 };
     }
 
-    alert.escalationLevel = AlertEscalationLevel.OSTA;
+    alert.escalationLevel = AlertEscalationLevel.STA;
     await this.alertsRepo.save(alert);
 
-    await this.writeAuditLog(alertId, AlertAuditEventType.OSTA_ESCALATED, {
-      escalationLevel: AlertEscalationLevel.OSTA,
-      notes: 'Unacknowledged after 15 minutes — escalated to OSTA Admin',
+    await this.writeAuditLog(alertId, AlertAuditEventType.STA_ESCALATED, {
+      escalationLevel: AlertEscalationLevel.STA,
+      notes: 'Unacknowledged after 15 minutes — escalated to STA Admin',
     });
 
     await this.notificationsQueue.add('notification-request', {
-      eventType: 'EMERGENCY_OSTA_ESCALATION',
+      eventType: 'EMERGENCY_STA_ESCALATION',
       eventSourceId: alertId,
       schoolId,
-      escalationLevel: AlertEscalationLevel.OSTA,
+      escalationLevel: AlertEscalationLevel.STA,
     });
 
     this.logger.log(
-      `OSTA escalation triggered for alert ${alertId} (schoolId=${schoolId})`,
+      `STA escalation triggered for alert ${alertId} (schoolId=${schoolId})`,
     );
     return { processed: true, recipientCount: 1 };
   }
@@ -326,9 +326,7 @@ export class AlertsProcessor extends WorkerHost {
       const rows: ParentRow[] = await this.dataSource.query(query, params);
       return rows ?? [];
     } catch {
-      this.logger.warn(
-        `Could not query students table for routeId=${routeId}`,
-      );
+      this.logger.warn(`Could not query students table for routeId=${routeId}`);
       return [];
     }
   }

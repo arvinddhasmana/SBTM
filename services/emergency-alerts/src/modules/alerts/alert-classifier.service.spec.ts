@@ -8,7 +8,10 @@ describe('AlertClassifierService', () => {
   let service: AlertClassifierService;
 
   beforeEach(() => {
-    service = new AlertClassifierService();
+    const mockConfig = {
+      getEventTypeTierMapping: jest.fn().mockResolvedValue(null),
+    } as unknown as import('../config/alert-config.service').AlertConfigService;
+    service = new AlertClassifierService(mockConfig);
   });
 
   it('should be defined', () => {

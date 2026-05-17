@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS alert_escalation_chain (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   config_name VARCHAR(100) NOT NULL,
   sequence_order INTEGER NOT NULL CHECK (sequence_order >= 0),
-  escalation_level VARCHAR(50) NOT NULL CHECK (escalation_level IN ('SCHOOL', 'BOARD', 'OSTA')),
+  escalation_level VARCHAR(50) NOT NULL CHECK (escalation_level IN ('SCHOOL', 'BOARD', 'STA')),
   time_threshold_ms INTEGER NOT NULL CHECK (time_threshold_ms >= 0),
   notification_channels JSONB,
   is_active BOOLEAN DEFAULT true,
@@ -65,7 +65,7 @@ CREATE TABLE IF NOT EXISTS notification_routing_config (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tier VARCHAR(20) NOT NULL CHECK (tier IN ('TIER_1', 'TIER_2', 'TIER_3')),
   event_type VARCHAR(50),
-  recipient_role VARCHAR(50) NOT NULL CHECK (recipient_role IN ('SUPER_ADMIN', 'OSTA_ADMIN', 'BOARD_ADMIN', 'SCHOOL_ADMIN', 'DRIVER', 'PARENT', 'SYSTEM')),
+  recipient_role VARCHAR(50) NOT NULL CHECK (recipient_role IN ('SUPER_ADMIN', 'STA_ADMIN', 'BOARD_ADMIN', 'SCHOOL_ADMIN', 'DRIVER', 'PARENT', 'SYSTEM')),
   notification_timing VARCHAR(50) NOT NULL CHECK (notification_timing IN ('IMMEDIATE', 'AFTER_CONFIRMATION', 'ON_TIMEOUT', 'ON_ESCALATION')),
   channels JSONB NOT NULL,
   is_mandatory BOOLEAN DEFAULT false,
@@ -85,7 +85,7 @@ CREATE TABLE IF NOT EXISTS alert_workflow_config (
   action_name VARCHAR(50) NOT NULL CHECK (action_name IN ('CONFIRM', 'FALSE_ALARM', 'REQUEST_INFO', 'RESOLVE', 'STATUS_UPDATE')),
   allowed_for_tier VARCHAR(20) NOT NULL CHECK (allowed_for_tier IN ('TIER_1', 'TIER_2', 'TIER_3')),
   allowed_for_status VARCHAR(50) NOT NULL CHECK (allowed_for_status IN ('PENDING_CONFIRMATION', 'CONFIRMED', 'AUTO_ESCALATED', 'ACTIVE', 'RESOLVED', 'FALSE_ALARM')),
-  required_role VARCHAR(50) NOT NULL CHECK (required_role IN ('SUPER_ADMIN', 'OSTA_ADMIN', 'BOARD_ADMIN', 'SCHOOL_ADMIN', 'DRIVER', 'SYSTEM')),
+  required_role VARCHAR(50) NOT NULL CHECK (required_role IN ('SUPER_ADMIN', 'STA_ADMIN', 'BOARD_ADMIN', 'SCHOOL_ADMIN', 'DRIVER', 'SYSTEM')),
   requires_notes BOOLEAN DEFAULT false,
   status_transition VARCHAR(50),
   is_active BOOLEAN DEFAULT true,
@@ -172,7 +172,7 @@ INSERT INTO alert_escalation_chain (config_name, sequence_order, escalation_leve
 VALUES
   ('default-chain', 0, 'SCHOOL', 0, '["WEBSOCKET", "PUSH"]', true),
   ('default-chain', 1, 'BOARD', 300000, '["WEBSOCKET", "PUSH", "SMS"]', true),
-  ('default-chain', 2, 'OSTA', 900000, '["WEBSOCKET", "PUSH", "SMS", "EMAIL"]', true)
+  ('default-chain', 2, 'STA', 900000, '["WEBSOCKET", "PUSH", "SMS", "EMAIL"]', true)
 ON CONFLICT (config_name, sequence_order) DO NOTHING;
 
 -- Notification Routing Configuration
@@ -182,8 +182,8 @@ VALUES
   ('TIER_1', NULL, 'SCHOOL_ADMIN', 'IMMEDIATE', '["WEBSOCKET", "PUSH"]', true, true),
   -- Tier 1: Board Admin (informational copy)
   ('TIER_1', NULL, 'BOARD_ADMIN', 'IMMEDIATE', '["WEBSOCKET"]', false, true),
-  -- Tier 1: OSTA Admin (informational copy)
-  ('TIER_1', NULL, 'OSTA_ADMIN', 'IMMEDIATE', '["WEBSOCKET"]', false, true),
+  -- Tier 1: STA Admin (informational copy)
+  ('TIER_1', NULL, 'STA_ADMIN', 'IMMEDIATE', '["WEBSOCKET"]', false, true),
   -- Tier 1: Parents (after confirmation or timeout)
   ('TIER_1', NULL, 'PARENT', 'AFTER_CONFIRMATION', '["PUSH", "SMS"]', true, true),
   ('TIER_1', NULL, 'PARENT', 'ON_TIMEOUT', '["PUSH", "SMS"]', true, true),

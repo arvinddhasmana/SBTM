@@ -37,8 +37,8 @@ const FALLBACK_BOARD_ESCALATION_MS = parseInt(
   process.env.ALERT_BOARD_ESCALATION_MS ?? '300000',
   10,
 );
-const FALLBACK_OSTA_ESCALATION_MS = parseInt(
-  process.env.ALERT_OSTA_ESCALATION_MS ?? '900000',
+const FALLBACK_STA_ESCALATION_MS = parseInt(
+  process.env.ALERT_STA_ESCALATION_MS ?? '900000',
   10,
 );
 
@@ -141,7 +141,7 @@ export class AlertsService {
         );
       }
 
-      if (escalationTiming.ostaEscalationMs) {
+      if (escalationTiming.staEscalationMs) {
         await this.alertsQueue.add(
           'osta-escalation',
           {
@@ -149,7 +149,7 @@ export class AlertsService {
             routeId: savedAlert.routeId,
             schoolId: savedAlert.schoolId,
           },
-          { delay: escalationTiming.ostaEscalationMs },
+          { delay: escalationTiming.staEscalationMs },
         );
       }
     } else if (tier === AlertTier.TIER_2) {
@@ -433,7 +433,7 @@ export class AlertsService {
   private async getEscalationTiming(tier: string): Promise<{
     confirmationTimeoutMs: number | null;
     boardEscalationMs: number | null;
-    ostaEscalationMs: number | null;
+    staEscalationMs: number | null;
   }> {
     try {
       const timing = await this.configService.getEscalationTiming(tier);
@@ -447,7 +447,7 @@ export class AlertsService {
       return {
         confirmationTimeoutMs: FALLBACK_CONFIRMATION_TIMEOUT_MS,
         boardEscalationMs: FALLBACK_BOARD_ESCALATION_MS,
-        ostaEscalationMs: FALLBACK_OSTA_ESCALATION_MS,
+        staEscalationMs: FALLBACK_STA_ESCALATION_MS,
       };
     }
   }

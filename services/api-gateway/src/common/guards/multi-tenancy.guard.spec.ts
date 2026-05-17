@@ -26,8 +26,8 @@ describe('MultiTenancyGuard', () => {
     expect(guard).toBeDefined();
   });
 
-  it('should allow OSTA_ADMIN to access anything', () => {
-    const context = createMockContext({ role: Role.OSTA_ADMIN });
+  it('should allow STA_ADMIN to access anything', () => {
+    const context = createMockContext({ role: Role.STA_ADMIN });
     expect(guard.canActivate(context)).toBe(true);
   });
 

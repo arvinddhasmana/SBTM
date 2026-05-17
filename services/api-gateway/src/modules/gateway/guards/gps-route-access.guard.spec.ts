@@ -49,7 +49,7 @@ describe('GpsRouteAccessGuard', () => {
   });
 
   it('should return true for admin users (via checkRouteAccess passthrough)', () => {
-    const user = { role: Role.ADMIN };
+    const user = { role: Role.STA_ADMIN };
     // checkRouteAccess does not throw for admins
     const result = guard.canActivate(makeContext('ROUTE-ANY', user));
     expect(checkRouteAccess).toHaveBeenCalledWith('ROUTE-ANY', user);

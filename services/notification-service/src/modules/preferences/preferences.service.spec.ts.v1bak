@@ -1,3 +1,9 @@
+// TODO(phase-B): rewrite against stx_alert_subscriptions (via api-gateway).
+// This v1 spec was preserved for reference only. The NotificationPreference
+// entity and PreferencesService were removed during the SBTM v2 cutover.
+// Needs rewriting to cover: per-guardian/user channel subscription lookup,
+// default permissive behaviour, and EMERGENCY-always-on semantics once
+// subscription enforcement moves to the api-gateway.
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { PreferencesService } from './preferences.service';

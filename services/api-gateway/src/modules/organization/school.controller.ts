@@ -26,14 +26,25 @@ export class SchoolController {
   constructor(private readonly schoolService: SchoolService) {}
 
   @Get()
-  @Roles(Role.OSTA_ADMIN, Role.BOARD_ADMIN)
+  @Roles(Role.STA_ADMIN, Role.BOARD_ADMIN)
   async findAll(
     @Query('boardId') boardId?: string,
-    @Request() req?: { user: { boardId?: string; role: string } },
+    @Request()
+    req?: {
+      user: {
+        anchorKind?: string | null;
+        anchorId?: string | null;
+        role: string;
+      };
+    },
   ) {
-    // Board admins are restricted to their own board
-    if (req?.user?.role === Role.BOARD_ADMIN && req.user.boardId) {
-      return this.schoolService.findByBoard(req.user.boardId);
+    // Board admins are restricted to their own board (anchor scope)
+    if (
+      req?.user?.role === Role.BOARD_ADMIN &&
+      req.user.anchorKind === 'board' &&
+      req.user.anchorId
+    ) {
+      return this.schoolService.findByBoard(req.user.anchorId);
     }
     if (boardId) {
       return this.schoolService.findByBoard(boardId);
@@ -42,13 +53,13 @@ export class SchoolController {
   }
 
   @Get(':id')
-  @Roles(Role.OSTA_ADMIN, Role.BOARD_ADMIN, Role.SCHOOL_ADMIN)
+  @Roles(Role.STA_ADMIN, Role.BOARD_ADMIN, Role.SCHOOL_ADMIN)
   async findOne(@Param('id') id: string) {
     return this.schoolService.findOne(id);
   }
 
   @Post()
-  @Roles(Role.OSTA_ADMIN, Role.BOARD_ADMIN)
+  @Roles(Role.STA_ADMIN, Role.BOARD_ADMIN)
   async create(
     @Body() dto: CreateSchoolDto,
     @Request() req: { user: { boardId?: string; role: string } },
@@ -61,13 +72,13 @@ export class SchoolController {
   }
 
   @Patch(':id')
-  @Roles(Role.OSTA_ADMIN, Role.BOARD_ADMIN)
+  @Roles(Role.STA_ADMIN, Role.BOARD_ADMIN)
   async update(@Param('id') id: string, @Body() dto: UpdateSchoolDto) {
     return this.schoolService.update(id, dto);
   }
 
   @Delete(':id')
-  @Roles(Role.OSTA_ADMIN)
+  @Roles(Role.STA_ADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(@Param('id') id: string) {
     await this.schoolService.remove(id);

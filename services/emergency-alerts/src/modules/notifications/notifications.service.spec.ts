@@ -62,11 +62,7 @@ describe('NotificationsService', () => {
   });
 
   it('should call sendPushNotification and log the attempt', async () => {
-    await service.sendPushNotification(
-      'alert-456',
-      'parent-uuid',
-      'Test message',
-    );
+    await service.sendPushNotification('alert-456', 'parent-uuid');
     expect(mockLogRepo.save).toHaveBeenCalled();
   });
 

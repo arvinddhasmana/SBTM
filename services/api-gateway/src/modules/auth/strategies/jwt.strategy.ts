@@ -55,11 +55,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       id: user.id,
       email: user.email,
       role: user.role,
-      driverId: user.driverId,
-      childRouteIds: user.childRouteIds,
-      assignedRouteIds: user.assignedRouteIds,
-      schoolId: user.schoolId,
-      boardId: user.boardId,
+      anchorKind: user.anchorKind,
+      anchorId: user.anchorId,
+      preferredLanguage: user.preferredLanguage,
     };
   }
 }

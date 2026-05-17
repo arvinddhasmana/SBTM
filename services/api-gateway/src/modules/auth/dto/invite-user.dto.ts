@@ -1,15 +1,26 @@
-import { IsEmail, IsEnum, IsOptional, IsUUID } from 'class-validator';
+import { IsEmail, IsEnum, IsOptional, IsUUID, IsIn } from 'class-validator';
 import { Role } from '@sbtm/common';
+import type { AnchorKind } from '../entities/user.entity';
 
 const INVITABLE_ROLES = [
-  Role.OSTA_ADMIN,
+  Role.STA_ADMIN,
   Role.BOARD_ADMIN,
   Role.SCHOOL_ADMIN,
+  Role.OPERATOR_ADMIN,
   Role.DRIVER,
   Role.PARENT,
 ] as const;
 
 type InvitableRole = (typeof INVITABLE_ROLES)[number];
+
+const ANCHOR_KINDS: AnchorKind[] = [
+  'sta',
+  'board',
+  'school',
+  'operator',
+  'driver',
+  'parent',
+];
 
 export class InviteUserDto {
   @IsEmail()
@@ -18,13 +29,16 @@ export class InviteUserDto {
   @IsEnum(INVITABLE_ROLES)
   role: InvitableRole;
 
-  /** Required for SCHOOL_ADMIN, DRIVER, PARENT roles — scoped from authenticated user for BOARD_ADMIN. */
+  /**
+   * v2 anchor scoping — required for non-SUPER roles. The anchor kind must agree with
+   * the role being invited (e.g. SCHOOL_ADMIN ⇒ kind 'school', OPERATOR_ADMIN ⇒ 'operator').
+   * ProvisioningService validates this server-side as well.
+   */
   @IsOptional()
-  @IsUUID()
-  schoolId?: string;
+  @IsIn(ANCHOR_KINDS)
+  anchorKind?: AnchorKind;
 
-  /** Required only for BOARD_ADMIN role; OSTA_ADMIN sets this explicitly. */
   @IsOptional()
   @IsUUID()
-  boardId?: string;
+  anchorId?: string;
 }

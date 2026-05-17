@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { NotificationProcessor } from './notification.processor';
 import { NotificationRouterService } from './notification-router.service';
-import { PreferencesModule } from '../preferences/preferences.module';
 import { TokensModule } from '../tokens/tokens.module';
 import { DeliveryModule } from '../delivery/delivery.module';
 import { ChannelsModule } from '../channels/channels.module';
@@ -18,7 +17,6 @@ import { ChannelsModule } from '../channels/channels.module';
         removeOnFail: { age: 86400 },
       },
     }),
-    PreferencesModule,
     TokensModule,
     DeliveryModule,
     ChannelsModule,

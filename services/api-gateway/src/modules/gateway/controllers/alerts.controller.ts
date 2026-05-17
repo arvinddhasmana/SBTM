@@ -18,7 +18,7 @@ import {
 } from '../services/alerts.gateway.service';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard, Roles, Role } from '@sbtm/common';
-import { School } from '../../auth/entities/school.entity';
+import { School } from '../../organization/entities/school.entity';
 
 @Controller()
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -50,7 +50,7 @@ export class AlertsController {
   }
 
   @Patch('alerts/:id/resolve')
-  @Roles(Role.OSTA_ADMIN, Role.ADMIN, Role.SCHOOL_ADMIN)
+  @Roles(Role.SUPER_ADMIN, Role.STA_ADMIN, Role.BOARD_ADMIN, Role.SCHOOL_ADMIN)
   async resolveAlert(
     @Param('id') id: string,
     @Request() req: { user: any },
@@ -65,7 +65,7 @@ export class AlertsController {
   }
 
   @Patch('alerts/:id/confirm')
-  @Roles(Role.OSTA_ADMIN, Role.ADMIN, Role.SCHOOL_ADMIN, Role.BOARD_ADMIN)
+  @Roles(Role.SUPER_ADMIN, Role.STA_ADMIN, Role.BOARD_ADMIN, Role.SCHOOL_ADMIN)
   async confirmAlert(
     @Param('id') id: string,
     @Request() req: { user: any },
@@ -79,7 +79,7 @@ export class AlertsController {
   }
 
   @Patch('alerts/:id/false-alarm')
-  @Roles(Role.OSTA_ADMIN, Role.ADMIN, Role.SCHOOL_ADMIN, Role.BOARD_ADMIN)
+  @Roles(Role.SUPER_ADMIN, Role.STA_ADMIN, Role.BOARD_ADMIN, Role.SCHOOL_ADMIN)
   async falseAlarmAlert(
     @Param('id') id: string,
     @Request() req: { user: any },
@@ -94,7 +94,7 @@ export class AlertsController {
   }
 
   @Patch('alerts/:id/request-info')
-  @Roles(Role.OSTA_ADMIN, Role.ADMIN, Role.SCHOOL_ADMIN, Role.BOARD_ADMIN)
+  @Roles(Role.SUPER_ADMIN, Role.STA_ADMIN, Role.BOARD_ADMIN, Role.SCHOOL_ADMIN)
   async requestInfoAlert(
     @Param('id') id: string,
     @Request() req: { user: any },
@@ -109,10 +109,10 @@ export class AlertsController {
 
   @Patch('alerts/:id/status-update')
   @Roles(
-    Role.OSTA_ADMIN,
-    Role.ADMIN,
-    Role.SCHOOL_ADMIN,
+    Role.SUPER_ADMIN,
+    Role.STA_ADMIN,
     Role.BOARD_ADMIN,
+    Role.SCHOOL_ADMIN,
     Role.DRIVER,
   )
   async addStatusUpdate(
@@ -138,16 +138,21 @@ export class AlertsController {
   @Roles(Role.PARENT)
   async getParentAlertHistory(@Request() req: { user: any }) {
     const user = req.user;
-    const routeIds: string[] = user.childRouteIds || [];
+    // TODO(phase-B): derive a parent's child route IDs server-side via the
+    // Guardian → StudentGuardian → Student → Route joins. v1 cached this list on the JWT
+    // (`user.childRouteIds`); v2 has no such claim, so until the resolver is wired we
+    // return an empty history.
+    void user;
+    const routeIds: string[] = [];
     return this.alertsGatewayService.getAlertsByRoutes(routeIds);
   }
 
   @Get('alerts/:id/audit-trail')
   @Roles(
-    Role.OSTA_ADMIN,
-    Role.ADMIN,
-    Role.SCHOOL_ADMIN,
+    Role.SUPER_ADMIN,
+    Role.STA_ADMIN,
     Role.BOARD_ADMIN,
+    Role.SCHOOL_ADMIN,
     Role.DRIVER,
     Role.PARENT,
   )
@@ -161,13 +166,18 @@ export class AlertsController {
   }
 
   @Post('emergency-events')
-  @Roles(Role.DRIVER, Role.ADMIN)
+  @Roles(Role.DRIVER, Role.SUPER_ADMIN, Role.STA_ADMIN)
   async createEmergencyEvent(
     @Body() dto: CreateEmergencyEventDto,
     @Request() req: { user: any },
   ) {
     const user = req.user;
-    const schoolId = user.schoolId;
+    // TODO(phase-B): a DRIVER's school context now flows from the run they're on, not
+    // a JWT claim. For now we allow the client to pass schoolId in the DTO, falling back
+    // to user.anchorId when the driver is school-anchored (rare).
+    const schoolId: string | undefined =
+      (dto as any).schoolId ??
+      (user.anchorKind === 'school' ? user.anchorId : undefined);
     // Support both flat lat/lng and nested location object from older clients
     const location = (dto as any).location as
       | { lat: number; lng: number }
@@ -183,7 +193,9 @@ export class AlertsController {
       lat,
       lng,
       schoolId,
-      driverId: dto.driverId || user.driverId || user.id,
+      driverId:
+        dto.driverId ??
+        (user.anchorKind === 'driver' ? user.anchorId : user.id),
     });
   }
 
@@ -192,17 +204,13 @@ export class AlertsController {
   /**
    * Enforce alert ownership: SCHOOL_ADMIN can only act on alerts from their own school,
    * BOARD_ADMIN can only act on alerts from schools within their board.
-   * OSTA_ADMIN, SUPER_ADMIN, and ADMIN bypass this check (via role hierarchy).
+   * SUPER_ADMIN and STA_ADMIN bypass this check (via role hierarchy).
    */
   private async assertAlertOwnership(
     alertId: string,
     user: any,
   ): Promise<void> {
-    if (
-      user.role === Role.SUPER_ADMIN ||
-      user.role === Role.OSTA_ADMIN ||
-      user.role === Role.ADMIN
-    ) {
+    if (user.role === Role.SUPER_ADMIN || user.role === Role.STA_ADMIN) {
       return;
     }
 
@@ -210,7 +218,9 @@ export class AlertsController {
     if (!alert) return;
 
     if (user.role === Role.SCHOOL_ADMIN) {
-      if (alert.schoolId && alert.schoolId !== user.schoolId) {
+      const userSchoolId =
+        user.anchorKind === 'school' ? user.anchorId : undefined;
+      if (alert.schoolId && alert.schoolId !== userSchoolId) {
         throw new ForbiddenException(
           'You can only manage alerts from your own school',
         );
@@ -218,11 +228,13 @@ export class AlertsController {
     }
 
     if (user.role === Role.BOARD_ADMIN) {
+      const userBoardId =
+        user.anchorKind === 'board' ? user.anchorId : undefined;
       if (alert.schoolId) {
         const school = await this.schoolRepository.findOne({
           where: { id: alert.schoolId },
         });
-        if (school && school.boardId !== user.boardId) {
+        if (school && school.boardId !== userBoardId) {
           throw new ForbiddenException(
             'You can only manage alerts from schools within your board',
           );
@@ -235,14 +247,14 @@ export class AlertsController {
     user: any,
     requestedSchoolId?: string,
   ): string | undefined {
-    if (
-      user.role === Role.SUPER_ADMIN ||
-      user.role === Role.OSTA_ADMIN ||
-      user.role === Role.ADMIN
-    ) {
+    if (user.role === Role.SUPER_ADMIN || user.role === Role.STA_ADMIN) {
       return requestedSchoolId;
     }
-    // SCHOOL_ADMIN and BOARD_ADMIN scoped to own context
-    return user.schoolId || requestedSchoolId;
+    // SCHOOL_ADMIN scoped to own anchor; BOARD_ADMIN falls back to the requested filter
+    // (board→school resolution is a TODO).
+    if (user.anchorKind === 'school' && user.anchorId) {
+      return user.anchorId;
+    }
+    return requestedSchoolId;
   }
 }

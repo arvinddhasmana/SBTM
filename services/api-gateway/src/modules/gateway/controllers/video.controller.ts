@@ -28,7 +28,7 @@ export class VideoController {
   ) {
     const user = req.user;
     const schoolId =
-      user.role === Role.OSTA_ADMIN ? query.schoolId : user.schoolId;
+      user.role === Role.STA_ADMIN ? query.schoolId : user.schoolId;
     return this.videoGatewayService.getVideoEvents({ ...query, schoolId });
   }
 
@@ -38,7 +38,8 @@ export class VideoController {
   }
 
   @Post()
-  @Roles(Role.DRIVER, Role.ADMIN, Role.SYSTEM)
+  // TODO(phase-B): replace with internal-service guard
+  @Roles(Role.DRIVER, Role.SUPER_ADMIN, Role.STA_ADMIN)
   async createVideoEvent(
     @Body() dto: CreateVideoEventDto,
     @Request() req: { user: any },

@@ -21,7 +21,7 @@ export interface AlertDto {
   tier?: 'TIER_1' | 'TIER_2' | 'TIER_3';
   confirmedBy?: string;
   confirmedAt?: string;
-  escalationLevel?: 'SCHOOL' | 'BOARD' | 'OSTA';
+  escalationLevel?: 'SCHOOL' | 'BOARD' | 'STA';
 }
 
 export interface CreateEmergencyEventDto {

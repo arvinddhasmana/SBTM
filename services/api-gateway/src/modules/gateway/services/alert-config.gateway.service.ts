@@ -16,7 +16,7 @@ export interface EscalationConfigDto {
   tier: string;
   confirmationTimeoutMs?: number;
   boardEscalationMs?: number;
-  ostaEscalationMs?: number;
+  staEscalationMs?: number;
   isDefault?: boolean;
   isActive?: boolean;
 }
@@ -159,7 +159,10 @@ export class AlertConfigGatewayService {
     return this.httpClient.put<EscalationConfigDto>(url, dto, { params });
   }
 
-  async deleteEscalationConfig(tier: string, actorUserId?: string): Promise<void> {
+  async deleteEscalationConfig(
+    tier: string,
+    actorUserId?: string,
+  ): Promise<void> {
     const url = `${this.alertsServiceUrl}/api/v1/alert-config/escalation-timing/${tier}`;
     const params = actorUserId ? { actorUserId } : undefined;
     return this.httpClient.delete(url, { params });
@@ -202,7 +205,9 @@ export class AlertConfigGatewayService {
   ): Promise<NotificationRoutingConfigDto> {
     const url = `${this.alertsServiceUrl}/api/v1/alert-config/notification-routing`;
     const params = actorUserId ? { actorUserId } : undefined;
-    return this.httpClient.post<NotificationRoutingConfigDto>(url, dto, { params });
+    return this.httpClient.post<NotificationRoutingConfigDto>(url, dto, {
+      params,
+    });
   }
 
   async updateNotificationRoutingConfig(
@@ -212,7 +217,9 @@ export class AlertConfigGatewayService {
   ): Promise<NotificationRoutingConfigDto> {
     const url = `${this.alertsServiceUrl}/api/v1/alert-config/notification-routing/${id}`;
     const params = actorUserId ? { actorUserId } : undefined;
-    return this.httpClient.put<NotificationRoutingConfigDto>(url, dto, { params });
+    return this.httpClient.put<NotificationRoutingConfigDto>(url, dto, {
+      params,
+    });
   }
 
   async deleteNotificationRoutingConfig(

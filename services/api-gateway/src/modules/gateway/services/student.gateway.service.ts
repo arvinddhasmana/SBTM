@@ -22,11 +22,7 @@ export class StudentGatewayService {
     // Enforce parent scoping
     if (user.role === Role.PARENT) {
       query.parent_id = user.id;
-    } else if (
-      user.role === Role.ADMIN ||
-      user.role === Role.OSTA_ADMIN ||
-      user.role === Role.SUPER_ADMIN
-    ) {
+    } else if (user.role === Role.STA_ADMIN || user.role === Role.SUPER_ADMIN) {
       // Unrestricted access - see all students
     } else if (user.role === Role.BOARD_ADMIN) {
       // Board admin: if they have a schoolId use it, otherwise show all (board-scoped via UI)
@@ -102,8 +98,7 @@ export class StudentGatewayService {
           );
         }
       } else if (
-        user.role !== Role.ADMIN &&
-        user.role !== Role.OSTA_ADMIN &&
+        user.role !== Role.STA_ADMIN &&
         user.role !== Role.SUPER_ADMIN &&
         user.role !== Role.BOARD_ADMIN
       ) {
@@ -158,8 +153,7 @@ export class StudentGatewayService {
         throw new ForbiddenException('You do not have access to this student');
       }
     } else if (
-      user.role !== Role.ADMIN &&
-      user.role !== Role.OSTA_ADMIN &&
+      user.role !== Role.STA_ADMIN &&
       user.role !== Role.SUPER_ADMIN &&
       user.role !== Role.BOARD_ADMIN
     ) {
@@ -183,7 +177,11 @@ export class StudentGatewayService {
   }
 
   async enrollStudent(dto: any, user: any) {
-    if (user.role !== Role.ADMIN && user.role !== Role.SCHOOL_ADMIN) {
+    if (
+      user.role !== Role.STA_ADMIN &&
+      user.role !== Role.SUPER_ADMIN &&
+      user.role !== Role.SCHOOL_ADMIN
+    ) {
       throw new ForbiddenException('Insufficient permissions');
     }
 
@@ -208,7 +206,11 @@ export class StudentGatewayService {
   }
 
   async bulkImport(file: any, schoolId: string, user: any) {
-    if (user.role !== Role.SCHOOL_ADMIN && user.role !== Role.ADMIN) {
+    if (
+      user.role !== Role.SCHOOL_ADMIN &&
+      user.role !== Role.STA_ADMIN &&
+      user.role !== Role.SUPER_ADMIN
+    ) {
       throw new ForbiddenException('Insufficient permissions');
     }
 

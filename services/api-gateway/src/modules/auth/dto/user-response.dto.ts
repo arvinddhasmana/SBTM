@@ -1,4 +1,5 @@
 import { Role } from '@sbtm/common';
+import type { AnchorKind } from '../entities/user.entity';
 
 export class UserResponseDto {
   id: string;
@@ -6,11 +7,10 @@ export class UserResponseDto {
   role: Role;
   firstName?: string;
   lastName?: string;
-  driverId?: string;
-  childRouteIds?: string[];
-  assignedRouteIds?: string[];
-  schoolId?: string;
-  boardId?: string;
+  /** v2 anchor scope (replaces v1 schoolId/boardId/driverId on the user object). */
+  anchorKind: AnchorKind | null;
+  anchorId: string | null;
+  preferredLanguage: string;
 }
 
 export class LoginResponseDto {

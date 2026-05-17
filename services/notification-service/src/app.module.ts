@@ -5,7 +5,6 @@ import { BullModule } from '@nestjs/bullmq';
 import { JwtModule } from '@nestjs/jwt';
 import { LoggerModule } from 'nestjs-pino';
 import { TokensModule } from './modules/tokens/tokens.module';
-import { PreferencesModule } from './modules/preferences/preferences.module';
 import { DeliveryModule } from './modules/delivery/delivery.module';
 import { ChannelsModule } from './modules/channels/channels.module';
 import { RouterModule } from './modules/router/router.module';
@@ -55,7 +54,6 @@ import { createRedisConnectionOptions } from '@sbtm/common';
       inject: [ConfigService],
     }),
     TokensModule,
-    PreferencesModule,
     DeliveryModule,
     ChannelsModule,
     RouterModule,

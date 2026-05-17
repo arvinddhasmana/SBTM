@@ -1,167 +1,65 @@
-import {
-  Injectable,
-  NotFoundException,
-  ForbiddenException,
-  Logger,
-} from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { FleetAssignment } from '../entities/fleet-assignment.entity';
+import { Injectable, Logger, NotImplementedException } from '@nestjs/common';
 import { ProposeFleetAssignmentDto } from '../dto/propose-fleet-assignment.dto';
 import { Role } from '@sbtm/common';
+import type { AnchorKind } from '../../auth/entities/user.entity';
 
 interface CallerContext {
   id: string;
   role: Role;
-  schoolId?: string;
-  boardId?: string;
+  anchorKind?: AnchorKind | null;
+  anchorId?: string | null;
 }
 
+/**
+ * v2 stub: the v1 `fleet_assignments` table is gone. Vehicle/Driver assignment now
+ * lives on `stx_runs` (each Run row pins a vehicle + driver to a route+trip+service_date).
+ * The propose/accept/reject workflow has not yet been re-modelled — we expect a
+ * `stx_run_proposals` table in a follow-up, but for Phase B we throw 501.
+ *
+ * TODO(phase-B): design the run-proposal lifecycle (operator proposes → school accepts)
+ * and re-implement these methods against `stx_runs` + `stx_run_proposals`.
+ */
 @Injectable()
 export class FleetAssignmentGatewayService {
   private readonly logger = new Logger(FleetAssignmentGatewayService.name);
 
-  constructor(
-    @InjectRepository(FleetAssignment)
-    private readonly assignmentRepository: Repository<FleetAssignment>,
-  ) {}
+  constructor() {}
 
-  /**
-   * Propose a new fleet assignment. Called by OSTA_ADMIN.
-   */
   async propose(
-    dto: ProposeFleetAssignmentDto,
+    _dto: ProposeFleetAssignmentDto,
     caller: CallerContext,
-  ): Promise<FleetAssignment> {
-    const assignment = this.assignmentRepository.create({
-      schoolId: dto.schoolId,
-      routeId: dto.routeId,
-      vehicleId: dto.vehicleId,
-      driverId: dto.driverId,
-      effectiveDate: dto.effectiveDate,
-      status: 'PROPOSED',
-      proposedByUserId: caller.id,
-      reviewNotes: dto.notes,
-    });
-
-    const saved = await this.assignmentRepository.save(assignment);
-
-    this.logger.log('Fleet assignment proposed', {
-      assignmentId: saved.id,
-      schoolId: saved.schoolId,
-      action: 'fleet-assignment.proposed',
-    });
-
-    return saved;
+  ): Promise<never> {
+    this.logger.debug('propose stub hit by caller', { id: caller.id });
+    throw new NotImplementedException(
+      'Fleet-assignment proposal is not yet wired to the v2 Run model',
+    );
   }
 
-  /**
-   * List fleet assignments. OSTA_ADMIN sees all; SCHOOL_ADMIN sees own school.
-   */
-  async list(caller: CallerContext): Promise<FleetAssignment[]> {
-    if (caller.role === Role.SCHOOL_ADMIN) {
-      if (!caller.schoolId) {
-        throw new ForbiddenException('User is not associated with a school');
-      }
-      return this.assignmentRepository.find({
-        where: { schoolId: caller.schoolId },
-        order: { createdAt: 'DESC' },
-      });
-    }
-
-    // OSTA_ADMIN / SUPER_ADMIN / BOARD_ADMIN sees all
-    return this.assignmentRepository.find({ order: { createdAt: 'DESC' } });
+  async list(_caller: CallerContext): Promise<never> {
+    throw new NotImplementedException(
+      'Fleet-assignment listing is not yet wired to the v2 Run model',
+    );
   }
 
-  /**
-   * Get a single fleet assignment by ID.
-   */
-  async getById(id: string): Promise<FleetAssignment> {
-    const assignment = await this.assignmentRepository.findOne({
-      where: { id },
-    });
-    if (!assignment) {
-      throw new NotFoundException('Fleet assignment not found');
-    }
-    return assignment;
+  async getById(_id: string): Promise<never> {
+    throw new NotImplementedException(
+      'Fleet-assignment lookup is not yet wired to the v2 Run model',
+    );
   }
 
-  /**
-   * Accept a proposed fleet assignment. Caller must be SCHOOL_ADMIN with matching schoolId.
-   */
-  async accept(id: string, caller: CallerContext): Promise<FleetAssignment> {
-    const assignment = await this.assignmentRepository.findOne({
-      where: { id },
-    });
-    if (!assignment) {
-      throw new NotFoundException('Fleet assignment not found');
-    }
-
-    if (
-      caller.role === Role.SCHOOL_ADMIN &&
-      assignment.schoolId !== caller.schoolId
-    ) {
-      throw new ForbiddenException(
-        'You can only accept assignments for your own school',
-      );
-    }
-
-    assignment.status = 'ACCEPTED';
-    assignment.reviewedByUserId = caller.id;
-    assignment.reviewedAt = new Date();
-
-    const saved = await this.assignmentRepository.save(assignment);
-
-    this.logger.log('Fleet assignment accepted', {
-      assignmentId: saved.id,
-      schoolId: saved.schoolId,
-      callerId: caller.id,
-      action: 'fleet-assignment.accepted',
-    });
-
-    return saved;
+  async accept(_id: string, _caller: CallerContext): Promise<never> {
+    throw new NotImplementedException(
+      'Fleet-assignment accept is not yet wired to the v2 Run model',
+    );
   }
 
-  /**
-   * Reject a proposed fleet assignment. Caller must be SCHOOL_ADMIN with matching schoolId.
-   */
   async reject(
-    id: string,
-    caller: CallerContext,
-    notes?: string,
-  ): Promise<FleetAssignment> {
-    const assignment = await this.assignmentRepository.findOne({
-      where: { id },
-    });
-    if (!assignment) {
-      throw new NotFoundException('Fleet assignment not found');
-    }
-
-    if (
-      caller.role === Role.SCHOOL_ADMIN &&
-      assignment.schoolId !== caller.schoolId
-    ) {
-      throw new ForbiddenException(
-        'You can only reject assignments for your own school',
-      );
-    }
-
-    assignment.status = 'REJECTED';
-    assignment.reviewedByUserId = caller.id;
-    assignment.reviewedAt = new Date();
-    if (notes) {
-      assignment.reviewNotes = notes;
-    }
-
-    const saved = await this.assignmentRepository.save(assignment);
-
-    this.logger.log('Fleet assignment rejected', {
-      assignmentId: saved.id,
-      schoolId: saved.schoolId,
-      callerId: caller.id,
-      action: 'fleet-assignment.rejected',
-    });
-
-    return saved;
+    _id: string,
+    _caller: CallerContext,
+    _notes?: string,
+  ): Promise<never> {
+    throw new NotImplementedException(
+      'Fleet-assignment reject is not yet wired to the v2 Run model',
+    );
   }
 }

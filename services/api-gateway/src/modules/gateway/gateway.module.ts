@@ -35,25 +35,16 @@ import { FleetAssignmentController } from './controllers/fleet-assignment.contro
 import { DocumentController } from './controllers/document.controller';
 import { SystemSettingsController } from './controllers/system-settings.controller';
 import { PageVisibilityController } from './controllers/page-visibility.controller';
-import { School } from '../auth/entities/school.entity';
-import { SchoolBoard } from '../auth/entities/school-board.entity';
-import { Route } from '../auth/entities/route.entity';
-import { StudentAbsence } from './entities/student-absence.entity';
-import { FleetAssignment } from './entities/fleet-assignment.entity';
+import { School } from '../organization/entities/school.entity';
+import { Board } from '../organization/entities/board.entity';
+import { Route } from '../gtfs/entities/route.entity';
 import { PageVisibility } from './entities/page-visibility.entity';
 import { PageVisibilityService } from './services/page-visibility.service';
 
 @Module({
   imports: [
     CommonModule,
-    TypeOrmModule.forFeature([
-      School,
-      SchoolBoard,
-      Route,
-      StudentAbsence,
-      FleetAssignment,
-      PageVisibility,
-    ]),
+    TypeOrmModule.forFeature([School, Board, Route, PageVisibility]),
   ],
   controllers: [
     GpsController,

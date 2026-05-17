@@ -24,31 +24,31 @@ export class SchoolBoardController {
   constructor(private readonly boardService: SchoolBoardService) {}
 
   @Get()
-  @Roles(Role.OSTA_ADMIN)
+  @Roles(Role.STA_ADMIN)
   async findAll() {
     return this.boardService.findAll();
   }
 
   @Get(':id')
-  @Roles(Role.OSTA_ADMIN, Role.BOARD_ADMIN)
+  @Roles(Role.STA_ADMIN, Role.BOARD_ADMIN)
   async findOne(@Param('id') id: string) {
     return this.boardService.findOne(id);
   }
 
   @Post()
-  @Roles(Role.OSTA_ADMIN)
+  @Roles(Role.STA_ADMIN)
   async create(@Body() dto: CreateBoardDto) {
     return this.boardService.create(dto);
   }
 
   @Patch(':id')
-  @Roles(Role.OSTA_ADMIN)
+  @Roles(Role.STA_ADMIN)
   async update(@Param('id') id: string, @Body() dto: UpdateBoardDto) {
     return this.boardService.update(id, dto);
   }
 
   @Delete(':id')
-  @Roles(Role.OSTA_ADMIN)
+  @Roles(Role.STA_ADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(@Param('id') id: string) {
     await this.boardService.remove(id);

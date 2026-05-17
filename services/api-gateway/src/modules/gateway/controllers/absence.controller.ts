@@ -45,10 +45,10 @@ export class AbsenceController {
 
   /**
    * Get absences for a given date (driver & admin view). FR-ABS-002
-   * Query param: date (YYYY-MM-DD), schoolId (optional, required for board/OSTA admins)
+   * Query param: date (YYYY-MM-DD), schoolId (optional, required for board/STA admins)
    */
   @Get()
-  @Roles(Role.DRIVER, Role.SCHOOL_ADMIN, Role.BOARD_ADMIN, Role.OSTA_ADMIN)
+  @Roles(Role.DRIVER, Role.SCHOOL_ADMIN, Role.BOARD_ADMIN, Role.STA_ADMIN)
   async listAbsences(
     @Query('date') date: string,
     @Query('schoolId') schoolId: string | undefined,
@@ -61,7 +61,7 @@ export class AbsenceController {
    * Admin dashboard overview of all absences (optional date filter).
    */
   @Get('admin')
-  @Roles(Role.SCHOOL_ADMIN, Role.BOARD_ADMIN, Role.OSTA_ADMIN)
+  @Roles(Role.SCHOOL_ADMIN, Role.BOARD_ADMIN, Role.STA_ADMIN)
   async adminAbsences(
     @Query('date') date: string | undefined,
     @Query('schoolId') schoolId: string | undefined,
@@ -99,7 +99,7 @@ export class AbsenceController {
    * Cancel / delete an absence report (parent cancels their own; admins can remove any in scope).
    */
   @Delete(':id')
-  @Roles(Role.PARENT, Role.SCHOOL_ADMIN, Role.BOARD_ADMIN, Role.OSTA_ADMIN)
+  @Roles(Role.PARENT, Role.SCHOOL_ADMIN, Role.BOARD_ADMIN, Role.STA_ADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
   async cancelAbsence(
     @Param('id') id: string,

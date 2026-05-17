@@ -15,13 +15,14 @@ import { InviteUserDto } from './dto/invite-user.dto';
 import { ActivateAccountDto } from './dto/activate-account.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RolesGuard, Roles, Role } from '@sbtm/common';
+import type { AnchorKind } from './entities/user.entity';
 
 interface AuthenticatedRequest {
   user: {
     id: string;
     role: Role;
-    schoolId?: string;
-    boardId?: string;
+    anchorKind?: AnchorKind | null;
+    anchorId?: string | null;
   };
 }
 
@@ -35,7 +36,7 @@ export class ProvisioningController {
    */
   @Post('invite')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.OSTA_ADMIN, Role.BOARD_ADMIN, Role.SCHOOL_ADMIN)
+  @Roles(Role.STA_ADMIN, Role.BOARD_ADMIN, Role.SCHOOL_ADMIN)
   async invite(
     @Body() dto: InviteUserDto,
     @Request() req: AuthenticatedRequest,
@@ -58,7 +59,7 @@ export class ProvisioningController {
    */
   @Get('users')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.OSTA_ADMIN, Role.BOARD_ADMIN, Role.SCHOOL_ADMIN)
+  @Roles(Role.STA_ADMIN, Role.BOARD_ADMIN, Role.SCHOOL_ADMIN)
   async listUsers(@Request() req: AuthenticatedRequest) {
     return this.provisioningService.listUsers(req.user);
   }
@@ -68,7 +69,7 @@ export class ProvisioningController {
    */
   @Patch('users/:userId/deactivate')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.OSTA_ADMIN, Role.BOARD_ADMIN, Role.SCHOOL_ADMIN)
+  @Roles(Role.STA_ADMIN, Role.BOARD_ADMIN, Role.SCHOOL_ADMIN)
   async deactivate(
     @Param('userId') userId: string,
     @Request() req: AuthenticatedRequest,
@@ -81,7 +82,7 @@ export class ProvisioningController {
    */
   @Patch('users/:userId/reactivate')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.OSTA_ADMIN, Role.BOARD_ADMIN, Role.SCHOOL_ADMIN)
+  @Roles(Role.STA_ADMIN, Role.BOARD_ADMIN, Role.SCHOOL_ADMIN)
   async reactivate(
     @Param('userId') userId: string,
     @Request() req: AuthenticatedRequest,

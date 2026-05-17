@@ -17,6 +17,8 @@ export class DeviceToken {
   id: string;
 
   @Column({ name: 'user_id', type: 'uuid' })
+  // TODO(phase-B): FK re-key to v2 users (consider stx_guardians.id for parent
+  // recipients) once subscription ownership in stx_alert_subscriptions stabilises.
   userId: string;
 
   @Column({ name: 'school_id', type: 'uuid' })

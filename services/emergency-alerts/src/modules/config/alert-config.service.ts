@@ -24,7 +24,7 @@ import {
 export interface EscalationTiming {
   confirmationTimeoutMs: number | null;
   boardEscalationMs: number | null;
-  ostaEscalationMs: number | null;
+  staEscalationMs: number | null;
 }
 
 export interface EscalationStep {
@@ -166,14 +166,14 @@ export class AlertConfigService implements OnModuleInit {
         return {
           confirmationTimeoutMs: tier === 'TIER_1' ? 120000 : null,
           boardEscalationMs: tier === 'TIER_1' ? 300000 : null,
-          ostaEscalationMs: tier === 'TIER_1' ? 900000 : null,
+          staEscalationMs: tier === 'TIER_1' ? 900000 : null,
         };
       }
 
       const timingValue = {
         confirmationTimeoutMs: config.confirmationTimeoutMs,
         boardEscalationMs: config.boardEscalationMs,
-        ostaEscalationMs: config.ostaEscalationMs,
+        staEscalationMs: config.staEscalationMs,
       };
       this.escalationConfigCache.set(tier, timingValue);
       return timingValue;
@@ -368,7 +368,7 @@ export class AlertConfigService implements OnModuleInit {
       this.escalationConfigCache.set(config.tier, {
         confirmationTimeoutMs: config.confirmationTimeoutMs,
         boardEscalationMs: config.boardEscalationMs,
-        ostaEscalationMs: config.ostaEscalationMs,
+        staEscalationMs: config.staEscalationMs,
       });
     });
 

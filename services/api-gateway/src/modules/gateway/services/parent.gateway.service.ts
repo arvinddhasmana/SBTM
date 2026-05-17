@@ -5,11 +5,19 @@ import { Repository, In, DataSource } from 'typeorm';
 import { Observable, Subject, finalize } from 'rxjs';
 import type { MessageEvent } from '@nestjs/common';
 import { HttpClientService } from '../../../common/utils/http-client.service';
-import { School } from '../../auth/entities/school.entity';
-import { Route } from '../../auth/entities/route.entity';
+import { School } from '../../organization/entities/school.entity';
+import { Route } from '../../gtfs/entities/route.entity';
+import type { AnchorKind } from '../../auth/entities/user.entity';
 
 interface ParentUser {
   id: string;
+  anchorKind?: AnchorKind | null;
+  anchorId?: string | null;
+  /**
+   * TODO(phase-B): drop this once getNotificationsForParent resolves the parent's child
+   * schools via Guardian → StudentGuardian → Student → School joins instead of trusting
+   * the legacy JWT claim.
+   */
   schoolId?: string;
 }
 
@@ -98,11 +106,11 @@ export class ParentGatewayService {
       ? await this.schoolRepository.findBy({ id: In(schoolIds) })
       : [];
     const routes = routeIds.length
-      ? await this.routeRepository.findBy({ id: In(routeIds) })
+      ? await this.routeRepository.findBy({ routeId: In(routeIds) })
       : [];
 
     const schoolMap = new Map(schools.map((s) => [s.id, s]));
-    const routeMap = new Map(routes.map((r) => [r.id, r]));
+    const routeMap = new Map(routes.map((r) => [r.routeId, r]));
 
     const studentIds = students.map((s) => s.id);
     const statusMap = await this.getStudentStatuses(studentIds);
@@ -113,9 +121,11 @@ export class ParentGatewayService {
       const routeId = amRouteId || pmRouteId;
       const amRoute = amRouteId ? routeMap.get(amRouteId) : undefined;
       const pmRoute = pmRouteId ? routeMap.get(pmRouteId) : undefined;
-      const route = amRoute || pmRoute;
       const school = schoolMap.get(student.school_id);
       const name = `${student.first_name} ${student.last_name}`.trim();
+
+      const routeDisplayName = (r: Route | undefined): string | undefined =>
+        r ? (r.routeShortName ?? r.routeLongName ?? r.routeId) : undefined;
 
       return {
         id: student.id,
@@ -124,11 +134,12 @@ export class ParentGatewayService {
         routeId,
         amRouteId,
         pmRouteId,
-        amRouteName: amRoute?.name,
-        pmRouteName: pmRoute?.name,
+        amRouteName: routeDisplayName(amRoute),
+        pmRouteName: routeDisplayName(pmRoute),
         amStopId: student.am_stop_id || undefined,
         pmStopId: student.pm_stop_id || undefined,
-        vehicleId: route?.vehicleId,
+        // TODO(phase-B): vehicle assignment moved to stx_runs; resolve via today's run.
+        vehicleId: undefined,
         status: statusMap.get(student.id) || ('unknown' as const),
         avatarUrl: this.getKidAvatarUrl(student.id),
       };

@@ -15,7 +15,7 @@ jest.mock('bcrypt');
 describe('ProvisioningService', () => {
   let service: ProvisioningService;
 
-  const mockOstaAdmin = { id: 'osta-1', role: Role.OSTA_ADMIN };
+  const mockOstaAdmin = { id: 'osta-1', role: Role.STA_ADMIN };
   const mockBoardAdmin = {
     id: 'board-admin-1',
     role: Role.BOARD_ADMIN,
@@ -56,7 +56,7 @@ describe('ProvisioningService', () => {
   });
 
   describe('inviteUser', () => {
-    it('creates invitation for PARENT role by OSTA_ADMIN', async () => {
+    it('creates invitation for PARENT role by STA_ADMIN', async () => {
       mockRepo.findOne.mockResolvedValue(null);
       mockRepo.create.mockReturnValue({
         id: 'new-user-1',
@@ -192,7 +192,7 @@ describe('ProvisioningService', () => {
   });
 
   describe('listUsers - tenant isolation', () => {
-    it('OSTA_ADMIN gets all users', async () => {
+    it('STA_ADMIN gets all users', async () => {
       mockRepo.find.mockResolvedValue([{ id: 'u-1' }, { id: 'u-2' }]);
       const result = await service.listUsers(mockOstaAdmin);
       expect(mockRepo.find).toHaveBeenCalledWith();
@@ -224,7 +224,7 @@ describe('ProvisioningService', () => {
   });
 
   describe('deactivateUser', () => {
-    it('OSTA_ADMIN can deactivate any user', async () => {
+    it('STA_ADMIN can deactivate any user', async () => {
       const target = {
         id: 'target-1',
         isActive: true,

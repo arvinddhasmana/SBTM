@@ -22,6 +22,18 @@ import { RolesGuard } from '@sbtm/common';
 import { Roles, Role } from '@sbtm/common';
 import { MultiTenancyGuard } from '../../common/guards/multi-tenancy.guard';
 
+/**
+ * v2 helper: derive the school scope from the JWT-attached user. SCHOOL_ADMIN's anchor
+ * IS the school. For other roles, the school must be passed as a query param.
+ * TODO(phase-B): widen to handle BOARD/STA admins fetching across multiple schools.
+ */
+function resolveSchoolId(req: any): string {
+  if (req.user?.anchorKind === 'school' && req.user.anchorId) {
+    return req.user.anchorId;
+  }
+  return req.query?.schoolId ?? '';
+}
+
 @Controller('routes')
 @UseGuards(JwtAuthGuard, RolesGuard, MultiTenancyGuard)
 export class RouteController {
@@ -31,14 +43,14 @@ export class RouteController {
   ) {}
 
   @Post()
-  @Roles(Role.SCHOOL_ADMIN, Role.OSTA_ADMIN)
+  @Roles(Role.SCHOOL_ADMIN, Role.STA_ADMIN)
   create(@Body() createRouteDto: CreateRouteDto) {
     return this.routeService.create(createRouteDto);
   }
 
   @Get()
   findAll(@Req() req: any) {
-    const schoolId = req.user.schoolId;
+    const schoolId = resolveSchoolId(req);
     return this.routeService.findAll(schoolId);
   }
 
@@ -47,7 +59,7 @@ export class RouteController {
     if (id.startsWith('ROUTE-')) {
       return res.redirect(`/api/v1/routes/reference/${id}`);
     }
-    const schoolId = req.user.schoolId;
+    const schoolId = resolveSchoolId(req);
     this.routeService
       .findOne(id, schoolId)
       .then((data) => res.json(data))
@@ -58,31 +70,31 @@ export class RouteController {
   }
 
   @Patch(':id')
-  @Roles(Role.SCHOOL_ADMIN, Role.OSTA_ADMIN)
+  @Roles(Role.SCHOOL_ADMIN, Role.STA_ADMIN)
   update(
     @Param('id') id: string,
     @Req() req: any,
     @Body() updateRouteDto: UpdateRouteDto,
   ) {
-    const schoolId = req.user.schoolId;
+    const schoolId = resolveSchoolId(req);
     return this.routeService.update(id, schoolId, updateRouteDto);
   }
 
   @Delete(':id')
-  @Roles(Role.SCHOOL_ADMIN, Role.OSTA_ADMIN)
+  @Roles(Role.SCHOOL_ADMIN, Role.STA_ADMIN)
   remove(@Param('id') id: string, @Req() req: any) {
-    const schoolId = req.user.schoolId;
+    const schoolId = resolveSchoolId(req);
     return this.routeService.remove(id, schoolId);
   }
 
   @Post('optimize')
-  @Roles(Role.SCHOOL_ADMIN, Role.OSTA_ADMIN)
+  @Roles(Role.SCHOOL_ADMIN, Role.STA_ADMIN)
   optimize(@Body() stops: CreateRouteStopDto[]) {
     return this.optimizationService.optimizeStops(stops);
   }
 
   @Post('snap-to-road')
-  @Roles(Role.SCHOOL_ADMIN, Role.OSTA_ADMIN, Role.DRIVER)
+  @Roles(Role.SCHOOL_ADMIN, Role.STA_ADMIN, Role.DRIVER)
   snapToRoad(@Body() waypoints: { lat: number; lng: number }[]) {
     return this.optimizationService.snapToRoad(waypoints);
   }

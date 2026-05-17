@@ -35,13 +35,13 @@ export class OrganizationController {
   // ---------- Boards ----------
 
   @Get('boards')
-  @Roles(Role.OSTA_ADMIN)
+  @Roles(Role.STA_ADMIN)
   async listBoards() {
     return this.organizationService.listBoards();
   }
 
   @Get('boards/:id')
-  @Roles(Role.OSTA_ADMIN, Role.BOARD_ADMIN)
+  @Roles(Role.STA_ADMIN, Role.BOARD_ADMIN)
   async getBoard(
     @Param('id') id: string,
     @Request() req: AuthenticatedRequest,
@@ -50,19 +50,19 @@ export class OrganizationController {
   }
 
   @Post('boards')
-  @Roles(Role.OSTA_ADMIN)
+  @Roles(Role.STA_ADMIN)
   async createBoard(@Body() dto: CreateBoardDto) {
     return this.organizationService.createBoard(dto);
   }
 
   @Patch('boards/:id')
-  @Roles(Role.OSTA_ADMIN)
+  @Roles(Role.STA_ADMIN)
   async updateBoard(@Param('id') id: string, @Body() dto: UpdateBoardDto) {
     return this.organizationService.updateBoard(id, dto);
   }
 
   @Delete('boards/:id')
-  @Roles(Role.OSTA_ADMIN)
+  @Roles(Role.STA_ADMIN)
   async deleteBoard(@Param('id') id: string) {
     return this.organizationService.deleteBoard(id);
   }
@@ -70,7 +70,7 @@ export class OrganizationController {
   // ---------- Schools ----------
 
   @Get('schools')
-  @Roles(Role.OSTA_ADMIN, Role.BOARD_ADMIN, Role.SCHOOL_ADMIN)
+  @Roles(Role.STA_ADMIN, Role.BOARD_ADMIN, Role.SCHOOL_ADMIN)
   async listSchools(
     @Query('boardId') boardId: string | undefined,
     @Request() req: AuthenticatedRequest,
@@ -79,7 +79,7 @@ export class OrganizationController {
   }
 
   @Get('schools/:id')
-  @Roles(Role.OSTA_ADMIN, Role.BOARD_ADMIN, Role.SCHOOL_ADMIN)
+  @Roles(Role.STA_ADMIN, Role.BOARD_ADMIN, Role.SCHOOL_ADMIN)
   async getSchool(
     @Param('id') id: string,
     @Request() req: AuthenticatedRequest,
@@ -88,7 +88,7 @@ export class OrganizationController {
   }
 
   @Post('schools')
-  @Roles(Role.OSTA_ADMIN, Role.BOARD_ADMIN)
+  @Roles(Role.STA_ADMIN, Role.BOARD_ADMIN)
   async createSchool(
     @Body() dto: CreateSchoolDto,
     @Request() req: AuthenticatedRequest,
@@ -97,7 +97,7 @@ export class OrganizationController {
   }
 
   @Patch('schools/:id')
-  @Roles(Role.OSTA_ADMIN, Role.BOARD_ADMIN)
+  @Roles(Role.STA_ADMIN, Role.BOARD_ADMIN)
   async updateSchool(
     @Param('id') id: string,
     @Body() dto: UpdateSchoolDto,
@@ -107,7 +107,7 @@ export class OrganizationController {
   }
 
   @Patch('schools/:id/deactivate')
-  @Roles(Role.OSTA_ADMIN, Role.BOARD_ADMIN)
+  @Roles(Role.STA_ADMIN, Role.BOARD_ADMIN)
   async deactivateSchool(
     @Param('id') id: string,
     @Request() req: AuthenticatedRequest,
@@ -116,7 +116,7 @@ export class OrganizationController {
   }
 
   @Delete('schools/:id')
-  @Roles(Role.OSTA_ADMIN)
+  @Roles(Role.STA_ADMIN)
   async deleteSchool(
     @Param('id') id: string,
     @Request() req: AuthenticatedRequest,

@@ -30,7 +30,7 @@ export class CreateEscalationConfigDto {
   @Min(300000)
   @Max(3600000)
   @IsOptional()
-  ostaEscalationMs?: number;
+  staEscalationMs?: number;
 
   @IsBoolean()
   @IsOptional()
@@ -54,7 +54,7 @@ export class UpdateEscalationConfigDto {
   @Min(300000)
   @Max(3600000)
   @IsOptional()
-  ostaEscalationMs?: number;
+  staEscalationMs?: number;
 
   @IsBoolean()
   @IsOptional()

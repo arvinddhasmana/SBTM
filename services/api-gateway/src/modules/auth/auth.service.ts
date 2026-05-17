@@ -3,114 +3,115 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { User } from './entities/user.entity';
+import { User, AnchorKind } from './entities/user.entity';
 import { LoginDto } from './dto/login.dto';
 import { LoginResponseDto, UserResponseDto } from './dto/user-response.dto';
 
 export interface JwtPayload {
-    sub: string;
-    email: string;
-    role: string;
-    schoolId?: string;
-    boardId?: string;
+  sub: string;
+  email: string;
+  role: string;
+  anchorKind?: AnchorKind | null;
+  anchorId?: string | null;
 }
 
 @Injectable()
 export class AuthService {
-    constructor(
-        @InjectRepository(User)
-        private readonly userRepository: Repository<User>,
-        private readonly jwtService: JwtService,
-    ) { }
+  constructor(
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
+    private readonly jwtService: JwtService,
+  ) {}
 
-    async login(loginDto: LoginDto): Promise<LoginResponseDto> {
-        const user = await this.userRepository.findOne({
-            where: { email: loginDto.email },
-        });
+  async login(loginDto: LoginDto): Promise<LoginResponseDto> {
+    const user = await this.userRepository.findOne({
+      where: { email: loginDto.email },
+    });
 
-        if (!user) {
-            throw new UnauthorizedException('Invalid credentials');
-        }
-
-        if (!user.isActive) {
-            throw new UnauthorizedException('Invalid credentials');
-        }
-
-        if (!user.passwordHash) {
-            throw new UnauthorizedException('Account not yet activated');
-        }
-
-        const isPasswordValid = await bcrypt.compare(loginDto.password, user.passwordHash);
-
-        if (!isPasswordValid) {
-            throw new UnauthorizedException('Invalid credentials');
-        }
-
-        const payload: JwtPayload = {
-            sub: user.id,
-            email: user.email,
-            role: user.role,
-            schoolId: user.schoolId,
-            boardId: user.boardId,
-        };
-
-        const accessToken = this.jwtService.sign(payload);
-
-        return {
-            accessToken,
-            user: this.toUserResponse(user),
-        };
+    if (!user) {
+      throw new UnauthorizedException('Invalid credentials');
     }
 
-    async validateUser(payload: JwtPayload): Promise<User | null> {
-        return this.userRepository.findOne({
-            where: { id: payload.sub, isActive: true },
-        });
+    if (!user.isActive) {
+      throw new UnauthorizedException('Invalid credentials');
     }
 
-    async getProfile(userId: string): Promise<UserResponseDto> {
-        const user = await this.userRepository.findOne({
-            where: { id: userId },
-        });
-
-        if (!user) {
-            throw new UnauthorizedException('User not found');
-        }
-
-        return this.toUserResponse(user);
+    if (!user.passwordHash) {
+      throw new UnauthorizedException('Account not yet activated');
     }
 
-    async createUser(
-        email: string,
-        password: string,
-        role: string,
-        additionalData?: Partial<User>,
-    ): Promise<User> {
-        const passwordHash = await bcrypt.hash(password, 10);
+    const isPasswordValid = await bcrypt.compare(
+      loginDto.password,
+      user.passwordHash,
+    );
 
-        const user = this.userRepository.create({
-            email,
-            passwordHash,
-            role: role as User['role'],
-            isActive: true,
-            ...additionalData,
-        });
-
-        return this.userRepository.save(user);
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Invalid credentials');
     }
 
-    private toUserResponse(user: User): UserResponseDto {
-        return {
-            id: user.id,
-            email: user.email,
-            role: user.role,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            driverId: user.driverId,
-            childRouteIds: user.childRouteIds,
-            assignedRouteIds: user.assignedRouteIds,
-            schoolId: user.schoolId,
-            boardId: user.boardId,
-        };
+    const payload: JwtPayload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+      anchorKind: user.anchorKind,
+      anchorId: user.anchorId,
+    };
+
+    const accessToken = this.jwtService.sign(payload);
+
+    return {
+      accessToken,
+      user: this.toUserResponse(user),
+    };
+  }
+
+  async validateUser(payload: JwtPayload): Promise<User | null> {
+    return this.userRepository.findOne({
+      where: { id: payload.sub, isActive: true },
+    });
+  }
+
+  async getProfile(userId: string): Promise<UserResponseDto> {
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('User not found');
     }
+
+    return this.toUserResponse(user);
+  }
+
+  async createUser(
+    email: string,
+    password: string,
+    role: string,
+    additionalData?: Partial<User>,
+  ): Promise<User> {
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    const user = this.userRepository.create({
+      email,
+      passwordHash,
+      role: role as User['role'],
+      isActive: true,
+      ...additionalData,
+    });
+
+    return this.userRepository.save(user);
+  }
+
+  private toUserResponse(user: User): UserResponseDto {
+    return {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      anchorKind: user.anchorKind,
+      anchorId: user.anchorId,
+      preferredLanguage: user.preferredLanguage,
+    };
+  }
 }

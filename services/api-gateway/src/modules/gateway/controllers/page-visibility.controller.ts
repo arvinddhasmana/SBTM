@@ -50,7 +50,7 @@ export class PageVisibilityController {
    * All admin roles may read — each user's sidebar uses this to filter nav items.
    */
   @Get()
-  @Roles(Role.SUPER_ADMIN, Role.OSTA_ADMIN, Role.BOARD_ADMIN, Role.SCHOOL_ADMIN)
+  @Roles(Role.SUPER_ADMIN, Role.STA_ADMIN, Role.BOARD_ADMIN, Role.SCHOOL_ADMIN)
   async findAll() {
     return this.pageVisibilityService.findAll();
   }

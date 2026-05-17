@@ -2,13 +2,15 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { FleetService } from './fleet.service';
 import { FleetController } from './fleet.controller';
-import { Vehicle } from '../auth/entities/vehicle.entity';
-import { Route } from '../auth/entities/route.entity';
+import { Vehicle } from './entities/vehicle.entity';
+import { Run } from './entities/run.entity';
+import { Driver } from './entities/driver.entity';
+import { Operator } from './entities/operator.entity';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([Vehicle, Route])],
-    providers: [FleetService],
-    controllers: [FleetController],
-    exports: [FleetService],
+  imports: [TypeOrmModule.forFeature([Vehicle, Run, Driver, Operator])],
+  providers: [FleetService],
+  controllers: [FleetController],
+  exports: [FleetService, TypeOrmModule],
 })
-export class FleetModule { }
+export class FleetModule {}

@@ -33,7 +33,7 @@ describe('OrganizationGatewayService', () => {
 
   const ostaAdminCaller = {
     id: 'osta-admin-1',
-    role: Role.OSTA_ADMIN,
+    role: Role.STA_ADMIN,
   };
 
   const boardAdminCaller = {

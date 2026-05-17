@@ -24,7 +24,7 @@ export class CreateWorkflowConfigDto {
 
   @IsEnum([
     'SUPER_ADMIN',
-    'OSTA_ADMIN',
+    'STA_ADMIN',
     'BOARD_ADMIN',
     'SCHOOL_ADMIN',
     'DRIVER',

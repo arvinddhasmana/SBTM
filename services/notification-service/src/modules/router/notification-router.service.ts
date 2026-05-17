@@ -1,6 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { DataSource } from 'typeorm';
-import { PreferencesService } from '../preferences/preferences.service';
 import { TokensService } from '../tokens/tokens.service';
 import { DeliveryLogService } from '../delivery/delivery-log.service';
 import { FcmAdapter } from '../channels/fcm/fcm.adapter';
@@ -27,7 +26,6 @@ export class NotificationRouterService {
   private readonly logger = new Logger(NotificationRouterService.name);
 
   constructor(
-    private readonly preferencesService: PreferencesService,
     private readonly tokensService: TokensService,
     private readonly deliveryLogService: DeliveryLogService,
     private readonly fcmAdapter: FcmAdapter,
@@ -36,13 +34,25 @@ export class NotificationRouterService {
     private readonly dataSource: DataSource,
   ) {}
 
-  async route(request: NotificationRequest): Promise<void> {
-    const { eventType, recipientUserId, schoolId } = request;
+  /**
+   * TODO(phase-B): wire to stx_alert_subscriptions via api-gateway.
+   * v1 NotificationPreference was removed in the SBTM v2 cutover; per-channel
+   * subscription enforcement now lives in stx_alert_subscriptions and will be
+   * resolved upstream by the api-gateway in a future slice. Until then this
+   * service defaults to permissive delivery (send on all channels) with the
+   * existing EMERGENCY-always-on / push-fallback-to-SMS behaviour.
+   */
+  private getEnabledChannels(eventType: string): string[] {
+    if (eventType === 'EMERGENCY') {
+      return ['PUSH', 'SMS'];
+    }
+    return ['PUSH', 'EMAIL', 'SMS'];
+  }
 
-    const channels = await this.preferencesService.getEnabledChannels(
-      recipientUserId,
-      eventType,
-    );
+  async route(request: NotificationRequest): Promise<void> {
+    const { eventType, recipientUserId } = request;
+
+    const channels = this.getEnabledChannels(eventType);
 
     this.logger.log(
       `Routing notification: eventType=${eventType}, userId=${recipientUserId}, channels=[${channels.join(',')}]`,

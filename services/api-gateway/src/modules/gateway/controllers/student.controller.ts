@@ -20,15 +20,15 @@ export class StudentController {
   constructor(private readonly studentGatewayService: StudentGatewayService) {}
 
   @Get()
-  @Roles(Role.ADMIN, Role.OSTA_ADMIN, Role.BOARD_ADMIN, Role.SCHOOL_ADMIN)
+  @Roles(Role.SUPER_ADMIN, Role.STA_ADMIN, Role.BOARD_ADMIN, Role.SCHOOL_ADMIN)
   findAll(@Query() query: any, @Request() req: any) {
     return this.studentGatewayService.getStudents(query, req.user);
   }
 
   @Get(':id')
   @Roles(
-    Role.ADMIN,
-    Role.OSTA_ADMIN,
+    Role.SUPER_ADMIN,
+    Role.STA_ADMIN,
     Role.BOARD_ADMIN,
     Role.SCHOOL_ADMIN,
     Role.PARENT,
@@ -38,13 +38,13 @@ export class StudentController {
   }
 
   @Post()
-  @Roles(Role.ADMIN, Role.SCHOOL_ADMIN)
+  @Roles(Role.SUPER_ADMIN, Role.STA_ADMIN, Role.BOARD_ADMIN, Role.SCHOOL_ADMIN)
   create(@Body() createStudentDto: any, @Request() req: any) {
     return this.studentGatewayService.enrollStudent(createStudentDto, req.user);
   }
 
   @Patch(':id')
-  @Roles(Role.ADMIN, Role.SCHOOL_ADMIN)
+  @Roles(Role.SUPER_ADMIN, Role.STA_ADMIN, Role.BOARD_ADMIN, Role.SCHOOL_ADMIN)
   update(
     @Param('id') id: string,
     @Body() updateStudentDto: any,
@@ -58,7 +58,7 @@ export class StudentController {
   }
 
   @Patch(':id/assignment')
-  @Roles(Role.ADMIN, Role.SCHOOL_ADMIN)
+  @Roles(Role.SUPER_ADMIN, Role.STA_ADMIN, Role.BOARD_ADMIN, Role.SCHOOL_ADMIN)
   assignRoute(
     @Param('id') id: string,
     @Body() assignment: any,
@@ -68,7 +68,7 @@ export class StudentController {
   }
 
   @Post('bulk-import')
-  @Roles(Role.ADMIN, Role.SCHOOL_ADMIN)
+  @Roles(Role.SUPER_ADMIN, Role.STA_ADMIN, Role.BOARD_ADMIN, Role.SCHOOL_ADMIN)
   bulkImport(@Body() data: any, @Request() req: any) {
     const { file, school_id } = data;
     return this.studentGatewayService.bulkImport(file, school_id, req.user);

@@ -24,7 +24,7 @@ export class AlertEscalationConfig {
   boardEscalationMs: number | null;
 
   @Column({ name: 'osta_escalation_ms', type: 'integer', nullable: true })
-  ostaEscalationMs: number | null;
+  staEscalationMs: number | null;
 
   @Column({ name: 'is_default', type: 'boolean', default: false })
   isDefault: boolean;

@@ -41,7 +41,7 @@ export class AlertsController {
   /**
    * GET /api/v1/alerts/audit/:alertId
    * Returns the full lifecycle audit trail for the given alert.
-   * Accessible to School Admin, Board Admin, and OSTA Admin via the API Gateway RBAC.
+   * Accessible to School Admin, Board Admin, and STA Admin via the API Gateway RBAC.
    */
   @Get('alerts/audit/:alertId')
   async getAuditLog(@Param('alertId') alertId: string) {

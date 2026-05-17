@@ -37,7 +37,7 @@ export enum AlertTier {
 export enum AlertEscalationLevel {
   SCHOOL = 'SCHOOL',
   BOARD = 'BOARD',
-  OSTA = 'OSTA',
+  STA = 'STA',
 }
 
 @Entity()

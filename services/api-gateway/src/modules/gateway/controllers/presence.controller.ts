@@ -31,8 +31,8 @@ export class PresenceController {
   @Post('presence-events')
   @Roles(
     Role.DRIVER,
-    Role.ADMIN,
-    Role.OSTA_ADMIN,
+    Role.SUPER_ADMIN,
+    Role.STA_ADMIN,
     Role.SCHOOL_ADMIN,
     Role.BOARD_ADMIN,
   )
@@ -43,8 +43,8 @@ export class PresenceController {
   @Post('student-presence-events')
   @Roles(
     Role.DRIVER,
-    Role.ADMIN,
-    Role.OSTA_ADMIN,
+    Role.SUPER_ADMIN,
+    Role.STA_ADMIN,
     Role.SCHOOL_ADMIN,
     Role.BOARD_ADMIN,
   )
@@ -56,8 +56,8 @@ export class PresenceController {
   @Post('student-presence-events/manual')
   @Roles(
     Role.DRIVER,
-    Role.ADMIN,
-    Role.OSTA_ADMIN,
+    Role.SUPER_ADMIN,
+    Role.STA_ADMIN,
     Role.SCHOOL_ADMIN,
     Role.BOARD_ADMIN,
   )

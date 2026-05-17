@@ -1,17 +1,20 @@
-import { Injectable, ForbiddenException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import {
+  Injectable,
+  ForbiddenException,
+  Logger,
+  NotImplementedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Route } from '../../auth/entities/route.entity';
 import { HttpClientService } from '../../../common/utils/http-client.service';
 import { Role } from '@sbtm/common';
 import { DataSource } from 'typeorm';
+import type { AnchorKind } from '../../auth/entities/user.entity';
 
 interface DriverUser {
   id: string;
   role?: Role;
-  assignedRouteIds?: string[];
-  schoolId?: string;
+  anchorKind?: AnchorKind | null;
+  anchorId?: string | null;
 }
 
 interface DriverRouteDto {
@@ -53,16 +56,25 @@ export interface RouteRosterResponse {
   direction: string;
 }
 
-const BOY_AVATAR_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Kid boy avatar"><defs><linearGradient id="bgBoy" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#cfe8ff"/><stop offset="100%" stop-color="#9bd0ff"/></linearGradient></defs><rect width="128" height="128" rx="64" fill="url(#bgBoy)"/><circle cx="64" cy="68" r="32" fill="#ffd8b5"/><path d="M34 58c2-20 16-34 30-34s29 13 31 31c-4-2-8-3-12-3H46c-4 0-8 2-12 6Z" fill="#4f3a2d"/><circle cx="52" cy="69" r="3" fill="#2b1d14"/><circle cx="76" cy="69" r="3" fill="#2b1d14"/><path d="M53 83c3 3 6 4 11 4s8-1 11-4" fill="none" stroke="#ca6c58" stroke-width="3" stroke-linecap="round"/><path d="M38 122c2-16 13-27 26-27 13 0 24 11 26 27" fill="#2f8de4"/></svg>`;
-const GIRL_AVATAR_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Kid girl avatar"><defs><linearGradient id="bgGirl" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ffe0ea"/><stop offset="100%" stop-color="#ffc3d6"/></linearGradient></defs><rect width="128" height="128" rx="64" fill="url(#bgGirl)"/><circle cx="64" cy="68" r="32" fill="#ffd7b4"/><path d="M31 60c2-24 18-39 33-39 17 0 33 15 33 40-4-6-11-10-19-10H50c-8 0-15 4-19 9Z" fill="#5a3a2d"/><path d="M40 60c-4 9-4 17 0 23" fill="none" stroke="#5a3a2d" stroke-width="6" stroke-linecap="round"/><path d="M88 60c4 9 4 17 0 23" fill="none" stroke="#5a3a2d" stroke-width="6" stroke-linecap="round"/><circle cx="52" cy="69" r="3" fill="#2b1d14"/><circle cx="76" cy="69" r="3" fill="#2b1d14"/><path d="M53 83c3 3 6 4 11 4s8-1 11-4" fill="none" stroke="#ca6c58" stroke-width="3" stroke-linecap="round"/><path d="M38 122c2-16 13-27 26-27 13 0 24 11 26 27" fill="#ec6fa0"/></svg>`;
-
+/**
+ * v2 stub-ish: the v1 model had `user.assignedRouteIds` and `routes` / `route_stops`
+ * tables; v2 splits that across `stx_runs` (driver↔run for a service_date), `routes`,
+ * `trips`, `stops`, `stop_times`. Until the run resolver and GTFS-backed driver schedule
+ * are wired (Phase B follow-up), the read paths here throw 501. Avatar helpers and the
+ * HTTP-client wiring are retained so this service still constructs cleanly.
+ *
+ * TODO(phase-B):
+ *   - getScheduleForDriver: SELECT runs WHERE driver_id = :anchorId AND service_date = today,
+ *     join routes/trips/stops/shapes.
+ *   - getRouteStudents: derive the day's roster from the assigned trip's stop_times and the
+ *     student↔stop assignment table (TBD).
+ */
 @Injectable()
 export class DriverGatewayService {
+  private readonly logger = new Logger(DriverGatewayService.name);
   private readonly presenceServiceUrl: string;
 
   constructor(
-    @InjectRepository(Route)
-    private readonly routeRepository: Repository<Route>,
     private readonly httpClient: HttpClientService,
     private readonly configService: ConfigService,
     private readonly dataSource: DataSource,
@@ -73,187 +85,28 @@ export class DriverGatewayService {
   }
 
   async getScheduleForDriver(user: DriverUser): Promise<DriverRouteDto[]> {
-    const routeIds = user.assignedRouteIds || [];
-    if (routeIds.length === 0) {
-      return [];
+    this.logger.debug('getScheduleForDriver stub hit', { id: user.id });
+    if (user.anchorKind !== 'driver' || !user.anchorId) {
+      throw new ForbiddenException('Caller is not anchored to a driver');
     }
-
-    // Query routes table with UUID route IDs from assignedRouteIds
-    const routes = await this.dataSource.query(
-      `SELECT r.id, r.name, r.direction, r."startTime", r."vehicleId", r."schoolId",
-              r.polyline,
-              s.lat AS "schoolLat", s.lng AS "schoolLng", s.name AS "schoolName"
-       FROM routes r
-       LEFT JOIN schools s ON r."schoolId" = s.id
-       WHERE r.id = ANY($1)
-       ORDER BY r.id ASC`,
-      [routeIds],
+    throw new NotImplementedException(
+      'Driver schedule is not yet wired to the v2 stx_runs / GTFS model',
     );
-
-    return routes.map((r: any) => {
-      const direction = r.direction || (r.id.toUpperCase().includes('PM') ? 'PM' : 'AM');
-      return {
-        routeId: r.id,
-        name: r.name,
-        direction,
-        startTime: r.startTime || '07:30',
-        vehicleId: r.vehicleId || undefined,
-        schoolId: r.schoolId,
-        polyline: r.polyline || undefined,
-        schoolLat: r.schoolLat != null ? Number(r.schoolLat) : undefined,
-        schoolLng: r.schoolLng != null ? Number(r.schoolLng) : undefined,
-        schoolName: r.schoolName || undefined,
-      };
-    });
   }
 
-  private getStudentAvatarUrl(studentId: string): string {
-    const hash = studentId
-      .split('')
-      .reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    const svg = hash % 2 === 0 ? BOY_AVATAR_SVG : GIRL_AVATAR_SVG;
-    return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
-  }
-
-  /**
-   * Return the full student roster for a route with server-confirmed presence states,
-   * grouped by stop with stop metadata.
-   *
-   * Students are sourced from the students table (operational data).
-   * Current presence state is merged from the presence service.
-   * Students with no presence events default to NOT_BOARDED.
-   *
-   * schoolId is always sourced from the authenticated user – never from the client.
-   */
   async getRouteStudents(
-    routeId: string,
+    _routeId: string,
     user: DriverUser,
   ): Promise<RouteRosterResponse> {
-    if (!user.assignedRouteIds?.includes(routeId)) {
-      throw new ForbiddenException('You do not have access to this route');
+    if (user.anchorKind !== 'driver' || !user.anchorId) {
+      throw new ForbiddenException('Caller is not anchored to a driver');
     }
-
-    if (!user.schoolId) {
-      throw new ForbiddenException('School context required');
-    }
-
-    // Determine route direction
-    const routeRows: Array<{ direction: string }> = await this.dataSource.query(
-      `SELECT direction FROM routes WHERE id = $1`,
-      [routeId],
+    // touch the deps so eslint/tsc don't drop them — they'll be needed once this is wired.
+    void this.httpClient;
+    void this.presenceServiceUrl;
+    void this.dataSource;
+    throw new NotImplementedException(
+      'Driver route roster is not yet wired to the v2 stx_runs / stop_times model',
     );
-    const direction =
-      routeRows[0]?.direction ||
-      (routeId.toUpperCase().includes('PM') ? 'PM' : 'AM');
-    const isAm = direction === 'AM';
-
-    // Fetch enrolled students for this route from students table
-    const enrolled: Array<{
-      id: string;
-      first_name: string;
-      last_name: string;
-      am_stop_id: string | null;
-      pm_stop_id: string | null;
-    }> = await this.dataSource.query(
-      `SELECT id, first_name, last_name, am_stop_id, pm_stop_id
-               FROM students
-               WHERE (am_route_id = $1 OR pm_route_id = $1)
-                 AND school_id = $2
-               ORDER BY last_name ASC, first_name ASC`,
-      [routeId, user.schoolId],
-    );
-
-    // Fetch stops for this route from route_stops table
-    const stops: Array<{
-      id: string;
-      sequence: number;
-      address: string;
-      lat: number;
-      lng: number;
-      arrivalTime: string;
-    }> = await this.dataSource.query(
-      `SELECT id, sequence, address,
-              ST_Y(location::geometry) AS lat,
-              ST_X(location::geometry) AS lng,
-              "arrivalTime"
-               FROM route_stops
-               WHERE "routeId" = $1
-               ORDER BY sequence ASC`,
-      [routeId],
-    );
-
-    const stopMap = new Map(stops.map((s) => [s.id, s]));
-
-    if (enrolled.length === 0) {
-      return {
-        stops: stops.map((s) => ({
-          id: s.id,
-          stopName: s.address,
-          sequence: s.sequence,
-          arrivalTime: s.arrivalTime,
-          lat: s.lat != null ? Number(s.lat) : undefined,
-          lng: s.lng != null ? Number(s.lng) : undefined,
-        })),
-        students: [],
-        direction,
-      };
-    }
-
-    // Fetch current presence state for the route (may be empty for fresh routes)
-    let presenceByStudentId = new Map<
-      string,
-      { status: 'BOARDED' | 'ALIGHTED'; lastSeen: string }
-    >();
-    try {
-      const presenceUrl = `${this.presenceServiceUrl}/api/v1/routes/${routeId}/students`;
-      const presenceResponse = await this.httpClient.get<any>(presenceUrl, {
-        params: { schoolId: user.schoolId },
-      });
-      const presenceList: Array<{
-        studentId: string;
-        status: string;
-        lastSeen?: string;
-      }> = Array.isArray(presenceResponse)
-        ? presenceResponse
-        : (presenceResponse?.students ?? []);
-
-      for (const p of presenceList) {
-        if (p.status === 'BOARDED' || p.status === 'ALIGHTED') {
-          presenceByStudentId.set(p.studentId, {
-            status: p.status,
-            lastSeen: p.lastSeen ?? new Date().toISOString(),
-          });
-        }
-      }
-    } catch {
-      // Non-fatal – presence service unavailable; return roster with NOT_BOARDED defaults
-    }
-
-    return {
-      stops: stops.map((s) => ({
-        id: s.id,
-        stopName: s.address,
-        sequence: s.sequence,
-        arrivalTime: s.arrivalTime,
-        lat: s.lat != null ? Number(s.lat) : undefined,
-        lng: s.lng != null ? Number(s.lng) : undefined,
-      })),
-      students: enrolled.map((student) => {
-        const presence = presenceByStudentId.get(student.id);
-        const stopId = isAm ? student.am_stop_id : student.pm_stop_id;
-        const stop = stopId ? stopMap.get(stopId) : undefined;
-        return {
-          id: student.id,
-          name: `${student.first_name} ${student.last_name}`,
-          status: presence?.status ?? 'NOT_BOARDED',
-          lastSeen: presence?.lastSeen,
-          stopId: stopId ?? undefined,
-          stopName: stop?.address ?? undefined,
-          stopSequence: stop?.sequence ?? undefined,
-          avatarUrl: this.getStudentAvatarUrl(student.id),
-        };
-      }),
-      direction,
-    };
   }
 }

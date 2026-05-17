@@ -168,8 +168,7 @@ export class GpsGatewayService {
     if (
       !user.schoolId &&
       user.role !== Role.SUPER_ADMIN &&
-      user.role !== Role.ADMIN &&
-      user.role !== Role.OSTA_ADMIN
+      user.role !== Role.STA_ADMIN
     ) {
       throw new ForbiddenException('School ID is required to ingest locations');
     }
@@ -214,8 +213,8 @@ export class GpsGatewayService {
   ): Promise<{ status: string }> {
     if (
       user.role !== Role.DRIVER &&
-      user.role !== Role.ADMIN &&
-      user.role !== Role.SUPER_ADMIN
+      user.role !== Role.SUPER_ADMIN &&
+      user.role !== Role.STA_ADMIN
     ) {
       throw new ForbiddenException(
         'Only drivers can record route lifecycle events',
@@ -252,8 +251,7 @@ export class GpsGatewayService {
     // System admins can access all routes
     if (
       user.role === Role.SUPER_ADMIN ||
-      user.role === Role.ADMIN ||
-      user.role === Role.OSTA_ADMIN ||
+      user.role === Role.STA_ADMIN ||
       user.role === Role.BOARD_ADMIN ||
       user.role === Role.SCHOOL_ADMIN
     ) {
@@ -506,8 +504,7 @@ export class GpsGatewayService {
     // Admin roles: see all seeded reference routes
     if (
       user.role === Role.SUPER_ADMIN ||
-      user.role === Role.ADMIN ||
-      user.role === Role.OSTA_ADMIN ||
+      user.role === Role.STA_ADMIN ||
       user.role === Role.BOARD_ADMIN ||
       user.role === Role.SCHOOL_ADMIN
     ) {

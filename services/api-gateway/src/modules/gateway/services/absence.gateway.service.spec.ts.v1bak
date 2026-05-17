@@ -27,7 +27,7 @@ describe('AbsenceGatewayService', () => {
     role: Role.SCHOOL_ADMIN,
     schoolId: 'school-1',
   };
-  const mockOstaAdmin = { id: 'osta-1', role: Role.OSTA_ADMIN };
+  const mockOstaAdmin = { id: 'osta-1', role: Role.STA_ADMIN };
 
   const mockRepo = {
     findOne: jest.fn(),
@@ -114,7 +114,7 @@ describe('AbsenceGatewayService', () => {
       );
     });
 
-    it('OSTA_ADMIN can pass an explicit schoolId filter', async () => {
+    it('STA_ADMIN can pass an explicit schoolId filter', async () => {
       mockRepo.find.mockResolvedValue([]);
       await service.listAbsences('2025-09-01', mockOstaAdmin, 'school-99');
       expect(mockRepo.find).toHaveBeenCalledWith(
@@ -172,7 +172,7 @@ describe('AbsenceGatewayService', () => {
       // A SCHOOL_ADMIN can delete school-scoped absences via findOne. This test verifies the repo
       // never gets called for absences outside their school because resolveCallerSchoolId enforces it.
       // Since deleteAbsence uses findOne by ID directly, and school admin can only query their school
-      // via listAbsences, the cross-school scenario would require OSTA_ADMIN.
+      // via listAbsences, the cross-school scenario would require STA_ADMIN.
       // Here we verify a PARENT cannot delete another parent's absence:
       const absence = {
         id: 'abs-2',

@@ -17,7 +17,9 @@ describe('AlertConfigService', () => {
   let eventTypeRepo: jest.Mocked<Repository<AlertEventTypeConfig>>;
   let escalationConfigRepo: jest.Mocked<Repository<AlertEscalationConfig>>;
   let escalationChainRepo: jest.Mocked<Repository<AlertEscalationChain>>;
-  let notificationRoutingRepo: jest.Mocked<Repository<NotificationRoutingConfig>>;
+  let notificationRoutingRepo: jest.Mocked<
+    Repository<NotificationRoutingConfig>
+  >;
   let workflowConfigRepo: jest.Mocked<Repository<AlertWorkflowConfig>>;
   let configAuditRepo: jest.Mocked<Repository<AlertConfigAudit>>;
 
@@ -37,7 +39,7 @@ describe('AlertConfigService', () => {
     tier: 'TIER_1',
     confirmationTimeoutMs: 120000,
     boardEscalationMs: 300000,
-    ostaEscalationMs: 900000,
+    staEscalationMs: 900000,
     isDefault: true,
     isActive: true,
   };
@@ -103,9 +105,13 @@ describe('AlertConfigService', () => {
 
     service = module.get<AlertConfigService>(AlertConfigService);
     eventTypeRepo = module.get(getRepositoryToken(AlertEventTypeConfig));
-    escalationConfigRepo = module.get(getRepositoryToken(AlertEscalationConfig));
+    escalationConfigRepo = module.get(
+      getRepositoryToken(AlertEscalationConfig),
+    );
     escalationChainRepo = module.get(getRepositoryToken(AlertEscalationChain));
-    notificationRoutingRepo = module.get(getRepositoryToken(NotificationRoutingConfig));
+    notificationRoutingRepo = module.get(
+      getRepositoryToken(NotificationRoutingConfig),
+    );
     workflowConfigRepo = module.get(getRepositoryToken(AlertWorkflowConfig));
     configAuditRepo = module.get(getRepositoryToken(AlertConfigAudit));
   });
@@ -117,7 +123,9 @@ describe('AlertConfigService', () => {
   describe('initializeCache', () => {
     it('should load all configuration caches successfully', async () => {
       eventTypeRepo.find.mockResolvedValue([mockEventTypeConfig] as any);
-      escalationConfigRepo.find.mockResolvedValue([mockEscalationConfig] as any);
+      escalationConfigRepo.find.mockResolvedValue([
+        mockEscalationConfig,
+      ] as any);
       escalationChainRepo.find.mockResolvedValue(mockEscalationChain as any);
       notificationRoutingRepo.find.mockResolvedValue([]);
       workflowConfigRepo.find.mockResolvedValue([]);
@@ -172,7 +180,9 @@ describe('AlertConfigService', () => {
   describe('getEscalationTiming', () => {
     beforeEach(async () => {
       eventTypeRepo.find.mockResolvedValue([]);
-      escalationConfigRepo.find.mockResolvedValue([mockEscalationConfig] as any);
+      escalationConfigRepo.find.mockResolvedValue([
+        mockEscalationConfig,
+      ] as any);
       escalationChainRepo.find.mockResolvedValue([]);
       notificationRoutingRepo.find.mockResolvedValue([]);
       workflowConfigRepo.find.mockResolvedValue([]);
@@ -184,7 +194,7 @@ describe('AlertConfigService', () => {
       expect(timing).toEqual({
         confirmationTimeoutMs: 120000,
         boardEscalationMs: 300000,
-        ostaEscalationMs: 900000,
+        staEscalationMs: 900000,
       });
     });
 
@@ -194,7 +204,7 @@ describe('AlertConfigService', () => {
         tier: 'TIER_2',
         confirmationTimeoutMs: null,
         boardEscalationMs: null,
-        ostaEscalationMs: null,
+        staEscalationMs: null,
       } as any);
 
       const timing = await service.getEscalationTiming('TIER_2');
@@ -223,7 +233,9 @@ describe('AlertConfigService', () => {
   describe('invalidateCache', () => {
     it('should clear all caches and reinitialize', async () => {
       eventTypeRepo.find.mockResolvedValue([mockEventTypeConfig] as any);
-      escalationConfigRepo.find.mockResolvedValue([mockEscalationConfig] as any);
+      escalationConfigRepo.find.mockResolvedValue([
+        mockEscalationConfig,
+      ] as any);
       escalationChainRepo.find.mockResolvedValue(mockEscalationChain as any);
       notificationRoutingRepo.find.mockResolvedValue([]);
       workflowConfigRepo.find.mockResolvedValue([]);

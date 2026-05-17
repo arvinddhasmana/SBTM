@@ -19,7 +19,7 @@ export class ComplianceController {
   constructor(private readonly complianceGateway: ComplianceGatewayService) {}
 
   @Get('inspections')
-  @Roles(Role.OSTA_ADMIN, Role.BOARD_ADMIN, Role.SCHOOL_ADMIN)
+  @Roles(Role.STA_ADMIN, Role.BOARD_ADMIN, Role.SCHOOL_ADMIN)
   async findAllInspections(@Query() query: any, @Req() req: any) {
     const schoolId = req.user?.schoolId;
     const params = schoolId ? { ...query, schoolId } : query;
@@ -27,7 +27,7 @@ export class ComplianceController {
   }
 
   @Post('inspections')
-  @Roles(Role.OSTA_ADMIN, Role.BOARD_ADMIN, Role.SCHOOL_ADMIN)
+  @Roles(Role.STA_ADMIN, Role.BOARD_ADMIN, Role.SCHOOL_ADMIN)
   async createInspection(@Body() body: any, @Req() req: any) {
     const schoolId = req.user?.schoolId;
     const payload = schoolId ? { ...body, school_id: schoolId } : body;
@@ -35,7 +35,7 @@ export class ComplianceController {
   }
 
   @Get('compliance/driver/:driverId')
-  @Roles(Role.OSTA_ADMIN, Role.BOARD_ADMIN, Role.SCHOOL_ADMIN)
+  @Roles(Role.STA_ADMIN, Role.BOARD_ADMIN, Role.SCHOOL_ADMIN)
   async findDriverCompliance(@Param('driverId') driverId: string) {
     return this.complianceGateway.forward(
       'GET',
@@ -44,7 +44,7 @@ export class ComplianceController {
   }
 
   @Get('compliance')
-  @Roles(Role.OSTA_ADMIN, Role.BOARD_ADMIN, Role.SCHOOL_ADMIN)
+  @Roles(Role.STA_ADMIN, Role.BOARD_ADMIN, Role.SCHOOL_ADMIN)
   async findAllCompliance(@Query() query: any, @Req() req: any) {
     const schoolId = req.user?.schoolId;
     const params = schoolId ? { ...query, schoolId } : query;
@@ -52,7 +52,7 @@ export class ComplianceController {
   }
 
   @Get('audit')
-  @Roles(Role.OSTA_ADMIN, Role.BOARD_ADMIN, Role.SCHOOL_ADMIN)
+  @Roles(Role.STA_ADMIN, Role.BOARD_ADMIN, Role.SCHOOL_ADMIN)
   async findAllAuditLogs(@Query() query: any, @Req() req: any) {
     const schoolId = req.user?.schoolId;
     const params = schoolId ? { ...query, schoolId } : query;

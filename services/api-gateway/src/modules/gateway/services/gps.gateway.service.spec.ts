@@ -35,7 +35,7 @@ describe('GpsGatewayService', () => {
 
   const adminUser = {
     id: 'admin-1',
-    role: Role.ADMIN,
+    role: Role.STA_ADMIN,
     childRouteIds: [],
     assignedRouteIds: [],
   };

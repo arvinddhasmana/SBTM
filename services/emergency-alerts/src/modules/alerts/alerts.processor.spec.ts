@@ -159,8 +159,7 @@ describe('AlertsProcessor', () => {
     });
 
     it('should return zero recipients gracefully when query fails', async () => {
-      mockDataSource.query
-        .mockRejectedValueOnce(new Error('database error'));
+      mockDataSource.query.mockRejectedValueOnce(new Error('database error'));
 
       const job = {
         id: 'job-6',
@@ -328,7 +327,7 @@ describe('AlertsProcessor', () => {
       expect(result).toEqual({ processed: true, recipientCount: 0 });
     });
 
-    it('should escalate to OSTA Admin when alert is still PENDING_CONFIRMATION', async () => {
+    it('should escalate to STA Admin when alert is still PENDING_CONFIRMATION', async () => {
       const alert = {
         id: 'alert-pending-osta',
         status: EmergencyAlertStatus.PENDING_CONFIRMATION,
@@ -347,7 +346,7 @@ describe('AlertsProcessor', () => {
       expect(result).toEqual({ processed: true, recipientCount: 1 });
       expect(mockNotificationsQueue.add).toHaveBeenCalledWith(
         'notification-request',
-        expect.objectContaining({ eventType: 'EMERGENCY_OSTA_ESCALATION' }),
+        expect.objectContaining({ eventType: 'EMERGENCY_STA_ESCALATION' }),
       );
       expect(mockAuditLogRepo.save).toHaveBeenCalled();
     });

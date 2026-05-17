@@ -4,12 +4,18 @@ import {
   PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
-  ManyToOne,
-  JoinColumn,
 } from 'typeorm';
 import { Role } from '@sbtm/common';
-import { School } from './school.entity';
-import { SchoolBoard } from './school-board.entity';
+
+export type IdentityProvider = 'local' | 'oidc:ocsb' | 'oidc:ocdsb';
+export type AnchorKind =
+  | 'super'
+  | 'sta'
+  | 'board'
+  | 'school'
+  | 'operator'
+  | 'driver'
+  | 'parent';
 
 @Entity('users')
 export class User {
@@ -19,7 +25,7 @@ export class User {
   @Column({ unique: true })
   email: string;
 
-  @Column({ nullable: true })
+  @Column({ name: 'passwordHash', nullable: true })
   passwordHash?: string;
 
   @Column({
@@ -29,47 +35,41 @@ export class User {
   })
   role: Role;
 
-  @Column({ nullable: true })
+  @Column({ name: 'firstName', nullable: true })
   firstName?: string;
 
-  @Column({ nullable: true })
+  @Column({ name: 'lastName', nullable: true })
   lastName?: string;
 
-  @Column({ nullable: true })
-  driverId?: string;
-
-  @Column('simple-array', { nullable: true })
-  childRouteIds?: string[];
-
-  @Column('simple-array', { nullable: true })
-  assignedRouteIds?: string[];
-
-  @Column({ nullable: true })
-  schoolId?: string;
-
-  @ManyToOne(() => School, (school) => school.users)
-  @JoinColumn({ name: 'schoolId' })
-  school?: School;
-
-  @Column({ nullable: true })
-  boardId?: string;
-
-  @ManyToOne(() => SchoolBoard, (board) => board.users)
-  @JoinColumn({ name: 'boardId' })
-  board?: SchoolBoard;
-
-  @Column({ default: true })
+  @Column({ name: 'isActive', default: true })
   isActive: boolean;
 
-  @Column({ nullable: true, unique: true })
+  @Column({ name: 'invitationToken', nullable: true, unique: true })
   invitationToken?: string;
 
-  @Column({ nullable: true, type: 'timestamptz' })
+  @Column({ name: 'invitationExpiresAt', nullable: true, type: 'timestamptz' })
   invitationExpiresAt?: Date;
 
-  @CreateDateColumn()
+  @Column({
+    name: 'identity_provider',
+    type: 'enum',
+    enum: ['local', 'oidc:ocsb', 'oidc:ocdsb'],
+    default: 'local',
+  })
+  identityProvider: IdentityProvider;
+
+  @Column({ name: 'preferred_language', type: 'text', default: 'en' })
+  preferredLanguage: string;
+
+  @Column({ name: 'anchor_kind', type: 'text', nullable: true })
+  anchorKind: AnchorKind | null;
+
+  @Column({ name: 'anchor_id', type: 'uuid', nullable: true })
+  anchorId: string | null;
+
+  @CreateDateColumn({ name: 'createdAt' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'updatedAt' })
   updatedAt: Date;
 }
