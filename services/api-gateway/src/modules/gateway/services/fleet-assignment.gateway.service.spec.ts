@@ -5,13 +5,13 @@ import { FleetAssignmentGatewayService } from './fleet-assignment.gateway.servic
 import { ProposeFleetAssignmentDto } from '../dto/propose-fleet-assignment.dto';
 
 /**
- * v2 contract test — the v1 fleet_assignments table is gone; vehicle/driver pinning
- * now lives on stx_runs and the propose/accept/reject lifecycle is blocked on the
- * stx_run_proposals design decision (v2-followups #2). Until that lands, every
- * surface throws NotImplementedException; this spec locks that in so a future
- * partial wiring can't silently regress.
+ * v2 contract test — fleet-assignment proposal workflow is **parked indefinitely**
+ * per user direction (decision 2026-05-17, v2-followups #2). Vehicle/driver pinning
+ * lives on stx_runs and is written by the importer; the propose/accept/reject
+ * lifecycle is not part of the v2 surface. The controller routes remain registered
+ * so the frontend gets a well-formed 501 instead of a 404; this spec locks that in.
  */
-describe('FleetAssignmentGatewayService (v2 — phase-B 501 contract)', () => {
+describe('FleetAssignmentGatewayService (v2 — parked 501 contract)', () => {
   let service: FleetAssignmentGatewayService;
   const caller = {
     id: 'op-1',
