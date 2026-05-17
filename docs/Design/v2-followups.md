@@ -61,10 +61,10 @@ Open work items deferred from the aggressive cutover (commits 497497c Phase A, 3
 
 ### 7. Internal-service guard replacing the removed `Role.SYSTEM`
 
-- **Where**: `video.controller.ts` and any other handler with `// TODO(phase-B): replace with internal-service guard`.
-- **Symptom**: handlers that previously accepted service-to-service calls via `Role.SYSTEM` now reject them.
-- **Fix**: add `@InternalService()` decorator + guard that validates the existing `INTERNAL_SERVICE_SECRET` JWT (already wired in `ServiceTokenService`).
-- **Size**: 0.5 day.
+- **Where**: `video.controller.ts` POST handler (callback from the video-processing pipeline).
+- **Status**: done on `feat/sbtm-refocus-data-model`. `InternalServiceAuthGuard` (libs/common) is now registered/exported by `CommonModule` (global) and applied via `@UseGuards(InternalServiceAuthGuard)` on `VideoController.createVideoEvent`. GET handlers retain `JwtAuthGuard + RolesGuard` at the method level (class-level guards were dropped so each method can choose its own auth). The POST no longer overwrites `dto.schoolId` from `req.user` — the internal caller is a service, not a user; the DTO carries `schoolId` directly. Token shape: Bearer JWT signed with `INTERNAL_SERVICE_SECRET`, issuer `sbtm-internal` (already minted by `ServiceTokenService`).
+- **Followup**: the standalone `MultiTenancyGuard` (`src/common/guards/multi-tenancy.guard.ts`) still carries a `TODO(phase-B): replace with internal-service guard` comment and still reads v1 `user.boardId` / `user.schoolId` — that guard is unused on any handler that needs internal-service access today, and its v1 anchor reads will be cleaned up as part of #1/#2.
+- **Size**: closed.
 
 ## Low priority (cosmetic / docs)
 
