@@ -9,6 +9,10 @@ import {
 import { Run } from '../../fleet/entities/run.entity';
 import { Driver } from '../../fleet/entities/driver.entity';
 import { Student } from './student.entity';
+import {
+  geographyPointTransformer,
+  type LatLng,
+} from '../../../common/transformers/geography-point.transformer';
 
 export enum BoardingEventKind {
   BOARDED = 'boarded',
@@ -72,9 +76,16 @@ export class BoardingEvent {
   })
   source: BoardingEventSource;
 
-  // TODO(phase-B): wire PostGIS column type — geography(Point, 4326)
-  @Column({ type: 'text', nullable: true })
-  location: string | null;
+  // PostGIS `geography(Point, 4326)` — see geographyPointTransformer for
+  // serialisation; raw-SQL callers should use ST_X/ST_Y and ST_MakePoint.
+  @Column({
+    type: 'geography',
+    spatialFeatureType: 'Point',
+    srid: 4326,
+    nullable: true,
+    transformer: geographyPointTransformer,
+  })
+  location: LatLng | null;
 
   @Column({ type: 'text', nullable: true })
   notes: string | null;

@@ -86,7 +86,8 @@ describe('DriverGatewayService.getScheduleForDriver', () => {
         vehicle_id: 'veh-1',
         school_id: 'sch-1',
         school_name: 'Maplewood Secondary',
-        school_location: 'POINT(-75.69 45.42)',
+        school_lat: 45.42,
+        school_lng: -75.69,
       },
     ]);
     const out = await ctx.runWith(driver, () =>
@@ -126,7 +127,8 @@ describe('DriverGatewayService.getScheduleForDriver', () => {
         vehicle_id: 'v',
         school_id: 's',
         school_name: 'X',
-        school_location: null,
+        school_lat: null,
+        school_lng: null,
       },
       {
         route_id: 'R-2',
@@ -137,7 +139,8 @@ describe('DriverGatewayService.getScheduleForDriver', () => {
         vehicle_id: 'v',
         school_id: 's',
         school_name: 'X',
-        school_location: null,
+        school_lat: null,
+        school_lng: null,
       },
     ]);
     const out = await ctx.runWith(driver, () =>

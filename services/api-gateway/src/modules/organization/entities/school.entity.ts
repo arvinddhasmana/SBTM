@@ -9,6 +9,10 @@ import {
 } from 'typeorm';
 import { Board } from './board.entity';
 import { BellSchedule } from './bell-schedule.entity';
+import {
+  geographyPointTransformer,
+  type LatLng,
+} from '../../../common/transformers/geography-point.transformer';
 
 @Entity('stx_schools')
 export class School {
@@ -28,9 +32,18 @@ export class School {
   @Column({ type: 'text', nullable: true })
   address: string | null;
 
-  // TODO(phase-B): wire PostGIS column type — geography(Point, 4326)
-  @Column({ type: 'text', nullable: true })
-  location: string | null;
+  // PostGIS `geography(Point, 4326)`. Raw-SQL callers should use
+  // `ST_X(location::geometry)` / `ST_Y(location::geometry)` and
+  // `ST_SetSRID(ST_MakePoint(lng, lat), 4326)::geography`; the transformer
+  // covers the repository `find` / `save` paths only.
+  @Column({
+    type: 'geography',
+    spatialFeatureType: 'Point',
+    srid: 4326,
+    nullable: true,
+    transformer: geographyPointTransformer,
+  })
+  location: LatLng | null;
 
   @Column({ name: 'time_zone', type: 'text', default: 'America/Toronto' })
   timeZone: string;

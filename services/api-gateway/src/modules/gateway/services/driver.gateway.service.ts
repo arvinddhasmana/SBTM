@@ -66,7 +66,8 @@ interface ScheduleRow {
   vehicle_id: string;
   school_id: string;
   school_name: string;
-  school_location: string | null;
+  school_lat: number | null;
+  school_lng: number | null;
 }
 
 /**
@@ -117,7 +118,8 @@ export class DriverGatewayService {
           run.vehicle_id::text        AS vehicle_id,
           s.id::text                  AS school_id,
           s.name                      AS school_name,
-          s.location                  AS school_location
+          ST_Y(s.location::geometry)  AS school_lat,
+          ST_X(s.location::geometry)  AS school_lng
         FROM stx_runs run
         JOIN trips t        ON t.trip_id = ANY(run.trip_ids)
         JOIN routes r       ON r.route_id = t.route_id
@@ -134,9 +136,8 @@ export class DriverGatewayService {
         [driverId, serviceDate],
       )) as ScheduleRow[];
 
-      return rows.map((row): DriverRouteDto => {
-        const { lat, lng } = parsePoint(row.school_location);
-        return {
+      return rows.map(
+        (row): DriverRouteDto => ({
           routeId: row.route_id,
           name: row.route_long_name || row.route_short_name || row.route_id,
           direction: row.direction,
@@ -144,10 +145,10 @@ export class DriverGatewayService {
           vehicleId: row.vehicle_id,
           schoolId: row.school_id,
           schoolName: row.school_name,
-          schoolLat: lat,
-          schoolLng: lng,
-        };
-      });
+          schoolLat: row.school_lat ?? undefined,
+          schoolLng: row.school_lng ?? undefined,
+        }),
+      );
     });
   }
 
@@ -166,21 +167,4 @@ export class DriverGatewayService {
       'Driver route roster is not yet wired to the v2 stx_runs / stop_times model',
     );
   }
-}
-
-/**
- * Parse `stx_schools.location` (today: plain `text`, future: PostGIS
- * `geography(Point, 4326)` per v2-followups #5). Accepts WKT `POINT(lng lat)`
- * or `lat,lng` string. Returns `{}` if unparseable — callers treat missing
- * coords as "no map pin", which is the correct degraded behaviour.
- */
-function parsePoint(loc: string | null): { lat?: number; lng?: number } {
-  if (!loc) return {};
-  const wkt = /^POINT\s*\(\s*(-?\d+(?:\.\d+)?)\s+(-?\d+(?:\.\d+)?)\s*\)$/i.exec(
-    loc,
-  );
-  if (wkt) return { lng: Number(wkt[1]), lat: Number(wkt[2]) };
-  const csv = /^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/.exec(loc);
-  if (csv) return { lat: Number(csv[1]), lng: Number(csv[2]) };
-  return {};
 }

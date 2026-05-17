@@ -48,10 +48,9 @@ Open work items deferred from the aggressive cutover (commits 497497c Phase A, 3
 
 ### 5. PostGIS column types stubbed as `text`
 
-- **Where**: `stx_schools.location`, `stx_students.home_location`, `stx_boarding_events.location` — entity files have `// TODO(phase-B): wire PostGIS column type — geography(Point, 4326)`.
-- **Symptom**: TypeORM treats them as strings. Spatial queries via repository methods won't work; raw SQL still does.
-- **Fix**: install `typeorm-postgis` or use `@Column({ type: 'geography', spatialFeatureType: 'Point', srid: 4326 })` once the TypeORM version supports it cleanly. Add a custom transformer if needed.
-- **Size**: 0.5 day.
+- **Where**: `stx_schools.location`, `stx_students.home_location`, `stx_boarding_events.location`.
+- **Status**: done on `feat/sbtm-refocus-data-model`. Entity columns now declare `type: 'geography', spatialFeatureType: 'Point', srid: 4326` and use a shared `geographyPointTransformer` (`services/api-gateway/src/common/transformers/geography-point.transformer.ts`) that decodes Postgres EWKB hex into `{ lat, lng }` on read and emits `SRID=4326;POINT(lng lat)` EWKT on write — TypeORM repository `find` / `save` paths are now first-class. Raw-SQL callers (e.g. `DriverGatewayService.getScheduleForDriver`) read coords via `ST_X(col::geometry)` / `ST_Y(col::geometry)` and write via `ST_SetSRID(ST_MakePoint(lng, lat), 4326)::geography` (already the importer's pattern). The old WKT-parsing shim in `driver.gateway.service.ts` is removed.
+- **Size**: closed.
 
 ### 6. `DeviceToken.userId` FK re-key to v2 users
 

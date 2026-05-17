@@ -8,6 +8,10 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { School } from '../../organization/entities/school.entity';
+import {
+  geographyPointTransformer,
+  type LatLng,
+} from '../../../common/transformers/geography-point.transformer';
 
 export enum StudentStatus {
   ENROLLED = 'enrolled',
@@ -46,9 +50,17 @@ export class Student {
   @Column({ name: 'home_address', type: 'bytea', nullable: true })
   homeAddress: Buffer | null;
 
-  // TODO(phase-B): wire PostGIS column type — geography(Point, 4326)
-  @Column({ name: 'home_location', type: 'text', nullable: true })
-  homeLocation: string | null;
+  // PostGIS `geography(Point, 4326)` — see geographyPointTransformer for
+  // serialisation; raw-SQL callers should use ST_X/ST_Y and ST_MakePoint.
+  @Column({
+    name: 'home_location',
+    type: 'geography',
+    spatialFeatureType: 'Point',
+    srid: 4326,
+    nullable: true,
+    transformer: geographyPointTransformer,
+  })
+  homeLocation: LatLng | null;
 
   @Column({
     type: 'enum',
