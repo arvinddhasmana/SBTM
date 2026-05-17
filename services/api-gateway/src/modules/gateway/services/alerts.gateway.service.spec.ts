@@ -2,10 +2,12 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AlertsGatewayService } from './alerts.gateway.service';
 import { HttpClientService } from '../../../common/utils/http-client.service';
 import { ConfigService } from '@nestjs/config';
+import { RlsContextService } from '../../../common/services/rls-context.service';
 
 describe('AlertsGatewayService', () => {
   let service: AlertsGatewayService;
   let httpClient: HttpClientService;
+  let rlsQuery: jest.Mock;
 
   const mockHttpClient = {
     get: jest.fn(),
@@ -25,6 +27,14 @@ describe('AlertsGatewayService', () => {
   };
 
   beforeEach(async () => {
+    rlsQuery = jest.fn().mockResolvedValue([]);
+    const mockRls = {
+      runAsCurrent: jest
+        .fn()
+        .mockImplementation(async <T>(fn: (tx: unknown) => Promise<T>) =>
+          fn({ query: rlsQuery } as unknown),
+        ),
+    };
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AlertsGatewayService,
@@ -35,6 +45,10 @@ describe('AlertsGatewayService', () => {
         {
           provide: ConfigService,
           useValue: mockConfigService,
+        },
+        {
+          provide: RlsContextService,
+          useValue: mockRls,
         },
       ],
     }).compile();
@@ -154,6 +168,38 @@ describe('AlertsGatewayService', () => {
       expect(httpClient.patch).toHaveBeenCalledWith(
         'http://alerts-service:3003/api/v1/alerts/alert-1/status-update',
         body,
+      );
+    });
+  });
+
+  describe('getParentAlertHistory', () => {
+    it('returns empty array when the guardian has no active ridership', async () => {
+      rlsQuery.mockResolvedValueOnce([]);
+      const result = await service.getParentAlertHistory('grd-1');
+      expect(result).toEqual([]);
+      expect(httpClient.get).not.toHaveBeenCalled();
+    });
+
+    it('resolves distinct route_ids from ridership and proxies to alerts service', async () => {
+      rlsQuery.mockResolvedValueOnce([
+        { route_id: 'R-OCSB-201' },
+        { route_id: 'R-OCDSB-101' },
+      ]);
+      const mockAlerts = [{ id: 'a-1', routeId: 'R-OCSB-201' }];
+      mockHttpClient.get.mockResolvedValueOnce(mockAlerts);
+
+      const result = await service.getParentAlertHistory('grd-1');
+
+      expect(result).toEqual(mockAlerts);
+      expect(rlsQuery).toHaveBeenCalledTimes(1);
+      const [sql, params] = rlsQuery.mock.calls[0] as [string, unknown[]];
+      expect(sql).toMatch(/FROM stx_student_guardians sg/);
+      expect(sql).toMatch(/JOIN stx_ridership rd/);
+      expect(sql).toMatch(/JOIN trips t/);
+      expect(params[0]).toBe('grd-1');
+      expect(httpClient.get).toHaveBeenCalledWith(
+        'http://alerts-service:3003/api/v1/alerts/by-routes',
+        { params: { routeIds: 'R-OCSB-201,R-OCDSB-101' } },
       );
     });
   });

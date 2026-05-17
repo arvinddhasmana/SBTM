@@ -141,13 +141,10 @@ export class AlertsController {
   @Roles(Role.PARENT)
   async getParentAlertHistory(@Request() req: AuthenticatedRequest) {
     const user = req.user;
-    // TODO(phase-B): derive a parent's child route IDs server-side via the
-    // Guardian → StudentGuardian → Student → Route joins. v1 cached this list on the JWT
-    // (`user.childRouteIds`); v2 has no such claim, so until the resolver is wired we
-    // return an empty history.
-    void user;
-    const routeIds: string[] = [];
-    return this.alertsGatewayService.getAlertsByRoutes(routeIds);
+    if (user.anchorKind !== 'parent' || !user.anchorId) {
+      throw new ForbiddenException('Caller is not anchored to a guardian');
+    }
+    return this.alertsGatewayService.getParentAlertHistory(user.anchorId);
   }
 
   @Get('alerts/:id/audit-trail')
