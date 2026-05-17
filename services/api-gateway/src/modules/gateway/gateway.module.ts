@@ -40,6 +40,7 @@ import { Board } from '../organization/entities/board.entity';
 import { Route } from '../gtfs/entities/route.entity';
 import { PageVisibility } from './entities/page-visibility.entity';
 import { PageVisibilityService } from './services/page-visibility.service';
+import { piiCryptoProvider } from './services/pii-crypto.provider';
 
 @Module({
   imports: [
@@ -84,6 +85,7 @@ import { PageVisibilityService } from './services/page-visibility.service';
     RouteChangeNotifierService,
     SystemSettingsGatewayService,
     PageVisibilityService,
+    piiCryptoProvider,
   ],
   exports: [
     GpsGatewayService,

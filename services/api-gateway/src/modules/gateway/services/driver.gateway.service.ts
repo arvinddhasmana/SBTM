@@ -1,8 +1,9 @@
 import {
   Injectable,
   ForbiddenException,
+  Inject,
   Logger,
-  NotImplementedException,
+  Optional,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpClientService } from '../../../common/utils/http-client.service';
@@ -10,6 +11,7 @@ import { Role } from '@sbtm/common';
 import { DataSource } from 'typeorm';
 import type { AnchorKind } from '../../auth/entities/user.entity';
 import { RlsContextService } from '../../../common/services/rls-context.service';
+import { PII_CRYPTO, type PiiCrypto } from './pii-crypto.provider';
 
 interface DriverUser {
   id: string;
@@ -72,15 +74,23 @@ interface ScheduleRow {
 
 /**
  * v2 driver gateway. `getScheduleForDriver` is wired against `stx_runs` joined
- * to GTFS trips/routes/stop_times. `getRouteStudents` remains a 501 stub until
- * the student↔stop assignment model is finalised (Phase B follow-up).
+ * to GTFS trips/routes/stop_times. `getRouteStudents` resolves the route roster
+ * via `stx_ridership` (canonical student↔stop link, see
+ * `docs/Design/RoutePlanner.md` §9 and `docs/Design/v2-followups.md` #2),
+ * scoped to trips that belong to runs the caller is assigned to today.
  *
  * RLS posture: driver is an app-layer scoped role (no RLS policy on `stx_runs`
- * for `anchor_kind = 'driver'`). The handler still runs inside
- * `rlsContext.runAsCurrent` so admin-policied joined tables (routes, schools)
- * are read with the caller's anchor context, and so the discipline of
- * tx-scoped reads is consistent across the codebase. The app-layer scope is
- * the `WHERE r.driver_id = $1` clause.
+ * for `anchor_kind = 'driver'`). Handlers still run inside
+ * `rlsContext.runAsCurrent` so admin-policied joined tables (routes, schools,
+ * stx_students, stx_ridership) are read with the caller's anchor context. The
+ * app-layer scope is the `WHERE run.driver_id = $1` clause and the `trip_id IN
+ * (driver's runs' trip_ids)` filter.
+ *
+ * Presence merge: this endpoint returns base roster info with
+ * `status: 'NOT_BOARDED'` for every student. The driver app overlays
+ * server-confirmed boarding state by calling the presence service separately;
+ * the gateway does not fan out to presence here to keep the read cheap and
+ * because presence has its own SSE channel for live updates.
  */
 @Injectable()
 export class DriverGatewayService {
@@ -92,6 +102,9 @@ export class DriverGatewayService {
     private readonly configService: ConfigService,
     private readonly dataSource: DataSource,
     private readonly rlsContext: RlsContextService,
+    @Optional()
+    @Inject(PII_CRYPTO)
+    private readonly pii: PiiCrypto | null = null,
   ) {
     this.presenceServiceUrl = this.configService.getOrThrow<string>(
       'PRESENCE_SERVICE_URL',
@@ -153,18 +166,146 @@ export class DriverGatewayService {
   }
 
   async getRouteStudents(
-    _routeId: string,
+    routeId: string,
     user: DriverUser,
   ): Promise<RouteRosterResponse> {
     if (user.anchorKind !== 'driver' || !user.anchorId) {
       throw new ForbiddenException('Caller is not anchored to a driver');
     }
-    // touch the deps so eslint/tsc don't drop them — they'll be needed once this is wired.
     void this.httpClient;
     void this.presenceServiceUrl;
     void this.dataSource;
-    throw new NotImplementedException(
-      'Driver route roster is not yet wired to the v2 stx_runs / stop_times model',
-    );
+
+    const driverId = user.anchorId;
+    const serviceDate = new Date().toISOString().slice(0, 10);
+
+    return this.rlsContext.runAsCurrent(async (tx) => {
+      const stopRows = (await tx.query(
+        `
+        SELECT DISTINCT ON (s.stop_id)
+          s.stop_id           AS id,
+          s.stop_name         AS stop_name,
+          st.stop_sequence    AS sequence,
+          st.arrival_time     AS arrival_time,
+          s.stop_lat          AS lat,
+          s.stop_lon          AS lng,
+          r.stx_direction_kind AS direction
+        FROM stx_runs run
+        JOIN trips t        ON t.trip_id = ANY(run.trip_ids)
+        JOIN routes r       ON r.route_id = t.route_id
+        JOIN stop_times st  ON st.trip_id = t.trip_id
+        JOIN stops s        ON s.stop_id = st.stop_id
+        WHERE run.driver_id     = $1
+          AND run.service_date  = $2
+          AND run.deleted_at    IS NULL
+          AND r.deleted_at      IS NULL
+          AND r.route_id        = $3
+        ORDER BY s.stop_id, st.stop_sequence
+        `,
+        [driverId, serviceDate, routeId],
+      )) as Array<{
+        id: string;
+        stop_name: string;
+        sequence: number;
+        arrival_time: string;
+        lat: number | null;
+        lng: number | null;
+        direction: string;
+      }>;
+
+      const studentRows = (await tx.query(
+        `
+        SELECT DISTINCT ON (rd.student_id)
+          rd.student_id          AS student_id,
+          stu.legal_name         AS legal_name,
+          stu.preferred_name     AS preferred_name,
+          rd.stop_id             AS stop_id,
+          s.stop_name            AS stop_name,
+          st.stop_sequence       AS stop_sequence
+        FROM stx_ridership rd
+        JOIN stx_students stu ON stu.id = rd.student_id
+        JOIN stops s          ON s.stop_id = rd.stop_id
+        JOIN stop_times st    ON st.trip_id = rd.trip_id AND st.stop_id = rd.stop_id
+        JOIN trips t          ON t.trip_id = rd.trip_id
+        WHERE t.route_id = $1
+          AND rd.status = 'active'
+          AND rd.effective_from <= $2::date
+          AND (rd.effective_to IS NULL OR rd.effective_to >= $2::date)
+          AND rd.trip_id = ANY(
+            SELECT UNNEST(trip_ids)
+            FROM stx_runs
+            WHERE driver_id    = $3
+              AND service_date = $2::date
+              AND deleted_at   IS NULL
+          )
+          AND stu.deleted_at IS NULL
+        ORDER BY rd.student_id, st.stop_sequence
+        `,
+        [routeId, serviceDate, driverId],
+      )) as Array<{
+        student_id: string;
+        legal_name: Buffer | null;
+        preferred_name: Buffer | null;
+        stop_id: string;
+        stop_name: string;
+        stop_sequence: number;
+      }>;
+
+      const direction = stopRows[0]?.direction ?? '';
+
+      const stops: RouteStopDto[] = stopRows
+        .slice()
+        .sort((a, b) => a.sequence - b.sequence)
+        .map((row) => ({
+          id: row.id,
+          stopName: row.stop_name,
+          sequence: row.sequence,
+          arrivalTime: row.arrival_time,
+          lat: row.lat ?? undefined,
+          lng: row.lng ?? undefined,
+        }));
+
+      const students: RouteRosterStudentDto[] = studentRows.map((row) => ({
+        id: row.student_id,
+        name: this.renderStudentName(
+          row.preferred_name,
+          row.legal_name,
+          row.student_id,
+        ),
+        status: 'NOT_BOARDED',
+        stopId: row.stop_id,
+        stopName: row.stop_name,
+        stopSequence: row.stop_sequence,
+      }));
+
+      return { stops, students, direction };
+    });
+  }
+
+  /**
+   * Decrypts the student's display name. Prefers `preferred_name` over
+   * `legal_name`. Falls back to the opaque student id if PII crypto is not
+   * wired (dev/test bootstraps without `SBTM_PII_KEY`) — the driver app
+   * surfaces this as a placeholder so the roster is still usable, but the
+   * absence of a key in production is a deployment bug, not a user-facing
+   * feature.
+   */
+  private renderStudentName(
+    preferred: Buffer | null,
+    legal: Buffer | null,
+    studentId: string,
+  ): string {
+    if (!this.pii) {
+      this.logger.warn(
+        'pii crypto not provided; returning student id as display name',
+      );
+      return studentId;
+    }
+    const decryptedPreferred = this.pii.decrypt(preferred);
+    if (decryptedPreferred && decryptedPreferred.length > 0) {
+      return decryptedPreferred;
+    }
+    const decryptedLegal = this.pii.decrypt(legal);
+    return decryptedLegal ?? studentId;
   }
 }
