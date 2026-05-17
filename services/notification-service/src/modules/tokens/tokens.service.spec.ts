@@ -3,6 +3,10 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { TokensService } from './tokens.service';
 import { DeviceToken } from './entities/device-token.entity';
 
+/**
+ * v2-followups #6: device_tokens is polymorphic across `users` (admin/driver)
+ * and `stx_guardians` (parent). Specs cover both kinds.
+ */
 describe('TokensService', () => {
   let service: TokensService;
   let mockRepo: any;
@@ -26,10 +30,11 @@ describe('TokensService', () => {
     service = module.get<TokensService>(TokensService);
   });
 
-  it('should register a new device token', async () => {
+  it('registers a new device token for a user recipient', async () => {
     mockRepo.findOne.mockResolvedValue(null);
 
     const result = await service.register(
+      'user',
       'user-1',
       'school-1',
       'fcm-token-abc',
@@ -37,48 +42,79 @@ describe('TokensService', () => {
     );
 
     expect(mockRepo.create).toHaveBeenCalledWith({
-      userId: 'user-1',
+      recipientKind: 'user',
+      recipientId: 'user-1',
       schoolId: 'school-1',
       token: 'fcm-token-abc',
       platform: 'android',
       isActive: true,
     });
     expect(mockRepo.save).toHaveBeenCalled();
-    expect(result.userId).toBe('user-1');
+    expect(result.recipientId).toBe('user-1');
+    expect(result.recipientKind).toBe('user');
   });
 
-  it('should reactivate an existing token', async () => {
+  it('registers a new device token for a guardian recipient', async () => {
+    mockRepo.findOne.mockResolvedValue(null);
+
+    const result = await service.register(
+      'guardian',
+      'grd-1',
+      'school-1',
+      'fcm-token-xyz',
+      'ios',
+    );
+
+    expect(mockRepo.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        recipientKind: 'guardian',
+        recipientId: 'grd-1',
+      }),
+    );
+    expect(result.recipientKind).toBe('guardian');
+  });
+
+  it('reactivates an existing token scoped by (kind, id, token)', async () => {
     const existing = {
       id: 'token-1',
-      userId: 'user-1',
+      recipientKind: 'user',
+      recipientId: 'user-1',
       token: 'fcm-token-abc',
       isActive: false,
       platform: 'ios',
     };
     mockRepo.findOne.mockResolvedValue(existing);
 
-    const result = await service.register(
+    await service.register(
+      'user',
       'user-1',
       'school-1',
       'fcm-token-abc',
       'android',
     );
 
+    expect(mockRepo.findOne).toHaveBeenCalledWith({
+      where: {
+        recipientKind: 'user',
+        recipientId: 'user-1',
+        token: 'fcm-token-abc',
+      },
+    });
     expect(existing.isActive).toBe(true);
     expect(existing.platform).toBe('android');
     expect(mockRepo.save).toHaveBeenCalledWith(existing);
   });
 
-  it('should deactivate a token', async () => {
-    await service.deactivate('token-1', 'user-1');
+  it('deactivates a token scoped by (id, kind, recipientId)', async () => {
+    await service.deactivate('token-1', 'user', 'user-1');
 
     expect(mockRepo.update).toHaveBeenCalledWith(
-      { id: 'token-1', userId: 'user-1' },
+      { id: 'token-1', recipientKind: 'user', recipientId: 'user-1' },
       { isActive: false },
     );
   });
 
-  it('should deactivate by token string', async () => {
+  it('deactivates by token string regardless of recipient', async () => {
     await service.deactivateByToken('fcm-token-abc');
 
     expect(mockRepo.update).toHaveBeenCalledWith(
@@ -87,17 +123,50 @@ describe('TokensService', () => {
     );
   });
 
-  it('should get active tokens for user', async () => {
+  it('gets active tokens for a user recipient', async () => {
     const tokens = [
-      { id: 'token-1', userId: 'user-1', isActive: true, token: 'abc' },
+      {
+        id: 'token-1',
+        recipientKind: 'user',
+        recipientId: 'user-1',
+        isActive: true,
+        token: 'abc',
+      },
     ];
     mockRepo.find.mockResolvedValue(tokens);
 
-    const result = await service.getActiveTokensForUser('user-1');
+    const result = await service.getActiveTokensForRecipient('user', 'user-1');
 
     expect(mockRepo.find).toHaveBeenCalledWith({
-      where: { userId: 'user-1', isActive: true },
+      where: { recipientKind: 'user', recipientId: 'user-1', isActive: true },
     });
     expect(result).toEqual(tokens);
+  });
+
+  it('gets active tokens for a guardian recipient (kind isolation)', async () => {
+    mockRepo.find.mockResolvedValue([]);
+    await service.getActiveTokensForRecipient('guardian', 'grd-1');
+
+    expect(mockRepo.find).toHaveBeenCalledWith({
+      where: {
+        recipientKind: 'guardian',
+        recipientId: 'grd-1',
+        isActive: true,
+      },
+    });
+  });
+
+  it('listForRecipient scopes by kind, id, and school', async () => {
+    mockRepo.find.mockResolvedValue([]);
+    await service.listForRecipient('guardian', 'grd-1', 'school-1');
+
+    expect(mockRepo.find).toHaveBeenCalledWith({
+      where: {
+        recipientKind: 'guardian',
+        recipientId: 'grd-1',
+        schoolId: 'school-1',
+      },
+      order: { createdAt: 'DESC' },
+    });
   });
 });

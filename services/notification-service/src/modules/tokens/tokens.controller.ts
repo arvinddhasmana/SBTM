@@ -11,6 +11,7 @@ import {
 import { InternalServiceAuthGuard } from '@sbtm/common';
 import { TokensService } from './tokens.service';
 import { RegisterDeviceTokenDto } from './dto/register-device-token.dto';
+import type { DeviceTokenRecipientKind } from './entities/device-token.entity';
 
 @Controller('device-tokens')
 @UseGuards(InternalServiceAuthGuard)
@@ -20,7 +21,8 @@ export class TokensController {
   @Post()
   async register(@Body() dto: RegisterDeviceTokenDto) {
     return this.tokensService.register(
-      dto.userId,
+      dto.recipientKind ?? 'user',
+      dto.recipientId,
       dto.schoolId,
       dto.token,
       dto.platform,
@@ -30,17 +32,27 @@ export class TokensController {
   @Delete(':tokenId')
   async deactivate(
     @Param('tokenId') tokenId: string,
-    @Query('userId') userId: string,
+    @Query('recipientId') recipientId: string,
+    @Query('recipientKind') recipientKind?: DeviceTokenRecipientKind,
   ) {
-    await this.tokensService.deactivate(tokenId, userId);
+    await this.tokensService.deactivate(
+      tokenId,
+      recipientKind ?? 'user',
+      recipientId,
+    );
     return { success: true };
   }
 
   @Get()
   async list(
-    @Query('userId') userId: string,
+    @Query('recipientId') recipientId: string,
     @Query('schoolId') schoolId: string,
+    @Query('recipientKind') recipientKind?: DeviceTokenRecipientKind,
   ) {
-    return this.tokensService.listForUser(userId, schoolId);
+    return this.tokensService.listForRecipient(
+      recipientKind ?? 'user',
+      recipientId,
+      schoolId,
+    );
   }
 }

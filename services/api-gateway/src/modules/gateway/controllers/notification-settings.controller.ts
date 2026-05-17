@@ -54,8 +54,13 @@ export class NotificationSettingsController {
     @Body() body: { token: string; platform: string },
   ) {
     const user = req.user;
+    // v2-followups #6: parents currently still hold a users.id (Role.PARENT),
+    // so kind='user' + id=user.id stays valid. When the parent-app cutover
+    // (#10) migrates parents to be guardian-only (no users row), switch this
+    // to kind='guardian', id=user.anchorId.
     return this.notificationSettingsService.registerDeviceToken({
-      userId: user.id,
+      recipientKind: 'user',
+      recipientId: user.id,
       schoolId: user.schoolId,
       token: body.token,
       platform: body.platform,
@@ -72,6 +77,7 @@ export class NotificationSettingsController {
     return this.notificationSettingsService.deactivateDeviceToken(
       tokenId,
       user.id,
+      'user',
     );
   }
 
@@ -82,6 +88,7 @@ export class NotificationSettingsController {
     return this.notificationSettingsService.getDeviceTokens(
       user.id,
       user.schoolId,
+      'user',
     );
   }
 

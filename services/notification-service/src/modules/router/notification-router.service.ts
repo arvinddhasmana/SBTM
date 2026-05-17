@@ -5,11 +5,17 @@ import { DeliveryLogService } from '../delivery/delivery-log.service';
 import { FcmAdapter } from '../channels/fcm/fcm.adapter';
 import { EmailAdapter } from '../channels/email/email.adapter';
 import { SmsAdapter } from '../channels/sms/sms.adapter';
+import type { DeviceTokenRecipientKind } from '../tokens/entities/device-token.entity';
 
 interface NotificationRequest {
   eventType: string;
   eventSourceId: string;
   recipientUserId: string;
+  /**
+   * v2-followups #6: defaults to 'user' (admin/driver). Parent-app flows
+   * should pass 'guardian' so token lookup keys off stx_guardians.id.
+   */
+  recipientKind?: DeviceTokenRecipientKind;
   schoolId: string;
   routeId?: string;
   studentId?: string;
@@ -131,7 +137,8 @@ export class NotificationRouterService {
     title: string,
     body: string,
   ): Promise<boolean> {
-    const tokens = await this.tokensService.getActiveTokensForUser(
+    const tokens = await this.tokensService.getActiveTokensForRecipient(
+      request.recipientKind ?? 'user',
       request.recipientUserId,
     );
 

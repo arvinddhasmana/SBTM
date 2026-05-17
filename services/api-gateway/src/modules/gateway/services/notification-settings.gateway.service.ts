@@ -16,7 +16,12 @@ export interface UpdatePreferencesPayload {
 }
 
 export interface RegisterDeviceTokenPayload {
-  userId: string;
+  /**
+   * v2-followups #6: defaults to 'user' (admin/driver). Parent-app flows
+   * must pass 'guardian' so notification-service keys off stx_guardians.id.
+   */
+  recipientKind?: 'user' | 'guardian';
+  recipientId: string;
   schoolId: string;
   token: string;
   platform: string;
@@ -57,15 +62,24 @@ export class NotificationSettingsGatewayService {
     return this.httpClient.post(url, payload);
   }
 
-  async deactivateDeviceToken(tokenId: string, userId: string): Promise<any> {
-    const url = `${this.notificationServiceUrl}/api/v1/device-tokens/${tokenId}?userId=${userId}`;
+  async deactivateDeviceToken(
+    tokenId: string,
+    recipientId: string,
+    recipientKind: 'user' | 'guardian' = 'user',
+  ): Promise<any> {
+    const params = new URLSearchParams({ recipientId, recipientKind });
+    const url = `${this.notificationServiceUrl}/api/v1/device-tokens/${tokenId}?${params.toString()}`;
     return this.httpClient.delete(url);
   }
 
-  async getDeviceTokens(userId: string, schoolId: string): Promise<any[]> {
+  async getDeviceTokens(
+    recipientId: string,
+    schoolId: string,
+    recipientKind: 'user' | 'guardian' = 'user',
+  ): Promise<any[]> {
     const url = `${this.notificationServiceUrl}/api/v1/device-tokens`;
     return this.httpClient.get(url, {
-      params: { userId, schoolId },
+      params: { recipientId, schoolId, recipientKind },
     });
   }
 

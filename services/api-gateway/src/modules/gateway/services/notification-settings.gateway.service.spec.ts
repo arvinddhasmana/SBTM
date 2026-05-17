@@ -101,7 +101,7 @@ describe('NotificationSettingsGatewayService', () => {
   describe('registerDeviceToken', () => {
     it('should POST device token to notification service', async () => {
       const payload = {
-        userId: 'user-1',
+        recipientId: 'user-1',
         schoolId: 'school-1',
         token: 'fcm-token-abc',
         platform: 'android',
@@ -128,13 +128,13 @@ describe('NotificationSettingsGatewayService', () => {
 
       expect(result).toEqual(mockResponse);
       expect(httpClient.delete).toHaveBeenCalledWith(
-        'http://notification-service:3008/api/v1/device-tokens/token-1?userId=user-1',
+        'http://notification-service:3008/api/v1/device-tokens/token-1?recipientId=user-1&recipientKind=user',
       );
     });
   });
 
   describe('getDeviceTokens', () => {
-    it('should GET device tokens with userId and schoolId params', async () => {
+    it('should GET device tokens with recipientId, schoolId, recipientKind params', async () => {
       const mockTokens = [{ id: 'token-1', platform: 'android' }];
       mockHttpClient.get.mockResolvedValue(mockTokens);
 
@@ -143,7 +143,13 @@ describe('NotificationSettingsGatewayService', () => {
       expect(result).toEqual(mockTokens);
       expect(httpClient.get).toHaveBeenCalledWith(
         'http://notification-service:3008/api/v1/device-tokens',
-        { params: { userId: 'user-1', schoolId: 'school-1' } },
+        {
+          params: {
+            recipientId: 'user-1',
+            schoolId: 'school-1',
+            recipientKind: 'user',
+          },
+        },
       );
     });
   });

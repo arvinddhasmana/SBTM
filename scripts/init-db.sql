@@ -354,18 +354,24 @@ CREATE TABLE alert_notification_log (
 );
 
 -- Notification Service Tables (Phase A)
+-- v2-followups #6: polymorphic recipient (user | guardian).
+-- Admin/driver recipients live in `users`; parent recipients live in
+-- `stx_guardians`. Cascade-on-delete is approximated via triggers further down
+-- (see device_tokens_cascade_* functions) since polymorphic FKs aren't first
+-- class in Postgres / TypeORM.
 CREATE TABLE device_tokens (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    "userId" UUID NOT NULL,
+    recipient_kind TEXT NOT NULL CHECK (recipient_kind IN ('user', 'guardian')),
+    recipient_id UUID NOT NULL,
     "schoolId" UUID NOT NULL,
     token VARCHAR(512) NOT NULL,
     platform VARCHAR(10) NOT NULL CHECK (platform IN ('android', 'ios', 'web')),
     "isActive" BOOLEAN NOT NULL DEFAULT TRUE,
     "createdAt" TIMESTAMP DEFAULT NOW(),
     "updatedAt" TIMESTAMP DEFAULT NOW(),
-    CONSTRAINT "UQ_device_token_user_token" UNIQUE ("userId", token)
+    CONSTRAINT uq_device_token_recipient_token UNIQUE (recipient_kind, recipient_id, token)
 );
-CREATE INDEX "IDX_device_tokens_user_active" ON device_tokens ("userId", "isActive");
+CREATE INDEX idx_device_tokens_recipient_active ON device_tokens (recipient_kind, recipient_id, "isActive");
 CREATE INDEX "IDX_device_tokens_school" ON device_tokens ("schoolId");
 
 CREATE TABLE notification_preferences (

@@ -8,18 +8,37 @@ import {
   Unique,
 } from 'typeorm';
 
+export type DeviceTokenRecipientKind = 'user' | 'guardian';
+
+/**
+ * v2-followups #6: polymorphic recipient. Admin/driver push tokens key off
+ * `users.id`; parent push tokens key off `stx_guardians.id`. The split keeps
+ * `users` strictly for authenticatable identities. Cascade-on-delete is
+ * enforced by triggers on `users` and `stx_guardians` (migration
+ * 20260517_device_tokens_polymorphic.sql) since Postgres has no native
+ * polymorphic FK.
+ */
 @Entity('device_tokens')
-@Unique(['userId', 'token'])
-@Index(['userId', 'isActive'])
+@Unique('uq_device_token_recipient_token', [
+  'recipientKind',
+  'recipientId',
+  'token',
+])
+@Index('idx_device_tokens_recipient_active', [
+  'recipientKind',
+  'recipientId',
+  'isActive',
+])
 @Index(['schoolId'])
 export class DeviceToken {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ name: 'user_id', type: 'uuid' })
-  // TODO(phase-B): FK re-key to v2 users (consider stx_guardians.id for parent
-  // recipients) once subscription ownership in stx_alert_subscriptions stabilises.
-  userId: string;
+  @Column({ name: 'recipient_kind', type: 'text' })
+  recipientKind: DeviceTokenRecipientKind;
+
+  @Column({ name: 'recipient_id', type: 'uuid' })
+  recipientId: string;
 
   @Column({ name: 'school_id', type: 'uuid' })
   schoolId: string;

@@ -1,7 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { DeviceToken } from './entities/device-token.entity';
+import {
+  DeviceToken,
+  DeviceTokenRecipientKind,
+} from './entities/device-token.entity';
 
 @Injectable()
 export class TokensService {
@@ -13,13 +16,14 @@ export class TokensService {
   ) {}
 
   async register(
-    userId: string,
+    recipientKind: DeviceTokenRecipientKind,
+    recipientId: string,
     schoolId: string,
     token: string,
     platform: string,
   ): Promise<DeviceToken> {
     const existing = await this.tokenRepo.findOne({
-      where: { userId, token },
+      where: { recipientKind, recipientId, token },
     });
 
     if (existing) {
@@ -27,13 +31,14 @@ export class TokensService {
       existing.platform = platform;
       await this.tokenRepo.save(existing);
       this.logger.log(
-        `Reactivated device token for userId=${userId}, platform=${platform}`,
+        `Reactivated device token for ${recipientKind}=${recipientId}, platform=${platform}`,
       );
       return existing;
     }
 
     const deviceToken = this.tokenRepo.create({
-      userId,
+      recipientKind,
+      recipientId,
       schoolId,
       token,
       platform,
@@ -41,15 +46,22 @@ export class TokensService {
     });
     const saved = await this.tokenRepo.save(deviceToken);
     this.logger.log(
-      `Registered device token for userId=${userId}, platform=${platform}`,
+      `Registered device token for ${recipientKind}=${recipientId}, platform=${platform}`,
     );
     return saved;
   }
 
-  async deactivate(tokenId: string, userId: string): Promise<void> {
-    await this.tokenRepo.update({ id: tokenId, userId }, { isActive: false });
+  async deactivate(
+    tokenId: string,
+    recipientKind: DeviceTokenRecipientKind,
+    recipientId: string,
+  ): Promise<void> {
+    await this.tokenRepo.update(
+      { id: tokenId, recipientKind, recipientId },
+      { isActive: false },
+    );
     this.logger.log(
-      `Deactivated device token tokenId=${tokenId}, userId=${userId}`,
+      `Deactivated device token tokenId=${tokenId}, ${recipientKind}=${recipientId}`,
     );
   }
 
@@ -58,15 +70,22 @@ export class TokensService {
     this.logger.log('Deactivated invalid device token');
   }
 
-  async getActiveTokensForUser(userId: string): Promise<DeviceToken[]> {
+  async getActiveTokensForRecipient(
+    recipientKind: DeviceTokenRecipientKind,
+    recipientId: string,
+  ): Promise<DeviceToken[]> {
     return this.tokenRepo.find({
-      where: { userId, isActive: true },
+      where: { recipientKind, recipientId, isActive: true },
     });
   }
 
-  async listForUser(userId: string, schoolId: string): Promise<DeviceToken[]> {
+  async listForRecipient(
+    recipientKind: DeviceTokenRecipientKind,
+    recipientId: string,
+    schoolId: string,
+  ): Promise<DeviceToken[]> {
     return this.tokenRepo.find({
-      where: { userId, schoolId },
+      where: { recipientKind, recipientId, schoolId },
       order: { createdAt: 'DESC' },
     });
   }

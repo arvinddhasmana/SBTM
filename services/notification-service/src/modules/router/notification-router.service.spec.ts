@@ -17,7 +17,7 @@ import { SmsAdapter } from '../channels/sms/sms.adapter';
 describe('NotificationRouterService (v2)', () => {
   let service: NotificationRouterService;
   let mockTokens: {
-    getActiveTokensForUser: jest.Mock;
+    getActiveTokensForRecipient: jest.Mock;
     deactivateByToken: jest.Mock;
   };
   let mockDeliveryLog: { create: jest.Mock };
@@ -28,7 +28,7 @@ describe('NotificationRouterService (v2)', () => {
 
   beforeEach(async () => {
     mockTokens = {
-      getActiveTokensForUser: jest
+      getActiveTokensForRecipient: jest
         .fn()
         .mockResolvedValue([{ token: 'fcm-token-1' }]),
       deactivateByToken: jest.fn(),
@@ -146,7 +146,7 @@ describe('NotificationRouterService (v2)', () => {
   });
 
   it('logs FAILED when no device tokens exist', async () => {
-    mockTokens.getActiveTokensForUser.mockResolvedValue([]);
+    mockTokens.getActiveTokensForRecipient.mockResolvedValue([]);
 
     await service.route(baseRequest);
 

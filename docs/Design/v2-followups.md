@@ -60,9 +60,8 @@ Open work items deferred from the aggressive cutover (commits 497497c Phase A, 3
 
 - **Where**: `services/notification-service/src/modules/tokens/entities/device-token.entity.ts`.
 - **Symptom**: orphaned device tokens if a v2 user is deleted (no cascade).
-- **Status**: **blocked on cross-service user FK shape**. Admin/driver recipients live in `api-gateway.users`; parent recipients live in `stx_guardians` (no `users` row). A single hard FK to `users` would force every guardian to also have a `users` row, and TypeORM cannot model a polymorphic `userId` cleanly. Defer until either (a) we mint shadow `users` rows for guardians during subscription provisioning, or (b) we split `device_tokens.user_id` into `recipient_kind` + `recipient_id`. Pick one as part of the parent-app cutover (Phase D, item #10).
-- **Fix**: add explicit FK + `ON DELETE CASCADE` migration once that decision is made.
-- **Size**: 0.5 day once unblocked.
+- **Status**: **done on `feat/sbtm-refocus-data-model`** via option (b) — polymorphic `recipient_kind` + `recipient_id`. Migration `services/api-gateway/migrations/20260517_device_tokens_polymorphic.sql` renames `userId`/`user_id` → `recipient_id`, adds `recipient_kind text CHECK IN ('user','guardian')`, swaps the unique constraint to `(recipient_kind, recipient_id, token)`, and installs `AFTER DELETE` triggers on `users` and `stx_guardians` to cascade-deactivate matching device tokens (no native polymorphic FK in Postgres). Entity, DTO, service (`register`/`deactivate`/`getActiveTokensForRecipient`/`listForRecipient`), controller, and the api-gateway-side gateway service + parent controller all now carry `recipientKind`. Parent endpoints currently still emit `kind='user'` (parents still hold a `Role.PARENT` row in `users`); they will flip to `kind='guardian'` once #10 (parent-app cutover) migrates parents to guardian-only.
+- **Size**: closed.
 
 ### 7. Internal-service guard replacing the removed `Role.SYSTEM`
 
