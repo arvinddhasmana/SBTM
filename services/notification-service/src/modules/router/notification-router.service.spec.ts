@@ -1,44 +1,39 @@
-// TODO(phase-B): rewrite for v2 NotificationRouterService.
-// Preserved from v1 (renamed .v1bak so tsc/Jest skip it). Needs rewriting to:
-//   - drop PreferencesService mock (removed in SBTM v2 cutover)
-//   - assert the permissive default channel set (PUSH/EMAIL/SMS, EMERGENCY=PUSH+SMS)
-//   - re-cover push-fallback-to-SMS for EMERGENCY, invalid-token deactivation,
-//     no-token / no-email / no-phone failure paths, EMAIL routing
-//   - update constructor wiring (no preferencesService arg) once subscription
-//     enforcement moves to api-gateway/stx_alert_subscriptions
 import { Test, TestingModule } from '@nestjs/testing';
 import { DataSource } from 'typeorm';
 import { NotificationRouterService } from './notification-router.service';
-import { PreferencesService } from '../preferences/preferences.service';
 import { TokensService } from '../tokens/tokens.service';
 import { DeliveryLogService } from '../delivery/delivery-log.service';
 import { FcmAdapter } from '../channels/fcm/fcm.adapter';
 import { EmailAdapter } from '../channels/email/email.adapter';
 import { SmsAdapter } from '../channels/sms/sms.adapter';
 
-describe('NotificationRouterService', () => {
+/**
+ * v2: PreferencesService is gone (v1 NotificationPreference dropped in Phase B);
+ * subscription enforcement moved upstream to stx_alert_subscriptions in api-gateway.
+ * Until that wiring lands, the router uses a permissive default channel set:
+ *   - EMERGENCY → ['PUSH', 'SMS']
+ *   - everything else → ['PUSH', 'EMAIL', 'SMS']
+ */
+describe('NotificationRouterService (v2)', () => {
   let service: NotificationRouterService;
-  let mockPreferences: any;
-  let mockTokens: any;
-  let mockDeliveryLog: any;
-  let mockFcm: any;
-  let mockEmail: any;
-  let mockSms: any;
-  let mockDataSource: any;
+  let mockTokens: {
+    getActiveTokensForUser: jest.Mock;
+    deactivateByToken: jest.Mock;
+  };
+  let mockDeliveryLog: { create: jest.Mock };
+  let mockFcm: { sendToDevices: jest.Mock };
+  let mockEmail: { send: jest.Mock };
+  let mockSms: { send: jest.Mock };
+  let mockDataSource: { query: jest.Mock };
 
   beforeEach(async () => {
-    mockPreferences = {
-      getEnabledChannels: jest.fn().mockResolvedValue(['PUSH']),
-    };
     mockTokens = {
       getActiveTokensForUser: jest
         .fn()
         .mockResolvedValue([{ token: 'fcm-token-1' }]),
       deactivateByToken: jest.fn(),
     };
-    mockDeliveryLog = {
-      create: jest.fn().mockResolvedValue({ id: 'log-1' }),
-    };
+    mockDeliveryLog = { create: jest.fn().mockResolvedValue({ id: 'log-1' }) };
     mockFcm = {
       sendToDevices: jest
         .fn()
@@ -63,7 +58,6 @@ describe('NotificationRouterService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         NotificationRouterService,
-        { provide: PreferencesService, useValue: mockPreferences },
         { provide: TokensService, useValue: mockTokens },
         { provide: DeliveryLogService, useValue: mockDeliveryLog },
         { provide: FcmAdapter, useValue: mockFcm },
@@ -85,13 +79,9 @@ describe('NotificationRouterService', () => {
     studentId: 'student-1',
   };
 
-  it('should route BOARD event via PUSH', async () => {
+  it('routes BOARD via PUSH (and falls through EMAIL/SMS permissively)', async () => {
     await service.route(baseRequest);
 
-    expect(mockPreferences.getEnabledChannels).toHaveBeenCalledWith(
-      'user-1',
-      'BOARD',
-    );
     expect(mockFcm.sendToDevices).toHaveBeenCalledWith(
       ['fcm-token-1'],
       expect.objectContaining({
@@ -106,11 +96,12 @@ describe('NotificationRouterService', () => {
         schoolId: 'school-1',
       }),
     );
+    // Permissive default: EMAIL + SMS also attempted.
+    expect(mockEmail.send).toHaveBeenCalled();
+    expect(mockSms.send).toHaveBeenCalled();
   });
 
-  it('should route EMERGENCY via PUSH and SMS', async () => {
-    mockPreferences.getEnabledChannels.mockResolvedValue(['PUSH', 'SMS']);
-
+  it('routes EMERGENCY via PUSH and SMS (skips EMAIL)', async () => {
     await service.route({
       ...baseRequest,
       eventType: 'EMERGENCY',
@@ -122,10 +113,10 @@ describe('NotificationRouterService', () => {
       '+15551234567',
       expect.stringContaining('Emergency'),
     );
+    expect(mockEmail.send).not.toHaveBeenCalled();
   });
 
-  it('should escalate to SMS if PUSH fails for EMERGENCY', async () => {
-    mockPreferences.getEnabledChannels.mockResolvedValue(['PUSH']);
+  it('does not double-escalate when EMERGENCY already includes SMS', async () => {
     mockFcm.sendToDevices.mockResolvedValue([
       { success: false, error: 'UNAVAILABLE' },
     ]);
@@ -136,20 +127,25 @@ describe('NotificationRouterService', () => {
       emergencyType: 'PANIC_BUTTON',
     });
 
-    expect(mockSms.send).toHaveBeenCalled();
+    // SMS fires once (as part of the default EMERGENCY channel set), not twice
+    // (no extra fallback escalation, since SMS is already in `channels`).
+    expect(mockSms.send).toHaveBeenCalledTimes(1);
   });
 
-  it('should not escalate to SMS for non-EMERGENCY push failure', async () => {
+  it('does not escalate to SMS for non-EMERGENCY push failure', async () => {
     mockFcm.sendToDevices.mockResolvedValue([
       { success: false, error: 'UNAVAILABLE' },
     ]);
 
     await service.route(baseRequest);
 
-    expect(mockSms.send).not.toHaveBeenCalled();
+    // SMS still fires once because it's part of the permissive default channel
+    // set for non-EMERGENCY — but it must NOT fire a second time as an
+    // escalation. Assert exactly-once.
+    expect(mockSms.send).toHaveBeenCalledTimes(1);
   });
 
-  it('should log FAILED when no device tokens exist', async () => {
+  it('logs FAILED when no device tokens exist', async () => {
     mockTokens.getActiveTokensForUser.mockResolvedValue([]);
 
     await service.route(baseRequest);
@@ -163,7 +159,7 @@ describe('NotificationRouterService', () => {
     );
   });
 
-  it('should deactivate invalid FCM tokens', async () => {
+  it('deactivates invalid FCM tokens', async () => {
     mockFcm.sendToDevices.mockResolvedValue([
       { success: false, error: 'INVALID_TOKEN' },
     ]);
@@ -173,9 +169,7 @@ describe('NotificationRouterService', () => {
     expect(mockTokens.deactivateByToken).toHaveBeenCalledWith('fcm-token-1');
   });
 
-  it('should route EMAIL channel', async () => {
-    mockPreferences.getEnabledChannels.mockResolvedValue(['EMAIL']);
-
+  it('routes EMAIL channel content', async () => {
     await service.route(baseRequest);
 
     expect(mockEmail.send).toHaveBeenCalledWith(
@@ -185,8 +179,7 @@ describe('NotificationRouterService', () => {
     );
   });
 
-  it('should log FAILED when no email address exists', async () => {
-    mockPreferences.getEnabledChannels.mockResolvedValue(['EMAIL']);
+  it('logs FAILED EMAIL when no email address exists', async () => {
     mockDataSource.query.mockResolvedValue([{ email: null, phone: null }]);
 
     await service.route(baseRequest);
@@ -196,6 +189,22 @@ describe('NotificationRouterService', () => {
         channel: 'EMAIL',
         status: 'FAILED',
         failureReason: 'NO_EMAIL_ADDRESS',
+      }),
+    );
+  });
+
+  it('logs FAILED SMS when no phone number exists', async () => {
+    mockDataSource.query.mockResolvedValue([
+      { email: 'parent@test.com', phone: null },
+    ]);
+
+    await service.route(baseRequest);
+
+    expect(mockDeliveryLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        channel: 'SMS',
+        status: 'FAILED',
+        failureReason: 'NO_PHONE_NUMBER',
       }),
     );
   });

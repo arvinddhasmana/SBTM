@@ -39,8 +39,7 @@ Open work items deferred from the aggressive cutover (commits 497497c Phase A, 3
   - `src/modules/gateway/services/{absence,driver,fleet-assignment,parent,parent-status}.gateway.service.spec.ts.v1bak`
   - **Done**: `school.service.spec.ts` and `school-board.service.spec.ts` rewritten against v2 entities (10 tests each); `organization.gateway.service.spec.ts` extended to full CRUD coverage (36 tests, v1bak deleted).
 - **Where** (notification-service):
-  - `src/modules/preferences/preferences.service.spec.ts.v1bak`
-  - `src/modules/router/notification-router.service.spec.ts.v1bak`
+  - **Done**: `notification-router.service.spec.ts` rewritten against the v2 permissive default channel set (PUSH/EMAIL/SMS, EMERGENCY=PUSH+SMS) — 9 tests, v1bak deleted. `preferences/` directory removed entirely (v1 NotificationPreference is gone in v2; subscription enforcement moves upstream to `stx_alert_subscriptions` per the TODO in `notification-router.service.ts`).
 - **Symptom**: coverage gap — these services have no unit tests.
 - **Fix**: rewrite using v2 fixtures (`anchorKind`/`anchorId` user shapes, new entity column names). Each file has a top-of-file TODO listing the v1 assertions that need new equivalents.
 - **Size**: 0.5–1 day per file.
