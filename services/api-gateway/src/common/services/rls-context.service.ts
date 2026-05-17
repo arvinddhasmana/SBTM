@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource, EntityManager } from 'typeorm';
+import { RequestContextService } from './request-context.service';
 
 export type AnchorKind =
   | 'super'
@@ -38,7 +39,10 @@ export interface UserAnchor {
  */
 @Injectable()
 export class RlsContextService {
-  constructor(private readonly dataSource: DataSource) {}
+  constructor(
+    private readonly dataSource: DataSource,
+    private readonly requestContext: RequestContextService,
+  ) {}
 
   /**
    * Run `fn` inside a transaction with sbtm.user_anchor_kind/id set for RLS.
@@ -55,5 +59,26 @@ export class RlsContextService {
       await tx.query(`SET LOCAL sbtm.user_anchor_id = $1`, [id]);
       return fn(tx);
     });
+  }
+
+  /**
+   * Run `fn` under the anchor of the currently authenticated request user
+   * (populated by `RequestContextInterceptor`). Throws if called outside an
+   * authenticated request scope — this is intentional: a missing user is
+   * almost always a bug (forgotten guard, background job, unauth route) and
+   * silently scoping to 'super' would leak data across tenants.
+   */
+  async runAsCurrent<T>(fn: (tx: EntityManager) => Promise<T>): Promise<T> {
+    const user = this.requestContext.getUser();
+    if (!user) {
+      throw new Error(
+        'RlsContextService.runAsCurrent() called outside an authenticated request scope. ' +
+          'Use runAs() explicitly for system jobs or unauth paths.',
+      );
+    }
+    return this.runAs(
+      { anchorKind: user.anchorKind, anchorId: user.anchorId },
+      fn,
+    );
   }
 }

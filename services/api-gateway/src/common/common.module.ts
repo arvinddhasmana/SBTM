@@ -1,7 +1,10 @@
 import { Module, Global } from '@nestjs/common';
+import { APP_INTERCEPTOR } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 import { HttpClientService } from './utils/http-client.service';
 import { ServiceTokenService } from './utils/service-token.service';
+import { RequestContextInterceptor } from './interceptors/request-context.interceptor';
+import { RequestContextService } from './services/request-context.service';
 import { RlsContextService } from './services/rls-context.service';
 
 @Global()
@@ -11,7 +14,21 @@ import { RlsContextService } from './services/rls-context.service';
     // The secret is overridden at call time (INTERNAL_SERVICE_SECRET), so the module default is unused.
     JwtModule.register({}),
   ],
-  providers: [HttpClientService, ServiceTokenService, RlsContextService],
-  exports: [HttpClientService, ServiceTokenService, RlsContextService],
+  providers: [
+    HttpClientService,
+    ServiceTokenService,
+    RequestContextService,
+    RlsContextService,
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: RequestContextInterceptor,
+    },
+  ],
+  exports: [
+    HttpClientService,
+    ServiceTokenService,
+    RequestContextService,
+    RlsContextService,
+  ],
 })
 export class CommonModule {}
