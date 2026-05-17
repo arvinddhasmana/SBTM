@@ -36,9 +36,8 @@ Open work items deferred from the aggressive cutover (commits 497497c Phase A, 3
   - `src/modules/auth/provisioning.service.spec.ts.v1bak`
   - `src/modules/fleet/fleet.service.spec.ts.v1bak`
   - `src/modules/route/route.service.spec.ts.v1bak`
-  - `src/modules/organization/school-board.service.spec.ts.v1bak`
-  - `src/modules/organization/school.service.spec.ts.v1bak`
   - `src/modules/gateway/services/{absence,driver,fleet-assignment,organization,parent,parent-status}.gateway.service.spec.ts.v1bak`
+  - **Done**: `school.service.spec.ts` and `school-board.service.spec.ts` rewritten against v2 entities (10 tests each).
 - **Where** (notification-service):
   - `src/modules/preferences/preferences.service.spec.ts.v1bak`
   - `src/modules/router/notification-router.service.spec.ts.v1bak`
