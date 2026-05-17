@@ -21,6 +21,7 @@ import { FILE_ORDER } from '../src/modules/adapter/sta-csv/csv-schemas';
 import { ManifestSchema, SourceFiles } from '../src/modules/adapter/types/source-files';
 import { CommitService } from '../src/modules/commit/commit.service';
 import { DryRunService } from '../src/modules/importer/dry-run.service';
+import { StubOsrmClient } from '../src/modules/shape-fallback/osrm-client';
 import { PgQueryable } from '../src/modules/staging/pg-pool.provider';
 import { StagingWriter } from '../src/modules/staging/staging-writer.service';
 
@@ -89,7 +90,7 @@ async function importOne(name: string, opts: RunOpts): Promise<boolean> {
   console.log(`    warnings=${result.validation.warnings.length}`);
 
   if (opts.commit && result.importSessionId) {
-    const commitSvc = new CommitService(opts.pg);
+    const commitSvc = new CommitService(opts.pg, new StubOsrmClient());
     const counts = await commitSvc.commit({
       importSessionId: result.importSessionId,
       staShortCode: input.manifest.sta_short_code,

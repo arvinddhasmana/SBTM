@@ -22,6 +22,7 @@ import { DryRunService } from '../importer/dry-run.service';
 import { PgQueryable } from '../staging/pg-pool.provider';
 import { StagingWriter } from '../staging/staging-writer.service';
 import { CommitService } from './commit.service';
+import { StubOsrmClient } from '../shape-fallback/osrm-client';
 
 const RUN_DB = !!process.env.DATABASE_URL;
 const describeDb = RUN_DB ? describe : describe.skip;
@@ -63,7 +64,7 @@ describeDb('CommitService (slice 2b transport-layer, integration)', () => {
     const adapter = new StaCsvAdapter();
     const writer = new StagingWriter(pg);
     const dryRun = new DryRunService([adapter], writer);
-    const commit = new CommitService(pg);
+    const commit = new CommitService(pg, new StubOsrmClient());
 
     for (const name of ['osta', 'rcjtc']) {
       const input = await loadBundle(name);
@@ -99,5 +100,28 @@ describeDb('CommitService (slice 2b transport-layer, integration)', () => {
       `SELECT count(*)::int AS c FROM stx_operators WHERE external_ids->>'legal_entity_id' = 'CA-ON-1234567'`,
     );
     expect((dup.rows[0] as { c: number }).c).toBe(1);
+
+    // Slice 3 post-processor: bundle ships no shape for R-OCDSB-101 and
+    // R-RCCDSB-501. After commit they must be flagged `sbtm_generated` and
+    // have shape rows generated from the stop sequence.
+    const generated = await pool.query(
+      `SELECT route_id, stx_shape_source FROM routes
+        WHERE route_id IN ('R-OCDSB-101', 'R-RCCDSB-501')
+        ORDER BY route_id`,
+    );
+    const sources = (generated.rows as { route_id: string; stx_shape_source: string }[]).map(
+      (r) => r.stx_shape_source,
+    );
+    expect(sources).toEqual(['sbtm_generated', 'sbtm_generated']);
+
+    const genShapes = await pool.query(
+      `SELECT count(*)::int AS c FROM shapes s
+         WHERE s.shape_id IN (
+           SELECT DISTINCT shape_id FROM trips
+            WHERE route_id IN ('R-OCDSB-101', 'R-RCCDSB-501')
+              AND shape_id IS NOT NULL
+         )`,
+    );
+    expect((genShapes.rows[0] as { c: number }).c).toBeGreaterThan(0);
   }, 30_000);
 });

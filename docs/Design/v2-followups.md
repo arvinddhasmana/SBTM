@@ -77,10 +77,9 @@ Open work items deferred from the aggressive cutover (commits 497497c Phase A, 3
 
 ### 9. Route Planner / shape-source post-processor
 
-- **Where**: `services/integration-importer/src/modules/shape-fallback/` ships a worker that road-snaps stop sequences via OSRM, but it is not invoked from the commit path. All routes currently land with `stx_shape_source = 'sta_import'` (the column default) even when the bundle ships no shape.
-- **Symptom**: bundle notes claim R-OCDSB-101 and R-RCCDSB-501 should be `sbtm_generated`; live DB shows them as `sta_import` with no shape rows.
-- **Fix**: after `CommitService.commit()` finishes, run the fallback worker for any route whose `shape_id` references zero `shapes` rows, then UPDATE `routes.stx_shape_source = 'sbtm_generated'` for those route_ids. Wire it as an optional step in `POST /imports/commit` and the CLI seeder.
-- **Size**: 0.5 day.
+- **Where**: `services/integration-importer/src/modules/shape-fallback/` ships a worker that road-snaps stop sequences via OSRM. Now wired into `CommitService.runShapeFallback`, which runs after the main commit transaction.
+- **Status**: done on `feat/sbtm-refocus-data-model`. After each commit, any route whose trip references a missing shape (`shape_id` NULL or zero rows in `shapes`) gets a road-snapped polyline (StubOsrmClient by default; HTTP impl swappable via `OSRM_CLIENT` provider), shape rows inserted, the trip's `shape_id` backfilled when NULL, and `routes.stx_shape_source` set to `sbtm_generated`. Integration test asserts R-OCDSB-101 and R-RCCDSB-501 are flagged correctly.
+- **Followup**: replace `StubOsrmClient` (straight-line passthrough of stop coords) with an HTTP client against the `sbtm-osrm` container. ~0.5 day.
 
 ### 10. Frontend apps + locales (Phase D)
 
