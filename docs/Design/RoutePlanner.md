@@ -96,7 +96,46 @@ School Admin sees the planner read-only on their school's routes; they raise tic
 - Live (in-progress run) overlay — that view lives in the Driver/Parent apps, not the planner.
 - Free-draw line editing — deferred per §2; the editor abstraction is the seam.
 
-## 9. Verification
+## 9. Non-destructive stop edits & student↔stop warnings
+
+Reaffirms §2: Route Planner **never** mutates student↔stop or student↔route assignments. When a stop is moved, renamed, or removed, existing `stx_ridership` rows that reference it are left intact — even if the new location is far enough from the old that the previously assigned students would, in practice, no longer be served by it.
+
+The reason is jurisdictional: the decision to reassign a student to a different stop, walk them to the moved one, or split a route is an STA Admin policy call (with parent communication implications). The Planner is a geometry tool, not a roster tool.
+
+To prevent silent drift, stop edits raise warnings that surface to STA Admin out-of-band:
+
+| Trigger                                                                | Warning row                                                                                   |
+| ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| Stop dragged > `STOP_MOVE_WARN_METERS` (default 100m) from prior coord | `stop_moved` — one row per affected `stx_ridership.stop_id = <moved stop>`                    |
+| Stop removed and `stx_ridership` rows still reference it               | Save is blocked at the API; UI prompts admin to either keep stop or open the warning workflow |
+| Stop reordered such that travel time delta > 10 min for any rider      | `schedule_drift` — one row per affected ridership                                             |
+
+**Schema sketch** (lands with the Route Planner save-path implementation, not in this doc):
+
+```sql
+CREATE TABLE stx_student_stop_warnings (
+  id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  ridership_id   uuid NOT NULL REFERENCES stx_ridership(id) ON DELETE CASCADE,
+  stop_id        uuid NOT NULL REFERENCES stops(stop_id),
+  reason         text NOT NULL,            -- 'stop_moved' | 'schedule_drift' | ...
+  details        jsonb NOT NULL DEFAULT '{}'::jsonb,  -- prev_lat/lng, new_lat/lng, distance_m, ...
+  raised_at      timestamptz NOT NULL DEFAULT now(),
+  raised_by      uuid REFERENCES users(id),
+  acked_at       timestamptz,
+  acked_by       uuid REFERENCES users(id),
+  ack_note       text
+);
+CREATE INDEX ON stx_student_stop_warnings (acked_at) WHERE acked_at IS NULL;
+```
+
+The admin-dashboard surface is a separate "Stop Change Review" screen — **not** part of the Planner UI — so the Planner remains a pure geometry tool. STA Admin acks each warning with a free-text note recording the chosen remedy (reassign in Student Management UI, leave as-is, contact parent, etc.); the ack is the audit trail, not an automatic mutation of `stx_ridership`.
+
+This means the Planner save-path implementation has two responsibilities beyond writing `stops`/`stop_times`/`shapes`:
+
+1. Diff old vs new stop coords; for each moved stop, query `stx_ridership` and emit one warning row per affected rider.
+2. Refuse to delete a stop with non-zero `stx_ridership` references (return 409 with the rider count); UI funnels admin to the review screen.
+
+## 10. Verification
 
 - Round-trip test: import GTFS ZIP → render in Planner → export GTFS ZIP → diff. Output ZIP must equal input modulo `feed_info.txt` timestamps and `stx_*` extension columns.
 - Fallback test: import a sample route with no `sta-shapes.csv`; assert `stx_shape_source='sbtm_generated'` and a non-empty `shapes` row set within 60 s.
