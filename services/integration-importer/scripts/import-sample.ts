@@ -1,20 +1,25 @@
 #!/usr/bin/env node
 /* eslint-disable no-console */
 /**
- * CLI seeder for the two-STA sample bundle. Runs entirely against the local
- * adapter + StagingWriter; when `DATABASE_URL` is unset it uses an in-memory
- * fake pg client so the dry-run still prints expected counts. Slice 2b will
- * extend this to also promote staged rows into the canonical v2 tables.
+ * CLI seeder for the two-STA sample bundle.
+ *
+ * - Default: validates + drains canonical records into stage_* tables using
+ *   an in-memory fake pg client (no DB required).
+ * - With DATABASE_URL set + `--commit` flag: connects to real Postgres,
+ *   stages, then promotes transport-layer entities into canonical v2 tables.
  *
  * Usage:
- *   npm run import:sample             # both OSTA + RCJTC
- *   npm run import:sample -- osta     # one bundle
+ *   npm run import:sample             # dry-run both OSTA + RCJTC (in-memory)
+ *   npm run import:sample -- osta     # dry-run one bundle
+ *   npm run import:sample -- --commit # validate + commit both (needs DATABASE_URL)
  */
 import { promises as fs } from 'node:fs';
 import * as path from 'node:path';
+import { Pool } from 'pg';
 import { StaCsvAdapter } from '../src/modules/adapter/sta-csv/sta-csv.adapter';
 import { FILE_ORDER } from '../src/modules/adapter/sta-csv/csv-schemas';
 import { ManifestSchema, SourceFiles } from '../src/modules/adapter/types/source-files';
+import { CommitService } from '../src/modules/commit/commit.service';
 import { DryRunService } from '../src/modules/importer/dry-run.service';
 import { PgQueryable } from '../src/modules/staging/pg-pool.provider';
 import { StagingWriter } from '../src/modules/staging/staging-writer.service';
@@ -29,6 +34,15 @@ class InMemoryPg implements PgQueryable {
       return { rows: [{ id: `mem-${this.next++}` }] };
     }
     return { rows: [] };
+  }
+}
+
+/** Adapts node-pg Pool to the minimal PgQueryable interface. */
+class RealPg implements PgQueryable {
+  constructor(private readonly pool: Pool) {}
+  async query(text: string, params?: unknown[]) {
+    const r = await this.pool.query(text, params as unknown[] | undefined);
+    return { rows: r.rows as unknown[] };
   }
 }
 
@@ -47,11 +61,16 @@ async function loadBundle(bundlePath: string): Promise<SourceFiles> {
   return { manifest, files };
 }
 
-async function importOne(name: string): Promise<boolean> {
+interface RunOpts {
+  commit: boolean;
+  pg: PgQueryable;
+}
+
+async function importOne(name: string, opts: RunOpts): Promise<boolean> {
   const bundlePath = path.join(BUNDLE_ROOT, name);
   console.log(`\n=== Importing ${name} from ${bundlePath} ===`);
   const adapter = new StaCsvAdapter();
-  const writer = new StagingWriter(new InMemoryPg());
+  const writer = new StagingWriter(opts.pg);
   const svc = new DryRunService([adapter], writer);
   const input = await loadBundle(bundlePath);
   const result = await svc.run('sta-csv', input);
@@ -66,18 +85,47 @@ async function importOne(name: string): Promise<boolean> {
     return false;
   }
   console.log(`OK  session=${result.importSessionId}`);
-  console.log(`    counts=${JSON.stringify(result.counts)}`);
-  console.log(`    warnings=${result.validation.warnings.length} (sha256 placeholders skipped)`);
+  console.log(`    stage counts=${JSON.stringify(result.counts)}`);
+  console.log(`    warnings=${result.validation.warnings.length}`);
+
+  if (opts.commit && result.importSessionId) {
+    const commitSvc = new CommitService(opts.pg);
+    const counts = await commitSvc.commit({
+      importSessionId: result.importSessionId,
+      staShortCode: input.manifest.sta_short_code,
+    });
+    console.log(`    commit counts=${JSON.stringify(counts)}`);
+  }
   return true;
 }
 
 async function main() {
   const args = process.argv.slice(2);
-  const targets = args.length > 0 ? args : ['osta', 'rcjtc'];
+  const commit = args.includes('--commit');
+  const targets = args.filter((a) => !a.startsWith('--'));
+  const list = targets.length > 0 ? targets : ['osta', 'rcjtc'];
+
+  let pg: PgQueryable;
+  let pool: Pool | undefined;
+  if (commit) {
+    if (!process.env.DATABASE_URL) {
+      console.error('--commit requires DATABASE_URL');
+      process.exit(2);
+    }
+    pool = new Pool({ connectionString: process.env.DATABASE_URL });
+    pg = new RealPg(pool);
+  } else {
+    pg = new InMemoryPg();
+  }
+
   let allOk = true;
-  for (const t of targets) {
-    const ok = await importOne(t);
-    allOk = allOk && ok;
+  try {
+    for (const t of list) {
+      const ok = await importOne(t, { commit, pg });
+      allOk = allOk && ok;
+    }
+  } finally {
+    await pool?.end();
   }
   process.exit(allOk ? 0 : 1);
 }

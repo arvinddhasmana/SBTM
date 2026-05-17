@@ -67,21 +67,29 @@ Open work items deferred from the aggressive cutover (commits 497497c Phase A, 3
 
 ## Low priority (cosmetic / docs)
 
-### 8. Importer slice 2b — staging → canonical commit (deferred, needs live Postgres)
+### 8. Importer slice 2b PII layer — students / guardians / ridership commit
 
-- **Where**: `services/integration-importer/src/modules/staging/` (writer ships, commit promoter pending).
-- **Symptom**: `POST /imports/dry-run` populates `stage_*` tables and returns counts, but never promotes rows into `stx_sta` / `stx_boards` / `stx_schools` / `stx_operators` / `stx_vehicles` / `routes` / `stops` / `shapes` / `trips` / `stop_times` / `stx_students` / `stx_guardians` / `stx_student_guardians` / `stx_ridership`. End-to-end Phase C verification ("import the bundle, count rows in canonical tables") cannot run yet.
-- **Fix**: a `CommitService` that, inside one transaction per session, resolves natural keys → UUIDs via `external_ids` JSONB lookups (sta/board/school/operator/vehicle/student/guardian), inserts GTFS-keyed rows by TEXT PK (routes/stops/shapes/trips/stop_times), encrypts BYTEA columns on `stx_students` (board_student_number, legal_name, preferred_name, date_of_birth, home_address) using the same KMS path as the rest of api-gateway, and respects RLS via `rlsContext.runAs({ role: 'STA_ADMIN', staId })`. Needs a live Postgres with the Phase A v2 schema applied to verify; unit tests can mock the pg client but the round-trip assertions belong in `npm run test:integration` gated on `DATABASE_URL`.
-- **Size**: 2–3 days once a staging Postgres with PostGIS + the encryption hook is reachable.
+- **Where**: `services/integration-importer/src/modules/commit/commit.service.ts` covers the transport layer (stx_sta / boards / schools / operators / vehicles / agency / calendar / routes / stops / shapes / trips / stop_times); the PII layer is deferred.
+- **Status**: transport layer landed on `feat/sbtm-refocus-data-model` — slice 2b integration test (`commit.service.int.spec.ts`) verifies a clean stage→commit round-trip on the two-STA bundle including cross-STA operator dedupe (one `stx_operators` row for `OP-STOCK`).
+- **Symptom**: `stx_students`, `stx_guardians`, `stx_student_guardians`, `stx_ridership` are still only staged. Audience-resolver and parent-app flows that depend on them cannot run end-to-end yet.
+- **Fix**: extend `CommitService` with an encrypted-PII path. `stx_students` has BYTEA columns (board_student_number, legal_name, preferred_name, date_of_birth, home_address) that must be encrypted via the same KMS hook the rest of api-gateway uses. Guardian PII (email/phone) needs the same treatment. Cross-board guardian shape (O-P2 → 2 children at different schools) must produce exactly one `stx_guardians` row and two `stx_student_guardians` link rows.
+- **Size**: 1–2 days once the encryption hook is available as a shared lib.
 
-### 9. Frontend apps + locales (Phase D)
+### 9. Route Planner / shape-source post-processor
+
+- **Where**: `services/integration-importer/src/modules/shape-fallback/` ships a worker that road-snaps stop sequences via OSRM, but it is not invoked from the commit path. All routes currently land with `stx_shape_source = 'sta_import'` (the column default) even when the bundle ships no shape.
+- **Symptom**: bundle notes claim R-OCDSB-101 and R-RCCDSB-501 should be `sbtm_generated`; live DB shows them as `sta_import` with no shape rows.
+- **Fix**: after `CommitService.commit()` finishes, run the fallback worker for any route whose `shape_id` references zero `shapes` rows, then UPDATE `routes.stx_shape_source = 'sbtm_generated'` for those route_ids. Wire it as an optional step in `POST /imports/commit` and the CLI seeder.
+- **Size**: 0.5 day.
+
+### 10. Frontend apps + locales (Phase D)
 
 - **Where**: `apps/admin-dashboard`, `apps/parent-dashboard`, `apps/parent-app-mobile`, `apps/driver-app`, plus all `**/locales/*.json` referencing "OSTA Admin".
 - **Symptom**: apps reference deleted `Role.OSTA_ADMIN`, expect old user shape (schoolId/boardId), and show stale UI strings.
 - **Fix**: full Phase D cutover per plan.
 - **Size**: 1–2 weeks for the four apps end-to-end.
 
-### 10. Docs alignment (Phase F)
+### 11. Docs alignment (Phase F)
 
 - **Where**: `docs/Design/SchemaAudit-And-Migration.md` (still describes dual-write), `docs/Design/DataModel-v2.md` §10 (still mentions OSTA Admin alias), various PRDs.
 - **Symptom**: documentation drift from code.
