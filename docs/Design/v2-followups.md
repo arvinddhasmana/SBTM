@@ -79,7 +79,7 @@ Open work items deferred from the aggressive cutover (commits 497497c Phase A, 3
 
 - **Where**: `services/integration-importer/src/modules/shape-fallback/` ships a worker that road-snaps stop sequences via OSRM. Now wired into `CommitService.runShapeFallback`, which runs after the main commit transaction.
 - **Status**: done on `feat/sbtm-refocus-data-model`. After each commit, any route whose trip references a missing shape (`shape_id` NULL or zero rows in `shapes`) gets a road-snapped polyline (StubOsrmClient by default; HTTP impl swappable via `OSRM_CLIENT` provider), shape rows inserted, the trip's `shape_id` backfilled when NULL, and `routes.stx_shape_source` set to `sbtm_generated`. Integration test asserts R-OCDSB-101 and R-RCCDSB-501 are flagged correctly.
-- **Followup**: replace `StubOsrmClient` (straight-line passthrough of stop coords) with an HTTP client against the `sbtm-osrm` container. ~0.5 day.
+- **Followup**: done. `HttpOsrmClient` (`services/integration-importer/src/modules/shape-fallback/http-osrm-client.ts`) calls `/route/v1/{profile}/{coords}?geometries=geojson&overview=full` and maps the returned polyline into GTFS shape rows. `osrmClientProvider` returns the HTTP client when `OSRM_BASE_URL` is set, else falls back to `StubOsrmClient` so local dev and unit tests stay green without an OSRM instance. Optional env: `OSRM_PROFILE` (default `driving`), `OSRM_TIMEOUT_MS` (default 10000). Failures (non-2xx, OSRM `code != 'Ok'`, missing geometry) throw — importer surfaces the error rather than silently producing zero shapes. `shape_dist_traveled` is left null for interior points (OSRM does not expose per-shape-point cumulative distance and the importer does not yet consume it).
 
 ### 10. Frontend apps + locales (Phase D)
 
