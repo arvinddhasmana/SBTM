@@ -1,5 +1,5 @@
 /**
- * Integration test for slice 2b transport-layer commit.
+ * Integration test for slice 2b transport-layer commit and slice 4 PII layer.
  *
  * Gated on `DATABASE_URL` — local/CI must set this to a Postgres URL where the
  * superuser role can bypass RLS and the staging migration plus the v2 schema
@@ -11,10 +11,17 @@
  *   1. Stage + commit both bundles end-to-end (no exceptions).
  *   2. Canonical row counts in stx_* + GTFS tables match the bundle.
  *   3. Operator dedupe: OP-STOCK appears once across both STAs.
+ *   4. Shape fallback (slice 3): routes missing shapes are flagged
+ *      `sbtm_generated` and gain shape rows.
+ *   5. PII layer (slice 4): students/guardians persisted encrypted and
+ *      round-trip; cross-board parent O-P2 produces ONE stx_guardians row
+ *      with TWO stx_student_guardians link rows; ridership rows present.
  */
 import { promises as fs } from 'node:fs';
+import { randomBytes } from 'node:crypto';
 import * as path from 'node:path';
 import { Pool } from 'pg';
+import { AesGcmPiiCrypto } from '@sbtm/common';
 import { StaCsvAdapter } from '../adapter/sta-csv/sta-csv.adapter';
 import { FILE_ORDER } from '../adapter/sta-csv/csv-schemas';
 import { ManifestSchema, SourceFiles } from '../adapter/types/source-files';
@@ -64,7 +71,9 @@ describeDb('CommitService (slice 2b transport-layer, integration)', () => {
     const adapter = new StaCsvAdapter();
     const writer = new StagingWriter(pg);
     const dryRun = new DryRunService([adapter], writer);
-    const commit = new CommitService(pg, new StubOsrmClient());
+    const piiKey = randomBytes(32);
+    const pii = new AesGcmPiiCrypto(piiKey);
+    const commit = new CommitService(pg, new StubOsrmClient(), pii);
 
     for (const name of ['osta', 'rcjtc']) {
       const input = await loadBundle(name);
@@ -123,5 +132,51 @@ describeDb('CommitService (slice 2b transport-layer, integration)', () => {
          )`,
     );
     expect((genShapes.rows[0] as { c: number }).c).toBeGreaterThan(0);
+
+    // Slice 4: PII layer end-to-end.
+    //
+    // (a) Row counts: 6 students per STA → 12; 4 guardians per STA but parent
+    // O-P2 spans OCSB + OCDSB and parent R-P2 spans RCDSB + RCCDSB. Within
+    // each STA all 4 guardian_codes are unique → 8 total guardians; 6 link
+    // rows per STA → 12.
+    const piiCounts = await pool.query(`
+      SELECT
+        (SELECT count(*)::int FROM stx_students) AS students,
+        (SELECT count(*)::int FROM stx_guardians) AS guardians,
+        (SELECT count(*)::int FROM stx_student_guardians) AS links,
+        (SELECT count(*)::int FROM stx_ridership) AS ridership
+    `);
+    const p = piiCounts.rows[0] as Record<string, number>;
+    expect(p.students).toBe(12);
+    expect(p.guardians).toBe(8);
+    expect(p.links).toBe(12);
+    expect(p.ridership).toBeGreaterThanOrEqual(12);
+
+    // (b) PII columns are BYTEA ciphertext, not plaintext.
+    const sample = await pool.query(`SELECT legal_name FROM stx_students LIMIT 1`);
+    const ct = (sample.rows[0] as { legal_name: Buffer }).legal_name;
+    expect(Buffer.isBuffer(ct)).toBe(true);
+    // 12-byte IV + 16-byte tag + at least 1 byte ciphertext.
+    expect(ct.length).toBeGreaterThan(28);
+    expect(pii.decrypt(ct)).toMatch(/[A-Za-z]/);
+
+    // (c) Cross-board guardian dedupe: OSTA-GRD-0002 has one stx_guardians row
+    //     with two stx_student_guardians link rows (OCSB-STU-0003 + OCDSB-STU-0001).
+    const op2 = await pool.query(
+      `SELECT g.id AS guardian_id,
+              (SELECT count(*)::int FROM stx_student_guardians sg WHERE sg.guardian_id = g.id) AS link_count
+         FROM stx_guardians g
+        WHERE g.external_ids->>'guardian_code' = 'OSTA-GRD-0002'`,
+    );
+    expect(op2.rows.length).toBe(1);
+    expect((op2.rows[0] as { link_count: number }).link_count).toBe(2);
+
+    // (d) Ridership round-trip: every ridership row points at a real trip.
+    const orphan = await pool.query(
+      `SELECT count(*)::int AS c FROM stx_ridership r
+         LEFT JOIN trips t ON t.trip_id = r.trip_id
+        WHERE t.trip_id IS NULL`,
+    );
+    expect((orphan.rows[0] as { c: number }).c).toBe(0);
   }, 30_000);
 });

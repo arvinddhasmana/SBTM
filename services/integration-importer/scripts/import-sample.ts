@@ -14,8 +14,10 @@
  *   npm run import:sample -- --commit # validate + commit both (needs DATABASE_URL)
  */
 import { promises as fs } from 'node:fs';
+import { randomBytes } from 'node:crypto';
 import * as path from 'node:path';
 import { Pool } from 'pg';
+import { AesGcmPiiCrypto, piiCryptoFromEnv, type PiiCrypto } from '@sbtm/common';
 import { StaCsvAdapter } from '../src/modules/adapter/sta-csv/sta-csv.adapter';
 import { FILE_ORDER } from '../src/modules/adapter/sta-csv/csv-schemas';
 import { ManifestSchema, SourceFiles } from '../src/modules/adapter/types/source-files';
@@ -65,6 +67,7 @@ async function loadBundle(bundlePath: string): Promise<SourceFiles> {
 interface RunOpts {
   commit: boolean;
   pg: PgQueryable;
+  pii: PiiCrypto;
 }
 
 async function importOne(name: string, opts: RunOpts): Promise<boolean> {
@@ -90,7 +93,7 @@ async function importOne(name: string, opts: RunOpts): Promise<boolean> {
   console.log(`    warnings=${result.validation.warnings.length}`);
 
   if (opts.commit && result.importSessionId) {
-    const commitSvc = new CommitService(opts.pg, new StubOsrmClient());
+    const commitSvc = new CommitService(opts.pg, new StubOsrmClient(), opts.pii);
     const counts = await commitSvc.commit({
       importSessionId: result.importSessionId,
       staShortCode: input.manifest.sta_short_code,
@@ -108,6 +111,7 @@ async function main() {
 
   let pg: PgQueryable;
   let pool: Pool | undefined;
+  let pii: PiiCrypto;
   if (commit) {
     if (!process.env.DATABASE_URL) {
       console.error('--commit requires DATABASE_URL');
@@ -115,14 +119,26 @@ async function main() {
     }
     pool = new Pool({ connectionString: process.env.DATABASE_URL });
     pg = new RealPg(pool);
+    // Use a real key from env when present; otherwise generate an ephemeral
+    // one for dev-loop seeding so the writer doesn't crash. The ciphertext
+    // becomes unreadable once the process exits — expected for sample data.
+    pii = process.env.SBTM_PII_KEY
+      ? piiCryptoFromEnv()
+      : ((): PiiCrypto => {
+          console.warn(
+            'SBTM_PII_KEY not set — using ephemeral PII key (ciphertext NOT decryptable after this run)',
+          );
+          return new AesGcmPiiCrypto(randomBytes(32));
+        })();
   } else {
     pg = new InMemoryPg();
+    pii = new AesGcmPiiCrypto(randomBytes(32));
   }
 
   let allOk = true;
   try {
     for (const t of list) {
-      const ok = await importOne(t, { commit, pg });
+      const ok = await importOne(t, { commit, pg, pii });
       allOk = allOk && ok;
     }
   } finally {

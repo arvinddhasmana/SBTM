@@ -69,11 +69,10 @@ Open work items deferred from the aggressive cutover (commits 497497c Phase A, 3
 
 ### 8. Importer slice 2b PII layer — students / guardians / ridership commit
 
-- **Where**: `services/integration-importer/src/modules/commit/commit.service.ts` covers the transport layer (stx_sta / boards / schools / operators / vehicles / agency / calendar / routes / stops / shapes / trips / stop_times); the PII layer is deferred.
-- **Status**: transport layer landed on `feat/sbtm-refocus-data-model` — slice 2b integration test (`commit.service.int.spec.ts`) verifies a clean stage→commit round-trip on the two-STA bundle including cross-STA operator dedupe (one `stx_operators` row for `OP-STOCK`).
-- **Symptom**: `stx_students`, `stx_guardians`, `stx_student_guardians`, `stx_ridership` are still only staged. Audience-resolver and parent-app flows that depend on them cannot run end-to-end yet.
-- **Fix**: extend `CommitService` with an encrypted-PII path. `stx_students` has BYTEA columns (board_student_number, legal_name, preferred_name, date_of_birth, home_address) that must be encrypted via the same KMS hook the rest of api-gateway uses. Guardian PII (email/phone) needs the same treatment. Cross-board guardian shape (O-P2 → 2 children at different schools) must produce exactly one `stx_guardians` row and two `stx_student_guardians` link rows.
-- **Size**: 1–2 days once the encryption hook is available as a shared lib.
+- **Where**: `services/integration-importer/src/modules/commit/commit.service.ts` covers the transport layer (stx_sta / boards / schools / operators / vehicles / agency / calendar / routes / stops / shapes / trips / stop_times); the PII layer landed in slice 4 (this commit).
+- **Status**: done on `feat/sbtm-refocus-data-model`. `CommitService` now writes `stx_students`, `stx_guardians`, `stx_student_guardians`, and `stx_ridership` inside the same transaction as the transport layer when a `PiiCrypto` provider is wired (`PII_CRYPTO` token, `piiCryptoProvider` via `piiCryptoFromEnv()`). PII columns (`legal_name`, `board_student_number`, `preferred_name`, `date_of_birth`, `home_address`, guardian `legal_name`/`email`/`phone`) are written as `AES-256-GCM` BYTEA per `libs/common/src/crypto/pii-crypto.ts`. Cross-board guardian dedupe is keyed on `external_ids->>'guardian_code'`: integration test asserts `OSTA-GRD-0002` (OCSB-STU-0003 + OCDSB-STU-0001) becomes one `stx_guardians` row with two `stx_student_guardians` links. Ridership writes one row per trip on the student's (route, direction).
+- **Followup**: replace the MVP single-key cipher with envelope encryption (per-record DEK wrapped by a KMS-managed KEK). The `PiiCrypto` interface stays stable across that swap — only `piiCryptoFromEnv()` / `AesGcmPiiCrypto` are replaced. ~2–3 days when a KMS provider is selected. Until then, **`SBTM_PII_KEY` (base64-encoded 32 bytes) must be set** in every env that runs the importer; rotating the key invalidates all stored ciphertexts.
+- **Size**: closed.
 
 ### 9. Route Planner / shape-source post-processor
 

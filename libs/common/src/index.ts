@@ -22,3 +22,11 @@ export {
 export { bootstrapApp, type BootstrapOptions } from './config/bootstrap';
 export { initTracing, shutdownTracing } from './config/tracing';
 export { createRedisConnectionOptions } from './config/redis.config';
+
+// Crypto
+export {
+  AesGcmPiiCrypto,
+  ciphertextEquals,
+  piiCryptoFromEnv,
+  type PiiCrypto,
+} from './crypto/pii-crypto';
