@@ -15,15 +15,9 @@ import { CreateSchoolDto, UpdateSchoolDto } from '../dto/create-school.dto';
 import { CreateBoardDto, UpdateBoardDto } from '../dto/create-board.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard, Roles, Role } from '@sbtm/common';
+import type { AuthenticatedUser } from '../../auth/types/authenticated-user';
 
-interface AuthenticatedRequest {
-  user: {
-    id: string;
-    role: Role;
-    schoolId?: string;
-    boardId?: string;
-  };
-}
+type AuthenticatedRequest = { user: AuthenticatedUser };
 
 @Controller()
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -35,9 +29,9 @@ export class OrganizationController {
   // ---------- Boards ----------
 
   @Get('boards')
-  @Roles(Role.STA_ADMIN)
-  async listBoards() {
-    return this.organizationService.listBoards();
+  @Roles(Role.SUPER_ADMIN, Role.STA_ADMIN, Role.BOARD_ADMIN)
+  async listBoards(@Request() req: AuthenticatedRequest) {
+    return this.organizationService.listBoards(req.user);
   }
 
   @Get('boards/:id')

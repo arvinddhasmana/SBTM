@@ -37,9 +37,30 @@ export class OrganizationGatewayService {
 
   // ---------- Board CRUD ----------
 
-  async listBoards(): Promise<Board[]> {
-    // TODO(phase-B): boards now belong to STAs; consider scoping by caller's STA anchor.
-    return this.boardRepository.find({ order: { name: 'ASC' } });
+  async listBoards(caller: CallerContext): Promise<Board[]> {
+    if (caller.role === Role.SUPER_ADMIN) {
+      return this.boardRepository.find({ order: { name: 'ASC' } });
+    }
+    if (caller.role === Role.STA_ADMIN) {
+      if (caller.anchorKind !== 'sta' || !caller.anchorId) {
+        throw new ForbiddenException('STA admin is not anchored to an STA');
+      }
+      return this.boardRepository.find({
+        where: { staId: caller.anchorId },
+        order: { name: 'ASC' },
+      });
+    }
+    if (caller.role === Role.BOARD_ADMIN) {
+      if (caller.anchorKind !== 'board' || !caller.anchorId) {
+        throw new ForbiddenException('Board admin is not anchored to a board');
+      }
+      return this.boardRepository.find({
+        where: { id: caller.anchorId },
+        order: { name: 'ASC' },
+      });
+    }
+    // SCHOOL_ADMIN and below: no board listing.
+    throw new ForbiddenException('You do not have permission to list boards');
   }
 
   async getBoard(id: string, caller: CallerContext): Promise<Board> {

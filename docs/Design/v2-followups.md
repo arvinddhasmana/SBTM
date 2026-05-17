@@ -9,7 +9,7 @@ Open work items deferred from the aggressive cutover (commits 497497c Phase A, 3
 - **Where**: ~24 callsites across `services/api-gateway/src/modules/gateway/services/*.ts` reading `req.user.schoolId`, `req.user.boardId`, `req.user.driverId`, `req.user.childRouteIds`, `req.user.assignedRouteIds`.
 - **Symptom**: code compiles (TS thinks `req.user` is `any`) but at runtime returns `undefined` for those fields → scoped queries return empty / forbidden.
 - **Fix**: introduce `AuthenticatedRequest` type with `user: { id, role, anchorKind, anchorId, preferredLanguage }`; replace `req.user.schoolId` → derived helper that maps `anchorKind`+`anchorId` to the appropriate scope. Per-service migration.
-- **Status**: partial — shared `AuthenticatedUser` type landed at `services/api-gateway/src/modules/auth/types/authenticated-user.ts` and wired into `JwtStrategy.validate()`. Per-service callsite migration is folded into item #2 (each 501 stub rewrite drops its local `RequestUser` interface and switches reads to anchor helpers).
+- **Status**: partial — shared `AuthenticatedUser` type landed at `services/api-gateway/src/modules/auth/types/authenticated-user.ts` and wired into `JwtStrategy.validate()`. Controller migrations done so far: `video.controller.ts`, `organization.controller.ts` (drop local v1-shaped `AuthenticatedRequest`, switch to `{ user: AuthenticatedUser }`, scope reads off `anchorKind`+`anchorId`). Per-service callsite migration is folded into item #2 (each 501 stub rewrite drops its local `RequestUser` interface and switches reads to anchor helpers).
 - **Size**: ~1–2 days. Should land before Phase C importer integrates so the importer's RBAC compiles against the real shape.
 
 ### 2. 501 stubs in api-gateway gateway services
@@ -56,8 +56,9 @@ Open work items deferred from the aggressive cutover (commits 497497c Phase A, 3
 
 - **Where**: `services/notification-service/src/modules/tokens/entities/device-token.entity.ts`.
 - **Symptom**: orphaned device tokens if a v2 user is deleted (no cascade).
-- **Fix**: add explicit FK + `ON DELETE CASCADE` migration once the cross-service user FK shape is settled.
-- **Size**: 0.5 day.
+- **Status**: **blocked on cross-service user FK shape**. Admin/driver recipients live in `api-gateway.users`; parent recipients live in `stx_guardians` (no `users` row). A single hard FK to `users` would force every guardian to also have a `users` row, and TypeORM cannot model a polymorphic `userId` cleanly. Defer until either (a) we mint shadow `users` rows for guardians during subscription provisioning, or (b) we split `device_tokens.user_id` into `recipient_kind` + `recipient_id`. Pick one as part of the parent-app cutover (Phase D, item #10).
+- **Fix**: add explicit FK + `ON DELETE CASCADE` migration once that decision is made.
+- **Size**: 0.5 day once unblocked.
 
 ### 7. Internal-service guard replacing the removed `Role.SYSTEM`
 
