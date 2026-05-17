@@ -19,6 +19,9 @@ import { Roles, Role } from '@sbtm/common';
 import { MultiTenancyGuard } from '../../common/guards/multi-tenancy.guard';
 import { CreateSchoolDto } from './dto/create-school.dto';
 import { UpdateSchoolDto } from './dto/update-school.dto';
+import type { AuthenticatedUser } from '../auth/types/authenticated-user';
+
+type AuthenticatedRequest = { user: AuthenticatedUser };
 
 @Controller('schools')
 @UseGuards(JwtAuthGuard, RolesGuard, MultiTenancyGuard)
@@ -29,14 +32,7 @@ export class SchoolController {
   @Roles(Role.STA_ADMIN, Role.BOARD_ADMIN)
   async findAll(
     @Query('boardId') boardId?: string,
-    @Request()
-    req?: {
-      user: {
-        anchorKind?: string | null;
-        anchorId?: string | null;
-        role: string;
-      };
-    },
+    @Request() req?: AuthenticatedRequest,
   ) {
     // Board admins are restricted to their own board (anchor scope)
     if (
@@ -62,11 +58,15 @@ export class SchoolController {
   @Roles(Role.STA_ADMIN, Role.BOARD_ADMIN)
   async create(
     @Body() dto: CreateSchoolDto,
-    @Request() req: { user: { boardId?: string; role: string } },
+    @Request() req: AuthenticatedRequest,
   ) {
-    // Board admins can only create schools within their own board
-    if (req.user.role === Role.BOARD_ADMIN && req.user.boardId) {
-      return this.schoolService.create({ ...dto, boardId: req.user.boardId });
+    // Board admins can only create schools within their own board (anchor scope)
+    if (
+      req.user.role === Role.BOARD_ADMIN &&
+      req.user.anchorKind === 'board' &&
+      req.user.anchorId
+    ) {
+      return this.schoolService.create({ ...dto, boardId: req.user.anchorId });
     }
     return this.schoolService.create(dto);
   }

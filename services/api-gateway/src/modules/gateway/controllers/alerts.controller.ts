@@ -19,6 +19,9 @@ import {
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard, Roles, Role } from '@sbtm/common';
 import { School } from '../../organization/entities/school.entity';
+import type { AuthenticatedUser } from '../../auth/types/authenticated-user';
+
+type AuthenticatedRequest = { user: AuthenticatedUser };
 
 @Controller()
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -31,7 +34,7 @@ export class AlertsController {
 
   @Get('alerts')
   async getAllAlerts(
-    @Request() req: { user: any },
+    @Request() req: AuthenticatedRequest,
     @Query('schoolId') schoolId?: string,
   ) {
     const user = req.user;
@@ -41,7 +44,7 @@ export class AlertsController {
 
   @Get('alerts/active')
   async getActiveAlerts(
-    @Request() req: { user: any },
+    @Request() req: AuthenticatedRequest,
     @Query('schoolId') schoolId?: string,
   ) {
     const user = req.user;
@@ -53,7 +56,7 @@ export class AlertsController {
   @Roles(Role.SUPER_ADMIN, Role.STA_ADMIN, Role.BOARD_ADMIN, Role.SCHOOL_ADMIN)
   async resolveAlert(
     @Param('id') id: string,
-    @Request() req: { user: any },
+    @Request() req: AuthenticatedRequest,
     @Body() body: { notes?: string; actorUserId?: string; actorRole?: string },
   ) {
     await this.assertAlertOwnership(id, req.user);
@@ -68,7 +71,7 @@ export class AlertsController {
   @Roles(Role.SUPER_ADMIN, Role.STA_ADMIN, Role.BOARD_ADMIN, Role.SCHOOL_ADMIN)
   async confirmAlert(
     @Param('id') id: string,
-    @Request() req: { user: any },
+    @Request() req: AuthenticatedRequest,
     @Body() body: { actorUserId?: string; actorRole?: string },
   ) {
     await this.assertAlertOwnership(id, req.user);
@@ -82,7 +85,7 @@ export class AlertsController {
   @Roles(Role.SUPER_ADMIN, Role.STA_ADMIN, Role.BOARD_ADMIN, Role.SCHOOL_ADMIN)
   async falseAlarmAlert(
     @Param('id') id: string,
-    @Request() req: { user: any },
+    @Request() req: AuthenticatedRequest,
     @Body() body: { actorUserId?: string; actorRole?: string; notes?: string },
   ) {
     await this.assertAlertOwnership(id, req.user);
@@ -97,7 +100,7 @@ export class AlertsController {
   @Roles(Role.SUPER_ADMIN, Role.STA_ADMIN, Role.BOARD_ADMIN, Role.SCHOOL_ADMIN)
   async requestInfoAlert(
     @Param('id') id: string,
-    @Request() req: { user: any },
+    @Request() req: AuthenticatedRequest,
     @Body() body: { actorUserId?: string; actorRole?: string },
   ) {
     await this.assertAlertOwnership(id, req.user);
@@ -117,7 +120,7 @@ export class AlertsController {
   )
   async addStatusUpdate(
     @Param('id') id: string,
-    @Request() req: { user: any },
+    @Request() req: AuthenticatedRequest,
     @Body() body: { notes: string; actorUserId?: string; actorRole?: string },
   ) {
     await this.assertAlertOwnership(id, req.user);
@@ -136,7 +139,7 @@ export class AlertsController {
 
   @Get('alerts/parent-history')
   @Roles(Role.PARENT)
-  async getParentAlertHistory(@Request() req: { user: any }) {
+  async getParentAlertHistory(@Request() req: AuthenticatedRequest) {
     const user = req.user;
     // TODO(phase-B): derive a parent's child route IDs server-side via the
     // Guardian → StudentGuardian → Student → Route joins. v1 cached this list on the JWT
@@ -169,7 +172,7 @@ export class AlertsController {
   @Roles(Role.DRIVER, Role.SUPER_ADMIN, Role.STA_ADMIN)
   async createEmergencyEvent(
     @Body() dto: CreateEmergencyEventDto,
-    @Request() req: { user: any },
+    @Request() req: AuthenticatedRequest,
   ) {
     const user = req.user;
     // TODO(phase-B): a DRIVER's school context now flows from the run they're on, not
@@ -208,7 +211,7 @@ export class AlertsController {
    */
   private async assertAlertOwnership(
     alertId: string,
-    user: any,
+    user: AuthenticatedUser,
   ): Promise<void> {
     if (user.role === Role.SUPER_ADMIN || user.role === Role.STA_ADMIN) {
       return;
@@ -244,7 +247,7 @@ export class AlertsController {
   }
 
   private resolveSchoolIdFilter(
-    user: any,
+    user: AuthenticatedUser,
     requestedSchoolId?: string,
   ): string | undefined {
     if (user.role === Role.SUPER_ADMIN || user.role === Role.STA_ADMIN) {

@@ -33,7 +33,7 @@ describe('MultiTenancyGuard', () => {
 
   it('should allow SCHOOL_ADMIN to access their own school', () => {
     const context = createMockContext(
-      { role: Role.SCHOOL_ADMIN, schoolId: 'school-123' },
+      { role: Role.SCHOOL_ADMIN, anchorKind: 'school', anchorId: 'school-123' },
       { schoolId: 'school-123' },
     );
     expect(guard.canActivate(context)).toBe(true);
@@ -41,7 +41,7 @@ describe('MultiTenancyGuard', () => {
 
   it('should forbid SCHOOL_ADMIN from accessing another school', () => {
     const context = createMockContext(
-      { role: Role.SCHOOL_ADMIN, schoolId: 'school-123' },
+      { role: Role.SCHOOL_ADMIN, anchorKind: 'school', anchorId: 'school-123' },
       { schoolId: 'school-456' },
     );
     expect(() => guard.canActivate(context)).toThrow(ForbiddenException);
@@ -49,7 +49,7 @@ describe('MultiTenancyGuard', () => {
 
   it('should allow BOARD_ADMIN to access their own board', () => {
     const context = createMockContext(
-      { role: Role.BOARD_ADMIN, boardId: 'board-789' },
+      { role: Role.BOARD_ADMIN, anchorKind: 'board', anchorId: 'board-789' },
       { boardId: 'board-789' },
     );
     expect(guard.canActivate(context)).toBe(true);
@@ -57,7 +57,7 @@ describe('MultiTenancyGuard', () => {
 
   it('should forbid BOARD_ADMIN from accessing another board', () => {
     const context = createMockContext(
-      { role: Role.BOARD_ADMIN, boardId: 'board-789' },
+      { role: Role.BOARD_ADMIN, anchorKind: 'board', anchorId: 'board-789' },
       { boardId: 'board-000' },
     );
     expect(() => guard.canActivate(context)).toThrow(ForbiddenException);

@@ -6,8 +6,9 @@
  * GPS configuration.
  *
  * The controller never accepts schoolId or userId from the request body for
- * auth-sensitive decisions. schoolId is derived from the authenticated JWT
- * (req.user.schoolId). updatedBy is always req.user.id.
+ * auth-sensitive decisions. updatedBy is always req.user.id. schoolId for
+ * device-token creation is sourced from the request DTO because SUPER_ADMIN
+ * spans every school and is not anchor-scoped.
  *
  * Classification: T2 — operational configuration, no student PII.
  */
@@ -28,6 +29,7 @@ import {
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard, Roles, Role } from '@sbtm/common';
+import type { AuthenticatedUser } from '../../auth/types/authenticated-user';
 import {
   SystemSettingsGatewayService,
   GpsTrackingSource,
@@ -38,9 +40,7 @@ interface SetGpsSourceBody {
   source: GpsTrackingSource;
 }
 
-interface RequestWithUser {
-  user: { id: string; schoolId?: string; role: Role };
-}
+type AuthenticatedRequest = { user: AuthenticatedUser };
 
 @Controller('system-settings')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -67,7 +67,7 @@ export class SystemSettingsController {
   @Put('gps-source')
   async setGpsSource(
     @Body() body: SetGpsSourceBody,
-    @Request() req: RequestWithUser,
+    @Request() req: AuthenticatedRequest,
   ) {
     const { source } = body;
     if (source !== 'DRIVER_APP' && source !== 'DEDICATED_GPS') {
@@ -90,7 +90,7 @@ export class SystemSettingsController {
   @HttpCode(HttpStatus.CREATED)
   async createDeviceToken(
     @Body() dto: CreateDeviceTokenDto,
-    @Request() _req: RequestWithUser,
+    @Request() _req: AuthenticatedRequest,
   ) {
     if (!dto.vehicleId || !dto.schoolId) {
       throw new BadRequestException('vehicleId and schoolId are required');
@@ -125,7 +125,7 @@ export class SystemSettingsController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteDeviceToken(
     @Param('id') id: string,
-    @Request() _req: RequestWithUser,
+    @Request() _req: AuthenticatedRequest,
   ) {
     return this.systemSettingsGatewayService.deleteDeviceToken(id);
   }

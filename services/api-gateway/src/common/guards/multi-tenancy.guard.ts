@@ -5,44 +5,54 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { Role } from '@sbtm/common';
+import type { AuthenticatedUser } from '../../modules/auth/types/authenticated-user';
 
 @Injectable()
 export class MultiTenancyGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
-    const request = context.switchToHttp().getRequest();
+    const request = context.switchToHttp().getRequest<{
+      user?: AuthenticatedUser;
+      params: Record<string, string | undefined>;
+      query: Record<string, string | undefined>;
+      body?: Record<string, unknown>;
+    }>();
     const user = request.user;
 
     if (!user) {
       return false;
     }
 
-    // SUPER_ADMIN and STA_ADMIN can access everything
-    // TODO(phase-B): replace with internal-service guard for service-to-service calls
+    // SUPER_ADMIN and STA_ADMIN span every board/school in their tenant scope.
     if (user.role === Role.SUPER_ADMIN || user.role === Role.STA_ADMIN) {
       return true;
     }
 
     const params = request.params;
     const query = request.query;
-    const body = request.body ?? {};
+    const body = (request.body ?? {}) as {
+      schoolId?: string;
+      boardId?: string;
+    };
 
     const schoolId = params.schoolId || query.schoolId || body.schoolId;
     const boardId = params.boardId || query.boardId || body.boardId;
 
-    // If user is BOARD_ADMIN, they can only access their board or schools in their board
+    // BOARD_ADMIN: only their own board (board→school check requires a service lookup,
+    // deferred to the per-handler RLS context).
     if (user.role === Role.BOARD_ADMIN) {
-      if (boardId && boardId !== user.boardId) {
+      const userBoardId =
+        user.anchorKind === 'board' ? user.anchorId : undefined;
+      if (boardId && boardId !== userBoardId) {
         throw new ForbiddenException('You do not have access to this board');
       }
-      // For schools, we would need to check if the school belongs to the board.
-      // For now, if schoolId is provided, we might need a service to check,
-      // but simplest case is checking boardId.
       return true;
     }
 
-    // If user is SCHOOL_ADMIN, they can only access their school
+    // SCHOOL_ADMIN: only their own school
     if (user.role === Role.SCHOOL_ADMIN) {
-      if (schoolId && schoolId !== user.schoolId) {
+      const userSchoolId =
+        user.anchorKind === 'school' ? user.anchorId : undefined;
+      if (schoolId && schoolId !== userSchoolId) {
         throw new ForbiddenException('You do not have access to this school');
       }
       return true;
