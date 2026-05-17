@@ -1,0 +1,1 @@
+sta_event_id,event_type,severity,scope_kind,scope_code,service_date,effective_from,effective_to,body_template,body_params_json

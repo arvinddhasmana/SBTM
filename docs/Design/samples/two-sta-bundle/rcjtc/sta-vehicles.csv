@@ -1,0 +1,3 @@
+vehicle_code,operator_code,license_plate,capacity_seated,capacity_wheelchair,equipment_json
+BUS-RCJTC-401,OP-STOCK,ON-RCJTC-401,36,0,"{""camera"":true,""har_alert"":true,""gps_device_id"":""GPS-RCJTC-401""}"
+BUS-RCJTC-501,OP-STOCK,ON-RCJTC-501,36,2,"{""camera"":true,""har_alert"":true,""gps_device_id"":""GPS-RCJTC-501""}"

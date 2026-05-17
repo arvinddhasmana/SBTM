@@ -3,20 +3,20 @@
 - Document owner: Engineering and Architecture
 - Status: **Draft for review** (feat/sbtm-refocus-data-model)
 - Last reviewed: 2026-05-15
-- Related: `DataModel-v2.md`, `Integrations-OSTA.md`, existing `services/emergency-alerts`, `services/notification-service`
+- Related: `DataModel-v2.md`, `Integrations-STA.md`, existing `services/emergency-alerts`, `services/notification-service`
 
 ## 1. Scope
 
 Alerts in SBTM cover **four categories**:
 
-| Category                  | Examples                                                                     | Origin                                           |
-| ------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------ |
-| **Operational**           | Route cancelled, bus delayed (>10 min), stop relocated, run substituted      | Board/School Admin, OSTA import, automated rules |
-| **Safety / Emergency**    | Driver panic, accident, medical event                                        | Driver app, on-vehicle hardware                  |
-| **Compliance / Tracking** | Route deviation > threshold, no-show after window, late departure from depot | `gps-tracking` service auto-detection            |
-| **Informational**         | Weather advisory, schedule change next week, app maintenance                 | Admin manual                                     |
+| Category                  | Examples                                                                     | Origin                                          |
+| ------------------------- | ---------------------------------------------------------------------------- | ----------------------------------------------- |
+| **Operational**           | Route cancelled, bus delayed (>10 min), stop relocated, run substituted      | Board/School Admin, STA import, automated rules |
+| **Safety / Emergency**    | Driver panic, accident, medical event                                        | Driver app, on-vehicle hardware                 |
+| **Compliance / Tracking** | Route deviation > threshold, no-show after window, late departure from depot | `gps-tracking` service auto-detection           |
+| **Informational**         | Weather advisory, schedule change next week, app maintenance                 | Admin manual                                    |
 
-Phase 1 replaces the **OSTA cancellation/delay alert channel** (Operational + Informational) for participating boards. Safety/Emergency and Compliance flows already exist in `services/emergency-alerts`; this design unifies the schema and consumer model with those.
+Phase 1 replaces the **STA cancellation/delay alert channel** (Operational + Informational) for participating boards/schools (per `stx_schools.alerts_enabled`). Safety/Emergency and Compliance flows already exist in `services/emergency-alerts`; this design unifies the schema and consumer model with those.
 
 ## 2. Design Principles
 
@@ -39,11 +39,11 @@ Phase 1 replaces the **OSTA cancellation/delay alert channel** (Operational + In
 | severity                     | enum          | `info` \| `notice` \| `warning` \| `critical`                                                                   |
 | title                        | text          | localised at render time                                                                                        |
 | body                         | text          | template key + params; see §6                                                                                   |
-| scope_kind                   | enum          | `consortium` \| `board` \| `school` \| `route` \| `run` \| `stop` \| `student`                                  |
+| scope_kind                   | enum          | `sta` \| `board` \| `school` \| `route` \| `run` \| `stop` \| `student`                                         |
 | scope_id                     | uuid          | FK to the scope row                                                                                             |
 | effective_from, effective_to | timestamptz   | window of validity                                                                                              |
 | service_date                 | date          | school day this alert applies to                                                                                |
-| source                       | enum          | `admin_manual` \| `osta_import` \| `osta_webhook` \| `auto_rule` \| `driver_app` \| `system`                    |
+| source                       | enum          | `admin_manual` \| `sta_import` \| `sta_webhook` \| `auto_rule` \| `driver_app` \| `system`                      |
 | source_ref                   | text          | upstream event id for idempotency                                                                               |
 | created_by_user_id           | FK→users      | nullable for system                                                                                             |
 | status                       | enum          | `draft` \| `published` \| `superseded` \| `cancelled`                                                           |
@@ -58,7 +58,7 @@ Unique constraint: `(source, source_ref)` to enforce idempotency.
 | ---------------------- | ----------- | --------------------------------------------------------------------------------------- |
 | id                     | uuid PK     |                                                                                         |
 | user_id                | FK→users    |                                                                                         |
-| scope_kind             | enum        | `board` \| `school` \| `route` \| `student`                                             |
+| scope_kind             | enum        | `sta` \| `board` \| `school` \| `route` \| `student`                                    |
 | scope_id               | uuid        |                                                                                         |
 | categories             | enum[]      | which categories user wants                                                             |
 | channels               | enum[]      | `push` \| `sms` \| `email` \| `in_app`                                                  |
@@ -67,10 +67,12 @@ Unique constraint: `(source, source_ref)` to enforce idempotency.
 
 **Default subscriptions** (auto-provisioned, modifiable):
 
-- Parent: `student` scope for each of their `stx_students`, all categories, channels = `push` + `in_app`. Critical alerts always SMS-fall-through if a phone number is on file.
+- Parent: `student` scope for each of their `stx_students`, all categories, channels = `push` + `in_app`. Critical alerts always SMS-fall-through if a phone number is on file. **All listed guardians receive every alert** by default (no primary-only filtering for any category) — per session decision.
 - School Admin: `school` scope, all categories.
 - Board Admin: `board` scope, operational + safety + compliance.
-- OSTA / Super Admin: `consortium` scope, all.
+- STA / Super Admin: `sta` scope, all.
+
+**Unsubscribe lock**: parents **cannot** unsubscribe from `severity = 'critical'` alerts in the Safety/Emergency category. The UI hides the toggle for these; API enforces the same lock.
 
 ### 3.3 `stx_alert_deliveries`
 
@@ -122,15 +124,15 @@ Standard audit row per state transition on `stx_alerts` (publish, supersede, can
 
 ## 5. Audience Resolution Rules (per scope_kind)
 
-| Alert scope  | Resolution                                                                                                               |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------ |
-| `consortium` | All users in active subscriptions with consortium scope.                                                                 |
-| `board`      | Users with board subscription matching `scope_id`, plus all parents whose students attend a school in that board.        |
-| `school`     | School subscribers + parents of students at that school.                                                                 |
-| `route`      | Subscribers of that route + parents of students with active `stx_ridership` to a `trip` of that route on `service_date`. |
-| `run`        | Subscribers of the parent route + parents of students riding that specific run on `service_date`.                        |
-| `stop`       | Parents of students whose ridership stop equals `scope_id` for that direction/date.                                      |
-| `student`    | Guardians of that student with `is_primary_pickup=true` (others by subscription only).                                   |
+| Alert scope | Resolution                                                                                                                                                                                  |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sta`       | All users in active subscriptions with STA scope, **plus cascade**: every board, school, route, run, stop, and parent under that STA on `service_date`. Used for STA-wide weather closures. |
+| `board`     | Users with board subscription matching `scope_id`, plus all parents whose students attend a school in that board.                                                                           |
+| `school`    | School subscribers + parents of students at that school.                                                                                                                                    |
+| `route`     | Subscribers of that route + parents of students with active `stx_ridership` to a `trip` of that route on `service_date`.                                                                    |
+| `run`       | Subscribers of the parent route + parents of students riding that specific run on `service_date`.                                                                                           |
+| `stop`      | Parents of students whose ridership stop equals `scope_id` for that direction/date.                                                                                                         |
+| `student`   | **All** guardians of that student (per session decision — no primary-only filtering by default).                                                                                            |
 
 In all cases, **absent students** (per `stx_student_absences`) are excluded for that day's `route_delayed`/`route_cancelled`/`no_show`-type alerts unless the guardian has explicitly opted in.
 
@@ -147,9 +149,9 @@ In all cases, **absent students** (per `stx_student_absences`) are excluded for 
 
 Admin console form → `POST /alerts` with category, scope, schedule. Approval workflow per category.
 
-### 7.2 OSTA import
+### 7.2 STA import
 
-File adapter parses `cancellations.csv` (Phase 1) or webhook (Phase 2). Each row becomes an alert with `source=osta_import|osta_webhook` and `source_ref=osta event id`. Re-imports are idempotent.
+File adapter parses `cancellations.csv` (Phase 1) or webhook (Phase 2). Each row becomes an alert with `source=sta_import|sta_webhook` and `source_ref=sta event id`. Re-imports are idempotent. STA-scope cancellations (e.g. weather closures) cascade per §5.
 
 ### 7.3 Auto-rule (compliance)
 
@@ -172,6 +174,7 @@ Manual today. Phase 2 may auto-create from a weather feed; out of scope here.
 ## 9. Privacy & Audit
 
 - Every delivery row has the resolved user_id and channel; full audit retained per `DataRetention.md`.
+- **Retention is per-STA configurable** via `stx_sta.alert_retention_days` (default 730). Boarding-event retention is likewise per-STA (`boarding_event_retention_days`, default 395). Hard-purge runs nightly.
 - A parent can request a "show me every alert about my child" report from the parent app — backed by `stx_alert_deliveries` joined on guardian-of-student.
 - Alerts referencing a specific student must not name other students in the body (template lint at publish time).
 - Test/preview sends are flagged `metadata.preview=true` and never count against analytics.
@@ -193,10 +196,12 @@ Manual today. Phase 2 may auto-create from a weather feed; out of scope here.
 - Metrics: alert publish-to-deliver p50/p95 per category, suppression rate, fallback rate, opt-out rate.
 - Disaster drill: weather-closure simulation against a staging copy of the recipient set quarterly.
 
-## 12. Open Questions
+## 12. Resolved Decisions & Deferred Items
 
-1. **Approval workflow** — does a Board Admin need OSTA Admin sign-off to publish a `weather_closure`, or is School/Board autonomy sufficient?
-2. **SMS provider** — confirm budget; cost is the dominant factor in storm scenarios.
-3. **Parent self-service unsubscribe scope** — can a parent fully unsubscribe from `safety/critical` alerts? Recommend **no**; confirm.
-4. **Guardian quorum** — when multiple guardians are listed, do all receive every alert by default, or only the primary? Recommend all for safety, primary-only for informational. Confirm.
-5. **OSTA dual-send transition** — for how long do we run both SBTM and OSTA app alerts in parallel, and how is duplication explained to parents?
+Per session direction (2026-05-15):
+
+1. **Approval workflow** — Resolved: each STA decides for its own boards/schools. SBTM provides a configurable per-(category, severity) approval matrix on `stx_sta`; defaults are STA-permissive for `notice`/`info`, require STA approval for `warning`/`critical` weather closures.
+2. **SMS provider** — Deferred: free tier in Phase 1 for testing; selection deferred.
+3. **Parent self-service unsubscribe from `safety/critical`** — Resolved: **not permitted**. UI hides toggle; API enforces.
+4. **Guardian quorum** — Resolved: **all listed guardians receive every alert** by default for every category. `is_primary_pickup` no longer filters delivery; it remains a flag for pickup authority only.
+5. **SBTM/STA-app dual-send transition** — Deferred: per-school `stx_schools.alerts_enabled` enables co-existence. Concrete cutover policy deferred.

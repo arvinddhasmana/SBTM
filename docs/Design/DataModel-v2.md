@@ -34,7 +34,7 @@ The two layers are linked by stable foreign keys (`gtfs_route_id`, `gtfs_trip_id
 - **google/transit canonical extensions**: <https://github.com/google/transit>
 - **Relevant non-school precedents reviewed**:
   - GTFS extensions for school routing are not standardized; we adopt a custom namespace `stx_*` (school transport extension) as recommended by the GTFS Best Practices for "additional fields and files".
-  - OSTA (Ottawa Student Transportation Authority) does **not** publish a public schema, GTFS feed, or REST API. Their consortium platform (BusPlanner Web, by GeoQuery) uses an internal schema not publicly documented. Our import contract is therefore CSV/Excel-based; see `Integrations-OSTA.md`.
+  - Ontario STAs (OSTA, STEO, RCJTC, …) do **not** publish public schemas, GTFS feeds, or REST APIs. Most use BusPlanner Web (GeoQuery / Edulog) or equivalent internal systems. Our import contract is therefore CSV/Excel-based and STA-agnostic; see `Integrations-STA.md`.
   - STN (Student Transportation News) industry surveys, NAPT (National Association for Pupil Transportation) routing software RFP templates, and BusPlanner Pro field exports inform the STX entity set (eligibility, hazard zones, courtesy seats, walk-zone exemption).
 
 ## 3. Tenancy & Identity
@@ -42,12 +42,14 @@ The two layers are linked by stable foreign keys (`gtfs_route_id`, `gtfs_trip_id
 ### 3.1 Hierarchy
 
 ```
-Consortium (OSTA)
+STA (Student Transportation Authority — e.g. OSTA, STEO, RCJTC)
   └── Board (OCDSB, OCSB, CECCE, CEPEO, …)
         └── School
               └── Run / Trip / Stop / Student
-Operator (Bus vendor) — independent; spans boards via Operator-Board contracts
+Operator (Bus vendor) — independent; may serve multiple STAs via Operator contracts
 ```
+
+SBTM supports **multiple STAs concurrently** (Ontario has ~30). Each STA is fully tenant-isolated from every other STA — no cross-STA reads except by Super Admin. A single Bus Operator may be contracted by multiple STAs; operator records are de-duplicated by `external_ids.legal_entity_id` but their contracts are scoped to one STA at a time.
 
 Per session decision: **RBAC is strictly scoped by this tree.** A user is anchored to exactly one node; visibility cascades downward. Cross-board joint runs are out of scope; if encountered, they will be modelled as two parallel runs with shared vehicle assignment.
 
@@ -76,7 +78,7 @@ All field names follow GTFS naming exactly. Optional GTFS fields we omit in Phas
 | agency_lang              | text      | `en` / `fr`                                                 |
 | agency_phone             | text      |                                                             |
 | agency_email             | text      |                                                             |
-| **stx_agency_kind**      | enum      | `consortium` \| `board` \| `operator`                       |
+| **stx_agency_kind**      | enum      | `sta` \| `board` \| `operator`                              |
 | **stx_parent_agency_id** | FK→agency | hierarchy                                                   |
 
 ### 4.2 `routes`
@@ -85,12 +87,14 @@ All field names follow GTFS naming exactly. Optional GTFS fields we omit in Phas
 | ----------------------------- | -------------- | -------------------------------------------------------- |
 | route_id                      | text PK        |                                                          |
 | agency_id                     | FK             |                                                          |
-| route_short_name              | text           | OSTA route number, e.g. `OCDSB-1234`                     |
+| route_short_name              | text           | STA route number, e.g. `OCDSB-1234`                      |
 | route_long_name               | text           |                                                          |
 | route_type                    | int            | `712` (school bus) per GTFS extended types               |
 | route_color, route_text_color | text           |                                                          |
+| **stx_sta_id**                | FK→stx_sta     | top-of-tree tenant anchor                                |
 | **stx_school_id**             | FK→stx_schools | primary tenant anchor                                    |
 | **stx_direction_kind**        | enum           | `am` \| `pm` \| `midday` \| `kindergarten` \| `activity` |
+| **stx_shape_source**          | enum           | `sta_import` \| `sbtm_generated` \| `sta_admin_edited`   |
 
 ### 4.3 `trips`
 
@@ -135,7 +139,15 @@ GTFS standard. Service IDs map to **school calendars** (instructional days minus
 
 ### 4.7 `shapes`
 
-GTFS standard. Imported from OSTA polylines; supplemented by GPS-derived snapped polylines (see `gps-tracking` Prisma `RouteGeofence`).
+GTFS standard (`shape_id`, `shape_pt_lat`, `shape_pt_lon`, `shape_pt_sequence`, `shape_dist_traveled?`). **Required** for every route in Phase 1 — the driver app, parent app, and geofencing all depend on a navigation path.
+
+Provenance is tracked on `routes.stx_shape_source`:
+
+- `sta_import` — points came from the STA's CSV import (preferred).
+- `sbtm_generated` — STA did not supply shapes; SBTM auto-generated by OSRM road-snapping sequential `stop_times` coordinates at import time. Flagged for STA Admin review.
+- `sta_admin_edited` — an STA Admin saved an edited shape via the Route Planner UI (see `RoutePlanner.md`). Subsequent re-imports do **not** overwrite this value unless explicitly chosen.
+
+In v1, route alignment lived in a single `Route.polyline` text column. v2 replaces this with the `shapes` table; per the aggressive cutover in `SchemaAudit-And-Migration.md`, the `Route.polyline` column is **dropped** — no dual-write retention window.
 
 ### 4.8 Omitted GTFS files (Phase 1)
 
@@ -147,28 +159,47 @@ Tables prefixed `stx_`. All carry `tenant_school_id` and `created_at`/`updated_a
 
 ### 5.1 `stx_schools`
 
-| field                | type                  | notes                                                       |
-| -------------------- | --------------------- | ----------------------------------------------------------- |
-| id                   | uuid PK               |                                                             |
-| board_id             | FK→stx_boards         |                                                             |
-| name                 | text                  |                                                             |
-| address              | text                  |                                                             |
-| location             | geography(Point)      |                                                             |
-| time_zone            | text                  |                                                             |
-| **bell_schedule_id** | FK→stx_bell_schedules | default; per-day overrides via `stx_bell_schedule_dates`    |
-| external_ids         | jsonb                 | `{ "osta_school_code": "...", "board_school_code": "..." }` |
+| field                | type                  | notes                                                                                                                                   |
+| -------------------- | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| id                   | uuid PK               |                                                                                                                                         |
+| board_id             | FK→stx_boards         |                                                                                                                                         |
+| name                 | text                  |                                                                                                                                         |
+| address              | text                  |                                                                                                                                         |
+| location             | geography(Point)      |                                                                                                                                         |
+| time_zone            | text                  |                                                                                                                                         |
+| **bell_schedule_id** | FK→stx_bell_schedules | default; per-day overrides via `stx_bell_schedule_dates`                                                                                |
+| **alerts_enabled**   | bool                  | per-school opt-in: when `true`, SBTM is the parent alert channel; when `false`, STA app remains primary and SBTM emits read-only mirror |
+| external_ids         | jsonb                 | `{ "sta_school_code": "...", "board_school_code": "..." }`                                                                              |
 
 ### 5.2 `stx_bell_schedules` / `stx_bell_schedule_dates`
 
 School start/end (and optional kindergarten/midday) times. Drives validation of `stop_times.arrival_time` for the school stop.
 
-### 5.3 `stx_boards`, `stx_consortium`
+### 5.3 `stx_sta`, `stx_boards`
 
-Tenant tree above `stx_schools`. `stx_consortium` is typically a single row (OSTA).
+`stx_sta` is the top of the tenant tree — one row per Student Transportation Authority (OSTA, STEO, RCJTC, …). `stx_boards.sta_id` is a `NOT NULL` FK.
+
+`stx_sta` columns:
+
+| field                              | type        | notes                                                                          |
+| ---------------------------------- | ----------- | ------------------------------------------------------------------------------ |
+| id                                 | uuid PK     |                                                                                |
+| name                               | text        | `Ottawa Student Transportation Authority`                                      |
+| short_code                         | text UNIQUE | `OSTA`, `STEO`, `RCJTC`                                                        |
+| region                             | text        | free text, e.g. `Ottawa`, `Eastern Ontario`                                    |
+| time_zone                          | text        | `America/Toronto`                                                              |
+| languages                          | text[]      | `['en','fr']`                                                                  |
+| **boarding_event_retention_days**  | int         | default 395; configurable per STA Admin; drives purge of `stx_boarding_events` |
+| **alert_retention_days**           | int         | default 730; per-STA configurable                                              |
+| import_cadence                     | text        | default `quarterly`; informational only — actual cadence is contractual        |
+| external_ids                       | jsonb       | `{ "legal_entity_id": "..." }`                                                 |
+| created_at, updated_at, deleted_at | timestamptz |                                                                                |
+
+The single-tenant assumption of v1 (one consortium = OSTA) is dropped. The `stx_consortium` name from the first draft is **superseded** by `stx_sta`.
 
 ### 5.4 `stx_operators` and `stx_operator_contracts`
 
-Bus operators (vendors). `stx_operator_contracts` links operator ↔ board with effective dates and route count.
+Bus operators (vendors). `stx_operator_contracts` links operator ↔ STA (and optionally board) with effective dates and route count. The same physical operator (e.g. `Stock Transportation`) can hold contracts with multiple STAs; their `stx_operators` row is shared, contracts are not.
 
 ### 5.5 `stx_vehicles`
 
@@ -325,34 +356,46 @@ The existing `gps-tracking` Prisma tables (`LocationPoint`, `RouteLifecycleEvent
 
 ## 9. GTFS Import / Export Contract
 
-- **Import**: standard GTFS-Schedule ZIP. Unknown `stx_*` columns are tolerated; OSTA imports via CSV adapter (see `Integrations-OSTA.md`) are normalised through this same code path.
+- **Import**: standard GTFS-Schedule ZIP. Unknown `stx_*` columns are tolerated; STA imports via CSV adapter (see `Integrations-STA.md` and `ImportMappings.md`) are normalised through this same code path.
 - **Export**: `feed_info.txt` mandatory; STX columns prefixed `stx_` are emitted in the same files (per GTFS spec, additional fields are permitted). A "GTFS-only" export omits `stx_*` columns for downstream public-transit consumers.
-- Export is **board-scoped by default** (one feed per board). Consortium-wide export is a Super Admin action and excludes student/guardian PII automatically.
+- Export is **board-scoped by default** (one feed per board). STA-wide and Super-Admin-wide exports are supported and automatically exclude student/guardian PII.
 
 ## 10. Identity & RBAC (Phase 1)
 
-| Role              | Anchor     | Visibility                           |
-| ----------------- | ---------- | ------------------------------------ |
-| Super Admin       | consortium | all                                  |
-| OSTA Admin        | consortium | all (operational)                    |
-| Board Admin       | board      | own board ↓                          |
-| School Admin      | school     | own school ↓                         |
-| Operator Admin    | operator   | own operator's runs/vehicles/drivers |
-| Driver            | driver     | own assigned runs (today + ±N days)  |
-| Parent / Guardian | guardian   | own students' runs, stops, alerts    |
+| Role              | Anchor   | Visibility                                    |
+| ----------------- | -------- | --------------------------------------------- |
+| Super Admin       | global   | all STAs                                      |
+| STA Admin         | STA      | own STA ↓ (all boards/schools under that STA) |
+| Board Admin       | board    | own board ↓                                   |
+| School Admin      | school   | own school ↓                                  |
+| Operator Admin    | operator | own operator's runs/vehicles/drivers          |
+| Driver            | driver   | own assigned runs (today + ±N days)           |
+| Parent / Guardian | guardian | own students' runs, stops, alerts             |
 
-Existing role enum (`/libs/common/src/decorators/roles.decorator.ts`) already includes SUPER_ADMIN, OSTA_ADMIN, BOARD_ADMIN, SCHOOL_ADMIN, DRIVER, PARENT — no enum change needed; an OPERATOR_ADMIN value is added.
+The role enum (`/libs/common/src/decorators/roles.decorator.ts`) is rewritten to replace `OSTA_ADMIN` with `STA_ADMIN` and add `OPERATOR_ADMIN`. Per the aggressive cutover in `SchemaAudit-And-Migration.md`, `OSTA_ADMIN` is **deleted outright** — no runtime alias, no backward-compat shim. Any surviving reference is a compile error and is caught by the Phase E CI grep gate.
 
 **OAuth federation**: A `users.identity_provider` column (`local` \| `oidc:ocsb` \| `oidc:ocdsb`) is added now but only `local` is wired in Phase 1.
 
-## 11. Open Questions
+## 11. Resolved Decisions & Deferred Items
 
-1. **Operator-Board contracts** — does OSTA assign routes to operators, or do boards contract directly? This affects whether `stx_operator_contracts` is board-scoped or consortium-scoped.
-2. **Courtesy-seat lifecycle** — daily reassignment vs. annual? Drives whether `stx_eligibility` needs versioning beyond `effective_from/to`.
-3. **Daycare pickup** — is a daycare a kind of `stop` (location_type 0 with `stx_stop_kind=daycare`) or a kind of `guardian`? Phase 1 model supports both; pick one for consistency.
-4. **Weather cancellation cascade** — is it always whole-board, or sometimes per-zone? Affects whether `stx_alerts.scope` needs a polygon vs. a board_id.
-5. **GTFS-Realtime publication** — internal-only, or do we publish to a board-public endpoint (e.g., for board apps)?
-6. **Retention of `stx_boarding_events`** — proposed 13 months (one academic year + 1) for incident investigation. Confirm with privacy/legal.
+Per session direction (2026-05-15):
+
+1. **Operator-Board contracts** — Resolved: STAs assign routes to operators. `stx_operator_contracts` is scoped to `sta_id`; board is an optional refinement column.
+2. **Courtesy-seat lifecycle** — Resolved: annual reassignment with mid-year revocation if a mandatory-eligible student requires the seat. Modelled via `stx_eligibility.eligibility_kind = 'courtesy'` with `effective_from/to`; no additional versioning needed.
+3. **Daycare pickup** — Resolved (Phase 1): keep simple. A daycare is a `stops` row (`stx_stop_kind=daycare`) when it is a pickup point; a daycare contact, when one needs notifications, is entered as a `stx_guardians` row with `relationship='daycare-provider'`. No daycare-specific entities are introduced in Phase 1.
+4. **Weather cancellation cascade** — Resolved: cascades follow the tenant tree. An STA-scoped alert reaches every board, school, and parent under that STA. See `Alerts.md` §5 for audience resolution at `scope_kind='sta'`.
+5. **GTFS-Realtime publication** — Deferred: internal-only in Phase 1. Public publication endpoint is a separate design.
+6. **Retention of `stx_boarding_events`** — Resolved: per-STA configurable via `stx_sta.boarding_event_retention_days` (default 395 = one academic year + ~30 days). Alert retention likewise per-STA (`alert_retention_days`, default 730).
+7. **Per-school alert opt-in** — Resolved: `stx_schools.alerts_enabled` controls whether SBTM is the primary parent alert channel for that school. Lets boards/schools transition off the STA's existing app at their own pace.
+8. **Stable IDs across academic years** — Recommendation to STAs: re-use `route_short_name` for the same physical route across years; persist `board_student_number` across grades within a board; additionally capture the Ontario Education Number (OEN) in `stx_students.external_ids.oen` for cross-board persistence.
+
+Open items deferred to a later design:
+
+- SMS provider selection (user: free tier for testing).
+- STA webhook / event-feed contract (Phase 2).
+- SBTM ↔ STA-app dual-send transition policy (defer; per-school `alerts_enabled` enables co-existence in the meantime).
+- RFID / NFC tap-on/tap-off (Phase 2).
+- Parent OAuth federation (OCSB/OCDSB) — stub only until those IdPs are confirmed.
 
 ## 12. Migration & Phasing
 

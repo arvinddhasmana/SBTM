@@ -1,0 +1,3 @@
+vehicle_code,operator_code,license_plate,capacity_seated,capacity_wheelchair,equipment_json
+BUS-OSTA-201,OP-STOCK,ON-OSTA-201,48,2,"{""camera"":true,""har_alert"":true,""gps_device_id"":""GPS-OSTA-201""}"
+BUS-OSTA-101,OP-STOCK,ON-OSTA-101,72,2,"{""camera"":true,""har_alert"":true,""gps_device_id"":""GPS-OSTA-101""}"

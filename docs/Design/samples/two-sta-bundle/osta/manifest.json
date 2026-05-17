@@ -1,0 +1,20 @@
+{
+  "sta_short_code": "OSTA",
+  "export_id": "OSTA-2026-Q2-001",
+  "export_at": "2026-05-15T08:00:00-04:00",
+  "files": {
+    "sta-routes.csv": { "sha256": "<computed-at-export>", "row_count": 2 },
+    "sta-stops.csv": { "sha256": "<computed-at-export>", "row_count": 6 },
+    "sta-stop-times.csv": { "sha256": "<computed-at-export>", "row_count": 6 },
+    "sta-trips.csv": { "sha256": "<computed-at-export>", "row_count": 2 },
+    "sta-shapes.csv": { "sha256": "<computed-at-export>", "row_count": 5 },
+    "sta-operators.csv": { "sha256": "<computed-at-export>", "row_count": 1 },
+    "sta-vehicles.csv": { "sha256": "<computed-at-export>", "row_count": 2 },
+    "board-school.csv": { "sha256": "<computed-at-export>", "row_count": 2 },
+    "students.csv": { "sha256": "<computed-at-export>", "row_count": 6 },
+    "guardians.csv": { "sha256": "<computed-at-export>", "row_count": 4 },
+    "student-guardians.csv": { "sha256": "<computed-at-export>", "row_count": 6 },
+    "ridership.csv": { "sha256": "<computed-at-export>", "row_count": 6 }
+  },
+  "notes": "R-OCDSB-101 (Maplewood Secondary, OCDSB) omits shape on purpose; SBTM auto-generates and sets stx_shape_source='sbtm_generated'. R-OCSB-201 (St. Bernadette School, OCSB) ships with shape; stx_shape_source='sta_import'. Operator OP-STOCK is shared with RCJTC bundle (cross-STA de-dupe via external_ids.legal_entity_id=CA-ON-1234567). Guardian OSTA-GRD-0001 has both children at St. Bernadette (same-school multi-child); OSTA-GRD-0002 has one child at St. Bernadette (OCSB) and one at Maplewood Secondary (OCDSB) — cross-board parent shape for audience-resolver dedupe and RBAC tests."
+}

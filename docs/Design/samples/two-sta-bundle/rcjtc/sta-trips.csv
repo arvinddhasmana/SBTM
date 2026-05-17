@@ -1,0 +1,3 @@
+sta_trip_id,sta_route_number,service_id,direction_id,shape_id,headsign,block_id
+T-RCDSB-401-AM,R-RCDSB-401,WEEKDAY-2025-26,0,SHP-RCDSB-401,Pinecrest Public School,
+T-RCCDSB-501-AM,R-RCCDSB-501,WEEKDAY-2025-26,0,,Cathedral Catholic School,

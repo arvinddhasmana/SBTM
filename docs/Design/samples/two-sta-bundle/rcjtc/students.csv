@@ -1,0 +1,7 @@
+board_student_number,oen,legal_name,preferred_name,grade,date_of_birth,school_code,home_address,home_lat,home_lon,eligibility_kind,medical_flags_json,transport_flags_json
+RCDSB-STU-0001,901234567,Taylor Renfrew,Taylor,3,2017-04-12,RCDSB-S400,12 River Rd Pembroke ON,45.826800,-77.110600,mandatory,,
+RCDSB-STU-0002,012345678,Jordan Sample,Jordan,5,2015-09-30,RCDSB-S400,55 River Rd Pembroke ON,45.824100,-77.115200,mandatory,,
+RCDSB-STU-0003,112233445,Skyler Mock,Skyler,2,2018-01-15,RCDSB-S400,80 River Rd Pembroke ON,45.825400,-77.112900,mandatory,,
+RCCDSB-STU-0001,223344556,Casey Pembroke,Casey,4,2016-11-08,RCCDSB-S500,15 Mackay St Pembroke ON,45.830200,-77.105400,mandatory,,
+RCCDSB-STU-0002,334455667,Reese Specimen,Reese,1,2019-07-19,RCCDSB-S500,40 Mackay St Pembroke ON,45.832700,-77.103100,mandatory,,
+RCCDSB-STU-0003,445566778,Hayden Fixture,Hayden,6,2014-05-30,RCCDSB-S500,75 Mackay St Pembroke ON,45.831500,-77.104200,courtesy,,
