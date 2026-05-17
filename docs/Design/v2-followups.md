@@ -67,14 +67,21 @@ Open work items deferred from the aggressive cutover (commits 497497c Phase A, 3
 
 ## Low priority (cosmetic / docs)
 
-### 8. Frontend apps + locales (Phase D)
+### 8. Importer slice 2b — staging → canonical commit (deferred, needs live Postgres)
+
+- **Where**: `services/integration-importer/src/modules/staging/` (writer ships, commit promoter pending).
+- **Symptom**: `POST /imports/dry-run` populates `stage_*` tables and returns counts, but never promotes rows into `stx_sta` / `stx_boards` / `stx_schools` / `stx_operators` / `stx_vehicles` / `routes` / `stops` / `shapes` / `trips` / `stop_times` / `stx_students` / `stx_guardians` / `stx_student_guardians` / `stx_ridership`. End-to-end Phase C verification ("import the bundle, count rows in canonical tables") cannot run yet.
+- **Fix**: a `CommitService` that, inside one transaction per session, resolves natural keys → UUIDs via `external_ids` JSONB lookups (sta/board/school/operator/vehicle/student/guardian), inserts GTFS-keyed rows by TEXT PK (routes/stops/shapes/trips/stop_times), encrypts BYTEA columns on `stx_students` (board_student_number, legal_name, preferred_name, date_of_birth, home_address) using the same KMS path as the rest of api-gateway, and respects RLS via `rlsContext.runAs({ role: 'STA_ADMIN', staId })`. Needs a live Postgres with the Phase A v2 schema applied to verify; unit tests can mock the pg client but the round-trip assertions belong in `npm run test:integration` gated on `DATABASE_URL`.
+- **Size**: 2–3 days once a staging Postgres with PostGIS + the encryption hook is reachable.
+
+### 9. Frontend apps + locales (Phase D)
 
 - **Where**: `apps/admin-dashboard`, `apps/parent-dashboard`, `apps/parent-app-mobile`, `apps/driver-app`, plus all `**/locales/*.json` referencing "OSTA Admin".
 - **Symptom**: apps reference deleted `Role.OSTA_ADMIN`, expect old user shape (schoolId/boardId), and show stale UI strings.
 - **Fix**: full Phase D cutover per plan.
 - **Size**: 1–2 weeks for the four apps end-to-end.
 
-### 9. Docs alignment (Phase F)
+### 10. Docs alignment (Phase F)
 
 - **Where**: `docs/Design/SchemaAudit-And-Migration.md` (still describes dual-write), `docs/Design/DataModel-v2.md` §10 (still mentions OSTA Admin alias), various PRDs.
 - **Symptom**: documentation drift from code.

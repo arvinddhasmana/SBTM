@@ -6,9 +6,11 @@ import {
   Inject,
   Logger,
   Post,
+  UseGuards,
 } from '@nestjs/common';
 import { promises as fs } from 'node:fs';
 import * as path from 'node:path';
+import { InternalServiceGuard } from '../../common/guards/internal-service.guard';
 import {
   TRANSPORT_DATA_ADAPTERS,
   TransportDataAdapter,
@@ -16,6 +18,7 @@ import {
 import { FILE_ORDER } from '../adapter/sta-csv/csv-schemas';
 import { ManifestSchema, SourceFiles } from '../adapter/types/source-files';
 import { ValidationReport } from '../adapter/types/validation-report';
+import { DryRunResult, DryRunService } from './dry-run.service';
 
 interface ValidateRequest {
   adapter: string;
@@ -23,19 +26,41 @@ interface ValidateRequest {
 }
 
 @Controller('imports')
+@UseGuards(InternalServiceGuard)
 export class ImporterController {
   private readonly logger = new Logger(ImporterController.name);
 
   constructor(
     @Inject(TRANSPORT_DATA_ADAPTERS)
     private readonly adapters: TransportDataAdapter[],
+    private readonly dryRun: DryRunService,
   ) {}
 
-  // TODO(phase-C/slice-2): require an STA-Admin or internal-service auth guard.
-  // Slice 1 leaves this endpoint unguarded for the dry-run path only.
   @Post('validate')
   @HttpCode(200)
   async validate(@Body() body: ValidateRequest): Promise<ValidationReport> {
+    const adapter = this.requireAdapter(body);
+    const input = await loadBundleFromDisk(body.bundlePath);
+    const report = await adapter.validate(input);
+    this.logger.log(
+      `validate ${body.adapter} ${body.bundlePath}: ok=${report.ok} errors=${report.errors.length} warnings=${report.warnings.length}`,
+    );
+    return report;
+  }
+
+  @Post('dry-run')
+  @HttpCode(200)
+  async dryRunEndpoint(@Body() body: ValidateRequest): Promise<DryRunResult> {
+    this.requireAdapter(body);
+    const input = await loadBundleFromDisk(body.bundlePath);
+    const result = await this.dryRun.run(body.adapter, input);
+    this.logger.log(
+      `dry-run ${body.adapter} session=${result.importSessionId ?? '-'} ok=${result.ok}`,
+    );
+    return result;
+  }
+
+  private requireAdapter(body: ValidateRequest): TransportDataAdapter {
     const adapter = this.adapters.find((a) => a.source === body?.adapter);
     if (!adapter) {
       throw new BadRequestException(
@@ -45,13 +70,7 @@ export class ImporterController {
     if (!body?.bundlePath || typeof body.bundlePath !== 'string') {
       throw new BadRequestException('bundlePath is required');
     }
-
-    const input = await loadBundleFromDisk(body.bundlePath);
-    const report = await adapter.validate(input);
-    this.logger.log(
-      `validate ${body.adapter} ${body.bundlePath}: ok=${report.ok} errors=${report.errors.length} warnings=${report.warnings.length}`,
-    );
-    return report;
+    return adapter;
   }
 }
 
