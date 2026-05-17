@@ -16,6 +16,7 @@ Open work items deferred from the aggressive cutover (commits 497497c Phase A, 3
 
 - **Where**: `RouteService.create/update`, `FleetAssignmentGatewayService.*`, `DriverGatewayService.schedule/roster`, `DocumentController.*`, `AbsenceGatewayService.*`, `parent.gateway.service.parent-history`.
 - **Symptom**: endpoints throw `NotImplementedException` at runtime. UIs hitting them show "501 Not Implemented".
+- **Status**: in progress on `feat/sbtm-refocus-data-model`. `DriverGatewayService.getScheduleForDriver` is wired against `stx_runs` + GTFS (`trips`/`routes`/`stop_times`/`stx_schools`) inside `rlsContext.runAsCurrent`; serves as the worked example for the remaining stubs. `DriverGatewayService.getRouteStudents` and the rest still 501 pending the student↔stop assignment model and per-stub design.
 - **Fix**: rewrite each against the v2 entities (`stx_runs`, `stx_ridership`, `stx_student_absences`, `trips`+`stop_times`+`shapes`). Several need design decisions first: run proposals model, trip exception model, driver→run resolver, parent alert audience resolver.
 - **Size**: Each is 0.5–2 days. Will be partly absorbed by Phase C (importer writes the same tables).
 
