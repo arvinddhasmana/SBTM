@@ -3,6 +3,8 @@ import { ConfigService } from '@nestjs/config';
 import { HttpClientService } from '../../../common/utils/http-client.service';
 import { Role } from '@sbtm/common';
 import { DataSource } from 'typeorm';
+import { AuthenticatedUser } from '../../auth/types/authenticated-user';
+import { schoolIdFromAnchor } from '../../auth/utils/anchor-scope';
 
 @Injectable()
 export class StudentGatewayService {
@@ -18,24 +20,22 @@ export class StudentGatewayService {
     );
   }
 
-  async getStudents(query: any, user: any) {
+  async getStudents(query: any, user: AuthenticatedUser) {
+    const schoolId = schoolIdFromAnchor(user);
     // Enforce parent scoping
     if (user.role === Role.PARENT) {
       query.parent_id = user.id;
     } else if (user.role === Role.STA_ADMIN || user.role === Role.SUPER_ADMIN) {
       // Unrestricted access - see all students
     } else if (user.role === Role.BOARD_ADMIN) {
-      // Board admin: if they have a schoolId use it, otherwise show all (board-scoped via UI)
-      if (user.schoolId) {
-        query.school_id = user.schoolId;
-      }
+      // Board admin: scope to their board via UI; no school filter applied here.
     } else {
-      if (!user.schoolId) {
+      if (!schoolId) {
         throw new ForbiddenException(
           'School ID is required for this operation',
         );
       }
-      query.school_id = user.schoolId;
+      query.school_id = schoolId;
     }
 
     const url = `${this.studentServiceUrl}/students`;
@@ -50,7 +50,7 @@ export class StudentGatewayService {
 
     // Fallback: serve from operational students table (demo flows).
     // Shape matches Admin Dashboard expectations (snake_case).
-    const targetSchoolId = query?.school_id || user.schoolId || null;
+    const targetSchoolId = query?.school_id || schoolId || null;
     const rows: Array<{
       id: string;
       firstName: string;
@@ -85,7 +85,8 @@ export class StudentGatewayService {
     }));
   }
 
-  async getStudentById(id: string, user: any) {
+  async getStudentById(id: string, user: AuthenticatedUser) {
+    const callerSchoolId = schoolIdFromAnchor(user);
     const url = `${this.studentServiceUrl}/students/${id}`;
     try {
       const student: any = await this.httpClient.get(url);
@@ -102,7 +103,7 @@ export class StudentGatewayService {
         user.role !== Role.SUPER_ADMIN &&
         user.role !== Role.BOARD_ADMIN
       ) {
-        if (student.school_id !== user.schoolId) {
+        if (student.school_id !== callerSchoolId) {
           throw new ForbiddenException(
             'You do not have access to this student',
           );
@@ -157,7 +158,7 @@ export class StudentGatewayService {
       user.role !== Role.SUPER_ADMIN &&
       user.role !== Role.BOARD_ADMIN
     ) {
-      if (student.schoolId !== user.schoolId) {
+      if (student.schoolId !== callerSchoolId) {
         throw new ForbiddenException('You do not have access to this student');
       }
     }
@@ -176,7 +177,7 @@ export class StudentGatewayService {
     };
   }
 
-  async enrollStudent(dto: any, user: any) {
+  async enrollStudent(dto: any, user: AuthenticatedUser) {
     if (
       user.role !== Role.STA_ADMIN &&
       user.role !== Role.SUPER_ADMIN &&
@@ -186,26 +187,32 @@ export class StudentGatewayService {
     }
 
     if (user.role === Role.SCHOOL_ADMIN) {
-      dto.school_id = user.schoolId;
+      const callerSchoolId = schoolIdFromAnchor(user);
+      if (!callerSchoolId) {
+        throw new ForbiddenException(
+          'School anchor required to enroll a student',
+        );
+      }
+      dto.school_id = callerSchoolId;
     }
 
     const url = `${this.studentServiceUrl}/students`;
     return this.httpClient.post(url, dto);
   }
 
-  async updateStudent(id: string, dto: any, user: any) {
+  async updateStudent(id: string, dto: any, user: AuthenticatedUser) {
     await this.getStudentById(id, user); // Check access
     const url = `${this.studentServiceUrl}/students/${id}`;
     return this.httpClient.patch(url, dto);
   }
 
-  async assignRoute(id: string, assignment: any, user: any) {
+  async assignRoute(id: string, assignment: any, user: AuthenticatedUser) {
     await this.getStudentById(id, user); // Check access
     const url = `${this.studentServiceUrl}/students/${id}/assignment`;
     return this.httpClient.patch(url, assignment);
   }
 
-  async bulkImport(file: any, schoolId: string, user: any) {
+  async bulkImport(file: any, schoolId: string, user: AuthenticatedUser) {
     if (
       user.role !== Role.SCHOOL_ADMIN &&
       user.role !== Role.STA_ADMIN &&
@@ -215,17 +222,13 @@ export class StudentGatewayService {
     }
 
     const targetSchoolId =
-      user.role === Role.SCHOOL_ADMIN ? user.schoolId : schoolId;
+      user.role === Role.SCHOOL_ADMIN ? schoolIdFromAnchor(user) : schoolId;
+    if (user.role === Role.SCHOOL_ADMIN && !targetSchoolId) {
+      throw new ForbiddenException('School anchor required for bulk import');
+    }
 
     // Proxying file upload
     const url = `${this.studentServiceUrl}/students/bulk-import`;
-    const formData = new FormData(); // This might need a specialized handling in httpClient
-    // For simplicity, we'll assume the gateway passes the buffer
-
-    // However, axios needs special handling for multipart/form-data with buffers
-    // We'll use a post with the right headers and data format
-
-    // But for now, let's keep it simple and assume the gateway can handle it
     return this.httpClient.post(url, { file, school_id: targetSchoolId });
   }
 }

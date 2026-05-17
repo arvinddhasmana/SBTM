@@ -5,6 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import { ForbiddenException } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { Role } from '@sbtm/common';
+import { AuthenticatedUser } from '../../auth/types/authenticated-user';
 
 describe('StudentGatewayService', () => {
   let service: StudentGatewayService;
@@ -31,33 +32,58 @@ describe('StudentGatewayService', () => {
     query: jest.fn(),
   };
 
-  const adminUser = {
+  const adminUser: AuthenticatedUser = {
     id: 'admin-1',
+    email: 'admin@example.com',
     role: Role.STA_ADMIN,
-    schoolId: 'school-1',
+    anchorKind: 'sta',
+    anchorId: 'sta-1',
+    preferredLanguage: 'en',
   };
 
-  const superAdminUser = {
+  const superAdminUser: AuthenticatedUser = {
     id: 'super-admin-1',
+    email: 'super@example.com',
     role: Role.SUPER_ADMIN,
+    anchorKind: 'super',
+    anchorId: 'super-admin-1',
+    preferredLanguage: 'en',
   };
 
-  const parentUser = {
+  const parentUser: AuthenticatedUser = {
     id: 'parent-1',
+    email: 'parent@example.com',
     role: Role.PARENT,
-    schoolId: 'school-1',
+    anchorKind: 'parent',
+    anchorId: 'parent-1',
+    preferredLanguage: 'en',
   };
 
-  const schoolAdminUser = {
+  const schoolAdminUser: AuthenticatedUser = {
     id: 'school-admin-1',
+    email: 'sa@example.com',
     role: Role.SCHOOL_ADMIN,
-    schoolId: 'school-1',
+    anchorKind: 'school',
+    anchorId: 'school-1',
+    preferredLanguage: 'en',
   };
 
-  const driverUser = {
+  const driverUser: AuthenticatedUser = {
     id: 'driver-1',
+    email: 'driver@example.com',
     role: Role.DRIVER,
-    schoolId: 'school-1',
+    anchorKind: 'driver',
+    anchorId: 'driver-1',
+    preferredLanguage: 'en',
+  };
+
+  const driverUserWithSchool: AuthenticatedUser = {
+    id: 'driver-2',
+    email: 'driver2@example.com',
+    role: Role.DRIVER,
+    anchorKind: 'school',
+    anchorId: 'school-1',
+    preferredLanguage: 'en',
   };
 
   beforeEach(async () => {
@@ -123,9 +149,7 @@ describe('StudentGatewayService', () => {
     });
 
     it('should throw ForbiddenException for DRIVER without schoolId', async () => {
-      const driverNoSchool = { id: 'driver-1', role: Role.DRIVER };
-
-      await expect(service.getStudents({}, driverNoSchool)).rejects.toThrow(
+      await expect(service.getStudents({}, driverUser)).rejects.toThrow(
         ForbiddenException,
       );
     });
@@ -135,7 +159,7 @@ describe('StudentGatewayService', () => {
       mockDataSource.query.mockResolvedValue([]);
 
       const query: any = {};
-      await service.getStudents(query, driverUser);
+      await service.getStudents(query, driverUserWithSchool);
 
       expect(query.school_id).toBe('school-1');
     });

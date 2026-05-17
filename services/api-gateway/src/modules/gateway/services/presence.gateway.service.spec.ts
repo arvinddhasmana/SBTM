@@ -2,6 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { PresenceGatewayService } from './presence.gateway.service';
 import { HttpClientService } from '../../../common/utils/http-client.service';
 import { ConfigService } from '@nestjs/config';
+import { Role } from '@sbtm/common';
+import { AuthenticatedUser } from '../../auth/types/authenticated-user';
 
 describe('PresenceGatewayService', () => {
   let service: PresenceGatewayService;
@@ -23,8 +25,22 @@ describe('PresenceGatewayService', () => {
     }),
   };
 
-  const adminUser = { id: 'admin-1', schoolId: 'school-1' };
-  const userNoSchool = { id: 'user-1' };
+  const adminUser: AuthenticatedUser = {
+    id: 'admin-1',
+    email: 'admin@example.com',
+    role: Role.SCHOOL_ADMIN,
+    anchorKind: 'school',
+    anchorId: 'school-1',
+    preferredLanguage: 'en',
+  };
+  const userNoSchool: AuthenticatedUser = {
+    id: 'user-1',
+    email: 'user@example.com',
+    role: Role.STA_ADMIN,
+    anchorKind: 'sta',
+    anchorId: 'sta-1',
+    preferredLanguage: 'en',
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
