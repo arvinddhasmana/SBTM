@@ -141,9 +141,9 @@ export class ParentGatewayService {
   }
 
   /**
-   * Query the latest presence_event per student to determine on_bus / at_school / at_home status.
-   * BOARD → on_bus, ALIGHT → at_school (during school hours) or at_home.
-   * If no presence events exist, infer status based on current time (school hours vs after hours).
+   * Query the latest stx_boarding_events per student to determine on_bus / at_school / at_home status.
+   * boarded → on_bus, alighted → at_school (AM route) or at_home (PM route).
+   * If no events exist, infer status based on current time.
    */
   private async getStudentStatuses(
     studentIds: string[],
@@ -155,31 +155,26 @@ export class ParentGatewayService {
     if (studentIds.length === 0) return statusMap;
 
     try {
-      // Get the latest presence event for each student using DISTINCT ON
-      // Join routes to read direction so AM/PM detection works with UUID route IDs
       const rows: Array<{
         studentId: string;
-        eventType: string;
+        eventKind: string;
         routeId: string;
         direction: string | null;
       }> = await this.dataSource.query(
-        `SELECT DISTINCT ON (pe."studentId") pe."studentId", pe."eventType", pe."routeId", r.direction
-                     FROM presence_event pe
-                     LEFT JOIN routes r ON pe."routeId"::uuid = r.id
-                     WHERE pe."studentId" = ANY($1)
-                     ORDER BY pe."studentId", pe."timestamp" DESC`,
+        `SELECT DISTINCT ON (be.student_id) be.student_id AS "studentId",
+                be.event_kind AS "eventKind", be.route_id AS "routeId", r.direction
+         FROM stx_boarding_events be
+         LEFT JOIN routes r ON be.route_id = r.id
+         WHERE be.student_id = ANY($1)
+         ORDER BY be.student_id, be.recorded_at DESC`,
         [studentIds],
       );
 
       for (const row of rows) {
-        if (row.eventType === 'BOARD') {
+        if (row.eventKind === 'boarded') {
           statusMap.set(row.studentId, 'on_bus');
-        } else if (row.eventType === 'ALIGHT') {
-          // Use route direction (UUID-safe); fall back to case-insensitive ID match for legacy IDs
-          const isPmRoute =
-            row.direction === 'PM' ||
-            (row.direction == null &&
-              row.routeId?.toUpperCase().includes('PM'));
+        } else if (row.eventKind === 'alighted') {
+          const isPmRoute = row.direction === 'PM';
           statusMap.set(row.studentId, isPmRoute ? 'at_home' : 'at_school');
         }
       }

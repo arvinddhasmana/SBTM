@@ -27,7 +27,8 @@ interface DriverRouteDto {
   startTime: string;
   vehicleId?: string;
   schoolId: string;
-  polyline?: string;
+  runId?: string;
+  path?: [number, number][];
   schoolLat?: number;
   schoolLng?: number;
   schoolName?: string;
@@ -66,6 +67,7 @@ interface ScheduleRow {
   direction: string;
   start_time: string;
   vehicle_id: string;
+  run_id: string;
   school_id: string;
   school_name: string;
   school_lat: number | null;
@@ -129,6 +131,7 @@ export class DriverGatewayService {
           r.stx_direction_kind        AS direction,
           MIN(st.arrival_time)::text  AS start_time,
           run.vehicle_id::text        AS vehicle_id,
+          run.run_id::text            AS run_id,
           s.id::text                  AS school_id,
           s.name                      AS school_name,
           ST_Y(s.location::geometry)  AS school_lat,
@@ -143,11 +146,41 @@ export class DriverGatewayService {
           AND run.deleted_at IS NULL
           AND r.deleted_at IS NULL
           AND s.deleted_at IS NULL
-        GROUP BY r.route_id, run.vehicle_id, s.id
+        GROUP BY r.route_id, run.vehicle_id, run.run_id, s.id
         ORDER BY MIN(st.arrival_time)
         `,
         [driverId, serviceDate],
       )) as ScheduleRow[];
+
+      const routeIds = [...new Set(rows.map((r) => r.route_id))];
+      const shapeRows =
+        routeIds.length > 0
+          ? ((await tx.query(
+              `
+              SELECT DISTINCT ON (sh.shape_id, sh.shape_pt_sequence)
+                t.route_id,
+                sh.shape_pt_lat      AS lat,
+                sh.shape_pt_lon      AS lon,
+                sh.shape_pt_sequence AS seq
+              FROM shapes sh
+              JOIN trips t ON t.shape_id = sh.shape_id
+              WHERE t.route_id = ANY($1)
+              ORDER BY sh.shape_id, sh.shape_pt_sequence
+              `,
+              [routeIds],
+            )) as Array<{
+              route_id: string;
+              lat: number;
+              lon: number;
+              seq: number;
+            }>)
+          : [];
+
+      const pathByRoute = new Map<string, [number, number][]>();
+      for (const sr of shapeRows) {
+        if (!pathByRoute.has(sr.route_id)) pathByRoute.set(sr.route_id, []);
+        pathByRoute.get(sr.route_id)!.push([sr.lat, sr.lon]);
+      }
 
       return rows.map(
         (row): DriverRouteDto => ({
@@ -156,10 +189,12 @@ export class DriverGatewayService {
           direction: row.direction,
           startTime: row.start_time,
           vehicleId: row.vehicle_id,
+          runId: row.run_id,
           schoolId: row.school_id,
           schoolName: row.school_name,
           schoolLat: row.school_lat ?? undefined,
           schoolLng: row.school_lng ?? undefined,
+          path: pathByRoute.get(row.route_id),
         }),
       );
     });
