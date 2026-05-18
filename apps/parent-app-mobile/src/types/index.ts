@@ -116,29 +116,6 @@ export type AlertEventType =
 export type AlertStatus = 'ACTIVE' | 'ACKNOWLEDGED' | 'RESOLVED' | 'FALSE_ALARM';
 export type AlertSeverity = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW' | 'INFO';
 
-// Notification Preferences
-export interface NotificationPreferences {
-  id?: string;
-  userId: string;
-  events: NotificationEventPreference[];
-}
-
-export interface NotificationEventPreference {
-  eventType: NotificationEventType;
-  channels: NotificationChannel[];
-  enabled: boolean;
-}
-
-export type NotificationEventType =
-  | 'CHILD_BOARDED'
-  | 'CHILD_ALIGHTED'
-  | 'EMERGENCY_ALERT'
-  | 'BUS_APPROACHING'
-  | 'ROUTE_CHANGE'
-  | 'ABSENCE_CONFIRMED';
-
-export type NotificationChannel = 'PUSH' | 'EMAIL' | 'SMS';
-
 // Absence Report Types
 export interface AbsenceReport {
   studentId: string;

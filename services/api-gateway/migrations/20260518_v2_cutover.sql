@@ -573,6 +573,7 @@ CREATE INDEX idx_absences_student_date ON stx_student_absences (student_id, trip
 
 CREATE TABLE stx_boarding_events (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  sta_id UUID NOT NULL REFERENCES stx_sta(id) ON DELETE CASCADE,
   run_id UUID NOT NULL REFERENCES stx_runs(id) ON DELETE CASCADE,
   stop_id TEXT NOT NULL REFERENCES stops(stop_id) ON DELETE RESTRICT,
   student_id UUID NOT NULL REFERENCES stx_students(id) ON DELETE CASCADE,
@@ -796,7 +797,12 @@ CREATE POLICY stx_absences_admin ON stx_student_absences
 
 ALTER TABLE stx_boarding_events ENABLE ROW LEVEL SECURITY;
 CREATE POLICY stx_boarding_admin ON stx_boarding_events
-  USING (current_setting('sbtm.user_anchor_kind', true) IN ('super','sta','board','school','operator'));
+  USING (
+    current_setting('sbtm.user_anchor_kind', true) = 'super'
+    OR (current_setting('sbtm.user_anchor_kind', true) = 'sta'
+        AND sta_id::text = current_setting('sbtm.user_anchor_id', true))
+    OR current_setting('sbtm.user_anchor_kind', true) IN ('board','school','operator')
+  );
 
 ALTER TABLE stx_alerts ENABLE ROW LEVEL SECURITY;
 CREATE POLICY stx_alerts_admin ON stx_alerts

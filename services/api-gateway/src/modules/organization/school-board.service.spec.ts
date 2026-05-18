@@ -32,10 +32,19 @@ describe('BoardService (v2 — stx_boards)', () => {
   });
 
   describe('findAll', () => {
-    it('returns every board', async () => {
+    it('returns boards scoped to the given staId', async () => {
+      mockRepo.find.mockResolvedValue([{ id: 'b-1' }, { id: 'b-2' }]);
+      const out = await service.findAll('sta-osta');
+      expect(mockRepo.find).toHaveBeenCalledWith({
+        where: { staId: 'sta-osta' },
+      });
+      expect(out).toHaveLength(2);
+    });
+
+    it('returns every board when no staId is supplied', async () => {
       mockRepo.find.mockResolvedValue([{ id: 'b-1' }, { id: 'b-2' }]);
       const out = await service.findAll();
-      expect(mockRepo.find).toHaveBeenCalledWith();
+      expect(mockRepo.find).toHaveBeenCalledWith(undefined);
       expect(out).toHaveLength(2);
     });
   });

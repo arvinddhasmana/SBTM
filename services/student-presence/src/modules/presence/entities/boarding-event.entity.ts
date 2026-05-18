@@ -29,6 +29,9 @@ export class BoardingEvent {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Column({ name: 'sta_id', type: 'uuid' })
+  staId: string;
+
   @Column({ name: 'run_id', type: 'uuid' })
   runId: string;
 

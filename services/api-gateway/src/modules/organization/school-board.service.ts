@@ -12,8 +12,8 @@ export class BoardService {
     private readonly boardRepository: Repository<Board>,
   ) {}
 
-  async findAll(): Promise<Board[]> {
-    return this.boardRepository.find();
+  async findAll(staId?: string): Promise<Board[]> {
+    return this.boardRepository.find(staId ? { where: { staId } } : undefined);
   }
 
   async findOne(id: string): Promise<Board> {

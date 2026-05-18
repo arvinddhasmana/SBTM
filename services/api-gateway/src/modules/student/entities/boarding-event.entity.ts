@@ -9,6 +9,7 @@ import {
 import { Run } from '../../fleet/entities/run.entity';
 import { Driver } from '../../fleet/entities/driver.entity';
 import { Student } from './student.entity';
+import { Sta } from '../../organization/entities/sta.entity';
 import {
   geographyPointTransformer,
   type LatLng,
@@ -32,6 +33,13 @@ export enum BoardingEventSource {
 export class BoardingEvent {
   @PrimaryGeneratedColumn('uuid')
   id: string;
+
+  @Column({ name: 'sta_id', type: 'uuid' })
+  staId: string;
+
+  @ManyToOne(() => Sta)
+  @JoinColumn({ name: 'sta_id' })
+  sta?: Sta;
 
   @Column({ name: 'run_id', type: 'uuid' })
   runId: string;

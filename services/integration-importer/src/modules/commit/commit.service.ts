@@ -70,6 +70,20 @@ export class CommitService {
   ) {}
 
   async commit(input: CommitInput): Promise<CommitCounts> {
+    // Guard: only commit sessions that have been successfully validated.
+    const sessionCheck = await this.pg.query(`SELECT status FROM import_sessions WHERE id = $1`, [
+      input.importSessionId,
+    ]);
+    if (!sessionCheck.rows.length) {
+      throw new BadRequestException(`Import session ${input.importSessionId} not found`);
+    }
+    const sessionStatus = (sessionCheck.rows[0] as { status: string }).status;
+    if (sessionStatus !== 'validated') {
+      throw new BadRequestException(
+        `Session ${input.importSessionId} is '${sessionStatus}', expected 'validated'`,
+      );
+    }
+
     const counts: CommitCounts = {
       sta: 0,
       board: 0,

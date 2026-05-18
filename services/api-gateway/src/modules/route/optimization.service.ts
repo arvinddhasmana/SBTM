@@ -9,8 +9,8 @@ import { CreateRouteStopDto } from './dto/route.dto';
 
 export interface OptimizationResult {
   optimizedStops: CreateRouteStopDto[];
-  polyline: string; // Encoded polyline string (Google format)
-  polylineGeoJson: GeoJsonLineString | null; // Decoded GeoJSON for map rendering
+  encodedPolyline: string; // Google-encoded OSRM route geometry (internal; not stored in v2 schema)
+  encodedPolylineGeoJson: GeoJsonLineString | null; // Decoded GeoJSON for map rendering
   totalDistance: number; // km
   totalDuration: number; // minutes
 }
@@ -113,8 +113,8 @@ function decodePolyline(encoded: string): [number, number][] {
 }
 
 export interface SnapToRoadResult {
-  polyline: string;
-  polylineGeoJson: GeoJsonLineString | null;
+  encodedPolyline: string;
+  encodedPolylineGeoJson: GeoJsonLineString | null;
   totalDistance: number; // km
   totalDuration: number; // minutes
 }
@@ -141,8 +141,8 @@ export class OptimizationService {
   ): Promise<SnapToRoadResult> {
     if (waypoints.length < 2) {
       return {
-        polyline: '',
-        polylineGeoJson: null,
+        encodedPolyline: '',
+        encodedPolylineGeoJson: null,
         totalDistance: 0,
         totalDuration: 0,
       };
@@ -166,8 +166,8 @@ export class OptimizationService {
           `OSRM snap-to-road returned code=${response.data.code}`,
         );
         return {
-          polyline: '',
-          polylineGeoJson: null,
+          encodedPolyline: '',
+          encodedPolylineGeoJson: null,
           totalDistance: 0,
           totalDuration: 0,
         };
@@ -177,8 +177,8 @@ export class OptimizationService {
       const decodedCoords = decodePolyline(route.geometry);
 
       return {
-        polyline: route.geometry,
-        polylineGeoJson: {
+        encodedPolyline: route.geometry,
+        encodedPolylineGeoJson: {
           type: 'LineString',
           coordinates: decodedCoords,
         },
@@ -189,8 +189,8 @@ export class OptimizationService {
       const message = err instanceof Error ? err.message : String(err);
       this.logger.warn(`OSRM snap-to-road failed (${message})`);
       return {
-        polyline: '',
-        polylineGeoJson: null,
+        encodedPolyline: '',
+        encodedPolylineGeoJson: null,
         totalDistance: 0,
         totalDuration: 0,
       };
@@ -278,8 +278,8 @@ export class OptimizationService {
 
     return {
       optimizedStops,
-      polyline: route.geometry,
-      polylineGeoJson: {
+      encodedPolyline: route.geometry,
+      encodedPolylineGeoJson: {
         type: 'LineString',
         coordinates: decodedCoords,
       },
@@ -308,8 +308,8 @@ export class OptimizationService {
 
     return {
       optimizedStops: optimized,
-      polyline: '',
-      polylineGeoJson: null,
+      encodedPolyline: '',
+      encodedPolylineGeoJson: null,
       totalDistance: 0,
       totalDuration: 0,
     };
