@@ -5,6 +5,11 @@ export const mockRoutesApi = {
   getActiveRoutes: async () => MOCK_ROUTES,
   getAllRoutes: async () => MOCK_ROUTES,
   getRouteById: async (id: string) => MOCK_ROUTES.find((r) => r.id === id) || MOCK_ROUTES[0],
+  getRouteShape: async (id: string) => {
+    const route = MOCK_ROUTES.find((r) => r.id === id);
+    if (!route?.path) return [];
+    return route.path.map(([lat, lon], i) => ({ lat, lon, sequence: i + 1 }));
+  },
   getLiveLocation: async (routeId: string) => MOCK_LOCATIONS.find((l) => l.routeId === routeId),
   getRouteHistory: async (routeId: string) => MOCK_LOCATIONS.filter((l) => l.routeId === routeId),
   createRoute: async (data: any) => ({
@@ -40,7 +45,6 @@ export const mockRoutesApi = {
 
     return {
       optimizedStops: stops,
-      polyline: '',
       polylineGeoJson:
         coordinates.length >= 2 ? { type: 'LineString' as const, coordinates } : null,
       totalDistance: Math.round(totalDist * 10) / 10,
@@ -65,7 +69,6 @@ export const mockRoutesApi = {
       totalDist += 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     }
     return {
-      polyline: '',
       polylineGeoJson:
         coordinates.length >= 2 ? { type: 'LineString' as const, coordinates } : null,
       totalDistance: Math.round(totalDist * 10) / 10,

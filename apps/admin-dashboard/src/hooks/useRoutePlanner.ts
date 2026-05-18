@@ -185,7 +185,6 @@ export function useRoutePlanner() {
           if (result.polylineGeoJson) {
             setOptimizationResult((prev) => ({
               optimizedStops: prev?.optimizedStops ?? [],
-              polyline: result.polyline,
               polylineGeoJson: result.polylineGeoJson,
               totalDistance: result.totalDistance,
               totalDuration: result.totalDuration,
@@ -236,7 +235,7 @@ export function useRoutePlanner() {
     setMapResetKey((k) => k + 1);
   }, [resetForm, user]);
 
-  const startEdit = useCallback((route: Route) => {
+  const startEdit = useCallback(async (route: Route) => {
     setMode('edit');
     setSelectedRoute(null);
     setEditingRouteId(route.id);
@@ -257,7 +256,27 @@ export function useRoutePlanner() {
       };
     });
     setStops(plannerStops);
-    setOptimizationResult(null);
+
+    // Seed optimizationResult from the stored shape so the existing route line renders.
+    try {
+      const shape = await routesApi.getRouteShape(route.id);
+      if (shape.length >= 2) {
+        const coords: [number, number][] = [...shape]
+          .sort((a, b) => a.sequence - b.sequence)
+          .map((p) => [p.lon, p.lat]);
+        setOptimizationResult({
+          optimizedStops: [],
+          polylineGeoJson: { type: 'LineString', coordinates: coords },
+          totalDistance: 0,
+          totalDuration: 0,
+        });
+      } else {
+        setOptimizationResult(null);
+      }
+    } catch {
+      setOptimizationResult(null);
+    }
+
     setMapMode('view');
     setMapResetKey((k) => k + 1);
   }, []);
@@ -392,7 +411,6 @@ export function useRoutePlanner() {
         if (result.polylineGeoJson) {
           setOptimizationResult((prev) => ({
             optimizedStops: prev?.optimizedStops ?? [],
-            polyline: result.polyline,
             polylineGeoJson: result.polylineGeoJson,
             totalDistance: result.totalDistance,
             totalDuration: result.totalDuration,
@@ -419,7 +437,6 @@ export function useRoutePlanner() {
       if (result.polylineGeoJson) {
         setOptimizationResult((prev) => ({
           optimizedStops: prev?.optimizedStops ?? [],
-          polyline: result.polyline,
           polylineGeoJson: result.polylineGeoJson,
           totalDistance: result.totalDistance,
           totalDuration: result.totalDuration,
@@ -519,7 +536,6 @@ export function useRoutePlanner() {
         if (snapResult.polylineGeoJson) {
           setOptimizationResult({
             optimizedStops: [],
-            polyline: snapResult.polyline,
             polylineGeoJson: snapResult.polylineGeoJson,
             totalDistance: snapResult.totalDistance,
             totalDuration: snapResult.totalDuration,
@@ -587,6 +603,12 @@ export function useRoutePlanner() {
       location: toWktPoint(s.lat, s.lng),
     }));
 
+    const shapePoints = optimizationResult?.polylineGeoJson?.coordinates.map(([lon, lat], i) => ({
+      lat,
+      lon,
+      sequence: i + 1,
+    }));
+
     setIsSaving(true);
     try {
       if (editingRouteId) {
@@ -595,7 +617,7 @@ export function useRoutePlanner() {
           direction,
           startTime,
           estimatedDuration: Math.max(1, Math.round(optimizationResult?.totalDuration || 60)),
-          polyline: optimizationResult?.polyline || undefined,
+          shapePoints,
           stops: stopPayload,
         });
       } else {
@@ -605,7 +627,7 @@ export function useRoutePlanner() {
           schoolId: formSchoolId,
           startTime,
           estimatedDuration: Math.max(1, Math.round(optimizationResult?.totalDuration || 60)),
-          polyline: optimizationResult?.polyline || undefined,
+          shapePoints,
           stops: stopPayload,
         });
       }

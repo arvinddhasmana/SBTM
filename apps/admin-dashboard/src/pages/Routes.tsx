@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Header, Card, LoadingSpinner } from '../components/common';
@@ -6,8 +6,7 @@ import { RouteList } from '../components/routes';
 import { LiveMap } from '../components/map';
 import { routesApi } from '../services/api';
 import { queryKeys } from '../services/query-keys';
-import { decodePolyline } from '../utils/polyline';
-import type { Route, LiveLocation } from '../types';
+import type { Route } from '../types';
 
 const Routes: React.FC = () => {
   const { t } = useTranslation(['routes', 'common']);
@@ -27,6 +26,26 @@ const Routes: React.FC = () => {
 
   const routes = data?.routes ?? [];
   const locations = data?.locations ?? [];
+
+  useEffect(() => {
+    if (!selectedRoute || selectedRoute.path) return;
+    let cancelled = false;
+    routesApi
+      .getRouteShape(selectedRoute.id)
+      .then((shape) => {
+        if (cancelled || shape.length === 0) return;
+        const path: [number, number][] = [...shape]
+          .sort((a, b) => a.sequence - b.sequence)
+          .map((p) => [p.lat, p.lon]);
+        setSelectedRoute((prev) =>
+          prev && prev.id === selectedRoute.id ? { ...prev, path } : prev,
+        );
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedRoute]);
 
   const selectedLocation = selectedRoute
     ? locations.find((l) => l.routeId === selectedRoute.id)
@@ -69,22 +88,17 @@ const Routes: React.FC = () => {
 
           {/* Map */}
           <Card
-            title={selectedRoute ? t('routes:routeLabel', { name: selectedRoute.name }) : t('routes:fleetMap')}
+            title={
+              selectedRoute
+                ? t('routes:routeLabel', { name: selectedRoute.name })
+                : t('routes:fleetMap')
+            }
             className="lg:col-span-2"
           >
             <div className="h-[500px]">
               <LiveMap
                 locations={selectedLocation ? [selectedLocation] : locations}
-                selectedRoute={
-                  selectedRoute
-                    ? {
-                        ...selectedRoute,
-                        path: selectedRoute.polyline
-                          ? decodePolyline(selectedRoute.polyline)
-                          : undefined,
-                      }
-                    : undefined
-                }
+                selectedRoute={selectedRoute ?? undefined}
                 onReset={() => setSelectedRoute(null)}
                 onMarkerClick={(loc) => {
                   const route = routes.find((r) => r.id === loc.routeId);
@@ -98,7 +112,8 @@ const Routes: React.FC = () => {
                   <div>
                     <h4 className="font-medium text-white">{selectedRoute.name}</h4>
                     <p className="text-sm text-slate-400">
-                      {selectedRoute.direction} • {t('routes:stopsCount', { count: selectedRoute.stops.length })}
+                      {selectedRoute.direction} •{' '}
+                      {t('routes:stopsCount', { count: selectedRoute.stops.length })}
                     </p>
                   </div>
                   <button onClick={() => setSelectedRoute(null)} className="btn-secondary text-sm">

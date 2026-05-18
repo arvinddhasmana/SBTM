@@ -43,6 +43,7 @@ vi.mock('../services/api', () => ({
   routesApi: {
     getAllRoutes: vi.fn(() => Promise.resolve(mockRoutes)),
     getAllLiveLocations: vi.fn(() => Promise.resolve(mockLocations)),
+    getRouteShape: vi.fn(() => Promise.resolve([])),
   },
 }));
 
@@ -79,10 +80,6 @@ vi.mock('leaflet', () => ({
       isValid: vi.fn().mockReturnValue(true),
     })),
   },
-}));
-
-vi.mock('../utils/polyline', () => ({
-  decodePolyline: vi.fn().mockReturnValue([]),
 }));
 
 describe('Routes Page', () => {

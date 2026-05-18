@@ -125,6 +125,13 @@ export interface RouteStop {
   location: string | { type: string; coordinates: number[] }; // WKT POINT or GeoJSON Point
 }
 
+export interface ShapePoint {
+  lat: number;
+  lon: number;
+  sequence: number;
+  distTraveled?: number;
+}
+
 export interface Route {
   id: string;
   name: string;
@@ -139,7 +146,6 @@ export interface Route {
   estimatedDuration: number;
   stops: RouteStop[];
   status?: 'active' | 'completed' | 'scheduled';
-  polyline?: string;
   path?: [number, number][];
 }
 

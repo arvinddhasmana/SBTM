@@ -62,13 +62,11 @@ vi.mock('../services/api', () => ({
     getAllRoutes: vi.fn().mockResolvedValue(mockRoutes),
     optimizeRoute: vi.fn().mockResolvedValue({
       optimizedStops: [],
-      polyline: '',
       polylineGeoJson: null,
       totalDistance: 10,
       totalDuration: 30,
     }),
     snapToRoad: vi.fn().mockResolvedValue({
-      polyline: '',
       polylineGeoJson: {
         type: 'LineString',
         coordinates: [
@@ -82,6 +80,7 @@ vi.mock('../services/api', () => ({
     createRoute: vi.fn().mockResolvedValue({ id: 'NEW-1' }),
     updateRoute: vi.fn().mockResolvedValue({ id: 'R1' }),
     deleteRoute: vi.fn().mockResolvedValue(undefined),
+    getRouteShape: vi.fn().mockResolvedValue([]),
   },
   organizationApi: {
     listSchools: vi.fn().mockResolvedValue(mockSchools),
@@ -164,7 +163,9 @@ describe('useRoutePlanner', () => {
     await waitFor(() => expect(result.current.filteredRoutes.length).toBe(2));
 
     const route = result.current.filteredRoutes[0];
-    act(() => result.current.startEdit(route));
+    await act(async () => {
+      await result.current.startEdit(route);
+    });
 
     expect(result.current.mode).toBe('edit');
     expect(result.current.routeName).toBe('Route Alpha');

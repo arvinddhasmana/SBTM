@@ -1,6 +1,5 @@
-import type { Route, LiveLocation } from '../../types';
+import type { Route, LiveLocation, ShapePoint } from '../../types';
 import { apiClient } from './api-client';
-import { decodePolyline } from '../../utils/polyline';
 
 export interface GeoJsonLineString {
   type: 'LineString';
@@ -9,51 +8,61 @@ export interface GeoJsonLineString {
 
 export interface OptimizationResult {
   optimizedStops: any[];
-  polyline: string;
   polylineGeoJson: GeoJsonLineString | null;
   totalDistance: number;
   totalDuration: number;
 }
 
 export interface SnapToRoadResult {
-  polyline: string;
   polylineGeoJson: GeoJsonLineString | null;
   totalDistance: number;
   totalDuration: number;
 }
 
-const transformRoute = (route: any): Route => {
+const flattenSchool = (route: any): Route => {
   const result: any = { ...route };
-  // Flatten school relation into top-level fields for map rendering
   if (result.school) {
     result.schoolName = result.schoolName ?? result.school.name;
     result.schoolLat = result.schoolLat ?? result.school.lat;
     result.schoolLng = result.schoolLng ?? result.school.lng;
   }
-  if (result.polyline && !result.path) {
-    result.path = decodePolyline(result.polyline);
-  }
   return result as Route;
 };
+
+const shapeToPath = (shape: ShapePoint[]): [number, number][] =>
+  [...shape].sort((a, b) => a.sequence - b.sequence).map((p) => [p.lat, p.lon] as [number, number]);
 
 export const routesApi = {
   async getActiveRoutes(): Promise<Route[]> {
     const response = await apiClient.get<Route[]>('/api/v1/routes/active');
-    return (response.data || []).map(transformRoute);
+    return (response.data || []).map(flattenSchool);
   },
 
   async getRouteById(id: string): Promise<Route> {
-    // Fallback for demo tracking script string-based IDs
     const endpoint = id.startsWith('ROUTE-')
       ? `/api/v1/routes/reference/${id}`
       : `/api/v1/routes/${id}`;
     const response = await apiClient.get<Route>(endpoint);
-    return transformRoute(response.data);
+    const route = flattenSchool(response.data);
+    try {
+      const shape = await routesApi.getRouteShape(route.id);
+      if (shape.length > 0) {
+        route.path = shapeToPath(shape);
+      }
+    } catch {
+      // no shape yet — leave path undefined
+    }
+    return route;
+  },
+
+  async getRouteShape(id: string): Promise<ShapePoint[]> {
+    const response = await apiClient.get<ShapePoint[]>(`/api/v1/routes/${id}/shape`);
+    return response.data || [];
   },
 
   async getAllRoutes(): Promise<Route[]> {
     const response = await apiClient.get<Route[]>('/api/v1/routes');
-    return (response.data || []).map(transformRoute);
+    return (response.data || []).map(flattenSchool);
   },
 
   async getLiveLocation(routeId: string): Promise<LiveLocation | undefined> {
@@ -73,12 +82,12 @@ export const routesApi = {
 
   async createRoute(data: any): Promise<Route> {
     const response = await apiClient.post<Route>('/api/v1/routes', data);
-    return transformRoute(response.data);
+    return flattenSchool(response.data);
   },
 
   async updateRoute(id: string, data: any): Promise<Route> {
     const response = await apiClient.patch<Route>(`/api/v1/routes/${id}`, data);
-    return transformRoute(response.data);
+    return flattenSchool(response.data);
   },
 
   async deleteRoute(id: string): Promise<void> {
