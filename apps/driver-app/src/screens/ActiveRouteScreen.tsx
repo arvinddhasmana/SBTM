@@ -22,7 +22,6 @@ import { useBleScanning } from '../hooks/useBleScanning';
 import { useRouteStatus } from '../hooks/useRouteStatus';
 import { usePanicDetection } from '../hooks/usePanicDetection';
 import { useDynamicReroute } from '../hooks/useDynamicReroute';
-import { decodePolyline } from '../utils/polyline';
 import { closestIndexToPolyline, haversineMeters } from '../utils/geo';
 import { DARK_MAP_STYLE } from '../constants/mapStyles';
 import BusNavigationMarker from '../components/map/BusNavigationMarker';
@@ -119,14 +118,11 @@ export default function ActiveRouteScreen({ navigation }: any) {
     longitudeDelta: number;
   } | null>(null);
 
-  // Decode route polyline
+  // Build route path from shapes data ([lat, lng][] already decoded server-side)
   const routePath: LatLng[] = useMemo(() => {
-    if (!activeRoute?.polyline) return [];
-    return decodePolyline(activeRoute.polyline).map(([lat, lng]) => ({
-      latitude: lat,
-      longitude: lng,
-    }));
-  }, [activeRoute?.polyline]);
+    if (!activeRoute?.path || activeRoute.path.length === 0) return [];
+    return activeRoute.path.map(([lat, lng]) => ({ latitude: lat, longitude: lng }));
+  }, [activeRoute?.path]);
 
   // Split the route polyline into visited and unvisited parts based on nearest point to bus
   const { visitedRoutePath, unvisitedRoutePath } = useMemo(() => {
@@ -158,6 +154,8 @@ export default function ActiveRouteScreen({ navigation }: any) {
     vehicleId,
     schoolId,
     Boolean(activeRoute),
+    activeRoute?.runId,
+    undefined,
   );
 
   // Night mode

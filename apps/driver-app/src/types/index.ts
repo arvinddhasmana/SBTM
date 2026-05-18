@@ -13,7 +13,8 @@ export interface Route {
   startTime: string; // ISO
   endTime: string; // ISO
   direction: 'AM' | 'PM';
-  polyline?: string;
+  runId?: string;
+  path?: [number, number][];
   schoolLat?: number;
   schoolLng?: number;
   schoolName?: string;

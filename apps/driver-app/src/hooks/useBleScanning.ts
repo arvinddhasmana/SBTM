@@ -14,25 +14,27 @@ import { BleService, type BleScanState } from '../services/ble.service';
  * @param enabled   Set to false to skip scanning (e.g. permission not granted)
  */
 export function useBleScanning(
-    routeId: string,
-    vehicleId: string,
-    schoolId: string,
-    enabled: boolean,
+  routeId: string,
+  vehicleId: string,
+  schoolId: string,
+  enabled: boolean,
+  runId?: string,
+  stopId?: string,
 ): { scanState: BleScanState } {
-    const [scanState, setScanState] = useState<BleScanState>(BleService.getState());
+  const [scanState, setScanState] = useState<BleScanState>(BleService.getState());
 
-    useEffect(() => {
-        const unsubscribe = BleService.onStateChange(setScanState);
+  useEffect(() => {
+    const unsubscribe = BleService.onStateChange(setScanState);
 
-        if (enabled && routeId && vehicleId && schoolId) {
-            void BleService.startScanning(routeId, vehicleId, schoolId);
-        }
+    if (enabled && routeId && vehicleId && schoolId) {
+      void BleService.startScanning(routeId, vehicleId, schoolId, runId ?? '', stopId ?? '');
+    }
 
-        return () => {
-            unsubscribe();
-            void BleService.stopScanning();
-        };
-    }, [routeId, vehicleId, schoolId, enabled]);
+    return () => {
+      unsubscribe();
+      void BleService.stopScanning();
+    };
+  }, [routeId, vehicleId, schoolId, enabled, runId, stopId]);
 
-    return { scanState };
+  return { scanState };
 }

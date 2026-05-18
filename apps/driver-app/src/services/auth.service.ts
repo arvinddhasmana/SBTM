@@ -11,7 +11,8 @@ function mapScheduleToDriver(
     startTime: string;
     vehicleId?: string;
     schoolId: string;
-    polyline?: string;
+    runId?: string;
+    path?: [number, number][];
     schoolLat?: number;
     schoolLng?: number;
     schoolName?: string;
@@ -32,7 +33,8 @@ function mapScheduleToDriver(
       startTime: route.startTime,
       endTime: route.startTime,
       direction: route.direction,
-      polyline: route.polyline,
+      runId: route.runId,
+      path: route.path,
       schoolLat: route.schoolLat,
       schoolLng: route.schoolLng,
       schoolName: route.schoolName,
@@ -53,7 +55,8 @@ export const AuthService = {
         startTime: string;
         vehicleId?: string;
         schoolId: string;
-        polyline?: string;
+        runId?: string;
+        path?: [number, number][];
         schoolLat?: number;
         schoolLng?: number;
         schoolName?: string;
@@ -75,7 +78,8 @@ export const AuthService = {
         startTime: string;
         vehicleId?: string;
         schoolId: string;
-        polyline?: string;
+        runId?: string;
+        path?: [number, number][];
         schoolLat?: number;
         schoolLng?: number;
         schoolName?: string;

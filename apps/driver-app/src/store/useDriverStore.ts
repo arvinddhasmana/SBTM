@@ -213,9 +213,11 @@ export const useDriverStore = create<DriverState>()(
           studentId,
           vehicleId: activeRoute.vehicleId,
           routeId: activeRoute.id,
+          runId: activeRoute.runId ?? '',
           schoolId: activeRoute.schoolId,
-          eventType: nextStatus === 'BOARDED' ? 'BOARD' : 'ALIGHT',
-          source: 'MANUAL',
+          stopId: target.stopId ?? '',
+          eventKind: nextStatus === 'BOARDED' ? 'boarded' : 'alighted',
+          source: 'driver_app',
           timestamp: new Date().toISOString(),
         });
 
@@ -250,9 +252,11 @@ export const useDriverStore = create<DriverState>()(
             studentId: student.id,
             vehicleId: activeRoute.vehicleId,
             routeId: activeRoute.id,
+            runId: activeRoute.runId ?? '',
             schoolId: activeRoute.schoolId,
-            eventType: 'BOARD',
-            source: 'MANUAL',
+            stopId: student.stopId ?? '',
+            eventKind: 'boarded',
+            source: 'driver_app',
             timestamp,
           });
         }
@@ -286,9 +290,11 @@ export const useDriverStore = create<DriverState>()(
             studentId: student.id,
             vehicleId: activeRoute.vehicleId,
             routeId: activeRoute.id,
+            runId: activeRoute.runId ?? '',
             schoolId: activeRoute.schoolId,
-            eventType: 'ALIGHT',
-            source: 'MANUAL',
+            stopId: student.stopId ?? '',
+            eventKind: 'alighted',
+            source: 'driver_app',
             timestamp,
           });
         }

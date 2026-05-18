@@ -12,23 +12,23 @@ const mockState = jest.fn().mockResolvedValue('PoweredOn');
 const mockDestroy = jest.fn();
 
 jest.mock('react-native-ble-plx', () => ({
-    BleManager: jest.fn().mockImplementation(() => ({
-        startDeviceScan: mockStartDeviceScan,
-        stopDeviceScan: mockStopDeviceScan,
-        state: mockState,
-        destroy: mockDestroy,
-    })),
-    State: { PoweredOn: 'PoweredOn' },
+  BleManager: jest.fn().mockImplementation(() => ({
+    startDeviceScan: mockStartDeviceScan,
+    stopDeviceScan: mockStopDeviceScan,
+    state: mockState,
+    destroy: mockDestroy,
+  })),
+  State: { PoweredOn: 'PoweredOn' },
 }));
 
 jest.mock('./presence.service', () => ({
-    PresenceService: {
-        sendBleDetections: jest.fn().mockResolvedValue(undefined),
-    },
+  PresenceService: {
+    sendBleDetections: jest.fn().mockResolvedValue(undefined),
+  },
 }));
 
 jest.mock('react-native', () => ({
-    Platform: { OS: 'android' },
+  Platform: { OS: 'android' },
 }));
 
 import { BleService } from './ble.service';
@@ -37,82 +37,82 @@ import { PresenceService } from './presence.service';
 const mockPresence = PresenceService as jest.Mocked<typeof PresenceService>;
 
 describe('BleService', () => {
-    const routeId = 'route-ble-1';
-    const vehicleId = 'vehicle-ble-1';
-    const schoolId = 'school-ble-1';
+  const routeId = 'route-ble-1';
+  const vehicleId = 'vehicle-ble-1';
+  const schoolId = 'school-ble-1';
 
-    beforeEach(() => {
-        jest.clearAllMocks();
-        BleService.destroy();
+  beforeEach(() => {
+    jest.clearAllMocks();
+    BleService.destroy();
+  });
+
+  afterEach(() => {
+    BleService.destroy();
+  });
+
+  describe('getState', () => {
+    it('returns idle initially', () => {
+      expect(BleService.getState()).toBe('idle');
+    });
+  });
+
+  describe('startScanning', () => {
+    it('transitions to scanning state when BLE is powered on', async () => {
+      await BleService.startScanning(routeId, vehicleId, schoolId, 'run-test-1', 'stop-test-1');
+      expect(BleService.getState()).toBe('scanning');
+      expect(mockStartDeviceScan).toHaveBeenCalled();
     });
 
-    afterEach(() => {
-        BleService.destroy();
+    it('transitions to permission_denied when BLE is not powered on', async () => {
+      mockState.mockResolvedValueOnce('PoweredOff');
+      await BleService.startScanning(routeId, vehicleId, schoolId, 'run-test-1', 'stop-test-1');
+      expect(BleService.getState()).toBe('permission_denied');
     });
 
-    describe('getState', () => {
-        it('returns idle initially', () => {
-            expect(BleService.getState()).toBe('idle');
-        });
+    it('ignores duplicate startScanning calls', async () => {
+      await BleService.startScanning(routeId, vehicleId, schoolId, 'run-test-1', 'stop-test-1');
+      await BleService.startScanning(routeId, vehicleId, schoolId, 'run-test-1', 'stop-test-1');
+      expect(mockStartDeviceScan).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('stopScanning', () => {
+    it('stops scanning and returns to idle state', async () => {
+      await BleService.startScanning(routeId, vehicleId, schoolId, 'run-test-1', 'stop-test-1');
+      await BleService.stopScanning();
+      expect(BleService.getState()).toBe('idle');
+      expect(mockStopDeviceScan).toHaveBeenCalled();
     });
 
-    describe('startScanning', () => {
-        it('transitions to scanning state when BLE is powered on', async () => {
-            await BleService.startScanning(routeId, vehicleId, schoolId);
-            expect(BleService.getState()).toBe('scanning');
-            expect(mockStartDeviceScan).toHaveBeenCalled();
-        });
-
-        it('transitions to permission_denied when BLE is not powered on', async () => {
-            mockState.mockResolvedValueOnce('PoweredOff');
-            await BleService.startScanning(routeId, vehicleId, schoolId);
-            expect(BleService.getState()).toBe('permission_denied');
-        });
-
-        it('ignores duplicate startScanning calls', async () => {
-            await BleService.startScanning(routeId, vehicleId, schoolId);
-            await BleService.startScanning(routeId, vehicleId, schoolId);
-            expect(mockStartDeviceScan).toHaveBeenCalledTimes(1);
-        });
+    it('does nothing if not scanning', async () => {
+      await BleService.stopScanning();
+      expect(mockStopDeviceScan).not.toHaveBeenCalled();
     });
+  });
 
-    describe('stopScanning', () => {
-        it('stops scanning and returns to idle state', async () => {
-            await BleService.startScanning(routeId, vehicleId, schoolId);
-            await BleService.stopScanning();
-            expect(BleService.getState()).toBe('idle');
-            expect(mockStopDeviceScan).toHaveBeenCalled();
-        });
+  describe('onStateChange', () => {
+    it('notifies listener on state transition', async () => {
+      const listener = jest.fn();
+      const unsubscribe = BleService.onStateChange(listener);
 
-        it('does nothing if not scanning', async () => {
-            await BleService.stopScanning();
-            expect(mockStopDeviceScan).not.toHaveBeenCalled();
-        });
+      await BleService.startScanning(routeId, vehicleId, schoolId, 'run-test-1', 'stop-test-1');
+
+      expect(listener).toHaveBeenCalledWith('scanning');
+
+      unsubscribe();
+
+      await BleService.stopScanning();
+      // Listener removed – should not have been called again
+      expect(listener).toHaveBeenCalledTimes(1);
     });
+  });
 
-    describe('onStateChange', () => {
-        it('notifies listener on state transition', async () => {
-            const listener = jest.fn();
-            const unsubscribe = BleService.onStateChange(listener);
-
-            await BleService.startScanning(routeId, vehicleId, schoolId);
-
-            expect(listener).toHaveBeenCalledWith('scanning');
-
-            unsubscribe();
-
-            await BleService.stopScanning();
-            // Listener removed – should not have been called again
-            expect(listener).toHaveBeenCalledTimes(1);
-        });
+  describe('destroy', () => {
+    it('resets state to idle', async () => {
+      await BleService.startScanning(routeId, vehicleId, schoolId, 'run-test-1', 'stop-test-1');
+      BleService.destroy();
+      expect(BleService.getState()).toBe('idle');
+      expect(mockDestroy).toHaveBeenCalled();
     });
-
-    describe('destroy', () => {
-        it('resets state to idle', async () => {
-            await BleService.startScanning(routeId, vehicleId, schoolId);
-            BleService.destroy();
-            expect(BleService.getState()).toBe('idle');
-            expect(mockDestroy).toHaveBeenCalled();
-        });
-    });
+  });
 });
