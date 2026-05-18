@@ -4,7 +4,7 @@
 
 The Admin Dashboard is a React single-page application (SPA) built with Vite, React Router v6, TanStack React Query, and Tailwind CSS. It serves as the primary management interface for the SBTM platform, providing real-time fleet monitoring, alert management, route planning, student administration, compliance tracking, and multi-tenant organization management.
 
-The application enforces a hierarchical role-based access control (RBAC) model with four admin roles: `SUPER_ADMIN`, `OSTA_ADMIN`, `BOARD_ADMIN`, and `SCHOOL_ADMIN`. Each page is wrapped in route guards that restrict visibility based on the authenticated user's role.
+The application enforces a hierarchical role-based access control (RBAC) model with four admin roles: `SUPER_ADMIN`, `STA_ADMIN`, `BOARD_ADMIN`, and `SCHOOL_ADMIN`. Each page is wrapped in route guards that restrict visibility based on the authenticated user's role.
 
 ### Visual Identity
 
@@ -83,22 +83,22 @@ The sidebar is a fixed left-side panel with collapsible behavior. It persists ac
 
 **Navigation Items (role-filtered):**
 
-| Path                  | Icon              | Label       | Allowed Roles                        |
-| --------------------- | ----------------- | ----------- | ------------------------------------ |
-| `/dashboard`          | `LayoutDashboard` | Dashboard   | All admins                           |
-| `/alerts`             | `Bell`            | Alerts      | All admins                           |
-| `/alerts/operational` | `ClipboardList`   | Operational | All admins                           |
-| `/routes`             | `Route`           | Routes      | All admins                           |
-| `/routes/planner`     | `Wand2`           | Planner     | All admins                           |
-| `/vehicles`           | `Bus`             | Fleet       | SUPER_ADMIN, OSTA_ADMIN              |
-| `/compliance`         | `Shield`          | Compliance  | All admins                           |
-| `/fleet-assignments`  | `Truck`           | Assignments | All admins                           |
-| `/students`           | `Users`           | Students    | All admins                           |
-| `/absences`           | `CalendarOff`     | Absences    | All admins                           |
-| `/boards`             | `Building2`       | Boards      | SUPER_ADMIN, OSTA_ADMIN              |
-| `/schools`            | `School`          | Schools     | SUPER_ADMIN, OSTA_ADMIN, BOARD_ADMIN |
-| `/users`              | `UserCog`         | Users       | SUPER_ADMIN only                     |
-| `/settings`           | `Settings`        | Settings    | All admins                           |
+| Path                  | Icon              | Label       | Allowed Roles                       |
+| --------------------- | ----------------- | ----------- | ----------------------------------- |
+| `/dashboard`          | `LayoutDashboard` | Dashboard   | All admins                          |
+| `/alerts`             | `Bell`            | Alerts      | All admins                          |
+| `/alerts/operational` | `ClipboardList`   | Operational | All admins                          |
+| `/routes`             | `Route`           | Routes      | All admins                          |
+| `/routes/planner`     | `Wand2`           | Planner     | All admins                          |
+| `/vehicles`           | `Bus`             | Fleet       | SUPER_ADMIN, STA_ADMIN              |
+| `/compliance`         | `Shield`          | Compliance  | All admins                          |
+| `/fleet-assignments`  | `Truck`           | Assignments | All admins                          |
+| `/students`           | `Users`           | Students    | All admins                          |
+| `/absences`           | `CalendarOff`     | Absences    | All admins                          |
+| `/boards`             | `Building2`       | Boards      | SUPER_ADMIN, STA_ADMIN              |
+| `/schools`            | `School`          | Schools     | SUPER_ADMIN, STA_ADMIN, BOARD_ADMIN |
+| `/users`              | `UserCog`         | Users       | SUPER_ADMIN only                    |
+| `/settings`           | `Settings`        | Settings    | All admins                          |
 
 Active nav items use: `bg-blue-500/20 text-blue-400 border border-blue-500/30`
 Inactive items use: `text-slate-400 hover:bg-slate-800 hover:text-white`
@@ -130,10 +130,10 @@ App.tsx
               /compliance -> Compliance
               /absences -> AbsenceManagement
               /fleet-assignments -> FleetAssignments
-              RoleGuard(SUPER_ADMIN, OSTA_ADMIN)
+              RoleGuard(SUPER_ADMIN, STA_ADMIN)
                 /vehicles -> Vehicles
                 /boards -> BoardsList
-              RoleGuard(SUPER_ADMIN, OSTA_ADMIN, BOARD_ADMIN)
+              RoleGuard(SUPER_ADMIN, STA_ADMIN, BOARD_ADMIN)
                 /schools -> SchoolsList
                 /tenant-overview -> TenantDashboard
               RoleGuard(SUPER_ADMIN)
@@ -227,7 +227,7 @@ const queryClient = new QueryClient({
 - Floating modal triggered by clicking an alert
 - Shows full alert details with audit trail
 - Action buttons: Resolve, Confirm, False Alarm, Request Info, Add Status Update
-- Action availability gated by `canConfirm` (SCHOOL_ADMIN, BOARD_ADMIN, OSTA_ADMIN, ADMIN roles)
+- Action availability gated by `canConfirm` (SCHOOL_ADMIN, BOARD_ADMIN, STA_ADMIN, ADMIN roles)
 
 **Data Sources & Refresh:**
 
@@ -379,7 +379,7 @@ const queryClient = new QueryClient({
 ### 8. Fleet Management (`/vehicles`)
 
 **Route**: `/vehicles`
-**Access**: SUPER_ADMIN, OSTA_ADMIN only (RoleGuard)
+**Access**: SUPER_ADMIN, STA_ADMIN only (RoleGuard)
 
 **Layout**: Standard layout with table card
 
@@ -487,10 +487,10 @@ const queryClient = new QueryClient({
 
 - SCHOOL_ADMIN can invite: DRIVER, PARENT
 - BOARD_ADMIN can invite: SCHOOL_ADMIN, DRIVER, PARENT
-- OSTA_ADMIN can invite: BOARD_ADMIN, SCHOOL_ADMIN, DRIVER, PARENT
+- STA_ADMIN can invite: BOARD_ADMIN, SCHOOL_ADMIN, DRIVER, PARENT
 - SUPER_ADMIN can invite all roles
 
-**Invitable Roles:** OSTA_ADMIN, BOARD_ADMIN, SCHOOL_ADMIN, DRIVER, PARENT
+**Invitable Roles:** STA_ADMIN, BOARD_ADMIN, SCHOOL_ADMIN, DRIVER, PARENT
 
 **Data Sources:**
 
@@ -501,15 +501,15 @@ const queryClient = new QueryClient({
 ### 13. School Boards (`/boards`)
 
 **Route**: `/boards`
-**Access**: SUPER_ADMIN, OSTA_ADMIN only (RoleGuard)
+**Access**: SUPER_ADMIN, STA_ADMIN only (RoleGuard)
 
 **Layout**: Standalone page with table
 
 **Components:**
 
-- "School Boards" title with "+ Add Board" button (OSTA_ADMIN+ only)
+- "School Boards" title with "+ Add Board" button (STA_ADMIN+ only)
 - Create/Edit inline form with board name input
-- Board table: Name, Schools count, Actions (Edit/Delete for OSTA_ADMIN+)
+- Board table: Name, Schools count, Actions (Edit/Delete for STA_ADMIN+)
 
 **Data Sources:**
 
@@ -521,45 +521,45 @@ const queryClient = new QueryClient({
 ### 14. Schools (`/schools`)
 
 **Route**: `/schools`
-**Access**: SUPER_ADMIN, OSTA_ADMIN, BOARD_ADMIN (RoleGuard)
+**Access**: SUPER_ADMIN, STA_ADMIN, BOARD_ADMIN (RoleGuard)
 
 **Layout**: Standalone page with table
 
 **Components:**
 
-- "Schools" title with "+ Add School" button (OSTA_ADMIN/BOARD_ADMIN)
-- Create/Edit inline form: School name + Board selector (OSTA_ADMIN only sees board dropdown)
-- Schools table: Name, Board ID (monospace), Actions (Edit for managers, Delete for OSTA_ADMIN)
+- "Schools" title with "+ Add School" button (STA_ADMIN/BOARD_ADMIN)
+- Create/Edit inline form: School name + Board selector (STA_ADMIN only sees board dropdown)
+- Schools table: Name, Board ID (monospace), Actions (Edit for managers, Delete for STA_ADMIN)
 
 **Scoping:**
 
 - BOARD_ADMIN sees only schools in their board (`user.boardId` filter)
-- OSTA_ADMIN/SUPER_ADMIN sees all schools across all boards
+- STA_ADMIN/SUPER_ADMIN sees all schools across all boards
 
 **Data Sources:**
 
-- `organizationApi.listSchools(boardId?)` + `organizationApi.listBoards()` (OSTA_ADMIN only)
+- `organizationApi.listSchools(boardId?)` + `organizationApi.listBoards()` (STA_ADMIN only)
 
 ---
 
 ### 15. Tenant Dashboard (`/tenant-overview`)
 
 **Route**: `/tenant-overview`
-**Access**: SUPER_ADMIN, OSTA_ADMIN, BOARD_ADMIN (RoleGuard)
+**Access**: SUPER_ADMIN, STA_ADMIN, BOARD_ADMIN (RoleGuard)
 
 **Layout**: Standalone page with stat cards and tables
 
 **Components:**
 
-- Title: "OSTA-Wide Overview" (OSTA_ADMIN) or "Board Overview" (BOARD_ADMIN)
+- Title: "STA-Wide Overview" (STA_ADMIN) or "Board Overview" (BOARD_ADMIN)
 - Stat cards (2-3 column grid): Total Boards, Total Schools, Avg Schools/Board
   - Card: `bg-dashboard-card rounded-xl p-5 border border-white/10`, value in `text-3xl font-bold`
-- Boards table (OSTA_ADMIN only): Board Name, Schools count
-- Schools table: School Name, Board (OSTA_ADMIN only)
+- Boards table (STA_ADMIN only): Board Name, Schools count
+- Schools table: School Name, Board (STA_ADMIN only)
 
 **Scoping:**
 
-- OSTA_ADMIN: Fetches all boards + all schools
+- STA_ADMIN: Fetches all boards + all schools
 - BOARD_ADMIN: Fetches only schools in their board
 
 ---
@@ -600,7 +600,7 @@ const queryClient = new QueryClient({
 
 **Components:**
 
-- Header: "Fleet Assignments" with "Create Proposal" button (OSTA_ADMIN only, Plus icon)
+- Header: "Fleet Assignments" with "Create Proposal" button (STA_ADMIN only, Plus icon)
 - Proposal form (expandable, 2-column grid): School ID, Route ID, Vehicle ID, Effective Date
 - Assignments table: School, Route, Vehicle, Effective Date, Status badge, Created timestamp, Actions
 - SCHOOL_ADMIN actions on PROPOSED: Accept, Reject (with inline notes)

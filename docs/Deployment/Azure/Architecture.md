@@ -138,13 +138,13 @@ C4Component
 
   Container_Boundary(gw, "API Gateway (NestJS)") {
     Component(auth, "Auth Module", "NestJS Module + Passport-JWT", "POST /auth/login — issues JWT; validates credentials against users table")
-    Component(rbac, "RBAC Guard", "NestJS Guard", "Validates role hierarchy: SUPER_ADMIN > OSTA_ADMIN > BOARD_ADMIN > SCHOOL_ADMIN > DRIVER > PARENT")
+    Component(rbac, "RBAC Guard", "NestJS Guard", "Validates role hierarchy: SUPER_ADMIN > STA_ADMIN > BOARD_ADMIN > SCHOOL_ADMIN > DRIVER > PARENT")
     Component(tenant, "Multi-Tenancy Guard", "NestJS Guard", "Extracts school_id from JWT; enforces tenant scope on all downstream calls; bypassed for SUPER_ADMIN")
     Component(proxy, "Service Proxy Module", "NestJS + HttpService", "Forwards authenticated requests to GPS / Alerts / Presence / Students / Compliance / Video / Notifications")
     Component(route, "Route Management Controller", "NestJS Controller", "GET /routes — queries GPS service + OSRM for route geometry and ETAs")
     Component(pdf, "PDF Generator", "NestJS Service + pdf-lib v1.17.1", "GET /documents/fleet-assignment/:id/pdf — generates fleet agreement PDFs")
     Component(org, "Organization Controller", "NestJS Controller", "CRUD for boards and schools; scoped by BOARD_ADMIN boardId")
-    Component(fleet, "Fleet Assignment Controller", "NestJS Controller", "OSTA_ADMIN proposes vehicle assignments; SCHOOL_ADMIN accepts/rejects")
+    Component(fleet, "Fleet Assignment Controller", "NestJS Controller", "STA_ADMIN proposes vehicle assignments; SCHOOL_ADMIN accepts/rejects")
   }
 
   ContainerDb(pg, "PostgreSQL", "users, schools, boards, fleet_assignments, student_absences tables")

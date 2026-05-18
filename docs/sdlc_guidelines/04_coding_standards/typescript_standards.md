@@ -12,12 +12,12 @@ Define TypeScript coding standards enforced across all SBTM applications and ser
 
 All packages share `tsconfig.base.json` at the monorepo root:
 
-| Setting | Value | Reason |
-|---|---|---|
-| `strict` | `true` | Catch type errors at compile time |
+| Setting                    | Value  | Reason                             |
+| -------------------------- | ------ | ---------------------------------- |
+| `strict`                   | `true` | Catch type errors at compile time  |
 | `noUncheckedIndexedAccess` | `true` | Undefined-safe array/object access |
-| `esModuleInterop` | `true` | Clean CJS/ESM interop |
-| `skipLibCheck` | `true` | Faster builds |
+| `esModuleInterop`          | `true` | Clean CJS/ESM interop              |
+| `skipLibCheck`             | `true` | Faster builds                      |
 
 Each package extends the base config and adds its own paths, includes, and module settings.
 
@@ -58,7 +58,7 @@ export const Role = {
   SCHOOL_ADMIN: 'school_admin',
   DRIVER: 'driver',
   PARENT: 'parent',
-  OSTA_ADMIN: 'osta_admin',
+  STA_ADMIN: 'sta_admin',
 } as const;
 
 export type Role = (typeof Role)[keyof typeof Role];

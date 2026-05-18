@@ -1198,7 +1198,7 @@ export const Role = {
   SCHOOL_ADMIN: 'school_admin',
   DRIVER: 'driver',
   PARENT: 'parent',
-  OSTA_ADMIN: 'osta_admin',
+  STA_ADMIN: 'sta_admin',
 } as const;
 
 export type Role = (typeof Role)[keyof typeof Role];
@@ -1572,7 +1572,7 @@ Test that each role can only access its permitted endpoints:
 | `parent`       | Own child's location, presence events | Other parents' data, admin endpoints, compliance |
 | `driver`       | Own route, presence management        | Student management, compliance, admin            |
 | `school_admin` | All data within own school            | Other schools' data, OSTA admin endpoints        |
-| `osta_admin`   | Cross-school data, compliance         | N/A (highest role)                               |
+| `sta_admin`    | Cross-school data, compliance         | N/A (highest role)                               |
 
 ## PII Leak Detection
 

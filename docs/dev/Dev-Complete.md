@@ -787,7 +787,7 @@ All accounts use password **`Admin123!`**.
 | :----------- | :----------------------- | :----------------------------------------------- |
 | SUPER_ADMIN  | `super.admin@sbtm.demo`  | Full system access                               |
 | BOARD_ADMIN  | `board.admin@sbtm.demo`  | Board-level administration (OSDSB)               |
-| OSTA_ADMIN   | `osta.admin@sbtm.demo`   | Fleet & route management                         |
+| STA_ADMIN    | `sta.admin@sbtm.demo`    | Fleet & route management                         |
 | SCHOOL_ADMIN | `school.admin@sbtm.demo` | School-scoped operations (Greenfield Elementary) |
 | DRIVER       | `driver1@sbtm.demo`      | Driver for BUS-01                                |
 | PARENT       | `parent1@sbtm.demo`      | Parent portal (also parent2, parent4, parent5)   |
@@ -868,7 +868,7 @@ These workflows require Hybrid or Full Docker mode with seeded data.
 
 ### Fleet Assignment Workflow
 
-1. **Login as OSTA Admin** (`osta.admin@sbtm.demo`)
+1. **Login as OSTA Admin** (`sta.admin@sbtm.demo`)
 2. **Propose an assignment**:
    ```
    POST /api/v1/fleet-assignments
@@ -898,7 +898,7 @@ These workflows require Hybrid or Full Docker mode with seeded data.
 
 ### Role-Based Sidebar
 
-Login as each role (SUPER_ADMIN, BOARD_ADMIN, OSTA_ADMIN, SCHOOL_ADMIN, DRIVER, PARENT) and verify the sidebar shows only the menu items permitted for that role.
+Login as each role (SUPER_ADMIN, BOARD_ADMIN, STA_ADMIN, SCHOOL_ADMIN, DRIVER, PARENT) and verify the sidebar shows only the menu items permitted for that role.
 
 ### Alert Ownership (School-Scoped)
 

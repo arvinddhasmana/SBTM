@@ -62,13 +62,13 @@ SBTM is **multi-tenant**. Every piece of data is scoped to a `school_id`. Users 
 
 ### Roles
 
-| Role | Access Level | Primary App |
-|---|---|---|
-| OSTA_ADMIN | Cross-board, system-wide | Admin Dashboard |
-| BOARD_ADMIN | Board-level (multiple schools) | Admin Dashboard |
-| SCHOOL_ADMIN | Single school | Admin Dashboard |
-| DRIVER | Assigned routes only | Driver App (mobile) |
-| PARENT | Linked children's routes only | Parent Portal (web) |
+| Role         | Access Level                   | Primary App         |
+| ------------ | ------------------------------ | ------------------- |
+| STA_ADMIN    | Cross-board, system-wide       | Admin Dashboard     |
+| BOARD_ADMIN  | Board-level (multiple schools) | Admin Dashboard     |
+| SCHOOL_ADMIN | Single school                  | Admin Dashboard     |
+| DRIVER       | Assigned routes only           | Driver App (mobile) |
+| PARENT       | Linked children's routes only  | Parent Portal (web) |
 
 ### Route
 
@@ -94,12 +94,12 @@ An **emergency event** is a safety-critical alert triggered by the driver's pani
 
 ### Demo Credentials
 
-| Role | Email | Password |
-|---|---|---|
-| OSTA Admin | osta.admin@sbtm.demo | Admin123! |
+| Role         | Email                  | Password  |
+| ------------ | ---------------------- | --------- |
+| OSTA Admin   | sta.admin@sbtm.demo    | Admin123! |
 | School Admin | school.admin@sbtm.demo | Admin123! |
-| Driver 1 | driver1@sbtm.demo | Admin123! |
-| Parent 1 | parent1@sbtm.demo | Admin123! |
+| Driver 1     | driver1@sbtm.demo      | Admin123! |
+| Parent 1     | parent1@sbtm.demo      | Admin123! |
 
 ---
 

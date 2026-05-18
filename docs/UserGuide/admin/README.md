@@ -10,7 +10,7 @@
 
 SBTM has four distinct admin roles arranged in a clear hierarchy:
 
-**Role Hierarchy:** `SUPER_ADMIN` > `OSTA_ADMIN` > `BOARD_ADMIN` > `SCHOOL_ADMIN`
+**Role Hierarchy:** `SUPER_ADMIN` > `STA_ADMIN` > `BOARD_ADMIN` > `SCHOOL_ADMIN`
 
 | Role                          | Scope                     | What You Manage                                                                                                                                |
 | ----------------------------- | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |

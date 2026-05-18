@@ -178,7 +178,7 @@ These guides describe the current system and call out partial or planned workflo
 
 SBTM has four distinct admin roles arranged in a clear hierarchy:
 
-**Role Hierarchy:** `SUPER_ADMIN` > `OSTA_ADMIN` > `BOARD_ADMIN` > `SCHOOL_ADMIN`
+**Role Hierarchy:** `SUPER_ADMIN` > `STA_ADMIN` > `BOARD_ADMIN` > `SCHOOL_ADMIN`
 
 | Role                          | Scope                     | What You Manage                                                                                                                                |
 | ----------------------------- | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -901,7 +901,7 @@ SBTM is **multi-tenant**. Every piece of data is scoped to a `school_id`. Users 
 
 | Role         | Access Level                   | Primary App         |
 | ------------ | ------------------------------ | ------------------- |
-| OSTA_ADMIN   | Cross-board, system-wide       | Admin Dashboard     |
+| STA_ADMIN    | Cross-board, system-wide       | Admin Dashboard     |
 | BOARD_ADMIN  | Board-level (multiple schools) | Admin Dashboard     |
 | SCHOOL_ADMIN | Single school                  | Admin Dashboard     |
 | DRIVER       | Assigned routes only           | Driver App (mobile) |
@@ -933,7 +933,7 @@ An **emergency event** is a safety-critical alert triggered by the driver's pani
 
 | Role         | Email                  | Password  |
 | ------------ | ---------------------- | --------- |
-| OSTA Admin   | osta.admin@sbtm.demo   | Admin123! |
+| OSTA Admin   | sta.admin@sbtm.demo    | Admin123! |
 | School Admin | school.admin@sbtm.demo | Admin123! |
 | Driver 1     | driver1@sbtm.demo      | Admin123! |
 | Parent 1     | parent1@sbtm.demo      | Admin123! |

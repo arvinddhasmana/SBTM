@@ -14,7 +14,7 @@ For downstream internal service endpoints and queue-driven contracts, use [Servi
 
 - Authentication: JWT bearer token through the API Gateway
 - Global prefix: `/api/v1`
-- Primary roles: `OSTA_ADMIN`, `BOARD_ADMIN`, `SCHOOL_ADMIN`, `ADMIN`, `DRIVER`, `PARENT`, `SYSTEM`
+- Primary roles: `STA_ADMIN`, `BOARD_ADMIN`, `SCHOOL_ADMIN`, `ADMIN`, `DRIVER`, `PARENT`, `SYSTEM`
 - Tenant scoping: gateway and guards use `schoolId`, `boardId`, assigned route lists, and child route lists depending on persona
 
 ### Headers
@@ -31,11 +31,11 @@ For downstream internal service endpoints and queue-driven contracts, use [Servi
 | `POST`  | `/api/v1/auth/login`                | Public        | `email`, `password`                            | Returns JWT-backed session payload            |
 | `POST`  | `/api/v1/auth/logout`               | Authenticated | none                                           | Logout is currently client-side token discard |
 | `GET`   | `/api/v1/auth/me`                   | Authenticated | none                                           | Returns current user profile                  |
-| `POST`  | `/api/v1/auth/invite`               | `OSTA_ADMIN`+ | `email`, `role`, `schoolId?`, `boardId?`       | Invite user                                   |
+| `POST`  | `/api/v1/auth/invite`               | `STA_ADMIN`+  | `email`, `role`, `schoolId?`, `boardId?`       | Invite user                                   |
 | `POST`  | `/api/v1/auth/activate`             | Public        | `token`, `password`, `firstName?`, `lastName?` | Activate invited account                      |
-| `GET`   | `/api/v1/auth/users`                | `OSTA_ADMIN`+ | none                                           | List users (scoped by caller tenant)          |
-| `PATCH` | `/api/v1/auth/users/:id/deactivate` | `OSTA_ADMIN`+ | path `id`                                      | Deactivate user                               |
-| `PATCH` | `/api/v1/auth/users/:id/reactivate` | `OSTA_ADMIN`+ | path `id`                                      | Reactivate user                               |
+| `GET`   | `/api/v1/auth/users`                | `STA_ADMIN`+  | none                                           | List users (scoped by caller tenant)          |
+| `PATCH` | `/api/v1/auth/users/:id/deactivate` | `STA_ADMIN`+  | path `id`                                      | Deactivate user                               |
+| `PATCH` | `/api/v1/auth/users/:id/reactivate` | `STA_ADMIN`+  | path `id`                                      | Reactivate user                               |
 
 ### Login Request
 
@@ -70,33 +70,33 @@ For downstream internal service endpoints and queue-driven contracts, use [Servi
 
 ## Organization and Tenancy Endpoints
 
-| Method  | Path                             | Access                                      | Request or Query   | Notes                           |
-| ------- | -------------------------------- | ------------------------------------------- | ------------------ | ------------------------------- |
-| `GET`   | `/api/v1/boards`                 | `OSTA_ADMIN`+                               | none               | List boards                     |
-| `GET`   | `/api/v1/boards/:id`             | `OSTA_ADMIN`, `BOARD_ADMIN`                 | path `id`          | Get board                       |
-| `POST`  | `/api/v1/boards`                 | `OSTA_ADMIN`+                               | `name`             | Create board                    |
-| `PATCH` | `/api/v1/boards/:id`             | `OSTA_ADMIN`+                               | update payload     | Update board                    |
-| `GET`   | `/api/v1/schools`                | `OSTA_ADMIN`, `BOARD_ADMIN`, `SCHOOL_ADMIN` | optional `boardId` | List schools or filter by board |
-| `GET`   | `/api/v1/schools/:id`            | `OSTA_ADMIN`, `BOARD_ADMIN`, `SCHOOL_ADMIN` | path `id`          | Get school                      |
-| `POST`  | `/api/v1/schools`                | `OSTA_ADMIN`, `BOARD_ADMIN`                 | `name`, `boardId`  | Create school                   |
-| `PATCH` | `/api/v1/schools/:id`            | `OSTA_ADMIN`, `BOARD_ADMIN`                 | update payload     | Update school                   |
-| `PATCH` | `/api/v1/schools/:id/deactivate` | `OSTA_ADMIN`, `BOARD_ADMIN`                 | path `id`          | Deactivate school               |
+| Method  | Path                             | Access                                     | Request or Query   | Notes                           |
+| ------- | -------------------------------- | ------------------------------------------ | ------------------ | ------------------------------- |
+| `GET`   | `/api/v1/boards`                 | `STA_ADMIN`+                               | none               | List boards                     |
+| `GET`   | `/api/v1/boards/:id`             | `STA_ADMIN`, `BOARD_ADMIN`                 | path `id`          | Get board                       |
+| `POST`  | `/api/v1/boards`                 | `STA_ADMIN`+                               | `name`             | Create board                    |
+| `PATCH` | `/api/v1/boards/:id`             | `STA_ADMIN`+                               | update payload     | Update board                    |
+| `GET`   | `/api/v1/schools`                | `STA_ADMIN`, `BOARD_ADMIN`, `SCHOOL_ADMIN` | optional `boardId` | List schools or filter by board |
+| `GET`   | `/api/v1/schools/:id`            | `STA_ADMIN`, `BOARD_ADMIN`, `SCHOOL_ADMIN` | path `id`          | Get school                      |
+| `POST`  | `/api/v1/schools`                | `STA_ADMIN`, `BOARD_ADMIN`                 | `name`, `boardId`  | Create school                   |
+| `PATCH` | `/api/v1/schools/:id`            | `STA_ADMIN`, `BOARD_ADMIN`                 | update payload     | Update school                   |
+| `PATCH` | `/api/v1/schools/:id/deactivate` | `STA_ADMIN`, `BOARD_ADMIN`                 | path `id`          | Deactivate school               |
 
 ## Route and Fleet Endpoints
 
 | Method   | Path                      | Access                          | Request or Query              | Notes                                                       |
 | -------- | ------------------------- | ------------------------------- | ----------------------------- | ----------------------------------------------------------- |
-| `POST`   | `/api/v1/routes`          | `SCHOOL_ADMIN`, `OSTA_ADMIN`    | `CreateRouteDto`              | Creates route and optional stop list                        |
+| `POST`   | `/api/v1/routes`          | `SCHOOL_ADMIN`, `STA_ADMIN`     | `CreateRouteDto`              | Creates route and optional stop list                        |
 | `GET`    | `/api/v1/routes`          | Authenticated with tenant scope | none                          | Lists routes for `req.user.schoolId`                        |
 | `GET`    | `/api/v1/routes/:id`      | Authenticated with tenant scope | path `id`                     | Retrieves one route                                         |
-| `PATCH`  | `/api/v1/routes/:id`      | `SCHOOL_ADMIN`, `OSTA_ADMIN`    | `UpdateRouteDto`              | Updates route metadata                                      |
-| `DELETE` | `/api/v1/routes/:id`      | `SCHOOL_ADMIN`, `OSTA_ADMIN`    | path `id`                     | Deletes route                                               |
-| `POST`   | `/api/v1/routes/optimize` | `SCHOOL_ADMIN`, `OSTA_ADMIN`    | array of `CreateRouteStopDto` | Currently returns mocked or placeholder optimization output |
-| `POST`   | `/api/v1/vehicles`        | `SCHOOL_ADMIN`, `OSTA_ADMIN`    | `CreateVehicleDto`            | Create vehicle                                              |
+| `PATCH`  | `/api/v1/routes/:id`      | `SCHOOL_ADMIN`, `STA_ADMIN`     | `UpdateRouteDto`              | Updates route metadata                                      |
+| `DELETE` | `/api/v1/routes/:id`      | `SCHOOL_ADMIN`, `STA_ADMIN`     | path `id`                     | Deletes route                                               |
+| `POST`   | `/api/v1/routes/optimize` | `SCHOOL_ADMIN`, `STA_ADMIN`     | array of `CreateRouteStopDto` | Currently returns mocked or placeholder optimization output |
+| `POST`   | `/api/v1/vehicles`        | `SCHOOL_ADMIN`, `STA_ADMIN`     | `CreateVehicleDto`            | Create vehicle                                              |
 | `GET`    | `/api/v1/vehicles`        | Authenticated with tenant scope | none                          | List vehicles by school                                     |
 | `GET`    | `/api/v1/vehicles/:id`    | Authenticated with tenant scope | path `id`                     | Get vehicle                                                 |
-| `PATCH`  | `/api/v1/vehicles/:id`    | `SCHOOL_ADMIN`, `OSTA_ADMIN`    | `UpdateVehicleDto`            | Update vehicle                                              |
-| `DELETE` | `/api/v1/vehicles/:id`    | `SCHOOL_ADMIN`, `OSTA_ADMIN`    | path `id`                     | Delete vehicle                                              |
+| `PATCH`  | `/api/v1/vehicles/:id`    | `SCHOOL_ADMIN`, `STA_ADMIN`     | `UpdateVehicleDto`            | Update vehicle                                              |
+| `DELETE` | `/api/v1/vehicles/:id`    | `SCHOOL_ADMIN`, `STA_ADMIN`     | path `id`                     | Delete vehicle                                              |
 
 ### Create Route Request
 
@@ -120,13 +120,13 @@ For downstream internal service endpoints and queue-driven contracts, use [Servi
 
 ## Fleet Assignment Endpoints
 
-| Method  | Path                                   | Access                       | Request or Query                                                            | Notes                     |
-| ------- | -------------------------------------- | ---------------------------- | --------------------------------------------------------------------------- | ------------------------- |
-| `POST`  | `/api/v1/fleet-assignments`            | `OSTA_ADMIN`                 | `schoolId`, `routeId`, `vehicleId`, `driverId?`, `effectiveDate?`, `notes?` | Propose fleet assignment  |
-| `GET`   | `/api/v1/fleet-assignments`            | `OSTA_ADMIN`, `SCHOOL_ADMIN` | none                                                                        | List assignments (scoped) |
-| `GET`   | `/api/v1/fleet-assignments/:id`        | `OSTA_ADMIN`, `SCHOOL_ADMIN` | path `id`                                                                   | Get assignment by ID      |
-| `PATCH` | `/api/v1/fleet-assignments/:id/accept` | `SCHOOL_ADMIN`               | path `id`                                                                   | Accept assignment         |
-| `PATCH` | `/api/v1/fleet-assignments/:id/reject` | `SCHOOL_ADMIN`               | path `id`, `notes?`                                                         | Reject assignment         |
+| Method  | Path                                   | Access                      | Request or Query                                                            | Notes                     |
+| ------- | -------------------------------------- | --------------------------- | --------------------------------------------------------------------------- | ------------------------- |
+| `POST`  | `/api/v1/fleet-assignments`            | `STA_ADMIN`                 | `schoolId`, `routeId`, `vehicleId`, `driverId?`, `effectiveDate?`, `notes?` | Propose fleet assignment  |
+| `GET`   | `/api/v1/fleet-assignments`            | `STA_ADMIN`, `SCHOOL_ADMIN` | none                                                                        | List assignments (scoped) |
+| `GET`   | `/api/v1/fleet-assignments/:id`        | `STA_ADMIN`, `SCHOOL_ADMIN` | path `id`                                                                   | Get assignment by ID      |
+| `PATCH` | `/api/v1/fleet-assignments/:id/accept` | `SCHOOL_ADMIN`              | path `id`                                                                   | Accept assignment         |
+| `PATCH` | `/api/v1/fleet-assignments/:id/reject` | `SCHOOL_ADMIN`              | path `id`, `notes?`                                                         | Reject assignment         |
 
 ### Propose Fleet Assignment Request
 
@@ -170,7 +170,7 @@ For downstream internal service endpoints and queue-driven contracts, use [Servi
 
 | Method  | Path                              | Access            | Request or Query                     | Notes                                                            |
 | ------- | --------------------------------- | ----------------- | ------------------------------------ | ---------------------------------------------------------------- |
-| `GET`   | `/api/v1/alerts/active`           | Authenticated     | optional `schoolId`                  | `OSTA_ADMIN` may filter by school; others use own tenant scope   |
+| `GET`   | `/api/v1/alerts/active`           | Authenticated     | optional `schoolId`                  | `STA_ADMIN` may filter by school; others use own tenant scope    |
 | `GET`   | `/api/v1/alerts/:id`              | Authenticated     | path `id`                            | Get alert detail                                                 |
 | `PATCH` | `/api/v1/alerts/:id/confirm`      | `SCHOOL_ADMIN`+   | `actorUserId`, `actorRole`           | Confirm a Tier 1 alert (sends parent notifications)              |
 | `PATCH` | `/api/v1/alerts/:id/false-alarm`  | `SCHOOL_ADMIN`+   | `actorUserId`, `actorRole`, `notes?` | Mark alert as false alarm                                        |
@@ -262,14 +262,14 @@ For downstream internal service endpoints and queue-driven contracts, use [Servi
 
 ## Student Management Endpoints
 
-| Method  | Path                              | Access                                                         | Request or Query         | Notes                                                                      |
-| ------- | --------------------------------- | -------------------------------------------------------------- | ------------------------ | -------------------------------------------------------------------------- |
-| `GET`   | `/api/v1/students`                | `ADMIN`, `OSTA_ADMIN`, `BOARD_ADMIN`, `SCHOOL_ADMIN`           | flexible query object    | Proxies filters such as `school_id`, `route_id`, `parent_id`               |
-| `GET`   | `/api/v1/students/:id`            | `ADMIN`, `OSTA_ADMIN`, `BOARD_ADMIN`, `SCHOOL_ADMIN`, `PARENT` | path `id`                | Parent access is still subject to effective downstream policy expectations |
-| `POST`  | `/api/v1/students`                | `ADMIN`, `SCHOOL_ADMIN`                                        | student DTO              | Enroll student                                                             |
-| `PATCH` | `/api/v1/students/:id`            | `ADMIN`, `SCHOOL_ADMIN`                                        | update DTO               | Update student                                                             |
-| `PATCH` | `/api/v1/students/:id/assignment` | `ADMIN`, `SCHOOL_ADMIN`                                        | route assignment payload | Updates AM or PM assignment                                                |
-| `POST`  | `/api/v1/students/bulk-import`    | `ADMIN`, `SCHOOL_ADMIN`                                        | `file`, `school_id`      | Bulk import via CSV string payload at the gateway layer                    |
+| Method  | Path                              | Access                                                        | Request or Query         | Notes                                                                      |
+| ------- | --------------------------------- | ------------------------------------------------------------- | ------------------------ | -------------------------------------------------------------------------- |
+| `GET`   | `/api/v1/students`                | `ADMIN`, `STA_ADMIN`, `BOARD_ADMIN`, `SCHOOL_ADMIN`           | flexible query object    | Proxies filters such as `school_id`, `route_id`, `parent_id`               |
+| `GET`   | `/api/v1/students/:id`            | `ADMIN`, `STA_ADMIN`, `BOARD_ADMIN`, `SCHOOL_ADMIN`, `PARENT` | path `id`                | Parent access is still subject to effective downstream policy expectations |
+| `POST`  | `/api/v1/students`                | `ADMIN`, `SCHOOL_ADMIN`                                       | student DTO              | Enroll student                                                             |
+| `PATCH` | `/api/v1/students/:id`            | `ADMIN`, `SCHOOL_ADMIN`                                       | update DTO               | Update student                                                             |
+| `PATCH` | `/api/v1/students/:id/assignment` | `ADMIN`, `SCHOOL_ADMIN`                                       | route assignment payload | Updates AM or PM assignment                                                |
+| `POST`  | `/api/v1/students/bulk-import`    | `ADMIN`, `SCHOOL_ADMIN`                                       | `file`, `school_id`      | Bulk import via CSV string payload at the gateway layer                    |
 
 ## Compliance Endpoints
 
@@ -283,18 +283,18 @@ For downstream internal service endpoints and queue-driven contracts, use [Servi
 
 ## Video Endpoints
 
-| Method | Path                       | Access                      | Request or Query                                                                                               | Notes                                                                       |
-| ------ | -------------------------- | --------------------------- | -------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| `GET`  | `/api/v1/video-events`     | Authenticated               | `schoolId`, `vehicleId`, `routeId`, `driverId`, `eventType`, `status`, `startDate`, `endDate`, `page`, `limit` | `OSTA_ADMIN` may supply explicit `schoolId`; others default to token school |
-| `GET`  | `/api/v1/video-events/:id` | Authenticated               | path `id`                                                                                                      | Get video event detail                                                      |
-| `POST` | `/api/v1/video-events`     | `DRIVER`, `ADMIN`, `SYSTEM` | `CreateVideoEventDto`                                                                                          | Creates event metadata and upload workflow                                  |
+| Method | Path                       | Access                      | Request or Query                                                                                               | Notes                                                                      |
+| ------ | -------------------------- | --------------------------- | -------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| `GET`  | `/api/v1/video-events`     | Authenticated               | `schoolId`, `vehicleId`, `routeId`, `driverId`, `eventType`, `status`, `startDate`, `endDate`, `page`, `limit` | `STA_ADMIN` may supply explicit `schoolId`; others default to token school |
+| `GET`  | `/api/v1/video-events/:id` | Authenticated               | path `id`                                                                                                      | Get video event detail                                                     |
+| `POST` | `/api/v1/video-events`     | `DRIVER`, `ADMIN`, `SYSTEM` | `CreateVideoEventDto`                                                                                          | Creates event metadata and upload workflow                                 |
 
 ## Document Generation Endpoints
 
-| Method | Path                                         | Access                       | Request or Query | Notes                            |
-| ------ | -------------------------------------------- | ---------------------------- | ---------------- | -------------------------------- |
-| `GET`  | `/api/v1/documents/fleet-assignment/:id/pdf` | `OSTA_ADMIN`, `SCHOOL_ADMIN` | path `id`        | Download fleet assignment as PDF |
-| `GET`  | `/api/v1/documents/route-plan/:routeId/pdf`  | `OSTA_ADMIN`, `SCHOOL_ADMIN` | path `routeId`   | Download route plan as PDF       |
+| Method | Path                                         | Access                      | Request or Query | Notes                            |
+| ------ | -------------------------------------------- | --------------------------- | ---------------- | -------------------------------- |
+| `GET`  | `/api/v1/documents/fleet-assignment/:id/pdf` | `STA_ADMIN`, `SCHOOL_ADMIN` | path `id`        | Download fleet assignment as PDF |
+| `GET`  | `/api/v1/documents/route-plan/:routeId/pdf`  | `STA_ADMIN`, `SCHOOL_ADMIN` | path `routeId`   | Download route plan as PDF       |
 
 ## Contract Caveats
 
