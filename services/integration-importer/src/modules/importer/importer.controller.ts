@@ -5,6 +5,7 @@ import {
   HttpCode,
   Inject,
   Logger,
+  NotFoundException,
   Post,
   UseGuards,
 } from '@nestjs/common';
@@ -20,6 +21,7 @@ import { FILE_ORDER } from '../adapter/sta-csv/csv-schemas';
 import { ManifestSchema, SourceFiles } from '../adapter/types/source-files';
 import { ValidationReport } from '../adapter/types/validation-report';
 import { DryRunResult, DryRunService } from './dry-run.service';
+import { PG_POOL, type PgQueryable } from '../staging/pg-pool.provider';
 
 interface ValidateRequest {
   adapter: string;
@@ -28,8 +30,6 @@ interface ValidateRequest {
 
 interface CommitRequest {
   importSessionId: string;
-  staShortCode: string;
-  staName?: string;
 }
 
 @Controller('imports')
@@ -42,6 +42,7 @@ export class ImporterController {
     private readonly adapters: TransportDataAdapter[],
     private readonly dryRun: DryRunService,
     private readonly commitSvc: CommitService,
+    @Inject(PG_POOL) private readonly pg: PgQueryable,
   ) {}
 
   @Post('validate')
@@ -71,13 +72,28 @@ export class ImporterController {
   @Post('commit')
   @HttpCode(200)
   async commitEndpoint(@Body() body: CommitRequest): Promise<CommitCounts> {
-    if (!body?.importSessionId || !body?.staShortCode) {
-      throw new BadRequestException('importSessionId and staShortCode are required');
+    if (!body?.importSessionId) {
+      throw new BadRequestException('importSessionId is required');
     }
+    // Derive staShortCode from the import session created during dry-run.
+    // Clients must not supply it — tenant identity is never accepted from the request body.
+    const sessionRow = await this.pg.query(
+      `SELECT sta_short_code, manifest_json->>'sta_name' AS sta_name
+         FROM import_sessions WHERE id = $1`,
+      [body.importSessionId],
+    );
+    if (!sessionRow.rows.length) {
+      throw new NotFoundException(`Import session ${body.importSessionId} not found`);
+    }
+    const row = sessionRow.rows[0] as {
+      sta_short_code: string;
+      sta_name: string | null;
+    };
+    const { sta_short_code: staShortCode, sta_name: staName } = row;
     const counts = await this.commitSvc.commit({
       importSessionId: body.importSessionId,
-      staShortCode: body.staShortCode,
-      staName: body.staName,
+      staShortCode,
+      staName: staName ?? undefined,
     });
     this.logger.log(`commit session=${body.importSessionId} counts=${JSON.stringify(counts)}`);
     return counts;

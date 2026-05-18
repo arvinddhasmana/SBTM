@@ -1,11 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { SchoolBoardService } from './school-board.service';
+import { BoardService } from './school-board.service';
 import { Board } from './entities/board.entity';
 
-describe('SchoolBoardService (v2 — stx_boards)', () => {
-  let service: SchoolBoardService;
+describe('BoardService (v2 — stx_boards)', () => {
+  let service: BoardService;
 
   const mockRepo = {
     find: jest.fn(),
@@ -18,12 +18,12 @@ describe('SchoolBoardService (v2 — stx_boards)', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        SchoolBoardService,
+        BoardService,
         { provide: getRepositoryToken(Board), useValue: mockRepo },
       ],
     }).compile();
 
-    service = module.get<SchoolBoardService>(SchoolBoardService);
+    service = module.get<BoardService>(BoardService);
     jest.clearAllMocks();
   });
 

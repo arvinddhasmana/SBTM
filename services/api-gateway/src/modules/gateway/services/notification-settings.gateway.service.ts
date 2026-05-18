@@ -2,18 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpClientService } from '../../../common/utils/http-client.service';
 
-export interface NotificationPreferenceDto {
-  id?: string;
-  eventType: string;
-  channel: string;
-  enabled: boolean;
-}
-
-export interface UpdatePreferencesPayload {
-  userId: string;
-  preferences: NotificationPreferenceDto[];
-}
-
 export interface RegisterDeviceTokenPayload {
   /**
    * v2-followups #6: defaults to 'user' (admin/driver). Parent-app flows
@@ -36,20 +24,6 @@ export class NotificationSettingsGatewayService {
     this.notificationServiceUrl = this.configService.getOrThrow<string>(
       'NOTIFICATION_SERVICE_URL',
     );
-  }
-
-  async getPreferences(userId: string): Promise<NotificationPreferenceDto[]> {
-    const url = `${this.notificationServiceUrl}/api/v1/notification-preferences`;
-    return this.httpClient.get<NotificationPreferenceDto[]>(url, {
-      params: { userId },
-    });
-  }
-
-  async updatePreferences(
-    payload: UpdatePreferencesPayload,
-  ): Promise<NotificationPreferenceDto[]> {
-    const url = `${this.notificationServiceUrl}/api/v1/notification-preferences`;
-    return this.httpClient.put<NotificationPreferenceDto[]>(url, payload);
   }
 
   async registerDeviceToken(payload: RegisterDeviceTokenPayload): Promise<any> {

@@ -167,6 +167,15 @@ jobs:
             echo "::error::v1 polyline field definition found — replace with path: [number, number][]"
             exit 1
           fi
+      - name: Fail on v1 SchoolBoard class names
+        run: |
+          if grep -rn --include="*.ts" \
+            --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=build \
+            --exclude-dir=test-results \
+            "SchoolBoardService\|SchoolBoardController" services/ apps/ libs/ 2>/dev/null; then
+            echo "::error::v1 SchoolBoard class name found — rename to BoardService/BoardController"
+            exit 1
+          fi
 
   # ── Phase E1: two-STA bundle integration test ────────────────────────────
   test-two-sta-integration:

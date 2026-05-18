@@ -10,7 +10,7 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { SchoolBoardService } from './school-board.service';
+import { BoardService } from './school-board.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '@sbtm/common';
 import { Roles, Role } from '@sbtm/common';
@@ -20,8 +20,8 @@ import { UpdateBoardDto } from './dto/update-board.dto';
 
 @Controller('boards')
 @UseGuards(JwtAuthGuard, RolesGuard, MultiTenancyGuard)
-export class SchoolBoardController {
-  constructor(private readonly boardService: SchoolBoardService) {}
+export class BoardController {
+  constructor(private readonly boardService: BoardService) {}
 
   @Get()
   @Roles(Role.STA_ADMIN)

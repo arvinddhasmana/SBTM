@@ -1,7 +1,6 @@
 import {
   Controller,
   Get,
-  Put,
   Post,
   Delete,
   Body,
@@ -20,27 +19,6 @@ export class NotificationSettingsController {
   constructor(
     private readonly notificationSettingsService: NotificationSettingsGatewayService,
   ) {}
-
-  @Get('notification-preferences')
-  @Roles(Role.PARENT)
-  async getPreferences(@Request() req: { user: AuthenticatedUser }) {
-    return this.notificationSettingsService.getPreferences(req.user.id);
-  }
-
-  @Put('notification-preferences')
-  @Roles(Role.PARENT)
-  async updatePreferences(
-    @Request() req: { user: AuthenticatedUser },
-    @Body()
-    body: {
-      preferences: { eventType: string; channel: string; enabled: boolean }[];
-    },
-  ) {
-    return this.notificationSettingsService.updatePreferences({
-      userId: req.user.id,
-      preferences: body.preferences,
-    });
-  }
 
   @Post('device-tokens')
   @Roles(Role.PARENT)

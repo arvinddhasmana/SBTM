@@ -5,15 +5,8 @@ import { Board } from './entities/board.entity';
 import { CreateBoardDto } from './dto/create-board.dto';
 import { UpdateBoardDto } from './dto/update-board.dto';
 
-/**
- * v2 BoardService — reads from `stx_boards`. (v1 SchoolBoard had a direct schools relation;
- * v2 schools join via board_id. relations: ['schools'] is dropped — fetch schools through SchoolService.)
- *
- * The class name is kept as `SchoolBoardService` so existing controller wiring continues to
- * compile; an alias export `BoardService` is provided for callers that want to migrate.
- */
 @Injectable()
-export class SchoolBoardService {
+export class BoardService {
   constructor(
     @InjectRepository(Board)
     private readonly boardRepository: Repository<Board>,
@@ -54,5 +47,3 @@ export class SchoolBoardService {
     await this.boardRepository.remove(board);
   }
 }
-
-export { SchoolBoardService as BoardService };

@@ -4,6 +4,7 @@ import {
   HttpCode,
   Logger,
   Post,
+  Request,
   UseGuards,
   UploadedFiles,
   UseInterceptors,
@@ -14,6 +15,7 @@ import { ConfigService } from '@nestjs/config';
 import { RolesGuard, Roles, Role } from '@sbtm/common';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { HttpClientService } from '../../../common/utils/http-client.service';
+import type { AuthenticatedUser } from '../../auth/types/authenticated-user';
 import * as tmp from 'os';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -52,8 +54,6 @@ interface CommitResponse {
 
 interface CommitRequest {
   importSessionId: string;
-  staShortCode: string;
-  staName?: string;
 }
 
 @Controller('api/v1/imports')
@@ -118,18 +118,19 @@ export class ImportController {
   @Post('commit')
   @HttpCode(200)
   @Roles(Role.SUPER_ADMIN, Role.STA_ADMIN)
-  async commit(@Body() body: CommitRequest): Promise<CommitResponse> {
-    if (!body?.importSessionId || !body?.staShortCode) {
-      throw new BadRequestException(
-        'importSessionId and staShortCode are required',
-      );
+  async commit(
+    @Body() body: CommitRequest,
+    @Request() req: { user: AuthenticatedUser },
+  ): Promise<CommitResponse> {
+    if (!body?.importSessionId) {
+      throw new BadRequestException('importSessionId is required');
     }
     const result = await this.httpClient.post<CommitResponse>(
       `${this.importerUrl}/imports/commit`,
-      body,
+      { importSessionId: body.importSessionId },
     );
     this.logger.log(
-      `import commit session=${body.importSessionId} sta=${body.staShortCode} counts=${JSON.stringify(result)}`,
+      `import commit session=${body.importSessionId} sta=${req.user.anchorId ?? 'super'} counts=${JSON.stringify(result)}`,
     );
     return result;
   }

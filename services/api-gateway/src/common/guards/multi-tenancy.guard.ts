@@ -14,7 +14,6 @@ export class MultiTenancyGuard implements CanActivate {
       user?: AuthenticatedUser;
       params: Record<string, string | undefined>;
       query: Record<string, string | undefined>;
-      body?: Record<string, unknown>;
     }>();
     const user = request.user;
 
@@ -29,13 +28,9 @@ export class MultiTenancyGuard implements CanActivate {
 
     const params = request.params;
     const query = request.query;
-    const body = (request.body ?? {}) as {
-      schoolId?: string;
-      boardId?: string;
-    };
 
-    const schoolId = params.schoolId || query.schoolId || body.schoolId;
-    const boardId = params.boardId || query.boardId || body.boardId;
+    const schoolId = params.schoolId || query.schoolId;
+    const boardId = params.boardId || query.boardId;
 
     // BOARD_ADMIN: only their own board (board→school check requires a service lookup,
     // deferred to the per-handler RLS context).

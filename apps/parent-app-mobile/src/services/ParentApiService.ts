@@ -6,7 +6,6 @@ import {
   AuthResponse,
   BusLocationUpdate,
   Alert,
-  NotificationPreferences,
   AbsenceReport,
   AbsenceReportResponse,
   Route,
@@ -96,15 +95,15 @@ class ParentApiServiceClass {
 
   /**
    * Get route details (stops, path).
-   * Backend returns stops with `address` (not `name`) and `location: "POINT(lng lat)"` string.
-   * Normalize to Stop shape the map screen expects.
+   * Hits GET /routes/reference/:routeId which returns the v2 shape as
+   * `path: [number, number][]` (lat/lon pairs). Path is mapped explicitly
+   * to prevent silent fallback to stop-coordinate interpolation in MapScreen.
    */
   async getRouteDetails(routeId: string): Promise<Route> {
-    // Mirrors web portal: hit the canonical reference endpoint directly to
-    // avoid the redirect from `/routes/:id` -> `/routes/reference/:id`.
     const raw = await ApiService.get<any>(`/routes/reference/${routeId}`);
     return {
       ...raw,
+      path: Array.isArray(raw.path) ? (raw.path as [number, number][]) : [],
       schoolName: raw.schoolName,
       schoolLat:
         typeof raw.schoolLat === 'number'
@@ -229,112 +228,6 @@ class ParentApiServiceClass {
       console.warn('Failed to load audit trail:', error);
       return [];
     }
-  }
-
-  /**
-   * Get notification preferences.
-   * Server returns a flat list `[{ eventType, channel, enabled }]`.
-   * Normalize to the nested NotificationPreferences shape the UI expects.
-   */
-  async getNotificationPreferences(): Promise<NotificationPreferences> {
-    const raw = await ApiService.get<any>('/notification-preferences');
-    return this.fromServerPrefs(raw);
-  }
-
-  /**
-   * Get the raw flat preference rows the server returns. The Settings screen
-   * uses these directly so it can mirror the web portal's UI exactly (one
-   * row per event-type, with PUSH/EMAIL toggles) regardless of which event
-   * types the user has previously persisted.
-   */
-  async getNotificationPreferencesRaw(): Promise<
-    Array<{ eventType: string; channel: string; enabled: boolean }>
-  > {
-    const raw = await ApiService.get<any>('/notification-preferences');
-    if (Array.isArray(raw)) return raw;
-    if (Array.isArray(raw?.preferences)) return raw.preferences;
-    return [];
-  }
-
-  /**
-   * Update notification preferences using the same flat-row body the server
-   * already accepts (`{ preferences: [...] }`).
-   */
-  async updateNotificationPreferencesRaw(
-    rows: Array<{ eventType: string; channel: string; enabled: boolean }>,
-  ): Promise<void> {
-    await ApiService.put<unknown>('/notification-preferences', {
-      preferences: rows,
-    });
-  }
-
-  /**
-   * Update notification preferences.
-   * Server expects body shape `{ preferences: [{ eventType, channel, enabled }] }`.
-   */
-  async updateNotificationPreferences(
-    preferences: NotificationPreferences,
-  ): Promise<NotificationPreferences> {
-    const body = this.toServerPrefs(preferences);
-    const raw = await ApiService.put<any>('/notification-preferences', body);
-    // Server may return either the flat list or void; normalize either way.
-    return raw ? this.fromServerPrefs(raw) : preferences;
-  }
-
-  /**
-   * Flatten nested NotificationPreferences -> server body
-   * `{ preferences: [{ eventType, channel, enabled }] }`.
-   */
-  private toServerPrefs(prefs: NotificationPreferences): {
-    preferences: { eventType: string; channel: string; enabled: boolean }[];
-  } {
-    const rows: { eventType: string; channel: string; enabled: boolean }[] = [];
-    for (const event of prefs.events ?? []) {
-      const channels = event.channels && event.channels.length > 0 ? event.channels : ['PUSH'];
-      for (const channel of channels) {
-        rows.push({
-          eventType: event.eventType,
-          channel,
-          enabled: event.enabled !== false,
-        });
-      }
-    }
-    return { preferences: rows };
-  }
-
-  /**
-   * Inflate the server's flat preference rows back into the nested
-   * NotificationPreferences shape used by the mobile UI.
-   * Accepts either an array of rows or `{ preferences: [...] }`.
-   */
-  private fromServerPrefs(raw: any): NotificationPreferences {
-    const rows: any[] = Array.isArray(raw)
-      ? raw
-      : Array.isArray(raw?.preferences)
-        ? raw.preferences
-        : [];
-    const grouped = new Map<string, { channels: Set<string>; enabled: boolean }>();
-    for (const row of rows) {
-      const eventType = row?.eventType;
-      const channel = row?.channel;
-      if (!eventType || !channel) continue;
-      const enabled = row?.enabled !== false;
-      const entry = grouped.get(eventType) ?? { channels: new Set<string>(), enabled };
-      if (enabled) entry.channels.add(channel);
-      // If any row is enabled, treat the event as enabled.
-      entry.enabled = entry.enabled || enabled;
-      grouped.set(eventType, entry);
-    }
-    return {
-      userId: raw?.userId ?? '',
-      events: Array.from(grouped.entries()).map(([eventType, entry]) => ({
-        eventType: eventType as NotificationPreferences['events'][number]['eventType'],
-        channels: Array.from(
-          entry.channels,
-        ) as NotificationPreferences['events'][number]['channels'],
-        enabled: entry.enabled,
-      })),
-    };
   }
 
   /**

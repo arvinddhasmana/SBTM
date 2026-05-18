@@ -54,48 +54,6 @@ describe('NotificationSettingsGatewayService', () => {
     expect(service).toBeDefined();
   });
 
-  describe('getPreferences', () => {
-    it('calls notification service with userId only (v2: no school scoping)', async () => {
-      const mockPreferences = [
-        {
-          id: 'pref-1',
-          eventType: 'ROUTE_CHANGE',
-          channel: 'email',
-          enabled: true,
-        },
-      ];
-      mockHttpClient.get.mockResolvedValue(mockPreferences);
-
-      const result = await service.getPreferences('user-1');
-
-      expect(result).toEqual(mockPreferences);
-      expect(httpClient.get).toHaveBeenCalledWith(
-        'http://notification-service:3008/api/v1/notification-preferences',
-        { params: { userId: 'user-1' } },
-      );
-    });
-  });
-
-  describe('updatePreferences', () => {
-    it('PUTs preferences without schoolId', async () => {
-      const payload = {
-        userId: 'user-1',
-        preferences: [
-          { eventType: 'ROUTE_CHANGE', channel: 'push', enabled: false },
-        ],
-      };
-      mockHttpClient.put.mockResolvedValue(payload.preferences);
-
-      const result = await service.updatePreferences(payload);
-
-      expect(result).toEqual(payload.preferences);
-      expect(httpClient.put).toHaveBeenCalledWith(
-        'http://notification-service:3008/api/v1/notification-preferences',
-        payload,
-      );
-    });
-  });
-
   describe('registerDeviceToken', () => {
     it('POSTs device token without schoolId (recipient is polymorphic)', async () => {
       const payload = {
