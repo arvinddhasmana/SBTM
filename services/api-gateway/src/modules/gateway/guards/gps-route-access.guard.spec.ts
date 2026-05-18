@@ -1,11 +1,39 @@
 import { ExecutionContext, ForbiddenException } from '@nestjs/common';
+import { Role } from '@sbtm/common';
 import { GpsRouteAccessGuard } from './gps-route-access.guard';
 import { GpsGatewayService } from '../services/gps.gateway.service';
-import { Role } from '@sbtm/common';
+import type { AuthenticatedUser } from '../../auth/types/authenticated-user';
+
+const parent: AuthenticatedUser = {
+  id: 'guardian-1',
+  email: 'p@example.com',
+  role: Role.PARENT,
+  anchorKind: 'parent',
+  anchorId: 'guardian-1',
+  preferredLanguage: 'en',
+};
+
+const staAdmin: AuthenticatedUser = {
+  id: 'u-sta',
+  email: 'sta@example.com',
+  role: Role.STA_ADMIN,
+  anchorKind: 'sta',
+  anchorId: 'sta-1',
+  preferredLanguage: 'en',
+};
+
+const driver: AuthenticatedUser = {
+  id: 'u-driver',
+  email: 'd@example.com',
+  role: Role.DRIVER,
+  anchorKind: 'driver',
+  anchorId: 'drv-1',
+  preferredLanguage: 'en',
+};
 
 const makeContext = (
   routeId: string | undefined,
-  user: object,
+  user: AuthenticatedUser,
 ): ExecutionContext =>
   ({
     switchToHttp: () => ({
@@ -18,54 +46,45 @@ describe('GpsRouteAccessGuard', () => {
   let checkRouteAccess: jest.Mock;
 
   beforeEach(() => {
-    checkRouteAccess = jest.fn();
+    checkRouteAccess = jest.fn().mockResolvedValue(undefined);
     guard = new GpsRouteAccessGuard({
       checkRouteAccess,
     } as unknown as GpsGatewayService);
   });
 
-  it('should return true when checkRouteAccess passes', () => {
-    const user = { role: Role.PARENT, childRouteIds: ['ROUTE-SingleBus-AM'] };
-    const result = guard.canActivate(makeContext('ROUTE-SingleBus-AM', user));
-    expect(checkRouteAccess).toHaveBeenCalledWith('ROUTE-SingleBus-AM', user);
+  it('returns true when checkRouteAccess resolves', async () => {
+    const result = await guard.canActivate(makeContext('R-1', parent));
+    expect(checkRouteAccess).toHaveBeenCalledWith('R-1', parent);
     expect(result).toBe(true);
   });
 
-  it('should propagate ForbiddenException from checkRouteAccess', () => {
-    const user = { role: Role.PARENT, childRouteIds: ['ROUTE-SingleBus-AM'] };
-    checkRouteAccess.mockImplementation(() => {
-      throw new ForbiddenException('You do not have access to this route');
-    });
-    expect(() =>
-      guard.canActivate(makeContext('ROUTE-NOT-MINE', user)),
-    ).toThrow(ForbiddenException);
+  it('propagates ForbiddenException from checkRouteAccess', async () => {
+    checkRouteAccess.mockRejectedValue(
+      new ForbiddenException('You do not have access to this route'),
+    );
+    await expect(
+      guard.canActivate(makeContext('R-NOT-MINE', parent)),
+    ).rejects.toBeInstanceOf(ForbiddenException);
   });
 
-  it('should return true and skip check when no routeId param', () => {
-    const user = { role: Role.PARENT, childRouteIds: [] };
-    const result = guard.canActivate(makeContext(undefined, user));
+  it('skips check when no routeId param', async () => {
+    const result = await guard.canActivate(makeContext(undefined, parent));
     expect(checkRouteAccess).not.toHaveBeenCalled();
     expect(result).toBe(true);
   });
 
-  it('should return true for admin users (via checkRouteAccess passthrough)', () => {
-    const user = { role: Role.STA_ADMIN };
-    // checkRouteAccess does not throw for admins
-    const result = guard.canActivate(makeContext('ROUTE-ANY', user));
-    expect(checkRouteAccess).toHaveBeenCalledWith('ROUTE-ANY', user);
+  it('passes through admin users (checkRouteAccess admin short-circuit)', async () => {
+    const result = await guard.canActivate(makeContext('R-ANY', staAdmin));
+    expect(checkRouteAccess).toHaveBeenCalledWith('R-ANY', staAdmin);
     expect(result).toBe(true);
   });
 
-  it('should propagate ForbiddenException for driver accessing wrong route', () => {
-    const user = {
-      role: Role.DRIVER,
-      assignedRouteIds: ['ROUTE-SingleBus-AM'],
-    };
-    checkRouteAccess.mockImplementation(() => {
-      throw new ForbiddenException('You do not have access to this route');
-    });
-    expect(() => guard.canActivate(makeContext('ROUTE-WRONG', user))).toThrow(
-      ForbiddenException,
+  it('propagates ForbiddenException for driver accessing wrong route', async () => {
+    checkRouteAccess.mockRejectedValue(
+      new ForbiddenException('You do not have access to this route'),
     );
+    await expect(
+      guard.canActivate(makeContext('R-WRONG', driver)),
+    ).rejects.toBeInstanceOf(ForbiddenException);
   });
 });

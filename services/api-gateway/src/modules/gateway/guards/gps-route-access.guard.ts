@@ -1,5 +1,6 @@
 import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 import { GpsGatewayService } from '../services/gps.gateway.service';
+import { AuthenticatedUser } from '../../auth/types/authenticated-user';
 
 /**
  * Guard that enforces per-route access control for GPS endpoints.
@@ -19,15 +20,13 @@ import { GpsGatewayService } from '../services/gps.gateway.service';
 export class GpsRouteAccessGuard implements CanActivate {
   constructor(private readonly gpsGatewayService: GpsGatewayService) {}
 
-  canActivate(context: ExecutionContext): boolean {
-    const request = context
-      .switchToHttp()
-      .getRequest<{ user: any; params: Record<string, string> }>();
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const request = context.switchToHttp().getRequest<{
+      user: AuthenticatedUser;
+      params: Record<string, string>;
+    }>();
     const routeId: string | undefined = request.params?.routeId;
 
-    // If there is no routeId param (e.g. a future route added without the param),
-    // this guard is a no-op — the route handler itself is responsible for any
-    // additional access control.
     if (!routeId) {
       return true;
     }
@@ -35,7 +34,7 @@ export class GpsRouteAccessGuard implements CanActivate {
     // checkRouteAccess throws ForbiddenException for unauthorised callers.
     // The exception propagates naturally; returning true is only reached when
     // access is permitted.
-    this.gpsGatewayService.checkRouteAccess(routeId, request.user);
+    await this.gpsGatewayService.checkRouteAccess(routeId, request.user);
     return true;
   }
 }

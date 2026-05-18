@@ -22,6 +22,7 @@ import {
 import { GpsSseService } from '../services/gps-sse.service';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { GpsRouteAccessGuard } from '../guards/gps-route-access.guard';
+import { AuthenticatedUser } from '../../auth/types/authenticated-user';
 import { RolesGuard, Roles, Role } from '@sbtm/common';
 
 @Controller('routes')
@@ -33,12 +34,12 @@ export class GpsController {
   ) {}
 
   @Get('active')
-  async getActiveRoutes(@Request() req: { user: any }) {
+  async getActiveRoutes(@Request() req: { user: AuthenticatedUser }) {
     return this.gpsGatewayService.getActiveRoutes(req.user);
   }
 
   @Get('locations')
-  async getAllLiveLocations(@Request() req: { user: any }) {
+  async getAllLiveLocations(@Request() req: { user: AuthenticatedUser }) {
     return this.gpsGatewayService.getAllLiveLocations(req.user);
   }
 
@@ -46,7 +47,7 @@ export class GpsController {
   @Get('reference/:routeId')
   async getReferenceRouteById(
     @Param('routeId') routeId: string,
-    @Request() req: { user: any },
+    @Request() req: { user: AuthenticatedUser },
   ) {
     return this.gpsGatewayService.getReferenceRouteById(routeId, req.user);
   }
@@ -54,7 +55,7 @@ export class GpsController {
   @Get(':routeId')
   async getRouteById(
     @Param('routeId') routeId: string,
-    @Request() req: { user: any },
+    @Request() req: { user: AuthenticatedUser },
   ) {
     return this.gpsGatewayService.getReferenceRouteById(routeId, req.user);
   }
@@ -62,7 +63,7 @@ export class GpsController {
   @Get(':routeId/live-location')
   async getLiveLocation(
     @Param('routeId') routeId: string,
-    @Request() req: { user: any },
+    @Request() req: { user: AuthenticatedUser },
   ) {
     return this.gpsGatewayService.getLiveLocation(routeId, req.user);
   }
@@ -93,7 +94,7 @@ export class GpsController {
   async getLocationHistory(
     @Param('routeId') routeId: string,
     @Query() query: LocationHistoryQueryDto,
-    @Request() req: { user: any },
+    @Request() req: { user: AuthenticatedUser },
   ) {
     return this.gpsGatewayService.getLocationHistory(routeId, query, req.user);
   }
@@ -101,7 +102,7 @@ export class GpsController {
   @Post('locations')
   async ingestLocation(
     @Body() dto: CreateLocationDto,
-    @Request() req: { user: any },
+    @Request() req: { user: AuthenticatedUser },
   ) {
     return this.gpsGatewayService.ingestLocation(dto, req.user);
   }
@@ -114,7 +115,7 @@ export class GpsController {
   @Roles(Role.DRIVER, Role.SUPER_ADMIN, Role.STA_ADMIN)
   async recordLifecycleEvent(
     @Body() dto: RouteLifecycleEventDto,
-    @Request() req: { user: any },
+    @Request() req: { user: AuthenticatedUser },
   ) {
     return this.gpsGatewayService.recordRouteLifecycleEvent(dto, req.user);
   }
@@ -123,7 +124,7 @@ export class GpsController {
   @Roles(Role.SUPER_ADMIN, Role.STA_ADMIN, Role.BOARD_ADMIN, Role.SCHOOL_ADMIN)
   async getRouteStudents(
     @Param('routeId') routeId: string,
-    @Request() req: { user: any },
+    @Request() req: { user: AuthenticatedUser },
   ) {
     return this.gpsGatewayService.getRouteStudents(routeId, req.user);
   }
