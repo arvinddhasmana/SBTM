@@ -1,3 +1,4 @@
+import type { AnchorKind } from '../../types';
 import { apiClient } from './api-client';
 
 export type InvitableRole = 'STA_ADMIN' | 'BOARD_ADMIN' | 'SCHOOL_ADMIN' | 'DRIVER' | 'PARENT';
@@ -5,8 +6,8 @@ export type InvitableRole = 'STA_ADMIN' | 'BOARD_ADMIN' | 'SCHOOL_ADMIN' | 'DRIV
 export interface InviteUserPayload {
   email: string;
   role: InvitableRole;
-  schoolId?: string;
-  boardId?: string;
+  anchorKind?: AnchorKind;
+  anchorId?: string;
 }
 
 export interface ProvisionedUser {
@@ -15,8 +16,8 @@ export interface ProvisionedUser {
   role: string;
   firstName?: string;
   lastName?: string;
-  schoolId?: string;
-  boardId?: string;
+  anchorKind?: AnchorKind | null;
+  anchorId?: string | null;
   isActive: boolean;
   createdAt: string;
 }

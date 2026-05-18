@@ -11,7 +11,23 @@ import type {
   InvitableRole,
 } from '../../services/api/provisioning.api';
 import type { School } from '../../services/api/organization.api';
+import { getBoardScope, getSchoolScope, type AnchorKind } from '../../types';
 import Header from '../../components/common/Header';
+
+const anchorKindForRole = (role: InvitableRole): AnchorKind => {
+  switch (role) {
+    case 'STA_ADMIN':
+      return 'sta';
+    case 'BOARD_ADMIN':
+      return 'board';
+    case 'SCHOOL_ADMIN':
+      return 'school';
+    case 'DRIVER':
+      return 'driver';
+    case 'PARENT':
+      return 'parent';
+  }
+};
 
 const INVITABLE_ROLES: InvitableRole[] = [
   'STA_ADMIN',
@@ -39,8 +55,8 @@ export const UserManagement: React.FC = () => {
   const [form, setForm] = useState<InviteFormState>({
     email: '',
     role: 'PARENT',
-    schoolId: user?.schoolId ?? '',
-    boardId: user?.boardId ?? '',
+    schoolId: getSchoolScope(user) ?? '',
+    boardId: getBoardScope(user) ?? '',
   });
   const [formError, setFormError] = useState<string | null>(null);
   const [isInviting, setIsInviting] = useState(false);
@@ -53,7 +69,7 @@ export const UserManagement: React.FC = () => {
       const [usersData, schoolsData] = await Promise.all([
         provisioningApi.listUsers(),
         user?.role === 'SUPER_ADMIN' || user?.role === 'STA_ADMIN' || user?.role === 'BOARD_ADMIN'
-          ? organizationApi.listSchools(user?.boardId)
+          ? organizationApi.listSchools(getBoardScope(user))
           : Promise.resolve([]),
       ]);
       return { users: usersData, schools: schoolsData };
@@ -78,8 +94,17 @@ export const UserManagement: React.FC = () => {
     setFormError(null);
     try {
       const payload: InviteUserPayload = { email: form.email.trim(), role: form.role };
-      if (form.schoolId) payload.schoolId = form.schoolId;
-      if (form.role === 'BOARD_ADMIN' && form.boardId) payload.boardId = form.boardId;
+      const anchorKind = anchorKindForRole(form.role);
+      const anchorId =
+        form.role === 'BOARD_ADMIN'
+          ? form.boardId
+          : form.role === 'SCHOOL_ADMIN' || form.role === 'DRIVER' || form.role === 'PARENT'
+            ? form.schoolId
+            : '';
+      if (anchorId) {
+        payload.anchorKind = anchorKind;
+        payload.anchorId = anchorId;
+      }
 
       const result = await provisioningApi.inviteUser(payload);
       setSuccessMessage(`${result.message}. Token URL: ${result.invitationUrl}`);
@@ -87,8 +112,8 @@ export const UserManagement: React.FC = () => {
       setForm({
         email: '',
         role: 'PARENT',
-        schoolId: user?.schoolId ?? '',
-        boardId: user?.boardId ?? '',
+        schoolId: getSchoolScope(user) ?? '',
+        boardId: getBoardScope(user) ?? '',
       });
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
     } catch (err: unknown) {

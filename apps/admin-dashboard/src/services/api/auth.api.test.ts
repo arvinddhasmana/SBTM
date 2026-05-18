@@ -21,9 +21,12 @@ describe('authApi', () => {
           user: {
             id: 'admin-001',
             email: 'admin@example.com',
-            role: 'ADMIN',
+            role: 'SUPER_ADMIN',
             firstName: 'Admin',
             lastName: 'User',
+            anchorKind: 'super',
+            anchorId: null,
+            preferredLanguage: 'en',
           },
         },
       };
@@ -36,10 +39,11 @@ describe('authApi', () => {
         user: {
           id: 'admin-001',
           email: 'admin@example.com',
-          role: 'ADMIN',
+          role: 'SUPER_ADMIN',
           name: 'Admin User',
-          schoolId: undefined,
-          boardId: undefined,
+          anchorKind: 'super',
+          anchorId: null,
+          preferredLanguage: 'en',
         },
       });
       expect(apiClient.post).toHaveBeenCalledWith('/api/v1/auth/login', {
@@ -65,9 +69,12 @@ describe('authApi', () => {
         data: {
           id: 'admin-001',
           email: 'admin@example.com',
-          role: 'ADMIN',
+          role: 'BOARD_ADMIN',
           firstName: 'Admin',
           lastName: 'User',
+          anchorKind: 'board',
+          anchorId: 'BRD-001',
+          preferredLanguage: 'en',
         },
       };
 
@@ -79,10 +86,11 @@ describe('authApi', () => {
         user: {
           id: 'admin-001',
           email: 'admin@example.com',
-          role: 'ADMIN',
+          role: 'BOARD_ADMIN',
           name: 'Admin User',
-          schoolId: undefined,
-          boardId: undefined,
+          anchorKind: 'board',
+          anchorId: 'BRD-001',
+          preferredLanguage: 'en',
         },
       });
       expect(apiClient.get).toHaveBeenCalledWith('/api/v1/auth/me');

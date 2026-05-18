@@ -146,21 +146,35 @@ export interface Route {
 // User and Auth Types
 export type UserRole =
   | 'SUPER_ADMIN'
-  | 'ADMIN'
-  | 'DRIVER'
-  | 'PARENT'
   | 'STA_ADMIN'
   | 'BOARD_ADMIN'
-  | 'SCHOOL_ADMIN';
+  | 'SCHOOL_ADMIN'
+  | 'OPERATOR_ADMIN'
+  | 'DRIVER'
+  | 'PARENT';
+
+/** v2 anchor kind — must agree with the api-gateway AnchorKind union. */
+export type AnchorKind = 'super' | 'sta' | 'board' | 'school' | 'operator' | 'driver' | 'parent';
 
 export interface User {
   id: string;
   email: string;
   name: string;
   role: UserRole;
-  schoolId?: string;
-  boardId?: string;
+  anchorKind: AnchorKind | null;
+  anchorId: string | null;
+  preferredLanguage?: string;
 }
+
+/** Anchor-scope helpers: return the id only when the user's anchor matches the requested kind. */
+export const getStaScope = (user: User | null | undefined): string | undefined =>
+  user?.anchorKind === 'sta' ? (user.anchorId ?? undefined) : undefined;
+
+export const getBoardScope = (user: User | null | undefined): string | undefined =>
+  user?.anchorKind === 'board' ? (user.anchorId ?? undefined) : undefined;
+
+export const getSchoolScope = (user: User | null | undefined): string | undefined =>
+  user?.anchorKind === 'school' ? (user.anchorId ?? undefined) : undefined;
 
 export interface AuthState {
   user: User | null;

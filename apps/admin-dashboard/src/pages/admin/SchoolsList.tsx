@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { organizationApi } from '../../services/api/organization.api';
 import { queryKeys } from '../../services/query-keys';
 import type { School, Board } from '../../services/api/organization.api';
+import { getBoardScope } from '../../types';
 import Header from '../../components/common/Header';
 
 interface SchoolFormState {
@@ -28,14 +29,12 @@ export const SchoolsList: React.FC = () => {
   const isBoardAdmin = user?.role === 'BOARD_ADMIN';
   const canManage = isStaAdmin || isBoardAdmin;
 
-  const schoolsQueryKey = queryKeys.schools.byBoard(
-    isBoardAdmin && user?.boardId ? user.boardId : undefined,
-  );
+  const schoolsQueryKey = queryKeys.schools.byBoard(isBoardAdmin ? getBoardScope(user) : undefined);
 
   const { data, isLoading } = useQuery({
     queryKey: [...schoolsQueryKey, 'with-boards'],
     queryFn: async () => {
-      const boardId = isBoardAdmin && user?.boardId ? user.boardId : undefined;
+      const boardId = isBoardAdmin ? getBoardScope(user) : undefined;
       const [schoolsData, boardsData] = await Promise.all([
         organizationApi.listSchools(boardId),
         organizationApi.listBoards(),
@@ -49,7 +48,7 @@ export const SchoolsList: React.FC = () => {
 
   const openCreateForm = () => {
     setEditingSchool(null);
-    setForm({ name: '', boardId: user?.boardId ?? boards[0]?.id ?? '' });
+    setForm({ name: '', boardId: getBoardScope(user) ?? boards[0]?.id ?? '' });
     setFormError(null);
     setShowForm(true);
   };

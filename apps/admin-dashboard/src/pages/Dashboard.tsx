@@ -52,7 +52,7 @@ const Dashboard: React.FC = () => {
     user?.role === 'SCHOOL_ADMIN' ||
     user?.role === 'BOARD_ADMIN' ||
     user?.role === 'STA_ADMIN' ||
-    user?.role === 'ADMIN';
+    user?.role === 'SUPER_ADMIN';
 
   // --- Separate queries so alert actions don't nuke bus/student data ---
 

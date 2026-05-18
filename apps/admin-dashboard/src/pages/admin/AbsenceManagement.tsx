@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { absenceApi } from '../../services/api/absence.api';
 import type { AbsenceRecord } from '../../services/api/absence.api';
 import { useAuth } from '../../context/AuthContext';
+import { getSchoolScope } from '../../types';
 import { queryKeys } from '../../services/query-keys';
 import { Header } from '../../components/common';
 
@@ -18,7 +19,7 @@ export const AbsenceManagement: React.FC = () => {
   const [rejectingId, setRejectingId] = useState<string | null>(null);
   const [rejectNotes, setRejectNotes] = useState('');
 
-  const schoolId = user?.schoolId;
+  const schoolId = getSchoolScope(user);
   const isSchoolAdmin = user?.role === 'SCHOOL_ADMIN';
   const absenceQueryKey = queryKeys.absences.byDate(filterDate || undefined, schoolId);
 

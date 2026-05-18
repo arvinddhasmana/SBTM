@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { organizationApi } from '../../services/api/organization.api';
 import type { Board, School } from '../../services/api/organization.api';
+import { getBoardScope } from '../../types';
 
 interface TenantStats {
   boardCount: number;
@@ -45,9 +46,12 @@ export const TenantDashboard: React.FC = () => {
           ]);
           setBoards(boardsData);
           setSchools(schoolsData);
-        } else if (isBoardAdmin && user?.boardId) {
-          const schoolsData = await organizationApi.listSchools(user.boardId);
-          setSchools(schoolsData);
+        } else if (isBoardAdmin) {
+          const boardScope = getBoardScope(user);
+          if (boardScope) {
+            const schoolsData = await organizationApi.listSchools(boardScope);
+            setSchools(schoolsData);
+          }
         }
       } catch {
         setError(t('dashboard:tenantDashboard.errorLoad'));
@@ -83,7 +87,7 @@ export const TenantDashboard: React.FC = () => {
         <p className="text-white/50 text-sm mt-1">
           {isStaAdmin
             ? t('dashboard:tenantDashboard.subtitleSta')
-            : t('dashboard:tenantDashboard.subtitleBoard', { boardId: user?.boardId ?? '—' })}
+            : t('dashboard:tenantDashboard.subtitleBoard', { boardId: getBoardScope(user) ?? '—' })}
         </p>
       </div>
 

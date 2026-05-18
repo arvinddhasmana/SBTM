@@ -91,7 +91,7 @@ const Alerts: React.FC = () => {
     user?.role === 'SCHOOL_ADMIN' ||
     user?.role === 'BOARD_ADMIN' ||
     user?.role === 'STA_ADMIN' ||
-    user?.role === 'ADMIN';
+    user?.role === 'SUPER_ADMIN';
 
   const handleResolve = async (id: string, notes?: string) => {
     setIsResolving(true);

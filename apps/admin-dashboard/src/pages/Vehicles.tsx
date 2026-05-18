@@ -6,6 +6,7 @@ import { fleetApi } from '../services/api/fleet.api';
 import { queryKeys } from '../services/query-keys';
 import { Plus, Edit2, Trash2, Bus } from 'lucide-react';
 import type { Vehicle, VehicleStatus } from '../types';
+import { getSchoolScope } from '../types';
 import { useAuth } from '../context/AuthContext';
 
 const Vehicles: React.FC = () => {
@@ -38,7 +39,7 @@ const Vehicles: React.FC = () => {
       if (editingVehicle) {
         await fleetApi.updateVehicle(editingVehicle.id, formData);
       } else {
-        await fleetApi.createVehicle({ ...formData, schoolId: user?.schoolId ?? '' });
+        await fleetApi.createVehicle({ ...formData, schoolId: getSchoolScope(user) ?? '' });
       }
       queryClient.invalidateQueries({ queryKey: queryKeys.vehicles.all });
       setIsModalOpen(false);
@@ -155,7 +156,9 @@ const Vehicles: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-400 mb-1">{t('fleet:form.status')}</label>
+                <label className="block text-sm font-medium text-slate-400 mb-1">
+                  {t('fleet:form.status')}
+                </label>
                 <select
                   value={formData.status}
                   onChange={(e) =>

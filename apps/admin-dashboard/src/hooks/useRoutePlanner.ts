@@ -11,6 +11,7 @@ import {
   parseWktPoint,
 } from '../utils/geo';
 import type { Route } from '../types';
+import { getBoardScope, getSchoolScope } from '../types';
 import type { School } from '../services/api/organization.api';
 import type { OptimizationResult } from '../services/api/routes.api';
 
@@ -99,9 +100,11 @@ export function useRoutePlanner() {
     // Apply user-context filter only when NOT in mock mode
     // (mock data IDs don't match real auth IDs).
     if (!useMock) {
-      if (user?.schoolId) {
-        result = result.filter((r) => r.schoolId === user.schoolId);
-      } else if (user?.boardId && schools.length > 0) {
+      const schoolScope = getSchoolScope(user);
+      const boardScope = getBoardScope(user);
+      if (schoolScope) {
+        result = result.filter((r) => r.schoolId === schoolScope);
+      } else if (boardScope && schools.length > 0) {
         const boardSchoolIds = new Set(schools.map((s) => s.id));
         result = result.filter((r) => boardSchoolIds.has(r.schoolId));
       }
@@ -224,8 +227,9 @@ export function useRoutePlanner() {
   const startCreate = useCallback(() => {
     resetForm();
     // Auto-select school for SCHOOL_ADMIN users
-    if (user?.role === 'SCHOOL_ADMIN' && user.schoolId) {
-      setFormSchoolId(user.schoolId);
+    const schoolScope = getSchoolScope(user);
+    if (user?.role === 'SCHOOL_ADMIN' && schoolScope) {
+      setFormSchoolId(schoolScope);
     }
     setMode('create');
     setSelectedRoute(null);

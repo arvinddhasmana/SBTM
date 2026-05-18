@@ -8,6 +8,7 @@ import type {
   ProposeFleetAssignmentDto,
 } from '../../services/api/fleet-assignment.api';
 import { useAuth } from '../../context/AuthContext';
+import { getSchoolScope } from '../../types';
 import { queryKeys } from '../../services/query-keys';
 import { apiClient } from '../../services/api/api-client';
 
@@ -67,7 +68,7 @@ export const FleetAssignments: React.FC = () => {
   });
 
   const displayedAssignments = isSchoolAdmin
-    ? assignments.filter((a) => a.schoolId === user?.schoolId)
+    ? assignments.filter((a) => a.schoolId === getSchoolScope(user))
     : assignments;
 
   const handlePropose = async (e: React.FormEvent) => {
