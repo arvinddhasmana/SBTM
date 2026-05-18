@@ -88,7 +88,10 @@ describe('ParentApiService', () => {
           { id: 'stop-1', name: 'Stop 1', lat: 45.42, lng: -75.69 },
           { id: 'stop-2', name: 'Stop 2', lat: 45.43, lng: -75.7 },
         ],
-        polyline: 'encoded-polyline-string',
+        path: [
+          [45.42, -75.69],
+          [45.43, -75.7],
+        ],
       };
       mockApiService.get.mockResolvedValue(mockRoute);
 

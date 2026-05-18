@@ -8,7 +8,7 @@ const E2E_API_URL = process.env.E2E_API_URL ?? 'http://localhost:3001';
  */
 const ADMIN_PASSWORDS: Partial<Record<string, string>> = {
   SUPER_ADMIN: 'Admin123!',
-  OSTA_ADMIN: 'Admin123!',
+  STA_ADMIN: 'Admin123!',
   BOARD_ADMIN: 'Admin123!',
   SCHOOL_ADMIN: 'Admin123!',
 };
@@ -26,11 +26,11 @@ export const TEST_USERS = {
     schoolId: null,
     boardId: null,
   },
-  OSTA_ADMIN: {
+  STA_ADMIN: {
     id: '10000000-0000-0000-0000-000000000001',
-    email: 'osta.admin@sbtm.demo',
-    role: 'OSTA_ADMIN',
-    name: 'Osta Admin',
+    email: 'sta.admin@sbtm.demo',
+    role: 'STA_ADMIN',
+    name: 'STA Admin',
     schoolId: null,
     boardId: null,
   },
@@ -70,7 +70,7 @@ export const TEST_USERS = {
 
 export type TestRole = keyof typeof TEST_USERS;
 
-export const ADMIN_ROLES: TestRole[] = ['SUPER_ADMIN', 'OSTA_ADMIN', 'BOARD_ADMIN', 'SCHOOL_ADMIN'];
+export const ADMIN_ROLES: TestRole[] = ['SUPER_ADMIN', 'STA_ADMIN', 'BOARD_ADMIN', 'SCHOOL_ADMIN'];
 
 /**
  * Common nav items visible to ALL admin roles.

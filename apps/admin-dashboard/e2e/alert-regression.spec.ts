@@ -12,7 +12,12 @@ test.describe('Alert Regression Tests', () => {
       await gotoAndWait(page, '/alerts');
 
       // Check page loads
-      await expect(page.locator('h1, h2').filter({ hasText: /alerts/i }).first()).toBeVisible();
+      await expect(
+        page
+          .locator('h1, h2')
+          .filter({ hasText: /alerts/i })
+          .first(),
+      ).toBeVisible();
 
       // Check no console errors
       const errors: string[] = [];
@@ -31,7 +36,10 @@ test.describe('Alert Regression Tests', () => {
 
       // Check filters exist
       await expect(
-        page.locator('select, button').filter({ hasText: /filter|status|tier/i }).first(),
+        page
+          .locator('select, button')
+          .filter({ hasText: /filter|status|tier/i })
+          .first(),
       ).toBeVisible({ timeout: 5000 });
     });
 
@@ -41,7 +49,10 @@ test.describe('Alert Regression Tests', () => {
 
       // Check operational alerts page loads
       await expect(
-        page.locator('h1, h2').filter({ hasText: /operational/i }).first(),
+        page
+          .locator('h1, h2')
+          .filter({ hasText: /operational/i })
+          .first(),
       ).toBeVisible();
     });
   });
@@ -84,7 +95,7 @@ test.describe('Alert Regression Tests', () => {
     });
 
     test('REG07: OSTA Admin can view alerts', async ({ page }) => {
-      await loginAs(page, 'OSTA_ADMIN');
+      await loginAs(page, 'STA_ADMIN');
       await gotoAndWait(page, '/alerts');
 
       await page.waitForTimeout(2000);
@@ -130,14 +141,22 @@ test.describe('Alert Regression Tests', () => {
       await gotoAndWait(page, '/dashboard');
 
       // Check dashboard loads
-      await expect(page.locator('h1, h2').filter({ hasText: /dashboard/i }).first()).toBeVisible({
+      await expect(
+        page
+          .locator('h1, h2')
+          .filter({ hasText: /dashboard/i })
+          .first(),
+      ).toBeVisible({
         timeout: 5000,
       });
 
       // Check for alert-related widgets
       await page.waitForTimeout(2000);
       const hasAlertWidget =
-        (await page.locator('div, section').filter({ hasText: /alert|emergency/i }).count()) > 0;
+        (await page
+          .locator('div, section')
+          .filter({ hasText: /alert|emergency/i })
+          .count()) > 0;
 
       expect(hasAlertWidget).toBe(true);
     });
@@ -239,7 +258,7 @@ test.describe('Alert Regression Tests', () => {
     });
 
     test('REG15: OSTA Admin should access all admin pages', async ({ page }) => {
-      await loginAs(page, 'OSTA_ADMIN');
+      await loginAs(page, 'STA_ADMIN');
 
       await gotoAndWait(page, '/alerts');
       await expect(page).toHaveURL(/alerts/);
@@ -269,7 +288,9 @@ test.describe('Alert Regression Tests', () => {
       await page.waitForTimeout(2000);
 
       // Verify API calls were made
-      const hasAlertApiCalls = apiCalls.some((url) => url.includes('alert') || url.includes('emergency'));
+      const hasAlertApiCalls = apiCalls.some(
+        (url) => url.includes('alert') || url.includes('emergency'),
+      );
       expect(apiCalls.length).toBeGreaterThan(0);
     });
 

@@ -1,7 +1,7 @@
 {
   "roles": {
     "SUPER_ADMIN": "Super Administrator",
-    "OSTA_ADMIN": "OSTA Administrator",
+    "STA_ADMIN": "STA Administrator",
     "BOARD_ADMIN": "Board Administrator",
     "SCHOOL_ADMIN": "School Administrator",
     "DRIVER": "Driver",

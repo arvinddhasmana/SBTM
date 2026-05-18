@@ -19,7 +19,6 @@ import {
   POLYLINE_COLORS,
   type BusStatus,
 } from '../components';
-import { decodePolyline } from '../utils/polyline';
 
 type MapScreenRouteProp = RouteProp<RootStackParamList, 'Map'>;
 
@@ -152,14 +151,9 @@ export default function MapScreen() {
     };
   }, [activeRouteId]);
 
-  // Decode road-following polyline (mirrors web portal). Falls back to
-  // straight stop-to-stop only when the server omits the polyline.
   const routePath = useMemo<{ latitude: number; longitude: number }[] | null>(() => {
-    if (routeDetails?.polyline) {
-      const coords = decodePolyline(routeDetails.polyline);
-      if (coords.length > 0) {
-        return coords.map(([lat, lng]) => ({ latitude: lat, longitude: lng }));
-      }
+    if (routeDetails?.path && routeDetails.path.length > 0) {
+      return routeDetails.path.map(([lat, lng]) => ({ latitude: lat, longitude: lng }));
     }
     if (routeDetails?.stops && routeDetails.stops.length > 1) {
       return routeDetails.stops.map((s) => ({ latitude: s.lat, longitude: s.lng }));

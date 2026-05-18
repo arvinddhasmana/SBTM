@@ -76,14 +76,14 @@ test.describe('SN: Sidebar Role-Based Navigation', () => {
     });
   });
 
-  // ─── OSTA_ADMIN ────────────────────────────────────────────────────────────
+  // ─── STA_ADMIN ────────────────────────────────────────────────────────────
 
-  test.describe('OSTA_ADMIN', () => {
+  test.describe('STA_ADMIN', () => {
     test.beforeEach(async ({ page }) => {
-      await loginAs(page, 'OSTA_ADMIN');
+      await loginAs(page, 'STA_ADMIN');
     });
 
-    /** SN05 – OSTA_ADMIN sees all common items plus Fleet, Boards, Schools */
+    /** SN05 – STA_ADMIN sees all common items plus Fleet, Boards, Schools */
     test('SN05 – sees common items, Fleet, Boards and Schools', async ({ page }) => {
       const errors = collectConsoleErrors(page);
       const nav = page.locator('nav');
@@ -96,7 +96,7 @@ test.describe('SN: Sidebar Role-Based Navigation', () => {
       expect(errors()).toHaveLength(0);
     });
 
-    /** SN06 – OSTA_ADMIN does NOT see Users */
+    /** SN06 – STA_ADMIN does NOT see Users */
     test('SN06 – does not see Users nav item', async ({ page }) => {
       await expectNoNavItem(page.locator('nav'), 'Users');
     });
@@ -205,10 +205,10 @@ test.describe('SN: Sidebar Role-Based Navigation', () => {
       await expect(page.getByText('BOARD_ADMIN')).toBeVisible();
     });
 
-    /** SN18 – Role label shown for OSTA_ADMIN */
-    test('SN18 – OSTA_ADMIN role label is displayed in the header', async ({ page }) => {
-      await loginAs(page, 'OSTA_ADMIN');
-      await expect(page.getByText('OSTA_ADMIN')).toBeVisible();
+    /** SN18 – Role label shown for STA_ADMIN */
+    test('SN18 – STA_ADMIN role label is displayed in the header', async ({ page }) => {
+      await loginAs(page, 'STA_ADMIN');
+      await expect(page.getByText('STA_ADMIN')).toBeVisible();
     });
   });
 });

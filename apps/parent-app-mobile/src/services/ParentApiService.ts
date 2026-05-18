@@ -95,7 +95,7 @@ class ParentApiServiceClass {
   }
 
   /**
-   * Get route details (stops, polyline).
+   * Get route details (stops, path).
    * Backend returns stops with `address` (not `name`) and `location: "POINT(lng lat)"` string.
    * Normalize to Stop shape the map screen expects.
    */

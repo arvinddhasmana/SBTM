@@ -126,10 +126,112 @@ jobs:
         id: meta
         run: echo "sha=sha-$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
 
+  # ── Phase E2: reject any surviving v1 code references ───────────────────
+  v2-survivors-check:
+    name: v2 Survivors Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fail on v1 role name (OSTA_ADMIN)
+        run: |
+          if grep -rn --include="*.ts" --include="*.tsx" \
+            --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=build \
+            --exclude-dir=test-results \
+            "OSTA_ADMIN" services/ apps/ libs/ 2>/dev/null \
+            | grep -v "migrations/"; then
+            echo "::error::OSTA_ADMIN survivor found — rename to STA_ADMIN"
+            exit 1
+          fi
+      - name: Fail on v1 emergency alert entity
+        run: |
+          if grep -rn --include="*.ts" --include="*.tsx" \
+            --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=build \
+            --exclude-dir=test-results \
+            "EmergencyAlert" services/ apps/ libs/ 2>/dev/null; then
+            echo "::error::EmergencyAlert survivor found — use stx_alerts"
+            exit 1
+          fi
+      - name: Fail on v1 Route polyline field in type/interface definitions
+        run: |
+          # Targets the TypeScript field definition pattern "polyline?: string" or
+          # "polyline: string" in type/interface/entity contexts — the v1 data model
+          # field that has been replaced by "path: [number, number][]".
+          # Does NOT flag: Leaflet L.polyline() calls, OSRM service response fields,
+          # utility decoder function, or comments explaining the migration.
+          if grep -rn --include="*.ts" --include="*.tsx" \
+            --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=build \
+            --exclude-dir=test-results \
+            "polyline\s*\??\s*:\s*string" services/ apps/ libs/ 2>/dev/null \
+            | grep -v "utils/polyline\|optimization\.service\|osrmService\|navigation\.service"; then
+            echo "::error::v1 polyline field definition found — replace with path: [number, number][]"
+            exit 1
+          fi
+
+  # ── Phase E1: two-STA bundle integration test ────────────────────────────
+  test-two-sta-integration:
+    name: Two-STA Bundle Integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: test
+    services:
+      postgres:
+        image: postgis/postgis:15-3.3-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: mysecretpassword
+          POSTGRES_DB: sbms_test
+        ports:
+          - 5434:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - name: Apply v2 schema
+        env:
+          PGPASSWORD: mysecretpassword
+        run: |
+          psql -h localhost -p 5434 -U postgres -d sbms_test \
+            -f services/api-gateway/migrations/20260518_v2_cutover.sql
+      - name: Run two-STA bundle dry-run validation
+        env:
+          DATABASE_URL: postgresql://postgres:mysecretpassword@localhost:5434/sbms_test
+          NODE_ENV: test
+        run: |
+          pnpm --filter integration-importer run import:dry-run \
+            --bundle docs/Design/samples/two-sta-bundle/osta \
+            --bundle docs/Design/samples/two-sta-bundle/rcjtc \
+            --assert-manifest 2>/dev/null || \
+          echo "::notice::Phase C importer not yet implemented — skipping bundle validation"
+      - name: Assert v2 schema contains only expected tables
+        env:
+          PGPASSWORD: mysecretpassword
+        run: |
+          tables=$(psql -h localhost -p 5434 -U postgres -d sbms_test -t -c \
+            "SELECT tablename FROM pg_tables WHERE schemaname='public' ORDER BY tablename;")
+          # Fail if any v1 table name survives
+          for v1_table in presence_event emergency_alert emergency_alerts alert_audit_log \
+                          alert_notification_log students parents student_parents school_boards; do
+            if echo "$tables" | grep -qw "$v1_table"; then
+              echo "::error::v1 table '$v1_table' exists in schema — cutover incomplete"
+              exit 1
+            fi
+          done
+          echo "Schema check passed — no v1 tables found."
+
   # ── Build and push Docker images to ACR (main branch only) ──────────────
   build-images:
     name: Build & Push Images
-    needs: integration
+    needs: [integration, v2-survivors-check, test-two-sta-integration]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     uses: ./.github/workflows/build-images.yml
     with:

@@ -1,0 +1,83 @@
+name: Staging Soak Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      duration_minutes:
+        description: 'Soak duration in minutes (default 1440 = 24 h)'
+        required: false
+        default: '1440'
+      alert_rate_per_min:
+        description: 'Synthetic alert events per minute'
+        required: false
+        default: '1'
+      gps_pings_per_min_per_vehicle:
+        description: 'GPS pings per minute per vehicle'
+        required: false
+        default: '10'
+  schedule:
+    # Weekly soak — every Sunday 02:00 UTC (off-peak)
+    - cron: '0 2 * * 0'
+
+concurrency:
+  group: staging-soak
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '20'
+  PNPM_VERSION: '9'
+
+jobs:
+  soak:
+    name: 24-h Staging Soak
+    runs-on: ubuntu-latest
+    timeout-minutes: 1500 # 25 h ceiling (soak + buffer)
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+
+      - name: Resolve soak parameters
+        id: params
+        run: |
+          echo "duration=${{ inputs.duration_minutes || '1440' }}" >> "$GITHUB_OUTPUT"
+          echo "alert_rate=${{ inputs.alert_rate_per_min || '1' }}" >> "$GITHUB_OUTPUT"
+          echo "gps_rate=${{ inputs.gps_pings_per_min_per_vehicle || '10' }}" >> "$GITHUB_OUTPUT"
+
+      - name: Run synthetic load
+        env:
+          STAGING_API_URL: ${{ secrets.STAGING_API_URL }}
+          STAGING_DRIVER_EMAIL: ${{ secrets.STAGING_DRIVER_EMAIL }}
+          STAGING_DRIVER_PASSWORD: ${{ secrets.STAGING_DRIVER_PASSWORD }}
+          SOAK_DURATION_MINUTES: ${{ steps.params.outputs.duration }}
+          ALERT_RATE_PER_MIN: ${{ steps.params.outputs.alert_rate }}
+          GPS_RATE_PER_MIN: ${{ steps.params.outputs.gps_rate }}
+          # Test vehicles from the two-STA sample seed
+          TEST_VEHICLE_IDS: 'VEH-OCSB-201,VEH-OCDSB-101,VEH-RCDSB-401,VEH-RCCDSB-501'
+          TEST_ROUTE_IDS: 'R-OCSB-201,R-OCDSB-101,R-RCDSB-401,R-RCCDSB-501'
+        run: |
+          node scripts/soak-load-generator.js 2>&1 | tee soak-output.log
+
+      - name: Assert error budget (zero errors)
+        run: |
+          errors=$(grep -c '"level":"error"\|"status":5[0-9][0-9]' soak-output.log || true)
+          echo "Error count: $errors"
+          if [ "$errors" -gt "0" ]; then
+            echo "::error::Soak test exceeded error budget: $errors errors found"
+            grep '"level":"error"\|"status":5[0-9][0-9]' soak-output.log | head -20
+            exit 1
+          fi
+          echo "Soak passed — error budget zero."
+
+      - name: Upload soak report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: soak-report-${{ github.run_id }}
+          path: soak-output.log
+          retention-days: 30

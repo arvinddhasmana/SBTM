@@ -5,9 +5,9 @@
  * to /dashboard instead of rendering the page content.
  *
  * Restriction matrix:
- *   /vehicles  — SUPER_ADMIN, OSTA_ADMIN only
- *   /boards    — SUPER_ADMIN, OSTA_ADMIN only
- *   /schools   — SUPER_ADMIN, OSTA_ADMIN, BOARD_ADMIN only
+ *   /vehicles  — SUPER_ADMIN, STA_ADMIN only
+ *   /boards    — SUPER_ADMIN, STA_ADMIN only
+ *   /schools   — SUPER_ADMIN, STA_ADMIN, BOARD_ADMIN only
  *   /users     — SUPER_ADMIN only
  *
  * Test IDs: RG01–RG16
@@ -48,21 +48,21 @@ test.describe('RG: Route Guards', () => {
     });
   });
 
-  // ─── OSTA_ADMIN restrictions ───────────────────────────────────────────────
+  // ─── STA_ADMIN restrictions ───────────────────────────────────────────────
 
-  test.describe('OSTA_ADMIN', () => {
+  test.describe('STA_ADMIN', () => {
     test.beforeEach(async ({ page }) => {
-      await loginAs(page, 'OSTA_ADMIN');
+      await loginAs(page, 'STA_ADMIN');
     });
 
-    /** RG05 – OSTA_ADMIN can access /vehicles */
-    test('RG05 – OSTA_ADMIN can navigate to /vehicles', async ({ page }) => {
+    /** RG05 – STA_ADMIN can access /vehicles */
+    test('RG05 – STA_ADMIN can navigate to /vehicles', async ({ page }) => {
       await page.goto('/vehicles', { waitUntil: 'domcontentloaded' }).catch(() => {});
       await expect(page).toHaveURL(/\/vehicles/);
     });
 
-    /** RG06 – OSTA_ADMIN is blocked from /users (redirected to /dashboard) */
-    test('RG06 – OSTA_ADMIN direct navigation to /users redirects to /dashboard', async ({
+    /** RG06 – STA_ADMIN is blocked from /users (redirected to /dashboard) */
+    test('RG06 – STA_ADMIN direct navigation to /users redirects to /dashboard', async ({
       page,
     }) => {
       await gotoAndWait(page, '/users');

@@ -149,7 +149,7 @@ test.describe('AT: Authentication', () => {
     test('AT12 – already authenticated admin visiting /login is redirected to /dashboard', async ({
       page,
     }) => {
-      await loginAs(page, 'OSTA_ADMIN');
+      await loginAs(page, 'STA_ADMIN');
       // PublicRoute redirects authenticated admins to /dashboard — absorb ERR_ABORTED
       await page.goto('/login', { waitUntil: 'domcontentloaded' }).catch(() => {});
       await page.waitForTimeout(500);

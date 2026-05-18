@@ -1,9 +1,9 @@
 /**
  * E2E: Fleet & Assignments pages
  *
- * Fleet (/vehicles): Only SUPER_ADMIN and OSTA_ADMIN can access.
+ * Fleet (/vehicles): Only SUPER_ADMIN and STA_ADMIN can access.
  * Assignments (/fleet-assignments): All admin roles can access;
- *   only OSTA_ADMIN sees the "Create Proposal" button.
+ *   only STA_ADMIN sees the "Create Proposal" button.
  *
  * Test IDs: FA01–FA10
  */
@@ -24,10 +24,10 @@ test.describe('FA: Fleet & Assignments', () => {
       expect(errors().filter((e) => e.includes('500'))).toHaveLength(0);
     });
 
-    /** FA02 – OSTA_ADMIN can access /vehicles */
-    test('FA02 – OSTA_ADMIN loads /vehicles without errors', async ({ page }) => {
+    /** FA02 – STA_ADMIN can access /vehicles */
+    test('FA02 – STA_ADMIN loads /vehicles without errors', async ({ page }) => {
       const errors = collectConsoleErrors(page);
-      await loginAs(page, 'OSTA_ADMIN');
+      await loginAs(page, 'STA_ADMIN');
       await page.goto('/vehicles', { waitUntil: 'domcontentloaded' }).catch(() => {});
       await expect(page).toHaveURL(/\/vehicles/);
       await page.waitForLoadState('networkidle');
@@ -54,9 +54,9 @@ test.describe('FA: Fleet & Assignments', () => {
   // ─── /fleet-assignments (Assignments) ─────────────────────────────────────
 
   test.describe('/fleet-assignments page (Assignments)', () => {
-    /** FA05 – OSTA_ADMIN sees Fleet in sidebar (only OSTA/SUPER have it) */
-    test('FA05 – OSTA_ADMIN sees Fleet item in sidebar', async ({ page }) => {
-      await loginAs(page, 'OSTA_ADMIN');
+    /** FA05 – STA_ADMIN sees Fleet in sidebar (only OSTA/SUPER have it) */
+    test('FA05 – STA_ADMIN sees Fleet item in sidebar', async ({ page }) => {
+      await loginAs(page, 'STA_ADMIN');
       await expect(page.locator('nav').getByText('Fleet', { exact: false })).toBeVisible();
     });
 
@@ -86,9 +86,9 @@ test.describe('FA: Fleet & Assignments', () => {
       expect(errors().filter((e) => e.includes('500'))).toHaveLength(0);
     });
 
-    /** FA09 – OSTA_ADMIN sees Fleet Assignments heading */
-    test('FA09 – OSTA_ADMIN sees Fleet Assignments page content', async ({ page }) => {
-      await loginAs(page, 'OSTA_ADMIN');
+    /** FA09 – STA_ADMIN sees Fleet Assignments heading */
+    test('FA09 – STA_ADMIN sees Fleet Assignments page content', async ({ page }) => {
+      await loginAs(page, 'STA_ADMIN');
       await page.goto('/fleet-assignments', { waitUntil: 'domcontentloaded' }).catch(() => {});
       await expect(page.getByRole('heading', { name: /Fleet Assignments/i })).toBeVisible();
     });

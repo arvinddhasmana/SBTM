@@ -61,7 +61,7 @@ export interface Route {
   schoolLng?: number;
   vehicleId: string;
   driverId: string;
-  polyline?: string;
+  path?: [number, number][];
   stops?: Stop[];
 }
 
