@@ -55,7 +55,7 @@ describe('NotificationSettingsGatewayService', () => {
   });
 
   describe('getPreferences', () => {
-    it('should call notification service with userId and schoolId', async () => {
+    it('calls notification service with userId only (v2: no school scoping)', async () => {
       const mockPreferences = [
         {
           id: 'pref-1',
@@ -66,31 +66,29 @@ describe('NotificationSettingsGatewayService', () => {
       ];
       mockHttpClient.get.mockResolvedValue(mockPreferences);
 
-      const result = await service.getPreferences('user-1', 'school-1');
+      const result = await service.getPreferences('user-1');
 
       expect(result).toEqual(mockPreferences);
       expect(httpClient.get).toHaveBeenCalledWith(
         'http://notification-service:3008/api/v1/notification-preferences',
-        { params: { userId: 'user-1', schoolId: 'school-1' } },
+        { params: { userId: 'user-1' } },
       );
     });
   });
 
   describe('updatePreferences', () => {
-    it('should PUT preferences to notification service', async () => {
+    it('PUTs preferences without schoolId', async () => {
       const payload = {
         userId: 'user-1',
-        schoolId: 'school-1',
         preferences: [
           { eventType: 'ROUTE_CHANGE', channel: 'push', enabled: false },
         ],
       };
-      const mockResponse = payload.preferences;
-      mockHttpClient.put.mockResolvedValue(mockResponse);
+      mockHttpClient.put.mockResolvedValue(payload.preferences);
 
       const result = await service.updatePreferences(payload);
 
-      expect(result).toEqual(mockResponse);
+      expect(result).toEqual(payload.preferences);
       expect(httpClient.put).toHaveBeenCalledWith(
         'http://notification-service:3008/api/v1/notification-preferences',
         payload,
@@ -99,19 +97,18 @@ describe('NotificationSettingsGatewayService', () => {
   });
 
   describe('registerDeviceToken', () => {
-    it('should POST device token to notification service', async () => {
+    it('POSTs device token without schoolId (recipient is polymorphic)', async () => {
       const payload = {
+        recipientKind: 'user' as const,
         recipientId: 'user-1',
-        schoolId: 'school-1',
         token: 'fcm-token-abc',
         platform: 'android',
       };
-      const mockResponse = { id: 'token-1' };
-      mockHttpClient.post.mockResolvedValue(mockResponse);
+      mockHttpClient.post.mockResolvedValue({ id: 'token-1' });
 
       const result = await service.registerDeviceToken(payload);
 
-      expect(result).toEqual(mockResponse);
+      expect(result).toEqual({ id: 'token-1' });
       expect(httpClient.post).toHaveBeenCalledWith(
         'http://notification-service:3008/api/v1/device-tokens',
         payload,
@@ -120,13 +117,12 @@ describe('NotificationSettingsGatewayService', () => {
   });
 
   describe('deactivateDeviceToken', () => {
-    it('should DELETE device token via notification service', async () => {
-      const mockResponse = { deactivated: true };
-      mockHttpClient.delete.mockResolvedValue(mockResponse);
+    it('DELETEs device token via notification service', async () => {
+      mockHttpClient.delete.mockResolvedValue({ deactivated: true });
 
       const result = await service.deactivateDeviceToken('token-1', 'user-1');
 
-      expect(result).toEqual(mockResponse);
+      expect(result).toEqual({ deactivated: true });
       expect(httpClient.delete).toHaveBeenCalledWith(
         'http://notification-service:3008/api/v1/device-tokens/token-1?recipientId=user-1&recipientKind=user',
       );
@@ -134,11 +130,11 @@ describe('NotificationSettingsGatewayService', () => {
   });
 
   describe('getDeviceTokens', () => {
-    it('should GET device tokens with recipientId, schoolId, recipientKind params', async () => {
+    it('GETs device tokens with recipientId + recipientKind (no schoolId)', async () => {
       const mockTokens = [{ id: 'token-1', platform: 'android' }];
       mockHttpClient.get.mockResolvedValue(mockTokens);
 
-      const result = await service.getDeviceTokens('user-1', 'school-1');
+      const result = await service.getDeviceTokens('user-1');
 
       expect(result).toEqual(mockTokens);
       expect(httpClient.get).toHaveBeenCalledWith(
@@ -146,7 +142,6 @@ describe('NotificationSettingsGatewayService', () => {
         {
           params: {
             recipientId: 'user-1',
-            schoolId: 'school-1',
             recipientKind: 'user',
           },
         },
@@ -155,16 +150,16 @@ describe('NotificationSettingsGatewayService', () => {
   });
 
   describe('getDeliveryLog', () => {
-    it('should GET delivery log with userId and schoolId params', async () => {
+    it('GETs delivery log with userId only', async () => {
       const mockLog = [{ id: 'log-1', status: 'delivered' }];
       mockHttpClient.get.mockResolvedValue(mockLog);
 
-      const result = await service.getDeliveryLog('user-1', 'school-1');
+      const result = await service.getDeliveryLog('user-1');
 
       expect(result).toEqual(mockLog);
       expect(httpClient.get).toHaveBeenCalledWith(
         'http://notification-service:3008/api/v1/delivery-log',
-        { params: { userId: 'user-1', schoolId: 'school-1' } },
+        { params: { userId: 'user-1' } },
       );
     });
   });

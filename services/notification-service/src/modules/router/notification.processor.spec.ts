@@ -70,6 +70,23 @@ describe('NotificationProcessor', () => {
     expect(result).toEqual({ processed: false });
   });
 
+  it('accepts a STA-scope job with no schoolId/boardId', async () => {
+    const job = {
+      id: 'job-sta',
+      name: 'notification-request',
+      data: {
+        eventType: 'WEATHER_CLOSURE',
+        eventSourceId: 'alert-1',
+        recipientUserId: 'user-1',
+      },
+    } as any;
+
+    const result = await processor.process(job);
+
+    expect(mockRouter.route).toHaveBeenCalledWith(job.data);
+    expect(result).toEqual({ processed: true });
+  });
+
   it('should process EMERGENCY events', async () => {
     const job = {
       id: 'job-4',

@@ -11,7 +11,6 @@ export interface NotificationPreferenceDto {
 
 export interface UpdatePreferencesPayload {
   userId: string;
-  schoolId: string;
   preferences: NotificationPreferenceDto[];
 }
 
@@ -22,7 +21,6 @@ export interface RegisterDeviceTokenPayload {
    */
   recipientKind?: 'user' | 'guardian';
   recipientId: string;
-  schoolId: string;
   token: string;
   platform: string;
 }
@@ -40,13 +38,10 @@ export class NotificationSettingsGatewayService {
     );
   }
 
-  async getPreferences(
-    userId: string,
-    schoolId: string,
-  ): Promise<NotificationPreferenceDto[]> {
+  async getPreferences(userId: string): Promise<NotificationPreferenceDto[]> {
     const url = `${this.notificationServiceUrl}/api/v1/notification-preferences`;
     return this.httpClient.get<NotificationPreferenceDto[]>(url, {
-      params: { userId, schoolId },
+      params: { userId },
     });
   }
 
@@ -74,19 +69,18 @@ export class NotificationSettingsGatewayService {
 
   async getDeviceTokens(
     recipientId: string,
-    schoolId: string,
     recipientKind: 'user' | 'guardian' = 'user',
   ): Promise<any[]> {
     const url = `${this.notificationServiceUrl}/api/v1/device-tokens`;
     return this.httpClient.get(url, {
-      params: { recipientId, schoolId, recipientKind },
+      params: { recipientId, recipientKind },
     });
   }
 
-  async getDeliveryLog(userId: string, schoolId: string): Promise<any[]> {
+  async getDeliveryLog(userId: string): Promise<any[]> {
     const url = `${this.notificationServiceUrl}/api/v1/delivery-log`;
     return this.httpClient.get(url, {
-      params: { userId, schoolId },
+      params: { userId },
     });
   }
 }

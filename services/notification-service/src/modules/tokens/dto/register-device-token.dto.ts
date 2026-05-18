@@ -14,9 +14,6 @@ export class RegisterDeviceTokenDto {
   @IsUUID()
   recipientId: string;
 
-  @IsUUID()
-  schoolId: string;
-
   @IsString()
   token: string;
 

@@ -13,7 +13,8 @@ export class DeliveryLogService {
   ) {}
 
   async create(data: {
-    schoolId: string;
+    boardId?: string | null;
+    schoolId?: string | null;
     recipientUserId: string;
     eventType: string;
     eventSourceId: string;
@@ -23,7 +24,8 @@ export class DeliveryLogService {
     failureReason?: string;
   }): Promise<NotificationDeliveryLog> {
     const log = this.logRepo.create({
-      schoolId: data.schoolId,
+      boardId: data.boardId ?? null,
+      schoolId: data.schoolId ?? null,
       recipientUserId: data.recipientUserId,
       eventType: data.eventType,
       eventSourceId: data.eventSourceId,
@@ -50,11 +52,10 @@ export class DeliveryLogService {
 
   async getForUser(
     userId: string,
-    schoolId: string,
     limit = 50,
   ): Promise<NotificationDeliveryLog[]> {
     return this.logRepo.find({
-      where: { recipientUserId: userId, schoolId },
+      where: { recipientUserId: userId },
       order: { createdAt: 'DESC' },
       take: limit,
     });

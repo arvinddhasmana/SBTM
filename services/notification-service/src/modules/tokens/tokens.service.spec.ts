@@ -36,7 +36,6 @@ describe('TokensService', () => {
     const result = await service.register(
       'user',
       'user-1',
-      'school-1',
       'fcm-token-abc',
       'android',
     );
@@ -44,7 +43,6 @@ describe('TokensService', () => {
     expect(mockRepo.create).toHaveBeenCalledWith({
       recipientKind: 'user',
       recipientId: 'user-1',
-      schoolId: 'school-1',
       token: 'fcm-token-abc',
       platform: 'android',
       isActive: true,
@@ -60,7 +58,6 @@ describe('TokensService', () => {
     const result = await service.register(
       'guardian',
       'grd-1',
-      'school-1',
       'fcm-token-xyz',
       'ios',
     );
@@ -85,13 +82,7 @@ describe('TokensService', () => {
     };
     mockRepo.findOne.mockResolvedValue(existing);
 
-    await service.register(
-      'user',
-      'user-1',
-      'school-1',
-      'fcm-token-abc',
-      'android',
-    );
+    await service.register('user', 'user-1', 'fcm-token-abc', 'android');
 
     expect(mockRepo.findOne).toHaveBeenCalledWith({
       where: {
@@ -156,15 +147,14 @@ describe('TokensService', () => {
     });
   });
 
-  it('listForRecipient scopes by kind, id, and school', async () => {
+  it('listForRecipient scopes by kind and id', async () => {
     mockRepo.find.mockResolvedValue([]);
-    await service.listForRecipient('guardian', 'grd-1', 'school-1');
+    await service.listForRecipient('guardian', 'grd-1');
 
     expect(mockRepo.find).toHaveBeenCalledWith({
       where: {
         recipientKind: 'guardian',
         recipientId: 'grd-1',
-        schoolId: 'school-1',
       },
       order: { createdAt: 'DESC' },
     });

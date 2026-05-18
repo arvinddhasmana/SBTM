@@ -29,7 +29,6 @@ export type DeviceTokenRecipientKind = 'user' | 'guardian';
   'recipientId',
   'isActive',
 ])
-@Index(['schoolId'])
 export class DeviceToken {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -39,9 +38,6 @@ export class DeviceToken {
 
   @Column({ name: 'recipient_id', type: 'uuid' })
   recipientId: string;
-
-  @Column({ name: 'school_id', type: 'uuid' })
-  schoolId: string;
 
   @Column({ type: 'varchar', length: 512 })
   token: string;

@@ -16,7 +16,14 @@ interface NotificationRequest {
    * should pass 'guardian' so token lookup keys off stx_guardians.id.
    */
   recipientKind?: DeviceTokenRecipientKind;
-  schoolId: string;
+  /**
+   * v2-followups #1/#6: board/school are optional scope context that mirrors
+   * stx_alerts.scope_kind. STA-scope alerts omit both; board-scope sends
+   * boardId; school-scope sends both. The delivery log persists whatever is
+   * provided so audit reports can filter by tenant level.
+   */
+  boardId?: string;
+  schoolId?: string;
   routeId?: string;
   studentId?: string;
   emergencyType?: string;
@@ -147,7 +154,8 @@ export class NotificationRouterService {
         `No active device tokens for userId=${request.recipientUserId}`,
       );
       await this.deliveryLogService.create({
-        schoolId: request.schoolId,
+        schoolId: request.schoolId ?? null,
+        boardId: request.boardId ?? null,
         recipientUserId: request.recipientUserId,
         eventType: request.eventType,
         eventSourceId: request.eventSourceId,
@@ -179,7 +187,8 @@ export class NotificationRouterService {
       }
 
       await this.deliveryLogService.create({
-        schoolId: request.schoolId,
+        schoolId: request.schoolId ?? null,
+        boardId: request.boardId ?? null,
         recipientUserId: request.recipientUserId,
         eventType: request.eventType,
         eventSourceId: request.eventSourceId,
@@ -203,7 +212,8 @@ export class NotificationRouterService {
     const contact = await this.getUserContact(request.recipientUserId);
     if (!contact.email) {
       await this.deliveryLogService.create({
-        schoolId: request.schoolId,
+        schoolId: request.schoolId ?? null,
+        boardId: request.boardId ?? null,
         recipientUserId: request.recipientUserId,
         eventType: request.eventType,
         eventSourceId: request.eventSourceId,
@@ -218,7 +228,8 @@ export class NotificationRouterService {
     const result = await this.emailAdapter.send(contact.email, title, htmlBody);
 
     await this.deliveryLogService.create({
-      schoolId: request.schoolId,
+      schoolId: request.schoolId ?? null,
+      boardId: request.boardId ?? null,
       recipientUserId: request.recipientUserId,
       eventType: request.eventType,
       eventSourceId: request.eventSourceId,
@@ -236,7 +247,8 @@ export class NotificationRouterService {
     const contact = await this.getUserContact(request.recipientUserId);
     if (!contact.phone) {
       await this.deliveryLogService.create({
-        schoolId: request.schoolId,
+        schoolId: request.schoolId ?? null,
+        boardId: request.boardId ?? null,
         recipientUserId: request.recipientUserId,
         eventType: request.eventType,
         eventSourceId: request.eventSourceId,
@@ -250,7 +262,8 @@ export class NotificationRouterService {
     const result = await this.smsAdapter.send(contact.phone, body);
 
     await this.deliveryLogService.create({
-      schoolId: request.schoolId,
+      schoolId: request.schoolId ?? null,
+      boardId: request.boardId ?? null,
       recipientUserId: request.recipientUserId,
       eventType: request.eventType,
       eventSourceId: request.eventSourceId,

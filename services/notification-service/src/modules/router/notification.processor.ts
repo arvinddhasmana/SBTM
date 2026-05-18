@@ -24,13 +24,14 @@ export class NotificationProcessor extends WorkerHost {
       eventType: string;
       eventSourceId: string;
       recipientUserId: string;
-      schoolId: string;
+      boardId?: string;
+      schoolId?: string;
       routeId?: string;
       studentId?: string;
       emergencyType?: string;
     };
 
-    if (!request.eventType || !request.recipientUserId || !request.schoolId) {
+    if (!request.eventType || !request.recipientUserId) {
       this.logger.warn(
         `Notification job ${job.id} missing required fields — skipping`,
       );

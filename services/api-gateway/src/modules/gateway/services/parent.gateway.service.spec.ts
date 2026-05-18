@@ -14,10 +14,10 @@ import { Route } from '../../gtfs/entities/route.entity';
  * surfaces a vehicleId on the route record (phase-B TODO — resolved per-day from
  * `stx_runs`), so the dto's `vehicleId` is always undefined here.
  *
- * Note: `ParentUser.schoolId` is still consumed by `getNotificationsForParent`
- * pending the phase-B rewrite that derives it from
- * Guardian → StudentGuardian → Student → School joins. The current spec mirrors
- * the implementation (legacy claim path) rather than the future shape.
+ * v2-followups #1: getNotificationsForParent now passes parentUserId only.
+ * Audience resolution lives in the alerts service via stx_alert_subscriptions
+ * + Guardian → StudentGuardian → Student joins, so cross-board guardians get
+ * all their alerts in one call regardless of any per-user schoolId.
  */
 describe('ParentGatewayService (v2)', () => {
   let service: ParentGatewayService;
@@ -38,7 +38,6 @@ describe('ParentGatewayService (v2)', () => {
     id: 'parent-1',
     anchorKind: 'parent' as const,
     anchorId: 'grd-1',
-    schoolId: 'school-1',
   };
 
   beforeEach(async () => {
@@ -233,17 +232,17 @@ describe('ParentGatewayService (v2)', () => {
   });
 
   describe('getNotificationsForParent', () => {
-    it('forwards parentUserId + legacy schoolId to alerts service', async () => {
+    it('forwards parentUserId only (v2: no per-user school scoping)', async () => {
       httpClient.get.mockResolvedValueOnce([{ id: 'n-1' }]);
       const result = await service.getNotificationsForParent(parentUser);
       expect(result).toEqual([{ id: 'n-1' }]);
       expect(httpClient.get).toHaveBeenCalledWith(
         'http://alerts-service:3003/api/v1/notifications',
-        { params: { parentUserId: 'parent-1', schoolId: 'school-1' } },
+        { params: { parentUserId: 'parent-1' } },
       );
     });
 
-    it('omits schoolId when the user has none', async () => {
+    it('omits all extra params when only id is provided', async () => {
       httpClient.get.mockResolvedValueOnce([]);
       await service.getNotificationsForParent({ id: 'parent-2' });
       expect(httpClient.get).toHaveBeenCalledWith(

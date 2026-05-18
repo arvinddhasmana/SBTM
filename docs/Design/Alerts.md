@@ -88,6 +88,8 @@ Unique constraint: `(source, source_ref)` to enforce idempotency.
 | sent_at, delivered_at, failed_at | timestamptz |                                                               |
 | error                            | text        |                                                               |
 
+> **Scope-context fields on the delivery row** (notification-service `notification_delivery_log`): `board_id` and `school_id` are both **nullable** and mirror the originating alert's `scope_kind`. Concretely: `scope_kind='sta'` → both null; `scope_kind='board'` → `board_id` set, `school_id` null; `scope_kind='school'` or `'route'` → `school_id` set, `board_id` null. The delivery row is therefore a lookup-friendly projection of scope — it is **not** an authorisation surface (RLS still enforces tenancy via the recipient's anchor). Same rule applies to `device_tokens`: the row no longer carries `school_id` at all, since a single device receives alerts at every scope its recipient is subscribed to (`stx_alert_subscriptions`).
+
 ### 3.4 `stx_alert_audit`
 
 Standard audit row per state transition on `stx_alerts` (publish, supersede, cancel, edit).

@@ -8,10 +8,7 @@ export class DeliveryController {
   constructor(private readonly deliveryLogService: DeliveryLogService) {}
 
   @Get()
-  async getDeliveryLog(
-    @Query('userId') userId: string,
-    @Query('schoolId') schoolId: string,
-  ) {
-    return this.deliveryLogService.getForUser(userId, schoolId);
+  async getDeliveryLog(@Query('userId') userId: string) {
+    return this.deliveryLogService.getForUser(userId);
   }
 }

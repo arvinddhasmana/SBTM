@@ -18,7 +18,6 @@ export class TokensService {
   async register(
     recipientKind: DeviceTokenRecipientKind,
     recipientId: string,
-    schoolId: string,
     token: string,
     platform: string,
   ): Promise<DeviceToken> {
@@ -39,7 +38,6 @@ export class TokensService {
     const deviceToken = this.tokenRepo.create({
       recipientKind,
       recipientId,
-      schoolId,
       token,
       platform,
       isActive: true,
@@ -82,10 +80,9 @@ export class TokensService {
   async listForRecipient(
     recipientKind: DeviceTokenRecipientKind,
     recipientId: string,
-    schoolId: string,
   ): Promise<DeviceToken[]> {
     return this.tokenRepo.find({
-      where: { recipientKind, recipientId, schoolId },
+      where: { recipientKind, recipientId },
       order: { createdAt: 'DESC' },
     });
   }

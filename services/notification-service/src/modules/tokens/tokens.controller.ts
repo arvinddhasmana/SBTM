@@ -23,7 +23,6 @@ export class TokensController {
     return this.tokensService.register(
       dto.recipientKind ?? 'user',
       dto.recipientId,
-      dto.schoolId,
       dto.token,
       dto.platform,
     );
@@ -46,13 +45,11 @@ export class TokensController {
   @Get()
   async list(
     @Query('recipientId') recipientId: string,
-    @Query('schoolId') schoolId: string,
     @Query('recipientKind') recipientKind?: DeviceTokenRecipientKind,
   ) {
     return this.tokensService.listForRecipient(
       recipientKind ?? 'user',
       recipientId,
-      schoolId,
     );
   }
 }

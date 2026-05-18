@@ -208,4 +208,35 @@ describe('NotificationRouterService (v2)', () => {
       }),
     );
   });
+
+  it('persists null board/school for STA-scope notifications', async () => {
+    await service.route({
+      eventType: 'WEATHER_CLOSURE',
+      eventSourceId: 'alert-1',
+      recipientUserId: 'user-1',
+    });
+
+    expect(mockDeliveryLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        schoolId: null,
+        boardId: null,
+      }),
+    );
+  });
+
+  it('persists boardId for board-scope notifications', async () => {
+    await service.route({
+      eventType: 'ROUTE_CHANGE',
+      eventSourceId: 'alert-2',
+      recipientUserId: 'user-1',
+      boardId: 'board-1',
+    });
+
+    expect(mockDeliveryLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        boardId: 'board-1',
+        schoolId: null,
+      }),
+    );
+  });
 });

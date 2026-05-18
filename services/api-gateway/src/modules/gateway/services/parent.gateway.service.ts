@@ -13,12 +13,6 @@ interface ParentUser {
   id: string;
   anchorKind?: AnchorKind | null;
   anchorId?: string | null;
-  /**
-   * TODO(phase-B): drop this once getNotificationsForParent resolves the parent's child
-   * schools via Guardian → StudentGuardian → Student → School joins instead of trusting
-   * the legacy JWT claim.
-   */
-  schoolId?: string;
 }
 
 interface StudentRecord {
@@ -222,10 +216,12 @@ export class ParentGatewayService {
 
   async getNotificationsForParent(user: ParentUser): Promise<unknown[]> {
     const alertsUrl = `${this.configService.getOrThrow<string>('ALERTS_SERVICE_URL')}/api/v1/notifications`;
+    // v2-followups #1: school scoping is gone from req.user. The alerts
+    // service resolves audience for a guardian via stx_alert_subscriptions
+    // + Guardian → StudentGuardian → Student joins, so parentUserId alone
+    // is sufficient. Cross-board guardians (one child per board) now get
+    // both boards' alerts in a single call.
     const params: Record<string, string> = { parentUserId: user.id };
-    if (user.schoolId) {
-      params.schoolId = user.schoolId;
-    }
     try {
       return await this.httpClient.get<unknown[]>(alertsUrl, { params });
     } catch {
