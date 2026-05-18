@@ -24,9 +24,9 @@ export const SchoolsList: React.FC = () => {
   const [formError, setFormError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
-  const isOstaAdmin = user?.role === 'OSTA_ADMIN' || user?.role === 'SUPER_ADMIN';
+  const isStaAdmin = user?.role === 'STA_ADMIN' || user?.role === 'SUPER_ADMIN';
   const isBoardAdmin = user?.role === 'BOARD_ADMIN';
-  const canManage = isOstaAdmin || isBoardAdmin;
+  const canManage = isStaAdmin || isBoardAdmin;
 
   const schoolsQueryKey = queryKeys.schools.byBoard(
     isBoardAdmin && user?.boardId ? user.boardId : undefined,
@@ -97,7 +97,7 @@ export const SchoolsList: React.FC = () => {
   };
 
   const handleDelete = async (school: School) => {
-    if (!isOstaAdmin) return;
+    if (!isStaAdmin) return;
     if (!window.confirm(t('schools:deleteConfirm', { name: school.name }))) return;
     try {
       await organizationApi.deleteSchool(school.id);
@@ -150,7 +150,7 @@ export const SchoolsList: React.FC = () => {
                   maxLength={120}
                 />
               </div>
-              {isOstaAdmin && (
+              {isStaAdmin && (
                 <div>
                   <label className="block text-xs text-white/60 mb-1">
                     {t('schools:boardLabel')}
@@ -215,7 +215,7 @@ export const SchoolsList: React.FC = () => {
                           >
                             {t('schools:actions.edit')}
                           </button>
-                          {isOstaAdmin && (
+                          {isStaAdmin && (
                             <button
                               onClick={() => handleDelete(school)}
                               className="text-red-400 hover:text-red-300 text-sm"

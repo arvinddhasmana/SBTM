@@ -151,7 +151,7 @@
       "FALSE_ALARM": "False alarm",
       "PARENT_NOTIFIED": "Parents notified",
       "BOARD_ESCALATED": "Escalated to board",
-      "OSTA_ESCALATED": "Escalated to OSTA",
+      "STA_ESCALATED": "Escalated to STA",
       "RESOLVED": "Resolved",
       "INFO_REQUESTED": "Info requested",
       "STATUS_UPDATE": "Update"
@@ -196,7 +196,7 @@
       "FALSE_ALARM": "False Alarm",
       "PARENT_NOTIFIED": "Parents Notified",
       "BOARD_ESCALATED": "Escalated to Board",
-      "OSTA_ESCALATED": "Escalated to OSTA",
+      "STA_ESCALATED": "Escalated to STA",
       "RESOLVED": "Resolved",
       "INFO_REQUESTED": "Info Requested",
       "STATUS_UPDATE": "Status Update"

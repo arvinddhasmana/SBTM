@@ -15,7 +15,7 @@ vi.mock('../../context/AuthContext', () => ({
     user: {
       id: 'u-1',
       email: 'admin@osta.ca',
-      role: 'OSTA_ADMIN',
+      role: 'STA_ADMIN',
     },
   }),
 }));
@@ -47,7 +47,7 @@ describe('BoardsList Page', () => {
     expect(screen.getByText('School Boards')).toBeInTheDocument();
   });
 
-  it('shows Add Board button for OSTA admin', () => {
+  it('shows Add Board button for STA admin', () => {
     renderComponent();
     expect(screen.getByText('+ Add Board')).toBeInTheDocument();
   });

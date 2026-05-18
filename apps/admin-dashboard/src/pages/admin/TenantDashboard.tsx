@@ -30,7 +30,7 @@ export const TenantDashboard: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const isOstaAdmin = user?.role === 'OSTA_ADMIN' || user?.role === 'SUPER_ADMIN';
+  const isStaAdmin = user?.role === 'STA_ADMIN' || user?.role === 'SUPER_ADMIN';
   const isBoardAdmin = user?.role === 'BOARD_ADMIN';
 
   useEffect(() => {
@@ -38,7 +38,7 @@ export const TenantDashboard: React.FC = () => {
       setIsLoading(true);
       setError(null);
       try {
-        if (isOstaAdmin) {
+        if (isStaAdmin) {
           const [boardsData, schoolsData] = await Promise.all([
             organizationApi.listBoards(),
             organizationApi.listSchools(),
@@ -76,13 +76,13 @@ export const TenantDashboard: React.FC = () => {
     <div className="p-8">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-white">
-          {isOstaAdmin
-            ? t('dashboard:tenantDashboard.titleOsta')
+          {isStaAdmin
+            ? t('dashboard:tenantDashboard.titleSta')
             : t('dashboard:tenantDashboard.titleBoard')}
         </h1>
         <p className="text-white/50 text-sm mt-1">
-          {isOstaAdmin
-            ? t('dashboard:tenantDashboard.subtitleOsta')
+          {isStaAdmin
+            ? t('dashboard:tenantDashboard.subtitleSta')
             : t('dashboard:tenantDashboard.subtitleBoard', { boardId: user?.boardId ?? '—' })}
         </p>
       </div>
@@ -94,7 +94,7 @@ export const TenantDashboard: React.FC = () => {
       )}
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
-        {isOstaAdmin && (
+        {isStaAdmin && (
           <StatCard
             label={t('dashboard:tenantDashboard.statTotalBoards')}
             value={stats.boardCount}
@@ -105,12 +105,12 @@ export const TenantDashboard: React.FC = () => {
           label={t('dashboard:tenantDashboard.statTotalSchools')}
           value={stats.schoolCount}
           sub={
-            isOstaAdmin
-              ? t('dashboard:tenantDashboard.statTotalSchoolsSubOsta')
+            isStaAdmin
+              ? t('dashboard:tenantDashboard.statTotalSchoolsSubSta')
               : t('dashboard:tenantDashboard.statTotalSchoolsSubBoard')
           }
         />
-        {isOstaAdmin && (
+        {isStaAdmin && (
           <StatCard
             label={t('dashboard:tenantDashboard.statAvgSchools')}
             value={stats.boardCount > 0 ? (stats.schoolCount / stats.boardCount).toFixed(1) : '—'}
@@ -119,7 +119,7 @@ export const TenantDashboard: React.FC = () => {
         )}
       </div>
 
-      {isOstaAdmin && boards.length > 0 && (
+      {isStaAdmin && boards.length > 0 && (
         <>
           <h2 className="text-lg font-semibold text-white mb-3">
             {t('dashboard:tenantDashboard.boardsHeading')}
@@ -157,7 +157,7 @@ export const TenantDashboard: React.FC = () => {
               <thead className="bg-white/5 uppercase text-xs font-semibold">
                 <tr>
                   <th className="px-6 py-4">{t('dashboard:tenantDashboard.colSchoolName')}</th>
-                  {isOstaAdmin && (
+                  {isStaAdmin && (
                     <th className="px-6 py-4">{t('dashboard:tenantDashboard.colBoard')}</th>
                   )}
                 </tr>
@@ -168,7 +168,7 @@ export const TenantDashboard: React.FC = () => {
                   return (
                     <tr key={school.id} className="hover:bg-white/5 transition-colors">
                       <td className="px-6 py-4">{school.name}</td>
-                      {isOstaAdmin && (
+                      {isStaAdmin && (
                         <td className="px-6 py-4 text-white/60 text-sm">
                           {board?.name ?? school.boardId}
                         </td>

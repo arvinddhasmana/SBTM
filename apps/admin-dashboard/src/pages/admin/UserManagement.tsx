@@ -14,7 +14,7 @@ import type { School } from '../../services/api/organization.api';
 import Header from '../../components/common/Header';
 
 const INVITABLE_ROLES: InvitableRole[] = [
-  'OSTA_ADMIN',
+  'STA_ADMIN',
   'BOARD_ADMIN',
   'SCHOOL_ADMIN',
   'DRIVER',
@@ -52,7 +52,7 @@ export const UserManagement: React.FC = () => {
     queryFn: async () => {
       const [usersData, schoolsData] = await Promise.all([
         provisioningApi.listUsers(),
-        user?.role === 'SUPER_ADMIN' || user?.role === 'OSTA_ADMIN' || user?.role === 'BOARD_ADMIN'
+        user?.role === 'SUPER_ADMIN' || user?.role === 'STA_ADMIN' || user?.role === 'BOARD_ADMIN'
           ? organizationApi.listSchools(user?.boardId)
           : Promise.resolve([]),
       ]);
@@ -177,8 +177,8 @@ export const UserManagement: React.FC = () => {
                   {INVITABLE_ROLES.filter((r) => {
                     if (user?.role === 'SCHOOL_ADMIN') return r === 'DRIVER' || r === 'PARENT';
                     if (user?.role === 'BOARD_ADMIN')
-                      return r !== 'OSTA_ADMIN' && r !== 'BOARD_ADMIN';
-                    if (user?.role === 'OSTA_ADMIN') return r !== 'OSTA_ADMIN';
+                      return r !== 'STA_ADMIN' && r !== 'BOARD_ADMIN';
+                    if (user?.role === 'STA_ADMIN') return r !== 'STA_ADMIN';
                     return true;
                   }).map((r) => (
                     <option key={r} value={r}>

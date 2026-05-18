@@ -40,7 +40,7 @@ describe('provisioningApi', () => {
   describe('listUsers', () => {
     it('should return provisioned users from API', async () => {
       const mockUsers = [
-        { id: 'u-1', email: 'admin@example.com', role: 'OSTA_ADMIN', isActive: true },
+        { id: 'u-1', email: 'admin@example.com', role: 'STA_ADMIN', isActive: true },
         { id: 'u-2', email: 'driver@example.com', role: 'DRIVER', isActive: true },
       ];
 

@@ -111,7 +111,7 @@ function getCardAuditDotColor(eventType: string): string {
       return 'bg-green-400';
     case 'AUTO_ESCALATED':
     case 'BOARD_ESCALATED':
-    case 'OSTA_ESCALATED':
+    case 'STA_ESCALATED':
       return 'bg-orange-400';
     case 'FALSE_ALARM':
       return 'bg-slate-400';
@@ -136,7 +136,7 @@ function getCardAuditLabelColor(eventType: string): string {
       return 'text-green-400';
     case 'AUTO_ESCALATED':
     case 'BOARD_ESCALATED':
-    case 'OSTA_ESCALATED':
+    case 'STA_ESCALATED':
       return 'text-orange-400';
     case 'FALSE_ALARM':
       return 'text-slate-400';

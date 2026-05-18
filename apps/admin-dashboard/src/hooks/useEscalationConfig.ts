@@ -13,11 +13,11 @@ import type { EscalationConfig } from '../types/alert-config';
  * always win.
  */
 export const DEFAULT_ESCALATION_TIMING: Required<
-  Pick<EscalationConfig, 'confirmationTimeoutMs' | 'boardEscalationMs' | 'ostaEscalationMs'>
+  Pick<EscalationConfig, 'confirmationTimeoutMs' | 'boardEscalationMs' | 'staEscalationMs'>
 > = {
   confirmationTimeoutMs: 120_000,
   boardEscalationMs: 300_000,
-  ostaEscalationMs: 900_000,
+  staEscalationMs: 900_000,
 };
 
 /**

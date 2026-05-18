@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useCallback, type ReactNode
 import type { User, AuthState } from '../types';
 import { authApi } from '../services/api';
 
-const ADMIN_ROLES = ['SUPER_ADMIN', 'OSTA_ADMIN', 'BOARD_ADMIN', 'SCHOOL_ADMIN'];
+const ADMIN_ROLES = ['SUPER_ADMIN', 'STA_ADMIN', 'BOARD_ADMIN', 'SCHOOL_ADMIN'];
 
 interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<void>;

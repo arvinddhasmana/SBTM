@@ -29,7 +29,7 @@ export type AlertAuditEventType =
   | 'FALSE_ALARM'
   | 'PARENT_NOTIFIED'
   | 'BOARD_ESCALATED'
-  | 'OSTA_ESCALATED'
+  | 'STA_ESCALATED'
   | 'RESOLVED'
   | 'INFO_REQUESTED'
   | 'STATUS_UPDATE';
@@ -149,7 +149,7 @@ export type UserRole =
   | 'ADMIN'
   | 'DRIVER'
   | 'PARENT'
-  | 'OSTA_ADMIN'
+  | 'STA_ADMIN'
   | 'BOARD_ADMIN'
   | 'SCHOOL_ADMIN';
 

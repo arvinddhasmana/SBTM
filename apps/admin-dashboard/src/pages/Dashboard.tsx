@@ -51,7 +51,7 @@ const Dashboard: React.FC = () => {
   const canConfirm =
     user?.role === 'SCHOOL_ADMIN' ||
     user?.role === 'BOARD_ADMIN' ||
-    user?.role === 'OSTA_ADMIN' ||
+    user?.role === 'STA_ADMIN' ||
     user?.role === 'ADMIN';
 
   // --- Separate queries so alert actions don't nuke bus/student data ---

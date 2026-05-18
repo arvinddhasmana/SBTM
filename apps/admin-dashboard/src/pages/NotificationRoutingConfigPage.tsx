@@ -207,8 +207,8 @@ export const NotificationRoutingConfigPage: React.FC = () => {
                   <option value="BOARD_ADMIN">
                     {t('alertConfig:notificationRouting.form.roles.BOARD_ADMIN')}
                   </option>
-                  <option value="OSTA_ADMIN">
-                    {t('alertConfig:notificationRouting.form.roles.OSTA_ADMIN')}
+                  <option value="STA_ADMIN">
+                    {t('alertConfig:notificationRouting.form.roles.STA_ADMIN')}
                   </option>
                   <option value="PARENT">
                     {t('alertConfig:notificationRouting.form.roles.PARENT')}

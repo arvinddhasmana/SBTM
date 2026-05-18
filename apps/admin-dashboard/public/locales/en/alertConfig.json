@@ -51,13 +51,13 @@
       "title": "Timing Guidelines",
       "confirmation": "Confirmation Timeout: Time before auto-escalating to parents (TIER 1 only)",
       "board": "Board Escalation: Time before escalating to Board Admin",
-      "osta": "OSTA Escalation: Time before escalating to OSTA Admin",
+      "sta": "STA Escalation: Time before escalating to STA Admin",
       "units": "All times are in seconds. Leave empty to disable that escalation step."
     },
     "fields": {
       "confirmationTimeout": "Confirmation Timeout (seconds)",
       "boardEscalation": "Board Escalation (seconds)",
-      "ostaEscalation": "OSTA Escalation (seconds)",
+      "staEscalation": "STA Escalation (seconds)",
       "notSet": "Not set",
       "timeSeconds": "{{value}}s"
     },
@@ -65,7 +65,7 @@
       "confirmationTier1": "Time before parents are notified",
       "confirmationOther": "Not applicable for this tier",
       "board": "Time before escalating to Board Admin",
-      "osta": "Time before escalating to OSTA Admin"
+      "sta": "Time before escalating to STA Admin"
     },
     "badges": {
       "default": "Default"
@@ -154,7 +154,7 @@
       "roles": {
         "SCHOOL_ADMIN": "School Admin",
         "BOARD_ADMIN": "Board Admin",
-        "OSTA_ADMIN": "OSTA Admin",
+        "STA_ADMIN": "STA Admin",
         "PARENT": "Parent",
         "DRIVER": "Driver"
       },
@@ -217,7 +217,7 @@
         "PENDING": "Pending",
         "CONFIRMED": "Confirmed",
         "ESCALATED_TO_BOARD": "Escalated to Board",
-        "ESCALATED_TO_OSTA": "Escalated to OSTA",
+        "ESCALATED_TO_STA": "Escalated to STA",
         "RESOLVED": "Resolved",
         "FALSE_ALARM": "False Alarm",
         "ALL": "All Statuses"
@@ -226,7 +226,7 @@
       "roles": {
         "SCHOOL_ADMIN": "School Admin",
         "BOARD_ADMIN": "Board Admin",
-        "OSTA_ADMIN": "OSTA Admin",
+        "STA_ADMIN": "STA Admin",
         "SUPER_ADMIN": "Super Admin",
         "ANY_ADMIN": "Any Admin"
       },

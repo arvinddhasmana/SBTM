@@ -36,7 +36,7 @@ export const FleetAssignments: React.FC = () => {
   const [formEffectiveDate, setFormEffectiveDate] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const isOstaAdmin = user?.role === 'OSTA_ADMIN' || user?.role === 'SUPER_ADMIN';
+  const isStaAdmin = user?.role === 'STA_ADMIN' || user?.role === 'SUPER_ADMIN';
   const isSchoolAdmin = user?.role === 'SCHOOL_ADMIN';
 
   const handleDownloadPdf = useCallback(
@@ -122,7 +122,7 @@ export const FleetAssignments: React.FC = () => {
       <Header
         title={t('fleet:assignments.title')}
         action={
-          isOstaAdmin && (
+          isStaAdmin && (
             <button
               onClick={() => setShowProposalForm(!showProposalForm)}
               className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-500 text-white hover:bg-blue-600 transition-colors shadow-lg shadow-blue-500/25"
@@ -140,7 +140,7 @@ export const FleetAssignments: React.FC = () => {
           </div>
         )}
 
-        {showProposalForm && isOstaAdmin && (
+        {showProposalForm && isStaAdmin && (
           <div className="mb-6 bg-dashboard-card rounded-xl border border-white/10 p-6">
             <h2 className="text-lg font-bold text-white mb-4">
               {t('fleet:assignments.newProposalTitle')}

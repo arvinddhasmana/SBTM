@@ -50,7 +50,7 @@ describe('Login Page', () => {
   it('renders page title', () => {
     renderLogin();
 
-    expect(screen.getByText(/OSTA Admin Dashboard/i)).toBeInTheDocument();
+    expect(screen.getByText(/STA Admin Dashboard/i)).toBeInTheDocument();
     expect(screen.getByText(/Sign in to your account/i)).toBeInTheDocument();
   });
 

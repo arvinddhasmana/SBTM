@@ -7,7 +7,7 @@ const mockUser = {
   id: 'u-1',
   name: 'Jane Admin',
   email: 'jane@osta.ca',
-  role: 'OSTA_ADMIN',
+  role: 'STA_ADMIN',
 };
 
 vi.mock('../context/AuthContext', () => ({
@@ -37,7 +37,7 @@ describe('Settings Page', () => {
     renderSettings();
     expect(screen.getAllByText('Jane Admin').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('jane@osta.ca')).toBeInTheDocument();
-    expect(screen.getAllByText('OSTA_ADMIN').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('STA_ADMIN').length).toBeGreaterThanOrEqual(1);
   });
 
   it('renders notification preferences section', () => {

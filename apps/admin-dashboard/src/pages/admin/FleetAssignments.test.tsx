@@ -32,7 +32,7 @@ vi.mock('../../context/AuthContext', () => ({
     user: {
       id: 'u-1',
       email: 'admin@osta.ca',
-      role: 'OSTA_ADMIN',
+      role: 'STA_ADMIN',
     },
   }),
 }));
@@ -75,7 +75,7 @@ describe('FleetAssignments Page', () => {
     expect(screen.getByText('Fleet Assignments')).toBeInTheDocument();
   });
 
-  it('shows Create Proposal button for OSTA admin', () => {
+  it('shows Create Proposal button for STA admin', () => {
     renderComponent();
     expect(screen.getByText('Create Proposal')).toBeInTheDocument();
   });

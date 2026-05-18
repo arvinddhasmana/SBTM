@@ -12,7 +12,7 @@ export interface EscalationConfig {
   tier: string;
   confirmationTimeoutMs?: number;
   boardEscalationMs?: number;
-  ostaEscalationMs?: number;
+  staEscalationMs?: number;
   isDefault?: boolean;
   isActive?: boolean;
 }

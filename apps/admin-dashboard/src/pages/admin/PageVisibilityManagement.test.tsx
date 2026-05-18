@@ -40,14 +40,12 @@ vi.mock('../../services/api/page-visibility.api', () => ({
         updatedAt: '2026-05-14T00:00:00Z',
       },
     ]),
-    update: vi
-      .fn()
-      .mockResolvedValue({
-        pageKey: 'alerts',
-        pageName: 'Alerts',
-        isVisible: false,
-        updatedAt: '2026-05-14T00:00:00Z',
-      }),
+    update: vi.fn().mockResolvedValue({
+      pageKey: 'alerts',
+      pageName: 'Alerts',
+      isVisible: false,
+      updatedAt: '2026-05-14T00:00:00Z',
+    }),
   },
 }));
 
@@ -192,7 +190,7 @@ describe('PageVisibilityManagement', () => {
   it('denies access for non-Super-Admin', async () => {
     const { useAuth } = await import('../../context/AuthContext');
     vi.mocked(useAuth).mockReturnValueOnce({
-      user: { id: 'osta-1', email: 'osta@test.example', role: 'OSTA_ADMIN' },
+      user: { id: 'osta-1', email: 'osta@test.example', role: 'STA_ADMIN' },
     } as ReturnType<typeof useAuth>);
 
     renderComponent();

@@ -1,6 +1,6 @@
 import { apiClient } from './api-client';
 
-export type InvitableRole = 'OSTA_ADMIN' | 'BOARD_ADMIN' | 'SCHOOL_ADMIN' | 'DRIVER' | 'PARENT';
+export type InvitableRole = 'STA_ADMIN' | 'BOARD_ADMIN' | 'SCHOOL_ADMIN' | 'DRIVER' | 'PARENT';
 
 export interface InviteUserPayload {
   email: string;

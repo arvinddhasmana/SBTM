@@ -90,7 +90,7 @@ const Alerts: React.FC = () => {
   const canConfirm =
     user?.role === 'SCHOOL_ADMIN' ||
     user?.role === 'BOARD_ADMIN' ||
-    user?.role === 'OSTA_ADMIN' ||
+    user?.role === 'STA_ADMIN' ||
     user?.role === 'ADMIN';
 
   const handleResolve = async (id: string, notes?: string) => {

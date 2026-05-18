@@ -197,8 +197,8 @@ export const WorkflowConfigPage: React.FC = () => {
                   <option value="ESCALATED_TO_BOARD">
                     {t('alertConfig:workflow.form.statuses.ESCALATED_TO_BOARD')}
                   </option>
-                  <option value="ESCALATED_TO_OSTA">
-                    {t('alertConfig:workflow.form.statuses.ESCALATED_TO_OSTA')}
+                  <option value="ESCALATED_TO_STA">
+                    {t('alertConfig:workflow.form.statuses.ESCALATED_TO_STA')}
                   </option>
                   <option value="RESOLVED">
                     {t('alertConfig:workflow.form.statuses.RESOLVED')}
@@ -225,8 +225,8 @@ export const WorkflowConfigPage: React.FC = () => {
                   <option value="BOARD_ADMIN">
                     {t('alertConfig:workflow.form.roles.BOARD_ADMIN')}
                   </option>
-                  <option value="OSTA_ADMIN">
-                    {t('alertConfig:workflow.form.roles.OSTA_ADMIN')}
+                  <option value="STA_ADMIN">
+                    {t('alertConfig:workflow.form.roles.STA_ADMIN')}
                   </option>
                   <option value="SUPER_ADMIN">
                     {t('alertConfig:workflow.form.roles.SUPER_ADMIN')}

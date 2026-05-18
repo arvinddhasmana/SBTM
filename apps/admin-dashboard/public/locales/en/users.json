@@ -8,7 +8,7 @@
   "schoolLabel": "School",
   "selectSchool": "Select a school…",
   "roles": {
-    "OSTA_ADMIN": "OSTA Admin",
+    "STA_ADMIN": "STA Admin",
     "BOARD_ADMIN": "Board Admin",
     "SCHOOL_ADMIN": "School Admin",
     "DRIVER": "Driver",

@@ -82,7 +82,7 @@ export const EscalationTimingConfigPage: React.FC = () => {
           <ul className="text-gray-300 text-sm space-y-1">
             <li>• {t('alertConfig:escalationTiming.guidelines.confirmation')}</li>
             <li>• {t('alertConfig:escalationTiming.guidelines.board')}</li>
-            <li>• {t('alertConfig:escalationTiming.guidelines.osta')}</li>
+            <li>• {t('alertConfig:escalationTiming.guidelines.sta')}</li>
             <li>• {t('alertConfig:escalationTiming.guidelines.units')}</li>
           </ul>
         </div>
@@ -208,19 +208,19 @@ export const EscalationTimingConfigPage: React.FC = () => {
                     </p>
                   </div>
 
-                  {/* OSTA Escalation */}
+                  {/* STA Escalation */}
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
-                      {t('alertConfig:escalationTiming.fields.ostaEscalation')}
+                      {t('alertConfig:escalationTiming.fields.staEscalation')}
                     </label>
                     {isEditing ? (
                       <input
                         type="number"
-                        value={msToSeconds(formData.ostaEscalationMs)}
+                        value={msToSeconds(formData.staEscalationMs)}
                         onChange={(e) =>
                           setFormData({
                             ...formData,
-                            ostaEscalationMs: secondsToMs(e.target.value),
+                            staEscalationMs: secondsToMs(e.target.value),
                           })
                         }
                         className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
@@ -229,13 +229,13 @@ export const EscalationTimingConfigPage: React.FC = () => {
                       />
                     ) : (
                       <div className="text-white text-lg font-semibold">
-                        {currentData.ostaEscalationMs
-                          ? `${currentData.ostaEscalationMs / 1000}s`
+                        {currentData.staEscalationMs
+                          ? `${currentData.staEscalationMs / 1000}s`
                           : t('alertConfig:escalationTiming.fields.notSet')}
                       </div>
                     )}
                     <p className="text-xs text-gray-500 mt-1">
-                      {t('alertConfig:escalationTiming.hints.osta')}
+                      {t('alertConfig:escalationTiming.hints.sta')}
                     </p>
                   </div>
                 </div>

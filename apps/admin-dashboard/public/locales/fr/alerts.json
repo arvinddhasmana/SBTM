@@ -151,7 +151,7 @@
       "FALSE_ALARM": "Fausse alarme",
       "PARENT_NOTIFIED": "Parents notifiés",
       "BOARD_ESCALATED": "Escaladée au conseil",
-      "OSTA_ESCALATED": "Escaladée à l'OSTA",
+      "STA_ESCALATED": "Escaladée à l'STA",
       "RESOLVED": "Résolue",
       "INFO_REQUESTED": "Info demandée",
       "STATUS_UPDATE": "Mise à jour"
@@ -191,7 +191,7 @@
       "FALSE_ALARM": "Fausse alarme",
       "PARENT_NOTIFIED": "Parents notifiés",
       "BOARD_ESCALATED": "Escaladée au conseil",
-      "OSTA_ESCALATED": "Escaladée à l'OSTA",
+      "STA_ESCALATED": "Escaladée à l'STA",
       "RESOLVED": "Résolue",
       "INFO_REQUESTED": "Info demandée",
       "STATUS_UPDATE": "Mise à jour du statut"

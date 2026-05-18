@@ -9,7 +9,7 @@ vi.mock('../../context/AuthContext', () => ({
     user: {
       id: 'osta-1',
       email: 'admin@test.example',
-      role: 'OSTA_ADMIN',
+      role: 'STA_ADMIN',
     },
   }),
 }));

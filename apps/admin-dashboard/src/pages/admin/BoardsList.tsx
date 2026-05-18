@@ -23,7 +23,7 @@ export const BoardsList: React.FC = () => {
   const [formError, setFormError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
-  const isOstaAdmin = user?.role === 'OSTA_ADMIN' || user?.role === 'SUPER_ADMIN';
+  const isStaAdmin = user?.role === 'STA_ADMIN' || user?.role === 'SUPER_ADMIN';
 
   const fetchBoards = async () => {
     setIsLoading(true);
@@ -99,7 +99,7 @@ export const BoardsList: React.FC = () => {
       <Header
         title={t('boards:title')}
         action={
-          isOstaAdmin && (
+          isStaAdmin && (
             <button
               onClick={openCreateForm}
               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
@@ -160,7 +160,7 @@ export const BoardsList: React.FC = () => {
                 <tr>
                   <th className="px-6 py-4">{t('boards:columns.name')}</th>
                   <th className="px-6 py-4">{t('boards:columns.schools')}</th>
-                  {isOstaAdmin && <th className="px-6 py-4">{t('boards:columns.actions')}</th>}
+                  {isStaAdmin && <th className="px-6 py-4">{t('boards:columns.actions')}</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/10">
@@ -168,7 +168,7 @@ export const BoardsList: React.FC = () => {
                   <tr key={board.id} className="hover:bg-white/5 transition-colors">
                     <td className="px-6 py-4">{board.name}</td>
                     <td className="px-6 py-4 text-white/60">{board.schools?.length ?? '—'}</td>
-                    {isOstaAdmin && (
+                    {isStaAdmin && (
                       <td className="px-6 py-4">
                         <div className="flex gap-2">
                           <button
@@ -191,7 +191,7 @@ export const BoardsList: React.FC = () => {
                 {boards.length === 0 && (
                   <tr>
                     <td
-                      colSpan={isOstaAdmin ? 3 : 2}
+                      colSpan={isStaAdmin ? 3 : 2}
                       className="px-6 py-8 text-center text-white/50"
                     >
                       {t('boards:empty')}

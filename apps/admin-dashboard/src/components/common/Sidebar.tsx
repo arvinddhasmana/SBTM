@@ -35,7 +35,7 @@ interface NavItem {
   pageKey?: string;
 }
 
-const ALL_ADMIN_ROLES: UserRole[] = ['SUPER_ADMIN', 'OSTA_ADMIN', 'BOARD_ADMIN', 'SCHOOL_ADMIN'];
+const ALL_ADMIN_ROLES: UserRole[] = ['SUPER_ADMIN', 'STA_ADMIN', 'BOARD_ADMIN', 'SCHOOL_ADMIN'];
 
 const navItems: NavItem[] = [
   {
@@ -77,7 +77,7 @@ const navItems: NavItem[] = [
     path: '/vehicles',
     icon: <Bus size={20} />,
     labelKey: 'nav.fleet',
-    allowedRoles: ['SUPER_ADMIN', 'OSTA_ADMIN'],
+    allowedRoles: ['SUPER_ADMIN', 'STA_ADMIN'],
     pageKey: 'vehicles',
   },
   {
@@ -112,14 +112,14 @@ const navItems: NavItem[] = [
     path: '/boards',
     icon: <Building2 size={20} />,
     labelKey: 'nav.boards',
-    allowedRoles: ['SUPER_ADMIN', 'OSTA_ADMIN'],
+    allowedRoles: ['SUPER_ADMIN', 'STA_ADMIN'],
     pageKey: 'boards',
   },
   {
     path: '/schools',
     icon: <School size={20} />,
     labelKey: 'nav.schools',
-    allowedRoles: ['SUPER_ADMIN', 'OSTA_ADMIN', 'BOARD_ADMIN'],
+    allowedRoles: ['SUPER_ADMIN', 'STA_ADMIN', 'BOARD_ADMIN'],
     pageKey: 'schools',
   },
   {

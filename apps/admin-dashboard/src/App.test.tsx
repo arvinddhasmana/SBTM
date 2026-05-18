@@ -6,31 +6,34 @@ vi.mock('./index.css', () => ({}));
 
 // Mock the components that import CSS
 vi.mock('./App', async () => {
-    const React = await import('react');
-    return {
-        default: () => React.createElement('div', { 'data-testid': 'app' },
-            React.createElement('h1', null, 'OSTA Admin Dashboard'),
-            React.createElement('p', null, 'Sign in to your account')
-        ),
-    };
+  const React = await import('react');
+  return {
+    default: () =>
+      React.createElement(
+        'div',
+        { 'data-testid': 'app' },
+        React.createElement('h1', null, 'STA Admin Dashboard'),
+        React.createElement('p', null, 'Sign in to your account'),
+      ),
+  };
 });
 
 describe('App', () => {
-    it('renders login page elements', async () => {
-        const { default: App } = await import('./App');
-        render(<App />);
-        expect(screen.getByTestId('app')).toBeInTheDocument();
-    });
+  it('renders login page elements', async () => {
+    const { default: App } = await import('./App');
+    render(<App />);
+    expect(screen.getByTestId('app')).toBeInTheDocument();
+  });
 
-    it('renders app title', async () => {
-        const { default: App } = await import('./App');
-        render(<App />);
-        expect(screen.getByText(/OSTA Admin Dashboard/i)).toBeInTheDocument();
-    });
+  it('renders app title', async () => {
+    const { default: App } = await import('./App');
+    render(<App />);
+    expect(screen.getByText(/STA Admin Dashboard/i)).toBeInTheDocument();
+  });
 
-    it('shows sign in text', async () => {
-        const { default: App } = await import('./App');
-        render(<App />);
-        expect(screen.getByText(/Sign in to your account/i)).toBeInTheDocument();
-    });
+  it('shows sign in text', async () => {
+    const { default: App } = await import('./App');
+    render(<App />);
+    expect(screen.getByText(/Sign in to your account/i)).toBeInTheDocument();
+  });
 });

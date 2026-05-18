@@ -20,7 +20,7 @@ vi.mock('../../context/AuthContext', () => ({
     user: {
       id: 'u-1',
       email: 'admin@osta.ca',
-      role: 'OSTA_ADMIN',
+      role: 'STA_ADMIN',
     },
   })),
 }));
@@ -50,10 +50,10 @@ describe('TenantDashboard Page', () => {
     expect(screen.getByText(/Loading tenant overview/i)).toBeInTheDocument();
   });
 
-  it('renders OSTA-Wide Overview heading for admin', async () => {
+  it('renders STA-Wide Overview heading for admin', async () => {
     renderComponent();
     await waitFor(() => {
-      expect(screen.getByText('OSTA-Wide Overview')).toBeInTheDocument();
+      expect(screen.getByText('STA-Wide Overview')).toBeInTheDocument();
     });
   });
 

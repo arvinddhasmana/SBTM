@@ -36,7 +36,7 @@ const TRANSLATIONS: Record<string, string> = {
   'nav.logout': 'Logout',
   'nav.collapseMenu': 'Collapse Menu',
   'nav.expandMenu': 'Expand Menu',
-  'app.title': 'OSTA Admin',
+  'app.title': 'STA Admin',
   'app.subtitle': 'Transport Management',
 };
 
@@ -118,7 +118,7 @@ describe('Sidebar', () => {
   it('renders the logo and title', () => {
     renderSidebar();
 
-    expect(screen.getByText('OSTA Admin')).toBeInTheDocument();
+    expect(screen.getByText('STA Admin')).toBeInTheDocument();
     expect(screen.getByText('Transport Management')).toBeInTheDocument();
   });
 
@@ -176,9 +176,9 @@ describe('Sidebar', () => {
     });
   });
 
-  describe('OSTA_ADMIN role', () => {
+  describe('STA_ADMIN role', () => {
     beforeEach(() => {
-      mockUseAuth.mockReturnValue(createAuthMock('OSTA_ADMIN'));
+      mockUseAuth.mockReturnValue(createAuthMock('STA_ADMIN'));
     });
 
     it('sees common admin items plus Fleet, Boards and Schools', () => {

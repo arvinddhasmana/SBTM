@@ -51,13 +51,13 @@
       "title": "Directives de délais",
       "confirmation": "Délai de confirmation : Temps avant escalade automatique aux parents (NIVEAU 1 uniquement)",
       "board": "Escalade au conseil : Temps avant escalade à l'administrateur du conseil",
-      "osta": "Escalade OSTA : Temps avant escalade à l'administrateur OSTA",
+      "sta": "Escalade STA : Temps avant escalade à l'administrateur STA",
       "units": "Tous les délais sont en secondes. Laisser vide pour désactiver cette étape d'escalade."
     },
     "fields": {
       "confirmationTimeout": "Délai de confirmation (secondes)",
       "boardEscalation": "Escalade au conseil (secondes)",
-      "ostaEscalation": "Escalade OSTA (secondes)",
+      "staEscalation": "Escalade STA (secondes)",
       "notSet": "Non défini",
       "timeSeconds": "{{value}}s"
     },
@@ -65,7 +65,7 @@
       "confirmationTier1": "Temps avant notification des parents",
       "confirmationOther": "Non applicable pour ce niveau",
       "board": "Temps avant escalade à l'administrateur du conseil",
-      "osta": "Temps avant escalade à l'administrateur OSTA"
+      "sta": "Temps avant escalade à l'administrateur STA"
     },
     "badges": {
       "default": "Par défaut"
@@ -154,7 +154,7 @@
       "roles": {
         "SCHOOL_ADMIN": "Admin École",
         "BOARD_ADMIN": "Admin Conseil",
-        "OSTA_ADMIN": "Admin OSTA",
+        "STA_ADMIN": "Admin STA",
         "PARENT": "Parent",
         "DRIVER": "Conducteur"
       },
@@ -217,7 +217,7 @@
         "PENDING": "En attente",
         "CONFIRMED": "Confirmé",
         "ESCALATED_TO_BOARD": "Escaladé au conseil",
-        "ESCALATED_TO_OSTA": "Escaladé à l'OSTA",
+        "ESCALATED_TO_STA": "Escaladé à l'STA",
         "RESOLVED": "Résolu",
         "FALSE_ALARM": "Fausse alarme",
         "ALL": "Tous les statuts"
@@ -226,7 +226,7 @@
       "roles": {
         "SCHOOL_ADMIN": "Admin École",
         "BOARD_ADMIN": "Admin Conseil",
-        "OSTA_ADMIN": "Admin OSTA",
+        "STA_ADMIN": "Admin STA",
         "SUPER_ADMIN": "Super Admin",
         "ANY_ADMIN": "Tout administrateur"
       },

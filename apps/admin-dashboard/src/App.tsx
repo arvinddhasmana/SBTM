@@ -46,7 +46,7 @@ import {
 } from './pages';
 import './index.css';
 
-const ALL_ADMIN_ROLES: UserRole[] = ['SUPER_ADMIN', 'OSTA_ADMIN', 'BOARD_ADMIN', 'SCHOOL_ADMIN'];
+const ALL_ADMIN_ROLES: UserRole[] = ['SUPER_ADMIN', 'STA_ADMIN', 'BOARD_ADMIN', 'SCHOOL_ADMIN'];
 
 // Protected Route wrapper
 const ProtectedRoute: React.FC = () => {
@@ -179,7 +179,7 @@ const AppRoutes: React.FC = () => {
         <Route
           path="/vehicles"
           element={
-            <RoleGuard allowedRoles={['SUPER_ADMIN', 'OSTA_ADMIN']}>
+            <RoleGuard allowedRoles={['SUPER_ADMIN', 'STA_ADMIN']}>
               <VisibilityGuard pageKey="vehicles">
                 <Vehicles />
               </VisibilityGuard>
@@ -197,7 +197,7 @@ const AppRoutes: React.FC = () => {
         <Route
           path="/boards"
           element={
-            <RoleGuard allowedRoles={['SUPER_ADMIN', 'OSTA_ADMIN']}>
+            <RoleGuard allowedRoles={['SUPER_ADMIN', 'STA_ADMIN']}>
               <VisibilityGuard pageKey="boards">
                 <BoardsList />
               </VisibilityGuard>
@@ -207,7 +207,7 @@ const AppRoutes: React.FC = () => {
         <Route
           path="/schools"
           element={
-            <RoleGuard allowedRoles={['SUPER_ADMIN', 'OSTA_ADMIN', 'BOARD_ADMIN']}>
+            <RoleGuard allowedRoles={['SUPER_ADMIN', 'STA_ADMIN', 'BOARD_ADMIN']}>
               <VisibilityGuard pageKey="schools">
                 <SchoolsList />
               </VisibilityGuard>
@@ -227,7 +227,7 @@ const AppRoutes: React.FC = () => {
         <Route
           path="/tenant-overview"
           element={
-            <RoleGuard allowedRoles={['SUPER_ADMIN', 'OSTA_ADMIN', 'BOARD_ADMIN']}>
+            <RoleGuard allowedRoles={['SUPER_ADMIN', 'STA_ADMIN', 'BOARD_ADMIN']}>
               <VisibilityGuard pageKey="tenant-overview">
                 <TenantDashboard />
               </VisibilityGuard>
