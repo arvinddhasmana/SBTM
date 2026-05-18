@@ -15,6 +15,7 @@ export * from './admin/UserManagement';
 export * from './admin/TenantDashboard';
 export * from './admin/AbsenceManagement';
 export * from './admin/FleetAssignments';
+export { default as StaImport } from './admin/StaImport';
 export { default as AlertConfigDashboard } from './AlertConfigDashboard';
 export { default as EventTypeConfigPage } from './EventTypeConfigPage';
 export { default as EscalationTimingConfigPage } from './EscalationTimingConfigPage';

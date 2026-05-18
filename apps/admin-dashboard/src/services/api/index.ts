@@ -10,6 +10,7 @@ import { organizationApi as realOrganizationApi } from './organization.api';
 import { provisioningApi as realProvisioningApi } from './provisioning.api';
 import { absenceApi as realAbsenceApi } from './absence.api';
 import { fleetAssignmentApi as realFleetAssignmentApi } from './fleet-assignment.api';
+import { importerApi as realImporterApi } from './importer.api';
 
 import {
   mockAuthApi,
@@ -25,6 +26,7 @@ import {
   mockAbsenceApi,
   mockFleetAssignmentApi,
 } from '../mock';
+import { mockImporterApi } from './importer.api';
 
 export const useMock =
   import.meta.env.VITE_USE_MOCK === 'true' ||
@@ -56,3 +58,4 @@ export const organizationApi = useMock ? mockOrganizationApi : realOrganizationA
 export const provisioningApi = useMock ? mockProvisioningApi : realProvisioningApi;
 export const absenceApi = useMock ? mockAbsenceApi : realAbsenceApi;
 export const fleetAssignmentApi = useMock ? mockFleetAssignmentApi : realFleetAssignmentApi;
+export const importerApi = useMock ? mockImporterApi : realImporterApi;

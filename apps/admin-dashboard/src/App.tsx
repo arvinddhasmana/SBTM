@@ -43,6 +43,7 @@ import {
   ConfigAuditLogPage,
   GpsSourceSettingsPage,
   PageVisibilityManagement,
+  StaImport,
 } from './pages';
 import './index.css';
 
@@ -282,6 +283,16 @@ const AppRoutes: React.FC = () => {
           element={
             <RoleGuard allowedRoles={['SUPER_ADMIN']}>
               <PageVisibilityManagement />
+            </RoleGuard>
+          }
+        />
+        <Route
+          path="/import"
+          element={
+            <RoleGuard allowedRoles={['SUPER_ADMIN', 'STA_ADMIN', 'BOARD_ADMIN']}>
+              <VisibilityGuard pageKey="import">
+                <StaImport />
+              </VisibilityGuard>
             </RoleGuard>
           }
         />

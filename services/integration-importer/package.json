@@ -16,7 +16,8 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
-    "import:sample": "ts-node scripts/import-sample.ts"
+    "import:sample": "ts-node scripts/import-sample.ts",
+    "import:dry-run": "ts-node scripts/import-dry-run.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

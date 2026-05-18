@@ -35,6 +35,7 @@ import { FleetAssignmentController } from './controllers/fleet-assignment.contro
 import { DocumentController } from './controllers/document.controller';
 import { SystemSettingsController } from './controllers/system-settings.controller';
 import { PageVisibilityController } from './controllers/page-visibility.controller';
+import { ImportController } from './controllers/import.controller';
 import { School } from '../organization/entities/school.entity';
 import { Board } from '../organization/entities/board.entity';
 import { Route } from '../gtfs/entities/route.entity';
@@ -64,6 +65,7 @@ import { piiCryptoProvider } from './services/pii-crypto.provider';
     DocumentController,
     SystemSettingsController,
     PageVisibilityController,
+    ImportController,
   ],
   providers: [
     GpsGatewayService,
