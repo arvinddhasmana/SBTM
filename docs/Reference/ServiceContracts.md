@@ -137,7 +137,7 @@ BLE detection batch:
 ## Tenant and Auth Contract Rules
 
 - Gateway remains the authoritative edge for JWT validation.
-- `OSTA_ADMIN`, `ADMIN`, and `SYSTEM` currently have broad access in tenant guard logic.
+- `STA_ADMIN`, `ADMIN`, and `SYSTEM` currently have broad access in tenant guard logic.
 - `BOARD_ADMIN` checks are only partially enforced because board-to-school validation is incomplete downstream.
 - `SCHOOL_ADMIN` checks rely on `schoolId` alignment in params, query, or body.
 - Parent access to route telemetry is controlled via `childRouteIds`.

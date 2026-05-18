@@ -1,5 +1,7 @@
 # PRD (Product Roadmap) - Complete Reference
 
+> **Historical record (pre-v2 cutover).** This consolidated PRD references the legacy `OSTA_ADMIN` role, the v1 `FleetAssignment` workflow, `EmergencyAlert` flow, and `Route.polyline` column — all of which were removed by the v2 aggressive cutover (`docs/Design/SchemaAudit-And-Migration.md`). Treat this document as product-history context; the current data model and RBAC live in `docs/Design/DataModel-v2.md` §10 and the current API contract in `docs/Reference/Reference-Complete.md`.
+
 ## Table of Contents
 
 ### v1

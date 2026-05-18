@@ -1,5 +1,7 @@
 # SBTM v4 Upgrade Plan
 
+> **Historical record (pre-v2 cutover).** This plan documents the pre-v2 implementation work and references the legacy `OSTA_ADMIN` role and v1 entity names (`SchoolBoard`, `Route.polyline`, `EmergencyAlert`, `FleetAssignment`, etc.). Those names have since been removed from the codebase by the v2 aggressive cutover (see `docs/Design/SchemaAudit-And-Migration.md`). Read this doc for product-history context; do not use it as a current API or RBAC reference — for that see `docs/Design/DataModel-v2.md` §10 and `docs/Reference/Reference-Complete.md`.
+
 - Document owner: Product and Architecture
 - Last reviewed: 2026-04-06
 - Scope: Phased delivery plan from current state to production-ready system

@@ -147,7 +147,7 @@ Pre-production posture lets us delete v1 outright. Each phase is sequential — 
 2. `DataModel-v2.md` §10 RBAC table: the "OSTA Admin (deprecated alias)" row is removed.
 3. Archive any stale ADR mentioning dual-write.
 
-**Verification F**: `grep -R "dual-write\|expand-migrate-contract\|OSTA_ADMIN" docs/` is empty.
+**Verification F**: `grep -RE "OSTA_ADMIN|Route\.polyline" docs/ --include='*.md' | grep -v "docs/prd/" | grep -v "dropped\|deleted\|removed\|negation\|historical"` is empty. The intentional negations in this file ("supersedes dual-write", "no dual-write parity dashboards", "skipping the dual-write tax") and the historical PRDs under `docs/prd/` (carrying a "Historical record (pre-v2 cutover)" banner) are excluded by design — they document the trade-off, not a surviving v1 code path.
 
 ### Rollback posture
 

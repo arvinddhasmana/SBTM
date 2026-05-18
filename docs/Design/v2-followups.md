@@ -95,10 +95,9 @@ Open work items deferred from the aggressive cutover (commits 497497c Phase A, 3
 
 ### 11. Docs alignment (Phase F)
 
-- **Where**: `docs/Design/SchemaAudit-And-Migration.md` (still describes dual-write), `docs/Design/DataModel-v2.md` §10 (still mentions OSTA Admin alias), various PRDs.
-- **Symptom**: documentation drift from code.
-- **Fix**: per plan Phase F.
-- **Size**: 1 day.
+- **Where**: `docs/Design/SchemaAudit-And-Migration.md`, `docs/Design/DataModel-v2.md` §10, `docs/Design/RoutePlanner.md`, `docs/Reference/Reference-Complete.md`, `docs/Reference/ServiceContracts.md`, `docs/prd/PRD-Complete.md`, `docs/prd/v4/UpgradePlan.md`, `docs/prd/v4/ImplementationPlanForPhaseBAlertGovernanceandConfirmation.md`.
+- **Status**: **done on `feat/sbtm-refocus-data-model`**. Audit found `SchemaAudit-And-Migration.md` and `DataModel-v2.md` §10 already aligned (every dual-write reference is an explicit negation; no OSTA Admin alias row exists). `RoutePlanner.md` §4 lost its stale "read-only after Phase B dual-read flip; removed in Phase C" line — `Route.polyline` is dropped outright in Phase A. `Reference-Complete.md` (31 occurrences) and `ServiceContracts.md` (1 occurrence) renamed `OSTA_ADMIN` → `STA_ADMIN` since they describe the current API contract. The three historical PRDs (`PRD-Complete.md`, `UpgradePlan.md`, `ImplementationPlanForPhaseBAlertGovernanceandConfirmation.md`) gained a "Historical record (pre-v2 cutover)" banner pointing readers to `DataModel-v2.md` §10 + `Reference-Complete.md` for current truth — those docs still reference v1 entity names by design (they describe pre-v2 work). The Phase F verification grep in `SchemaAudit-And-Migration.md` was sharpened to exclude the intentional negations and the banner-tagged PRDs.
+- **Size**: closed.
 
 ## How to use this file
 

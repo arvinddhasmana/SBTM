@@ -1,5 +1,7 @@
 ## Plan: Phase B — Alert Governance and Confirmation
 
+> **Historical record (pre-v2 cutover).** This plan references v1 endpoints, the `EmergencyAlert` entity, and the `OSTA_ADMIN` role — all replaced by `stx_alerts` + `STA_ADMIN` in v2 (`docs/Design/Alerts.md`, `docs/Design/DataModel-v2.md` §10). Kept for product-history context; not a current implementation reference.
+
 Implement alert tier classification (Tier 1/2/3), admin confirmation workflow with auto-escalation, escalation chain (School → Board → OSTA), operational alerts dashboard, and full audit trail. This transforms the current simple ACTIVE/RESOLVED alert lifecycle into a governed process where Tier 1 safety alerts require School Admin confirmation before parent delivery, with timeout-based auto-escalation.
 
 ---

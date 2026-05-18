@@ -41,7 +41,7 @@ Provide STA / Board / School Admins (per RBAC) a map-based UI to inspect and ref
 
 - New GTFS table `shapes` (one row per `(shape_id, shape_pt_sequence)`). One `shape_id` per `routes.route_id` is the common case; multi-shape routes are supported.
 - `routes.stx_shape_source` enum tracks provenance: `sta_import` | `sbtm_generated` | `sta_admin_edited`. Edits in the Route Planner UI set it to `sta_admin_edited` and the import pipeline will not overwrite without explicit operator opt-in.
-- `Route.polyline` (v1 text column) is read-only after Phase B dual-read flip; removed in Phase C.
+- `Route.polyline` (v1 text column) is **dropped outright** in the Phase A schema reset per `SchemaAudit-And-Migration.md` — no dual-read window, no retention. All alignment reads/writes go through the `shapes` table.
 
 ### 4.1 Editor abstraction
 
