@@ -1,88 +1,72 @@
-import { Injectable, Logger } from '@nestjs/common';
-import {
-  AlertTier,
-  EmergencyEventType,
-} from './entities/emergency-alert.entity';
-import { AlertConfigService } from '../config/alert-config.service';
+import { Injectable } from '@nestjs/common';
+import { EmergencyEventType } from './event-types';
+import { AlertCategory, AlertSeverity } from './entities/alert.entity';
+
+export interface AlertClassification {
+  category: AlertCategory;
+  severity: AlertSeverity;
+}
 
 /**
  * AlertClassifierService
  *
- * Classifies incoming emergency events into alert tiers that govern the
- * confirmation and notification workflow.
- *
- * NOW CONFIGURABLE: Event type to tier mapping is read from database configuration
- * instead of being hardcoded. Falls back to hardcoded defaults if configuration not found.
- *
- * Tier 1 — Safety-critical: require School Admin confirmation before parent delivery.
- * Tier 2 — Operational: visible to admins only. No parent notification.
- * Tier 3 — Informational: bypass confirmation, delivered directly to parents.
+ * Maps a v1-style `eventType` enum value to the v2 `(category, severity)`
+ * pair used to populate `stx_alerts`. The mapping table is fixed per the
+ * Phase B migration spec — there is no dynamic config lookup any more. The
+ * previous tier-based escalation workflow has been removed in v2; all alerts
+ * land directly as `status = 'active'`.
  */
 @Injectable()
 export class AlertClassifierService {
-  private readonly logger = new Logger(AlertClassifierService.name);
+  private static readonly TABLE: Record<string, AlertClassification> = {
+    [EmergencyEventType.PANIC_BUTTON]: {
+      category: AlertCategory.SAFETY,
+      severity: AlertSeverity.CRITICAL,
+    },
+    [EmergencyEventType.PANIC_ALERT]: {
+      category: AlertCategory.SAFETY,
+      severity: AlertSeverity.CRITICAL,
+    },
+    [EmergencyEventType.MEDICAL]: {
+      category: AlertCategory.SAFETY,
+      severity: AlertSeverity.CRITICAL,
+    },
+    [EmergencyEventType.INCIDENT]: {
+      category: AlertCategory.SAFETY,
+      severity: AlertSeverity.WARNING,
+    },
+    [EmergencyEventType.ROUTE_DEVIATION]: {
+      category: AlertCategory.ROUTE_DEVIATION,
+      severity: AlertSeverity.WARNING,
+    },
+    [EmergencyEventType.ROUTE_DIVERSION]: {
+      category: AlertCategory.ROUTE_DEVIATION,
+      severity: AlertSeverity.WARNING,
+    },
+    [EmergencyEventType.LATE_ARRIVAL]: {
+      category: AlertCategory.ROUTE_DELAYED,
+      severity: AlertSeverity.INFO,
+    },
+    [EmergencyEventType.LATE_DEPARTURE]: {
+      category: AlertCategory.ROUTE_DELAYED,
+      severity: AlertSeverity.INFO,
+    },
+    [EmergencyEventType.COMPLIANCE]: {
+      category: AlertCategory.GENERAL,
+      severity: AlertSeverity.WARNING,
+    },
+    [EmergencyEventType.OTHER]: {
+      category: AlertCategory.GENERAL,
+      severity: AlertSeverity.INFO,
+    },
+  };
 
-  // Fallback hardcoded mappings (used if configuration not found)
-  private static readonly TIER_1_EVENTS: ReadonlySet<EmergencyEventType> =
-    new Set([
-      EmergencyEventType.PANIC_BUTTON,
-      EmergencyEventType.MEDICAL,
-      EmergencyEventType.INCIDENT,
-      EmergencyEventType.PANIC_ALERT,
-    ]);
-
-  private static readonly TIER_2_EVENTS: ReadonlySet<EmergencyEventType> =
-    new Set([
-      EmergencyEventType.ROUTE_DEVIATION,
-      EmergencyEventType.LATE_ARRIVAL,
-      EmergencyEventType.ROUTE_DIVERSION,
-      EmergencyEventType.LATE_DEPARTURE,
-      EmergencyEventType.COMPLIANCE,
-      EmergencyEventType.OTHER,
-    ]);
-
-  constructor(private readonly configService: AlertConfigService) {}
-
-  /**
-   * Classify an event type into its alert tier.
-   * Uses configuration service with fallback to hardcoded defaults.
-   * @returns AlertTier.TIER_1, TIER_2, or TIER_3
-   */
-  async classify(eventType: EmergencyEventType): Promise<AlertTier> {
-    try {
-      // Try to get tier from configuration
-      const tier = await this.configService.getEventTypeTier(eventType);
-      return tier;
-    } catch (error) {
-      this.logger.warn(
-        `Failed to get tier from configuration for ${eventType}, using fallback`,
-        error,
-      );
-      // Fallback to hardcoded classification
-      return this.classifyFallback(eventType);
-    }
-  }
-
-  /**
-   * Fallback classification using hardcoded rules
-   */
-  private classifyFallback(eventType: EmergencyEventType): AlertTier {
-    if (AlertClassifierService.TIER_1_EVENTS.has(eventType)) {
-      return AlertTier.TIER_1;
-    }
-    if (AlertClassifierService.TIER_2_EVENTS.has(eventType)) {
-      return AlertTier.TIER_2;
-    }
-    return AlertTier.TIER_3;
-  }
-
-  async isTier1(eventType: EmergencyEventType): Promise<boolean> {
-    const tier = await this.classify(eventType);
-    return tier === AlertTier.TIER_1;
-  }
-
-  async isTier2(eventType: EmergencyEventType): Promise<boolean> {
-    const tier = await this.classify(eventType);
-    return tier === AlertTier.TIER_2;
+  classify(eventType: EmergencyEventType | string): AlertClassification {
+    return (
+      AlertClassifierService.TABLE[eventType] ?? {
+        category: AlertCategory.GENERAL,
+        severity: AlertSeverity.INFO,
+      }
+    );
   }
 }

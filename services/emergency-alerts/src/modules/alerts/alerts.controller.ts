@@ -30,6 +30,7 @@ export class AlertsController {
 
   @Get('alerts')
   async findAll(@Query('schoolId') schoolId?: string) {
+    // schoolId query-string preserved for wire compat; v2 stores it as sta_id.
     return this.alertsService.findAll(schoolId);
   }
 

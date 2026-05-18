@@ -16,10 +16,7 @@ import {
   AlertConfigAudit,
   AlertConfigChangeRequest,
 } from './entities';
-import {
-  EmergencyEventType,
-  AlertTier,
-} from '../alerts/entities/emergency-alert.entity';
+import { EmergencyEventType, AlertTier } from '../alerts/event-types';
 
 export interface EscalationTiming {
   confirmationTimeoutMs: number | null;

@@ -6,371 +6,283 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
-import {
-  EmergencyAlert,
-  EmergencyAlertStatus,
-  AlertEscalationLevel,
-} from './entities/emergency-alert.entity';
-import {
-  AlertAuditLog,
-  AlertAuditEventType,
-} from './entities/alert-audit-log.entity';
-import { CreateEmergencyEventDto } from './dto/create-emergency-event.dto';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
-import { WebsocketGateway } from '../realtime/websocket.gateway';
-import { NotificationsService } from '../notifications/notifications.service';
-import {
-  NotificationChannel,
-  NotificationStatus,
-} from './entities/alert-notification-log.entity';
+import { Alert, AlertScopeKind, AlertStatus } from './entities/alert.entity';
+import { AlertAudit } from './entities/alert-audit.entity';
+import { CreateEmergencyEventDto } from './dto/create-emergency-event.dto';
 import { AlertClassifierService } from './alert-classifier.service';
-import { AlertTier } from './entities/emergency-alert.entity';
-import { AlertConfigService } from '../config/alert-config.service';
+import { WebsocketGateway } from '../realtime/websocket.gateway';
 
-/** Fallback delay constants if configuration service unavailable (milliseconds). */
-const FALLBACK_CONFIRMATION_TIMEOUT_MS = parseInt(
-  process.env.ALERT_CONFIRMATION_TIMEOUT_MS ?? '120000',
-  10,
-);
-const FALLBACK_BOARD_ESCALATION_MS = parseInt(
-  process.env.ALERT_BOARD_ESCALATION_MS ?? '300000',
-  10,
-);
-const FALLBACK_STA_ESCALATION_MS = parseInt(
-  process.env.ALERT_STA_ESCALATION_MS ?? '900000',
-  10,
-);
-
-/** Shape returned by findForRoute — used by the parent-app API endpoint. */
+/**
+ * Shape returned by `findForRoute` — consumed by the parent app via the
+ * api-gateway proxy. Field names preserved from v1 for wire compatibility.
+ */
 export interface RouteAlertView {
   routeId: string;
   alertActive: boolean;
   message: string;
   id?: string;
-  vehicleId?: string;
-  eventType?: string;
-  description?: string | null;
+  category?: string;
+  severity?: string;
+  title?: string;
+  body?: string | null;
   status?: string;
-  lat?: number;
-  lng?: number;
   createdAt?: Date;
 }
-
-const EVENT_TYPE_LABELS: Record<string, string> = {
-  LATE_ARRIVAL: 'Late Arrival',
-  ROUTE_DEVIATION: 'Route Deviation',
-  PANIC_BUTTON: 'Panic Button',
-  INCIDENT: 'Incident',
-  ROUTE_DIVERSION: 'Route Diversion',
-  PANIC_ALERT: 'Panic Alert',
-  MEDICAL: 'Medical',
-  LATE_DEPARTURE: 'Late Departure',
-  COMPLIANCE: 'Compliance',
-  OTHER: 'Other',
-};
 
 @Injectable()
 export class AlertsService {
   private readonly logger = new Logger(AlertsService.name);
 
   constructor(
-    @InjectRepository(EmergencyAlert)
-    private alertsRepo: Repository<EmergencyAlert>,
-    @InjectRepository(AlertAuditLog)
-    private auditLogRepo: Repository<AlertAuditLog>,
-    @InjectQueue('alerts') private alertsQueue: Queue,
-    private wsGateway: WebsocketGateway,
-    private notificationsService: NotificationsService,
-    private classifierService: AlertClassifierService,
-    private configService: AlertConfigService,
+    @InjectRepository(Alert)
+    private readonly alertsRepo: Repository<Alert>,
+    @InjectRepository(AlertAudit)
+    private readonly auditRepo: Repository<AlertAudit>,
+    @InjectQueue('alerts') private readonly alertsQueue: Queue,
+    private readonly wsGateway: WebsocketGateway,
+    private readonly classifier: AlertClassifierService,
   ) {}
 
-  async create(createDto: CreateEmergencyEventDto): Promise<EmergencyAlert> {
-    const tier = await this.classifierService.classify(createDto.eventType);
+  /**
+   * Create a new alert from an incoming emergency event.
+   *
+   * v1 → v2 mapping:
+   *   • scope_kind  = 'route'
+   *   • scope_ref   = routeId
+   *   • sta_id      = schoolId (free-form on the v1 wire; v2 column is uuid)
+   *   • category/severity from the classifier
+   *   • status      = 'active' (v1 PENDING_CONFIRMATION/Tier escalation
+   *                   workflow removed — see Phase B decisions)
+   *
+   * Extra v1 fields (vehicleId, driverId, lat, lng, timestamp) are captured
+   * in the initial audit row's `payload` JSONB since the Alert entity itself
+   * has no context column.
+   */
+  async create(dto: CreateEmergencyEventDto): Promise<Alert> {
+    const { category, severity } = this.classifier.classify(dto.eventType);
 
     const alert = this.alertsRepo.create({
-      ...createDto,
-      tier,
-      status:
-        tier === AlertTier.TIER_1
-          ? EmergencyAlertStatus.PENDING_CONFIRMATION
-          : EmergencyAlertStatus.ACTIVE,
+      staId: dto.schoolId,
+      category,
+      severity,
+      scopeKind: AlertScopeKind.ROUTE,
+      scopeRef: dto.routeId,
+      title: this.buildTitle(dto),
+      body: dto.description ?? null,
+      status: AlertStatus.ACTIVE,
+      startsAt: dto.timestamp ? new Date(dto.timestamp) : new Date(),
+      endsAt: null,
+      serviceDate: null,
+      createdByUserId: null,
     });
-    const savedAlert = await this.alertsRepo.save(alert);
+    const saved = await this.alertsRepo.save(alert);
 
-    // Log CREATED audit event
-    await this.writeAuditLog(savedAlert.id, AlertAuditEventType.CREATED, {
-      escalationLevel: AlertEscalationLevel.SCHOOL,
+    await this.writeAudit(saved.id, 'created', {
+      eventType: dto.eventType,
+      vehicleId: dto.vehicleId,
+      driverId: dto.driverId,
+      lat: dto.lat,
+      lng: dto.lng,
+      timestamp: dto.timestamp,
     });
 
-    if (tier === AlertTier.TIER_1) {
-      // Tier 1: Hold parent notification until admin confirms or timer fires.
-      await this.writeAuditLog(
-        savedAlert.id,
-        AlertAuditEventType.PENDING_CONFIRMATION,
-        { escalationLevel: AlertEscalationLevel.SCHOOL },
-      );
+    // Wire-compat: still enqueue under queue name `alerts`, job `emergency-event`.
+    await this.alertsQueue.add('emergency-event', {
+      id: saved.id,
+      alertId: saved.id,
+      staId: saved.staId,
+      routeId: dto.routeId,
+      schoolId: dto.schoolId,
+      category: saved.category,
+      severity: saved.severity,
+      eventType: dto.eventType,
+    });
 
-      // Get escalation timing from configuration (with fallback)
-      const escalationTiming = await this.getEscalationTiming(tier);
-
-      // Schedule escalation timer chain (state-guarded in processor).
-      if (escalationTiming.confirmationTimeoutMs) {
-        await this.alertsQueue.add(
-          'confirmation-timeout',
-          {
-            alertId: savedAlert.id,
-            routeId: savedAlert.routeId,
-            schoolId: savedAlert.schoolId,
-            eventType: savedAlert.eventType,
-          },
-          { delay: escalationTiming.confirmationTimeoutMs },
-        );
-      }
-
-      if (escalationTiming.boardEscalationMs) {
-        await this.alertsQueue.add(
-          'board-escalation',
-          {
-            alertId: savedAlert.id,
-            routeId: savedAlert.routeId,
-            schoolId: savedAlert.schoolId,
-          },
-          { delay: escalationTiming.boardEscalationMs },
-        );
-      }
-
-      if (escalationTiming.staEscalationMs) {
-        await this.alertsQueue.add(
-          'osta-escalation',
-          {
-            alertId: savedAlert.id,
-            routeId: savedAlert.routeId,
-            schoolId: savedAlert.schoolId,
-          },
-          { delay: escalationTiming.staEscalationMs },
-        );
-      }
-    } else if (tier === AlertTier.TIER_2) {
-      // Tier 2: Admin-only alert. No parent notification.
-      this.logger.log(
-        `Tier 2 alert created: alertId=${savedAlert.id}, eventType=${savedAlert.eventType}`,
-      );
-    } else {
-      // Tier 3: Bypass confirmation — deliver directly to parents.
-      await this.alertsQueue.add('emergency-event', savedAlert);
-
-      await this.notificationsService.logNotificationAttempt(
-        savedAlert.id,
-        'route:' + createDto.routeId,
-        NotificationChannel.PUSH,
-        NotificationStatus.SENT,
-      );
-    }
-
-    // Broadcast to admin WebSocket subscribers for all tiers.
-    this.wsGateway.broadcastAlert(savedAlert);
-
-    return savedAlert;
+    this.wsGateway.broadcastAlert(this.toWireShape(saved));
+    return saved;
   }
 
   /**
-   * School Admin confirms a Tier 1 alert. Triggers parent notification.
+   * Mark an existing alert as resolved. Writes a `resolved` audit row.
+   */
+  async resolve(
+    id: string,
+    actorUserId?: string,
+    actorRole?: string,
+    notes?: string,
+  ): Promise<Alert> {
+    const alert = await this.alertsRepo.findOneBy({ id });
+    if (!alert) {
+      throw new NotFoundException(`Alert ${id} not found`);
+    }
+    alert.status = AlertStatus.RESOLVED;
+    alert.endsAt = new Date();
+    const saved = await this.alertsRepo.save(alert);
+
+    await this.writeAudit(id, 'resolved', {
+      actorUserId,
+      actorRole,
+      notes,
+    });
+
+    this.wsGateway.broadcastAlert(this.toWireShape(saved));
+    return saved;
+  }
+
+  /**
+   * v1 `confirm` lifecycle action. v2 alerts are already `active` on
+   * creation, so this records an audit row only — no status change.
    */
   async confirm(
     alertId: string,
     actorUserId?: string,
     actorRole?: string,
-  ): Promise<EmergencyAlert> {
+  ): Promise<Alert> {
     const alert = await this.alertsRepo.findOneBy({ id: alertId });
     if (!alert) {
       throw new NotFoundException(`Alert ${alertId} not found`);
     }
 
-    alert.status = EmergencyAlertStatus.CONFIRMED;
-    alert.confirmedBy = actorUserId ?? null;
-    alert.confirmedAt = new Date();
-    const saved = await this.alertsRepo.save(alert);
-
-    await this.writeAuditLog(alertId, AlertAuditEventType.CONFIRMED, {
+    await this.writeAudit(alertId, 'confirmed', {
       actorUserId,
       actorRole,
-      escalationLevel: AlertEscalationLevel.SCHOOL,
     });
 
-    // Fan out to parents now that the alert is confirmed.
-    await this.alertsQueue.add('emergency-event', saved);
-    await this.notificationsService.logNotificationAttempt(
-      saved.id,
-      'route:' + saved.routeId,
-      NotificationChannel.PUSH,
-      NotificationStatus.SENT,
-    );
-
-    this.wsGateway.broadcastAlert(saved);
-    return saved;
+    this.wsGateway.broadcastAlert(this.toWireShape(alert));
+    return alert;
   }
 
   /**
-   * School Admin marks the alert as a false alarm. Suppresses parent notification.
+   * v1 `falseAlarm` → v2 status = 'cancelled'. Writes a `cancelled` audit row.
    */
   async falseAlarm(
     alertId: string,
     actorUserId?: string,
     actorRole?: string,
     notes?: string,
-  ): Promise<EmergencyAlert> {
+  ): Promise<Alert> {
     const alert = await this.alertsRepo.findOneBy({ id: alertId });
     if (!alert) {
       throw new NotFoundException(`Alert ${alertId} not found`);
     }
-
-    alert.status = EmergencyAlertStatus.FALSE_ALARM;
+    alert.status = AlertStatus.CANCELLED;
+    alert.endsAt = new Date();
     const saved = await this.alertsRepo.save(alert);
 
-    await this.writeAuditLog(alertId, AlertAuditEventType.FALSE_ALARM, {
+    await this.writeAudit(alertId, 'cancelled', {
       actorUserId,
       actorRole,
       notes,
-      escalationLevel: AlertEscalationLevel.SCHOOL,
+      reason: 'false_alarm',
     });
 
-    this.wsGateway.broadcastAlert(saved);
+    this.wsGateway.broadcastAlert(this.toWireShape(saved));
     return saved;
   }
 
-  /**
-   * School Admin requests more information about a Tier 1 alert.
-   * Logs the event; the BullMQ delayed jobs continue running.
-   */
+  /** Records an `info_requested` audit row, no status change. */
   async requestInfo(
     alertId: string,
     actorUserId?: string,
     actorRole?: string,
-  ): Promise<EmergencyAlert> {
+  ): Promise<Alert> {
     const alert = await this.alertsRepo.findOneBy({ id: alertId });
     if (!alert) {
       throw new NotFoundException(`Alert ${alertId} not found`);
     }
-
-    await this.writeAuditLog(alertId, AlertAuditEventType.INFO_REQUESTED, {
+    await this.writeAudit(alertId, 'info_requested', {
       actorUserId,
       actorRole,
-      escalationLevel: AlertEscalationLevel.SCHOOL,
     });
-
     return alert;
   }
 
-  /**
-   * Retrieve the full audit trail for a specific alert.
-   * Returns IDs and event metadata only — no T4 PII.
-   */
-  async getAuditLog(alertId: string): Promise<AlertAuditLog[]> {
-    return this.auditLogRepo.find({
+  async getAuditLog(alertId: string): Promise<AlertAudit[]> {
+    return this.auditRepo.find({
       where: { alertId },
-      order: { eventTimestamp: 'ASC' },
+      order: { createdAt: 'ASC' },
     });
   }
 
-  async findAll(schoolId?: string): Promise<EmergencyAlert[]> {
-    const where = schoolId ? { schoolId } : {};
-    return this.alertsRepo.find({ where, order: { timestamp: 'DESC' } });
+  async findAll(staId?: string): Promise<Alert[]> {
+    const where = staId ? { staId } : {};
+    return this.alertsRepo.find({ where, order: { createdAt: 'DESC' } });
   }
 
-  async findAllActive(schoolId?: string): Promise<EmergencyAlert[]> {
-    // Include PENDING_CONFIRMATION, CONFIRMED, and AUTO_ESCALATED alerts —
-    // they are operationally "active" and must be visible to admins.
-    const statuses = [
-      EmergencyAlertStatus.ACTIVE,
-      EmergencyAlertStatus.PENDING_CONFIRMATION,
-      EmergencyAlertStatus.CONFIRMED,
-      EmergencyAlertStatus.AUTO_ESCALATED,
-    ];
-    if (schoolId) {
-      return this.alertsRepo
-        .createQueryBuilder('a')
-        .where('a.schoolId = :schoolId', { schoolId })
-        .andWhere('a.status IN (:...statuses)', { statuses })
-        .orderBy('a.timestamp', 'DESC')
-        .getMany();
-    }
-    return this.alertsRepo
+  async findAllActive(staId?: string): Promise<Alert[]> {
+    const qb = this.alertsRepo
       .createQueryBuilder('a')
-      .where('a.status IN (:...statuses)', { statuses })
-      .orderBy('a.timestamp', 'DESC')
-      .getMany();
+      .where('a.status = :status', { status: AlertStatus.ACTIVE })
+      .orderBy('a.created_at', 'DESC');
+    if (staId) {
+      qb.andWhere('a.sta_id = :staId', { staId });
+    }
+    return qb.getMany();
   }
 
-  async resolve(
-    id: string,
+  /**
+   * Add a status update (operational note) to an alert that is still active.
+   * Records a `status_update` audit row with the provided notes.
+   */
+  async addStatusUpdate(
+    alertId: string,
+    notes: string,
     actorUserId?: string,
     actorRole?: string,
-    notes?: string,
-  ): Promise<EmergencyAlert> {
-    const alert = await this.alertsRepo.findOneBy({ id });
+  ): Promise<AlertAudit> {
+    const alert = await this.alertsRepo.findOneBy({ id: alertId });
     if (!alert) {
-      throw new NotFoundException(`Alert ${id} not found`);
+      throw new NotFoundException(`Alert ${alertId} not found`);
     }
-    alert.status = EmergencyAlertStatus.RESOLVED;
-    const resolved = await this.alertsRepo.save(alert);
-
-    await this.writeAuditLog(id, AlertAuditEventType.RESOLVED, {
+    if (alert.status !== AlertStatus.ACTIVE) {
+      throw new BadRequestException(
+        `Cannot add status update to alert in ${alert.status} state`,
+      );
+    }
+    const entry = await this.writeAudit(alertId, 'status_update', {
       actorUserId,
       actorRole,
       notes,
     });
-
-    // Broadcast resolution via SSE/WebSocket so clients get real-time updates.
-    this.wsGateway.broadcastAlert(resolved);
-
-    return resolved;
+    this.wsGateway.broadcastAlert(this.toWireShape(alert));
+    return entry;
   }
 
-  async findOne(id: string): Promise<EmergencyAlert | null> {
+  async findOne(id: string): Promise<Alert | null> {
     return this.alertsRepo.findOneBy({ id });
   }
 
+  /**
+   * Parent-app endpoint: return the most recent operationally active alert
+   * for a given route (scope_kind=route, scope_ref=routeId).
+   */
   async findForRoute(routeId: string): Promise<RouteAlertView> {
-    // Include all operationally active statuses — not just ACTIVE.
-    // TIER_1 events (PANIC_BUTTON, INCIDENT) start as PENDING_CONFIRMATION
-    // and must be visible to parents immediately.
-    const activeAlert = await this.alertsRepo.findOne({
+    const active = await this.alertsRepo.findOne({
       where: {
-        routeId,
-        status: In([
-          EmergencyAlertStatus.ACTIVE,
-          EmergencyAlertStatus.PENDING_CONFIRMATION,
-          EmergencyAlertStatus.CONFIRMED,
-          EmergencyAlertStatus.AUTO_ESCALATED,
-        ]),
+        scopeKind: AlertScopeKind.ROUTE,
+        scopeRef: routeId,
+        status: AlertStatus.ACTIVE,
       },
       order: { createdAt: 'DESC' },
     });
 
-    if (activeAlert) {
-      const label =
-        EVENT_TYPE_LABELS[activeAlert.eventType] || activeAlert.eventType;
-      const message =
-        activeAlert.description ||
-        `${label}: ${activeAlert.vehicleId} on route ${routeId}`;
-
+    if (active) {
+      const message = active.body ?? active.title;
       return {
-        id: activeAlert.id,
+        id: active.id,
         routeId,
-        vehicleId: activeAlert.vehicleId,
-        eventType: activeAlert.eventType,
-        description: activeAlert.description || null,
+        category: active.category,
+        severity: active.severity,
+        title: active.title,
+        body: active.body,
         message,
-        status: activeAlert.status,
-        lat: activeAlert.lat,
-        lng: activeAlert.lng,
-        createdAt: activeAlert.createdAt,
+        status: active.status,
+        createdAt: active.createdAt,
         alertActive: true,
       };
     }
-
     return {
       routeId,
       alertActive: false,
@@ -378,98 +290,60 @@ export class AlertsService {
     };
   }
 
-  async findByRoutes(routeIds: string[]): Promise<EmergencyAlert[]> {
+  async findByRoutes(routeIds: string[]): Promise<Alert[]> {
     if (routeIds.length === 0) return [];
     return this.alertsRepo.find({
-      where: { routeId: In(routeIds) },
+      where: {
+        scopeKind: AlertScopeKind.ROUTE,
+        scopeRef: In(routeIds),
+      },
       order: { createdAt: 'DESC' },
     });
-  }
-
-  /**
-   * Add a status update to an active alert (CONFIRMED, ACTIVE, or AUTO_ESCALATED).
-   * Records a STATUS_UPDATE audit entry with the provided notes.
-   */
-  async addStatusUpdate(
-    alertId: string,
-    notes: string,
-    actorUserId?: string,
-    actorRole?: string,
-  ): Promise<AlertAuditLog> {
-    const alert = await this.alertsRepo.findOneBy({ id: alertId });
-    if (!alert) {
-      throw new NotFoundException(`Alert ${alertId} not found`);
-    }
-
-    const updatableStatuses = [
-      EmergencyAlertStatus.ACTIVE,
-      EmergencyAlertStatus.CONFIRMED,
-      EmergencyAlertStatus.AUTO_ESCALATED,
-      EmergencyAlertStatus.PENDING_CONFIRMATION,
-    ];
-    if (!updatableStatuses.includes(alert.status)) {
-      throw new BadRequestException(
-        `Cannot add status update to alert in ${alert.status} state`,
-      );
-    }
-
-    const entry = await this.writeAuditLog(
-      alertId,
-      AlertAuditEventType.STATUS_UPDATE,
-      { actorUserId, actorRole, notes },
-    );
-
-    this.wsGateway.broadcastAlert(alert);
-    return entry;
   }
 
   // ---------------------------------------------------------------------------
   // Private helpers
   // ---------------------------------------------------------------------------
 
-  /**
-   * Get escalation timing from configuration with fallback to constants
-   */
-  private async getEscalationTiming(tier: string): Promise<{
-    confirmationTimeoutMs: number | null;
-    boardEscalationMs: number | null;
-    staEscalationMs: number | null;
-  }> {
-    try {
-      const timing = await this.configService.getEscalationTiming(tier);
-      return timing;
-    } catch (error) {
-      this.logger.warn(
-        `Failed to get escalation timing from configuration for ${tier}, using fallback`,
-        error,
-      );
-      // Return fallback values
-      return {
-        confirmationTimeoutMs: FALLBACK_CONFIRMATION_TIMEOUT_MS,
-        boardEscalationMs: FALLBACK_BOARD_ESCALATION_MS,
-        staEscalationMs: FALLBACK_STA_ESCALATION_MS,
-      };
-    }
+  private buildTitle(dto: CreateEmergencyEventDto): string {
+    const label = dto.eventType.replace(/_/g, ' ').toLowerCase();
+    return `${label} on route ${dto.routeId}`;
   }
 
-  private async writeAuditLog(
+  private async writeAudit(
     alertId: string,
-    eventType: AlertAuditEventType,
-    opts: {
-      actorUserId?: string;
-      actorRole?: string;
-      notes?: string;
-      escalationLevel?: string;
-    } = {},
-  ): Promise<AlertAuditLog> {
-    const entry = this.auditLogRepo.create({
+    action: string,
+    payload: Record<string, unknown> = {},
+  ): Promise<AlertAudit> {
+    const clean: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(payload)) {
+      if (v !== undefined) clean[k] = v;
+    }
+    const entry = this.auditRepo.create({
       alertId,
-      eventType,
-      actorUserId: opts.actorUserId ?? null,
-      actorRole: opts.actorRole ?? null,
-      notes: opts.notes ?? null,
-      escalationLevel: opts.escalationLevel ?? null,
+      action,
+      actorUserId:
+        typeof payload.actorUserId === 'string' ? payload.actorUserId : null,
+      payload: clean,
     });
-    return this.auditLogRepo.save(entry);
+    return this.auditRepo.save(entry);
+  }
+
+  private toWireShape(alert: Alert): Record<string, unknown> {
+    return {
+      id: alert.id,
+      staId: alert.staId,
+      category: alert.category,
+      severity: alert.severity,
+      scopeKind: alert.scopeKind,
+      scopeRef: alert.scopeRef,
+      title: alert.title,
+      body: alert.body,
+      status: alert.status,
+      startsAt: alert.startsAt,
+      endsAt: alert.endsAt,
+      createdAt: alert.createdAt,
+      updatedAt: alert.updatedAt,
+    };
   }
 }

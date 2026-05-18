@@ -1,8 +1,9 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { EmergencyAlert } from './entities/emergency-alert.entity';
-import { AlertNotificationLog } from './entities/alert-notification-log.entity';
-import { AlertAuditLog } from './entities/alert-audit-log.entity';
+import { Alert } from './entities/alert.entity';
+import { AlertAudit } from './entities/alert-audit.entity';
+import { AlertDelivery } from './entities/alert-delivery.entity';
+import { AlertSubscription } from './entities/alert-subscription.entity';
 import { AlertsController } from './alerts.controller';
 import { AlertsService } from './alerts.service';
 import { AlertsProcessor } from './alerts.processor';
@@ -15,16 +16,13 @@ import { ConfigModule } from '../config/config.module';
 @Module({
   imports: [
     TypeOrmModule.forFeature([
-      EmergencyAlert,
-      AlertNotificationLog,
-      AlertAuditLog,
+      Alert,
+      AlertAudit,
+      AlertDelivery,
+      AlertSubscription,
     ]),
-    BullModule.registerQueue({
-      name: 'alerts',
-    }),
-    BullModule.registerQueue({
-      name: 'notifications',
-    }),
+    BullModule.registerQueue({ name: 'alerts' }),
+    BullModule.registerQueue({ name: 'notifications' }),
     ConfigModule,
     RealtimeModule,
     NotificationsModule,

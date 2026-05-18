@@ -9,8 +9,9 @@ import {
   NotificationRoutingConfig,
   AlertWorkflowConfig,
   AlertConfigAudit,
+  AlertConfigChangeRequest,
 } from './entities';
-import { AlertTier } from '../alerts/entities/emergency-alert.entity';
+import { AlertTier } from '../alerts/event-types';
 
 describe('AlertConfigService', () => {
   let service: AlertConfigService;
@@ -98,6 +99,10 @@ describe('AlertConfigService', () => {
         },
         {
           provide: getRepositoryToken(AlertConfigAudit),
+          useFactory: mockRepoFactory,
+        },
+        {
+          provide: getRepositoryToken(AlertConfigChangeRequest),
           useFactory: mockRepoFactory,
         },
       ],
@@ -240,6 +245,7 @@ describe('AlertConfigService', () => {
       notificationRoutingRepo.find.mockResolvedValue([]);
       workflowConfigRepo.find.mockResolvedValue([]);
 
+      await service.initializeCache();
       await service.invalidateCache();
 
       // Should have called find methods twice (initial load + after invalidation)

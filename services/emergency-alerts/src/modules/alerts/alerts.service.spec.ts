@@ -2,14 +2,15 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AlertsService } from './alerts.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import {
-  EmergencyAlert,
-  AlertTier,
-  EmergencyAlertStatus,
-  EmergencyEventType,
-} from './entities/emergency-alert.entity';
-import { AlertAuditLog } from './entities/alert-audit-log.entity';
+  Alert,
+  AlertCategory,
+  AlertScopeKind,
+  AlertSeverity,
+  AlertStatus,
+} from './entities/alert.entity';
+import { AlertAudit } from './entities/alert-audit.entity';
+import { EmergencyEventType } from './event-types';
 import { WebsocketGateway } from '../realtime/websocket.gateway';
-import { NotificationsService } from '../notifications/notifications.service';
 import { AlertClassifierService } from './alert-classifier.service';
 import { getQueueToken } from '@nestjs/bullmq';
 
@@ -20,7 +21,7 @@ describe('AlertsService', () => {
     create: jest.fn().mockImplementation((dto: unknown) => dto),
     save: jest
       .fn()
-      .mockImplementation((alert: Partial<EmergencyAlert>) =>
+      .mockImplementation((alert: Partial<Alert>) =>
         Promise.resolve({ id: 'uuid', ...alert }),
       ),
     find: jest.fn().mockResolvedValue([]),
@@ -34,7 +35,7 @@ describe('AlertsService', () => {
     }),
   };
 
-  const mockAuditLogRepository = {
+  const mockAuditRepository = {
     create: jest.fn().mockImplementation((dto: unknown) => dto),
     save: jest.fn().mockResolvedValue({ id: 'audit-uuid' }),
     find: jest.fn().mockResolvedValue([]),
@@ -48,15 +49,11 @@ describe('AlertsService', () => {
     broadcastAlert: jest.fn(),
   };
 
-  const mockNotifications = {
-    sendPushNotification: jest.fn(),
-    logNotificationAttempt: jest.fn().mockResolvedValue({ id: 'log-uuid' }),
-  };
-
   const mockClassifier = {
-    classify: jest.fn(),
-    isTier1: jest.fn(),
-    isTier2: jest.fn(),
+    classify: jest.fn().mockReturnValue({
+      category: AlertCategory.SAFETY,
+      severity: AlertSeverity.CRITICAL,
+    }),
   };
 
   beforeEach(async () => {
@@ -66,12 +63,12 @@ describe('AlertsService', () => {
       providers: [
         AlertsService,
         {
-          provide: getRepositoryToken(EmergencyAlert),
+          provide: getRepositoryToken(Alert),
           useValue: mockAlertRepository,
         },
         {
-          provide: getRepositoryToken(AlertAuditLog),
-          useValue: mockAuditLogRepository,
+          provide: getRepositoryToken(AlertAudit),
+          useValue: mockAuditRepository,
         },
         {
           provide: getQueueToken('alerts'),
@@ -80,10 +77,6 @@ describe('AlertsService', () => {
         {
           provide: WebsocketGateway,
           useValue: mockGateway,
-        },
-        {
-          provide: NotificationsService,
-          useValue: mockNotifications,
         },
         {
           provide: AlertClassifierService,
@@ -101,7 +94,7 @@ describe('AlertsService', () => {
 
   describe('create()', () => {
     const baseDto = {
-      schoolId: 'school-001',
+      schoolId: '00000000-0000-0000-0000-000000000001',
       vehicleId: 'v-001',
       routeId: 'r-001',
       driverId: 'd-001',
@@ -111,85 +104,70 @@ describe('AlertsService', () => {
       eventType: EmergencyEventType.PANIC_BUTTON,
     };
 
-    it('should create a Tier 1 alert with PENDING_CONFIRMATION status and schedule escalation jobs', async () => {
-      mockClassifier.classify.mockReturnValue(AlertTier.TIER_1);
+    it('persists an active alert mapped from the v1 event payload', async () => {
+      mockClassifier.classify.mockReturnValueOnce({
+        category: AlertCategory.SAFETY,
+        severity: AlertSeverity.CRITICAL,
+      });
 
       const result = await service.create(baseDto);
 
       expect(result).toBeDefined();
+      expect(mockAlertRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          staId: baseDto.schoolId,
+          scopeKind: AlertScopeKind.ROUTE,
+          scopeRef: baseDto.routeId,
+          status: AlertStatus.ACTIVE,
+          category: AlertCategory.SAFETY,
+          severity: AlertSeverity.CRITICAL,
+        }),
+      );
       expect(mockAlertRepository.save).toHaveBeenCalled();
-      // Should add 3 delayed escalation jobs, not 'emergency-event'
-      expect(mockQueue.add).toHaveBeenCalledTimes(3);
-      expect(mockQueue.add).toHaveBeenCalledWith(
-        'confirmation-timeout',
-        expect.objectContaining({ alertId: 'uuid' }),
-        expect.objectContaining({ delay: 120_000 }),
-      );
-      expect(mockQueue.add).toHaveBeenCalledWith(
-        'board-escalation',
-        expect.objectContaining({ alertId: 'uuid' }),
-        expect.objectContaining({ delay: 300_000 }),
-      );
-      expect(mockQueue.add).toHaveBeenCalledWith(
-        'osta-escalation',
-        expect.objectContaining({ alertId: 'uuid' }),
-        expect.objectContaining({ delay: 900_000 }),
-      );
-      // Admin WebSocket broadcast always fires
       expect(mockGateway.broadcastAlert).toHaveBeenCalled();
-      // No parent notification for Tier 1 — held for confirmation
-      expect(mockNotifications.logNotificationAttempt).not.toHaveBeenCalled();
-      // Audit log written (CREATED + PENDING_CONFIRMATION = 2 saves)
-      expect(mockAuditLogRepository.save).toHaveBeenCalledTimes(2);
     });
 
-    it('should create a Tier 2 alert with ACTIVE status and no parent queue job', async () => {
-      mockClassifier.classify.mockReturnValue(AlertTier.TIER_2);
-      const dto = { ...baseDto, eventType: EmergencyEventType.ROUTE_DEVIATION };
+    it('enqueues a single `emergency-event` job for fan-out (wire-compat)', async () => {
+      await service.create(baseDto);
 
-      const result = await service.create(dto);
-
-      expect(result).toBeDefined();
-      expect(mockAlertRepository.save).toHaveBeenCalled();
-      // No queue jobs for Tier 2
-      expect(mockQueue.add).not.toHaveBeenCalled();
-      expect(mockNotifications.logNotificationAttempt).not.toHaveBeenCalled();
-      expect(mockGateway.broadcastAlert).toHaveBeenCalled();
-      // Only CREATED audit event
-      expect(mockAuditLogRepository.save).toHaveBeenCalledTimes(1);
-    });
-
-    it('should create a Tier 3 alert and immediately fan out to parents', async () => {
-      mockClassifier.classify.mockReturnValue(AlertTier.TIER_3);
-      const dto = { ...baseDto, eventType: EmergencyEventType.OTHER };
-
-      const result = await service.create(dto);
-
-      expect(result).toBeDefined();
+      expect(mockQueue.add).toHaveBeenCalledTimes(1);
       expect(mockQueue.add).toHaveBeenCalledWith(
         'emergency-event',
-        expect.anything(),
+        expect.objectContaining({
+          alertId: 'uuid',
+          routeId: baseDto.routeId,
+          schoolId: baseDto.schoolId,
+        }),
       );
-      expect(mockNotifications.logNotificationAttempt).toHaveBeenCalled();
-      expect(mockGateway.broadcastAlert).toHaveBeenCalled();
+    });
+
+    it('writes a `created` audit row carrying v1 context (vehicle/driver/lat/lng)', async () => {
+      await service.create(baseDto);
+
+      expect(mockAuditRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: 'created',
+          payload: expect.objectContaining({
+            eventType: baseDto.eventType,
+            vehicleId: baseDto.vehicleId,
+            driverId: baseDto.driverId,
+            lat: baseDto.lat,
+            lng: baseDto.lng,
+          }),
+        }),
+      );
+      expect(mockAuditRepository.save).toHaveBeenCalledTimes(1);
     });
   });
 
   describe('confirm()', () => {
-    it('should confirm an alert and trigger parent notification', async () => {
-      const existingAlert = {
+    it('records a `confirmed` audit row without mutating alert status', async () => {
+      const existing = {
         id: 'alert-001',
-        status: EmergencyAlertStatus.PENDING_CONFIRMATION,
-        routeId: 'r-001',
-        schoolId: 'school-001',
+        status: AlertStatus.ACTIVE,
+        scopeRef: 'r-001',
       };
-      mockAlertRepository.findOneBy.mockResolvedValueOnce(existingAlert);
-      mockAlertRepository.save.mockResolvedValueOnce({
-        ...existingAlert,
-        status: EmergencyAlertStatus.CONFIRMED,
-        confirmedBy: 'admin-001',
-        confirmedAt: new Date(),
-      });
+      mockAlertRepository.findOneBy.mockResolvedValueOnce(existing);
 
       const result = await service.confirm(
         'alert-001',
@@ -197,15 +175,19 @@ describe('AlertsService', () => {
         'SCHOOL_ADMIN',
       );
 
-      expect(result.status).toBe(EmergencyAlertStatus.CONFIRMED);
-      expect(mockQueue.add).toHaveBeenCalledWith(
-        'emergency-event',
-        expect.anything(),
+      expect(result.status).toBe(AlertStatus.ACTIVE);
+      expect(mockAlertRepository.save).not.toHaveBeenCalled();
+      expect(mockAuditRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          alertId: 'alert-001',
+          action: 'confirmed',
+          actorUserId: 'admin-001',
+        }),
       );
-      expect(mockAuditLogRepository.save).toHaveBeenCalled();
+      expect(mockAuditRepository.save).toHaveBeenCalled();
     });
 
-    it('should throw NotFoundException when alert is not found', async () => {
+    it('throws NotFoundException when alert is not found', async () => {
       mockAlertRepository.findOneBy.mockResolvedValueOnce(null);
 
       await expect(service.confirm('nonexistent-id')).rejects.toThrow(
@@ -215,16 +197,16 @@ describe('AlertsService', () => {
   });
 
   describe('falseAlarm()', () => {
-    it('should mark alert as FALSE_ALARM and suppress notification', async () => {
-      const existingAlert = {
+    it('flips alert to CANCELLED and writes a `cancelled` audit row', async () => {
+      const existing = {
         id: 'alert-002',
-        status: EmergencyAlertStatus.PENDING_CONFIRMATION,
-        routeId: 'r-001',
+        status: AlertStatus.ACTIVE,
+        scopeRef: 'r-001',
       };
-      mockAlertRepository.findOneBy.mockResolvedValueOnce(existingAlert);
+      mockAlertRepository.findOneBy.mockResolvedValueOnce(existing);
       mockAlertRepository.save.mockResolvedValueOnce({
-        ...existingAlert,
-        status: EmergencyAlertStatus.FALSE_ALARM,
+        ...existing,
+        status: AlertStatus.CANCELLED,
       });
 
       const result = await service.falseAlarm(
@@ -234,12 +216,20 @@ describe('AlertsService', () => {
         'Test false alarm',
       );
 
-      expect(result.status).toBe(EmergencyAlertStatus.FALSE_ALARM);
+      expect(result.status).toBe(AlertStatus.CANCELLED);
       expect(mockQueue.add).not.toHaveBeenCalled();
-      expect(mockAuditLogRepository.save).toHaveBeenCalled();
+      expect(mockAuditRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: 'cancelled',
+          payload: expect.objectContaining({
+            reason: 'false_alarm',
+            notes: 'Test false alarm',
+          }),
+        }),
+      );
     });
 
-    it('should throw NotFoundException when alert is not found', async () => {
+    it('throws NotFoundException when alert is not found', async () => {
       mockAlertRepository.findOneBy.mockResolvedValueOnce(null);
 
       await expect(service.falseAlarm('nonexistent-id')).rejects.toThrow(
@@ -249,12 +239,9 @@ describe('AlertsService', () => {
   });
 
   describe('requestInfo()', () => {
-    it('should log INFO_REQUESTED audit event without changing alert status', async () => {
-      const existingAlert = {
-        id: 'alert-003',
-        status: EmergencyAlertStatus.PENDING_CONFIRMATION,
-      };
-      mockAlertRepository.findOneBy.mockResolvedValueOnce(existingAlert);
+    it('records an `info_requested` audit row without changing alert status', async () => {
+      const existing = { id: 'alert-003', status: AlertStatus.ACTIVE };
+      mockAlertRepository.findOneBy.mockResolvedValueOnce(existing);
 
       const result = await service.requestInfo(
         'alert-003',
@@ -263,12 +250,16 @@ describe('AlertsService', () => {
       );
 
       expect(result).toBeDefined();
-      // Status unchanged — no save on the alert
       expect(mockAlertRepository.save).not.toHaveBeenCalled();
-      expect(mockAuditLogRepository.save).toHaveBeenCalled();
+      expect(mockAuditRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          alertId: 'alert-003',
+          action: 'info_requested',
+        }),
+      );
     });
 
-    it('should throw NotFoundException when alert is not found', async () => {
+    it('throws NotFoundException when alert is not found', async () => {
       mockAlertRepository.findOneBy.mockResolvedValueOnce(null);
 
       await expect(service.requestInfo('nonexistent-id')).rejects.toThrow(
@@ -278,33 +269,29 @@ describe('AlertsService', () => {
   });
 
   describe('resolve()', () => {
-    it('should resolve an alert and log RESOLVED audit event', async () => {
-      const existingAlert = {
-        id: 'alert-004',
-        status: EmergencyAlertStatus.ACTIVE,
-      };
-      mockAlertRepository.findOneBy.mockResolvedValueOnce(existingAlert);
+    it('flips an ACTIVE alert to RESOLVED and writes a `resolved` audit row', async () => {
+      const existing = { id: 'alert-004', status: AlertStatus.ACTIVE };
+      mockAlertRepository.findOneBy.mockResolvedValueOnce(existing);
       mockAlertRepository.save.mockResolvedValueOnce({
-        ...existingAlert,
-        status: EmergencyAlertStatus.RESOLVED,
+        ...existing,
+        status: AlertStatus.RESOLVED,
       });
 
       const result = await service.resolve('alert-004');
 
-      expect(result.status).toBe(EmergencyAlertStatus.RESOLVED);
+      expect(result.status).toBe(AlertStatus.RESOLVED);
       expect(mockGateway.broadcastAlert).toHaveBeenCalled();
-      expect(mockAuditLogRepository.save).toHaveBeenCalled();
+      expect(mockAuditRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({ action: 'resolved' }),
+      );
     });
 
-    it('should forward notes, actorUserId, actorRole to audit log', async () => {
-      const existingAlert = {
-        id: 'alert-005',
-        status: EmergencyAlertStatus.CONFIRMED,
-      };
-      mockAlertRepository.findOneBy.mockResolvedValueOnce(existingAlert);
+    it('forwards notes, actorUserId, actorRole to the audit payload', async () => {
+      const existing = { id: 'alert-005', status: AlertStatus.ACTIVE };
+      mockAlertRepository.findOneBy.mockResolvedValueOnce(existing);
       mockAlertRepository.save.mockResolvedValueOnce({
-        ...existingAlert,
-        status: EmergencyAlertStatus.RESOLVED,
+        ...existing,
+        status: AlertStatus.RESOLVED,
       });
 
       await service.resolve(
@@ -314,17 +301,19 @@ describe('AlertsService', () => {
         'Incident resolved on scene',
       );
 
-      expect(mockAuditLogRepository.create).toHaveBeenCalledWith(
+      expect(mockAuditRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
           alertId: 'alert-005',
           actorUserId: 'admin-001',
-          actorRole: 'SCHOOL_ADMIN',
-          notes: 'Incident resolved on scene',
+          payload: expect.objectContaining({
+            actorRole: 'SCHOOL_ADMIN',
+            notes: 'Incident resolved on scene',
+          }),
         }),
       );
     });
 
-    it('should throw NotFoundException when alert is not found', async () => {
+    it('throws NotFoundException when alert is not found', async () => {
       mockAlertRepository.findOneBy.mockResolvedValueOnce(null);
 
       await expect(service.resolve('nonexistent-id')).rejects.toThrow(
@@ -334,13 +323,13 @@ describe('AlertsService', () => {
   });
 
   describe('addStatusUpdate()', () => {
-    it('should add a status update to a CONFIRMED alert', async () => {
-      const existingAlert = {
+    it('adds a `status_update` audit row when alert is ACTIVE', async () => {
+      const existing = {
         id: 'alert-006',
-        status: EmergencyAlertStatus.CONFIRMED,
-        routeId: 'r-001',
+        status: AlertStatus.ACTIVE,
+        scopeRef: 'r-001',
       };
-      mockAlertRepository.findOneBy.mockResolvedValueOnce(existingAlert);
+      mockAlertRepository.findOneBy.mockResolvedValueOnce(existing);
 
       const result = await service.addStatusUpdate(
         'alert-006',
@@ -350,50 +339,21 @@ describe('AlertsService', () => {
       );
 
       expect(result).toBeDefined();
-      expect(mockAuditLogRepository.create).toHaveBeenCalledWith(
+      expect(mockAuditRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
           alertId: 'alert-006',
-          notes: 'Police on scene',
+          action: 'status_update',
           actorUserId: 'admin-001',
-          actorRole: 'SCHOOL_ADMIN',
+          payload: expect.objectContaining({
+            notes: 'Police on scene',
+            actorRole: 'SCHOOL_ADMIN',
+          }),
         }),
       );
-      expect(mockGateway.broadcastAlert).toHaveBeenCalledWith(existingAlert);
+      expect(mockGateway.broadcastAlert).toHaveBeenCalled();
     });
 
-    it('should add a status update to an ACTIVE alert', async () => {
-      const existingAlert = {
-        id: 'alert-007',
-        status: EmergencyAlertStatus.ACTIVE,
-      };
-      mockAlertRepository.findOneBy.mockResolvedValueOnce(existingAlert);
-
-      const result = await service.addStatusUpdate(
-        'alert-007',
-        'Investigating situation',
-      );
-
-      expect(result).toBeDefined();
-      expect(mockAuditLogRepository.save).toHaveBeenCalled();
-    });
-
-    it('should add a status update to an AUTO_ESCALATED alert', async () => {
-      const existingAlert = {
-        id: 'alert-008',
-        status: EmergencyAlertStatus.AUTO_ESCALATED,
-      };
-      mockAlertRepository.findOneBy.mockResolvedValueOnce(existingAlert);
-
-      const result = await service.addStatusUpdate(
-        'alert-008',
-        'Board admin reviewing',
-      );
-
-      expect(result).toBeDefined();
-      expect(mockAuditLogRepository.save).toHaveBeenCalled();
-    });
-
-    it('should throw NotFoundException when alert is not found', async () => {
+    it('throws NotFoundException when alert is not found', async () => {
       mockAlertRepository.findOneBy.mockResolvedValueOnce(null);
 
       await expect(
@@ -401,61 +361,57 @@ describe('AlertsService', () => {
       ).rejects.toThrow('Alert nonexistent-id not found');
     });
 
-    it('should throw BadRequestException for RESOLVED alerts', async () => {
-      const existingAlert = {
+    it('throws BadRequestException for RESOLVED alerts', async () => {
+      mockAlertRepository.findOneBy.mockResolvedValueOnce({
         id: 'alert-009',
-        status: EmergencyAlertStatus.RESOLVED,
-      };
-      mockAlertRepository.findOneBy.mockResolvedValueOnce(existingAlert);
+        status: AlertStatus.RESOLVED,
+      });
 
       await expect(
         service.addStatusUpdate('alert-009', 'notes'),
-      ).rejects.toThrow('Cannot add status update to alert in RESOLVED state');
+      ).rejects.toThrow('Cannot add status update to alert in resolved state');
     });
 
-    it('should throw BadRequestException for FALSE_ALARM alerts', async () => {
-      const existingAlert = {
+    it('throws BadRequestException for CANCELLED alerts', async () => {
+      mockAlertRepository.findOneBy.mockResolvedValueOnce({
         id: 'alert-010',
-        status: EmergencyAlertStatus.FALSE_ALARM,
-      };
-      mockAlertRepository.findOneBy.mockResolvedValueOnce(existingAlert);
+        status: AlertStatus.CANCELLED,
+      });
 
       await expect(
         service.addStatusUpdate('alert-010', 'notes'),
-      ).rejects.toThrow(
-        'Cannot add status update to alert in FALSE_ALARM state',
-      );
+      ).rejects.toThrow('Cannot add status update to alert in cancelled state');
     });
   });
 
   describe('getAuditLog()', () => {
-    it('should return audit entries for the given alertId', async () => {
+    it('returns audit entries for the given alertId in chronological order', async () => {
       const mockEntries = [
-        { id: 'entry-1', alertId: 'alert-001', eventType: 'CREATED' },
-        { id: 'entry-2', alertId: 'alert-001', eventType: 'CONFIRMED' },
+        { id: 'entry-1', alertId: 'alert-001', action: 'created' },
+        { id: 'entry-2', alertId: 'alert-001', action: 'confirmed' },
       ];
-      mockAuditLogRepository.find.mockResolvedValueOnce(mockEntries);
+      mockAuditRepository.find.mockResolvedValueOnce(mockEntries);
 
       const result = await service.getAuditLog('alert-001');
 
       expect(result).toHaveLength(2);
-      expect(mockAuditLogRepository.find).toHaveBeenCalledWith({
+      expect(mockAuditRepository.find).toHaveBeenCalledWith({
         where: { alertId: 'alert-001' },
-        order: { eventTimestamp: 'ASC' },
+        order: { createdAt: 'ASC' },
       });
     });
   });
 
   describe('tenant isolation', () => {
-    it('findAll() scopes query by schoolId', async () => {
-      await service.findAll('school-abc');
+    it('findAll() scopes query by staId', async () => {
+      await service.findAll('sta-abc');
 
       expect(mockAlertRepository.find).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { schoolId: 'school-abc' } }),
+        expect.objectContaining({ where: { staId: 'sta-abc' } }),
       );
     });
 
-    it('findAll() returns all alerts when no schoolId provided', async () => {
+    it('findAll() returns all alerts when no staId provided', async () => {
       await service.findAll();
 
       expect(mockAlertRepository.find).toHaveBeenCalledWith(
@@ -463,56 +419,36 @@ describe('AlertsService', () => {
       );
     });
 
-    it('findAllActive() scopes query by schoolId via query builder', async () => {
-      await service.findAllActive('school-xyz');
+    it('findAllActive() scopes query by staId via query builder', async () => {
+      await service.findAllActive('sta-xyz');
 
       expect(mockAlertRepository.createQueryBuilder).toHaveBeenCalled();
     });
   });
 
   describe('findForRoute()', () => {
-    it('should return a PENDING_CONFIRMATION alert (Tier 1 not yet confirmed)', async () => {
-      const pendingAlert = {
-        id: 'alert-pending',
-        routeId: 'route-1',
-        vehicleId: 'BUS-01',
-        eventType: 'PANIC_BUTTON',
-        description: 'Driver pressed panic button',
-        status: EmergencyAlertStatus.PENDING_CONFIRMATION,
-        lat: 45.35,
-        lng: -75.79,
-        createdAt: new Date('2026-04-18T10:00:00Z'),
-      };
-      mockAlertRepository.findOne.mockResolvedValueOnce(pendingAlert);
-
-      const result = await service.findForRoute('route-1');
-
-      expect(result.alertActive).toBe(true);
-      expect(result.id).toBe('alert-pending');
-      expect(result.eventType).toBe('PANIC_BUTTON');
-    });
-
-    it('should return an ACTIVE alert (Tier 2)', async () => {
-      const activeAlert = {
+    it('returns alertActive=true for an ACTIVE alert scoped to the route', async () => {
+      const active = {
         id: 'alert-active',
-        routeId: 'route-1',
-        vehicleId: 'BUS-01',
-        eventType: 'ROUTE_DEVIATION',
-        description: null,
-        status: EmergencyAlertStatus.ACTIVE,
-        lat: 45.35,
-        lng: -75.79,
+        category: AlertCategory.SAFETY,
+        severity: AlertSeverity.CRITICAL,
+        title: 'panic button on route route-1',
+        body: null,
+        scopeRef: 'route-1',
+        status: AlertStatus.ACTIVE,
         createdAt: new Date('2026-04-18T10:00:00Z'),
       };
-      mockAlertRepository.findOne.mockResolvedValueOnce(activeAlert);
+      mockAlertRepository.findOne.mockResolvedValueOnce(active);
 
       const result = await service.findForRoute('route-1');
 
       expect(result.alertActive).toBe(true);
-      expect(result.eventType).toBe('ROUTE_DEVIATION');
+      expect(result.id).toBe('alert-active');
+      expect(result.category).toBe(AlertCategory.SAFETY);
+      expect(result.severity).toBe(AlertSeverity.CRITICAL);
     });
 
-    it('should return alertActive: false when no operational alerts exist', async () => {
+    it('returns alertActive=false when no active alerts exist', async () => {
       mockAlertRepository.findOne.mockResolvedValueOnce(null);
 
       const result = await service.findForRoute('route-1');

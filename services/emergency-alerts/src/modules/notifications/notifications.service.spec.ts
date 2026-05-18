@@ -1,20 +1,22 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { NotificationsService } from './notifications.service';
 import {
-  AlertNotificationLog,
+  NotificationsService,
   NotificationChannel,
   NotificationStatus,
-} from '../alerts/entities/alert-notification-log.entity';
+} from './notifications.service';
+import { AlertDelivery } from '../alerts/entities/alert-delivery.entity';
 
 describe('NotificationsService', () => {
   let service: NotificationsService;
 
-  const mockLogRepo = {
+  const mockDeliveriesRepo = {
     create: jest.fn().mockImplementation((dto) => dto),
     save: jest
       .fn()
-      .mockImplementation((log) => Promise.resolve({ id: 'log-uuid', ...log })),
+      .mockImplementation((row) =>
+        Promise.resolve({ id: 'delivery-uuid', ...row }),
+      ),
     createQueryBuilder: jest.fn(() => ({
       where: jest.fn().mockReturnThis(),
       innerJoin: jest.fn().mockReturnThis(),
@@ -29,8 +31,8 @@ describe('NotificationsService', () => {
       providers: [
         NotificationsService,
         {
-          provide: getRepositoryToken(AlertNotificationLog),
-          useValue: mockLogRepo,
+          provide: getRepositoryToken(AlertDelivery),
+          useValue: mockDeliveriesRepo,
         },
       ],
     }).compile();
@@ -43,7 +45,7 @@ describe('NotificationsService', () => {
     expect(service).toBeDefined();
   });
 
-  it('should log a notification attempt', async () => {
+  it('logs a notification attempt as a stx_alert_deliveries row', async () => {
     const result = await service.logNotificationAttempt(
       'alert-123',
       'parent-uuid',
@@ -51,42 +53,42 @@ describe('NotificationsService', () => {
       NotificationStatus.SENT,
     );
 
-    expect(mockLogRepo.create).toHaveBeenCalledWith({
+    expect(mockDeliveriesRepo.create).toHaveBeenCalledWith({
       alertId: 'alert-123',
-      recipientUserId: 'parent-uuid',
+      userId: 'parent-uuid',
       channel: NotificationChannel.PUSH,
       status: NotificationStatus.SENT,
     });
-    expect(mockLogRepo.save).toHaveBeenCalled();
+    expect(mockDeliveriesRepo.save).toHaveBeenCalled();
     expect(result).toBeDefined();
   });
 
-  it('should call sendPushNotification and log the attempt', async () => {
+  it('sendPushNotification persists a delivery row', async () => {
     await service.sendPushNotification('alert-456', 'parent-uuid');
-    expect(mockLogRepo.save).toHaveBeenCalled();
+    expect(mockDeliveriesRepo.save).toHaveBeenCalled();
   });
 
-  it('should return empty array when no notifications exist for parent', async () => {
+  it('returns an empty array when no deliveries exist for a parent', async () => {
     const result = await service.getParentNotifications(
       'parent-uuid',
-      'school-001',
+      'sta-001',
     );
     expect(Array.isArray(result)).toBe(true);
   });
 
-  it('should query notifications with tenant isolation when schoolId provided', async () => {
+  it('joins on stx_alerts for tenant isolation when staId is provided', async () => {
     const innerJoinMock = jest.fn().mockReturnThis();
     const getManyMock = jest.fn().mockResolvedValue([
       {
-        id: 'log-1',
+        id: 'delivery-1',
         alertId: 'alert-123',
-        recipientUserId: 'parent-uuid',
-        channel: NotificationChannel.PUSH,
-        status: NotificationStatus.SENT,
-        timestamp: new Date(),
+        userId: 'parent-uuid',
+        channel: 'push',
+        status: 'sent',
+        createdAt: new Date(),
       },
     ]);
-    mockLogRepo.createQueryBuilder.mockReturnValue({
+    mockDeliveriesRepo.createQueryBuilder.mockReturnValue({
       where: jest.fn().mockReturnThis(),
       innerJoin: innerJoinMock,
       orderBy: jest.fn().mockReturnThis(),
@@ -96,7 +98,7 @@ describe('NotificationsService', () => {
 
     const result = await service.getParentNotifications(
       'parent-uuid',
-      'school-001',
+      'sta-001',
     );
 
     expect(innerJoinMock).toHaveBeenCalled();
