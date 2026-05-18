@@ -18,7 +18,7 @@ You are the **Greatest Ever Developer** AI Agent for the School Bus Transport Ma
 Non-negotiable rules:
 
 - Never log student names, guardian contact details, addresses, or other T4 data in plain text.
-- Never create or modify tenant-aware data access without `school_id` scoping.
+- Never create or modify tenant-aware data access without proper v2 tenant scoping: `sta_id` for STA-level entities, `board_id` for board-level entities, `school_id` for student/school-level entities. Derive the scoping key from authenticated identity — never from the request body.
 - Never trust tenant, role, or identity values from the request body or client payload.
 - Never hardcode secrets, JWT keys, credentials, tokens, or connection strings.
 - Never use real student, guardian, driver, or school data in tests, fixtures, screenshots, or demo payloads.
@@ -48,7 +48,9 @@ Then load task-specific guidance based on the area you are touching:
 | Queue or Redis work                           | `docs/sdlc_guidelines/08_tech_specific/redis_bullmq.md`                                                                                                                                           |
 | Real-time transport                           | `docs/sdlc_guidelines/08_tech_specific/socketio_sse.md`                                                                                                                                           |
 | Docker or compose changes                     | `docs/sdlc_guidelines/development/docker_development.md`, `docs/sdlc_guidelines/08_tech_specific/docker_guidelines.md`                                                                            |
-| Database schema or migrations                 | `docs/sdlc_guidelines/08_tech_specific/postgresql_postgis.md`                                                                                                                                     |
+| Database schema or migrations                 | `docs/sdlc_guidelines/08_tech_specific/postgresql_postgis.md`, `docs/Design/DataModel-v2.md`                                                                                                      |
+| Import pipeline / adapter work                | `docs/Design/Integrations-STA.md`, `docs/Design/ImportMappings.md`, `docs/sdlc_guidelines/04_coding_standards/nestjs_standards.md`                                                                |
+| Route planner or shapes                       | `docs/Design/RoutePlanner.md`, `docs/Design/DataModel-v2.md`                                                                                                                                      |
 | Testing                                       | `docs/sdlc_guidelines/05_testing/testing_strategy.md`, `docs/sdlc_guidelines/05_testing/security_testing.md`                                                                                      |
 | Performance-sensitive tracking or alert flows | `docs/sdlc_guidelines/05_testing/performance_testing.md`                                                                                                                                          |
 | CI/CD changes                                 | `docs/sdlc_guidelines/06_integration_cicd/branching_strategy.md`, `docs/sdlc_guidelines/06_integration_cicd/ci_cd_pipeline.md`, `docs/sdlc_guidelines/06_integration_cicd/artifact_management.md` |
@@ -68,9 +70,11 @@ Then load task-specific guidance based on the area you are touching:
    - `docs/Design/Architecture.md`
    - `docs/Design/SystemArchitecture.md`
    - `docs/Design/DataArchitecture.md`
+   - `docs/Design/DataModel-v2.md`
    - `docs/Design/IntegrationArchitecture.md`
    - `docs/Design/SecurityPrivacyArchitecture.md`
    - `docs/Design/TechnicalSpecifications.md`
+   - `docs/Design/Integrations-STA.md` (when touching import pipeline, adapters, or STA-scoped data)
 5. Read the affected service or app README and any matching module notes in `docs/Implementation/`.
 6. If you are adding a dependency, verify it against `docs/sdlc_guidelines/01_security_compliance/supply_chain_security.md` before using it.
 
@@ -126,6 +130,9 @@ Apply these rules without exception.
 
 - All protected client access must flow through the API Gateway.
 - All mutation routes must enforce RBAC and tenant awareness.
+- The v2 role enum is `SUPER_ADMIN`, `STA_ADMIN`, `BOARD_ADMIN`, `SCHOOL_ADMIN`, `OPERATOR_ADMIN`, `DRIVER`, `PARENT`. The legacy `OSTA_ADMIN` value is removed — any reference is a compile error and serves as the cutover audit. Do not reintroduce it.
+- Tenant scoping is hierarchical: `sta_id` scopes STA-level entities (`stx_boards`, `routes`, `stx_alerts` with `scope_kind='sta'`); `board_id` scopes board-level entities (`stx_schools`); `school_id` scopes student-level entities (`stx_students`, `stx_ridership`). Use the narrowest applicable scope from the authenticated JWT.
+- Import endpoints (`/imports/dry-run`, `/imports/commit`) require `STA_ADMIN` or `SUPER_ADMIN` for transport-layer data; `BOARD_ADMIN` may upload board/student layers only.
 - Use DTO validation with `class-validator` for NestJS and Zod or equivalent boundary validation for Express.
 - Derive tenant context from authenticated identity, not from client-supplied body fields.
 - Use parameterized queries only. Never build SQL with string concatenation.
@@ -259,7 +266,7 @@ When you bring up `./scripts/dev-hybrid.sh`, `pnpm run start:dev`, `pnpm exec vi
 Before creating a PR, verify every item:
 
 - [ ] No T4 student or guardian data appears in logs, errors, tests, fixtures, or screenshots
-- [ ] All tenant-aware reads and writes are scoped by authenticated `school_id`
+- [ ] All tenant-aware reads and writes are scoped by the correct v2 anchor: `sta_id` for STA-level, `board_id` for board-level, `school_id` for student-level entities
 - [ ] All new routes enforce authentication and RBAC where required
 - [ ] All external inputs are validated at the boundary
 - [ ] No hardcoded secrets, tokens, or credentials exist
@@ -318,14 +325,15 @@ Assign the PR to the **Meanest Ever Reviewer** agent or a human reviewer.
 
 ## Core Stack Reminder
 
-| Layer                          | Technology                                |
-| ------------------------------ | ----------------------------------------- |
-| Admin dashboard                | React 19 + Vite + TailwindCSS             |
-| Driver app                     | React Native + Expo                       |
-| Parent app                     | React 19 + Vite                           |
-| API Gateway                    | NestJS + JWT + RBAC                       |
-| GPS Tracking                   | Express + Prisma                          |
-| Alerts and Presence            | NestJS + BullMQ + Redis + Socket.IO       |
-| Student and Compliance domains | NestJS + TypeORM                          |
-| Storage                        | PostgreSQL 15 + PostGIS, Redis 7, MinIO   |
-| Deployment                     | Docker Compose locally, Kubernetes target |
+| Layer                          | Technology                                                                       |
+| ------------------------------ | -------------------------------------------------------------------------------- |
+| Admin dashboard                | React 19 + Vite + TailwindCSS                                                    |
+| Driver app                     | React Native + Expo                                                              |
+| Parent app                     | React 19 + Vite                                                                  |
+| API Gateway                    | NestJS + JWT + RBAC                                                              |
+| GPS Tracking                   | Express + Prisma                                                                 |
+| Alerts and Presence            | NestJS + BullMQ + Redis + Socket.IO                                              |
+| Student and Compliance domains | NestJS + TypeORM                                                                 |
+| Integration Importer           | NestJS + `TransportDataAdapter` pattern (`StaCsvAdapter`, `GtfsScheduleAdapter`) |
+| Storage                        | PostgreSQL 15 + PostGIS, Redis 7, MinIO                                          |
+| Deployment                     | Docker Compose locally, Kubernetes target                                        |

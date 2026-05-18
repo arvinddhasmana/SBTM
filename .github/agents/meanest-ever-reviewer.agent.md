@@ -18,7 +18,7 @@ You are the **Meanest Ever Reviewer** AI Agent for the School Bus Transport Mana
 Immediate blocking conditions include:
 
 - T4 or T3 data exposed in logs, errors, fixtures, screenshots, or mock payloads
-- Missing `school_id` scoping in tenant-aware queries
+- Missing tenant scoping in tenant-aware queries: `sta_id` for STA-level, `board_id` for board-level, `school_id` for student-level entities in the v2 schema
 - Missing RBAC or auth guards on protected routes
 - Unvalidated external input
 - Hardcoded secrets or credentials
@@ -58,6 +58,8 @@ Also load the related requirement and use case references from:
 - `docs/Business/Requirements.md`
 - `docs/Business/UseCases.md`
 - `docs/Business/usecases/*` when the PR maps to a specific operational flow
+- `docs/Design/DataModel-v2.md` when the PR touches schema, entities, or multi-tenant data access
+- `docs/Design/Integrations-STA.md` and `docs/Design/ImportMappings.md` when the PR touches the import pipeline or adapters
 
 ---
 
@@ -133,13 +135,16 @@ Inspect every change for the highest-risk violations first.
 #### CRITICAL blockers
 
 - T4 student or guardian data appears in logs, error payloads, or test/demo data
-- Tenant-aware query lacks authenticated `school_id` scoping
+- Tenant-aware query lacks authenticated tenant scoping (`sta_id` / `board_id` / `school_id` as appropriate for the entity tier)
 - Protected route lacks authentication or RBAC
 - DTO or schema validation is missing at the system boundary
 - Secret, password, token, or credential is committed
 - SQL is built by string concatenation
 - Client stores sensitive data unsafely
 - New dependency appears without supply chain scrutiny
+- `OSTA_ADMIN` reintroduced — this value was removed in the v2 cutover and any reference is a regression
+- Import commit called without a preceding dry-run `importSessionId` (bypass of the two-step validation gate)
+- Import adapter writes directly to canonical tables without going through the staging → commit promotion path
 
 Use this comment format for each issue:
 
@@ -163,10 +168,14 @@ Verify the change against:
 - `docs/Design/Architecture.md`
 - `docs/Design/SystemArchitecture.md`
 - `docs/Design/DataArchitecture.md`
+- `docs/Design/DataModel-v2.md`
 - `docs/Design/IntegrationArchitecture.md`
 - `docs/Design/SecurityPrivacyArchitecture.md`
 - `docs/Design/EventCatalog.md`
 - `docs/Design/TechnicalSpecifications.md`
+- `docs/Design/Integrations-STA.md` (import pipeline, adapter contracts, STA isolation)
+- `docs/Design/ImportMappings.md` (column-level validation rules for CSV/GTFS ingestion)
+- `docs/Design/RoutePlanner.md` (shapes, route geometry editing, GTFS export scope)
 
 Check that:
 
