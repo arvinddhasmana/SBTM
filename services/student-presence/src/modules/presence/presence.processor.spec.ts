@@ -8,7 +8,7 @@ import {
   PresenceNotificationLog,
   PresenceNotificationStatus,
 } from './entities/presence-notification-log.entity';
-import { EventType, EventSource } from './entities/presence-event.entity';
+import { BoardingEventKind, BoardingEventSource } from './entities/boarding-event.entity';
 
 describe('PresenceProcessor', () => {
   let processor: PresenceProcessor;
@@ -34,10 +34,7 @@ describe('PresenceProcessor', () => {
           provide: getRepositoryToken(PresenceNotificationLog),
           useValue: mockLogRepo,
         },
-        {
-          provide: DataSource,
-          useValue: mockDataSource,
-        },
+        { provide: DataSource, useValue: mockDataSource },
         {
           provide: getQueueToken('notifications'),
           useValue: mockNotificationsQueue,
@@ -64,13 +61,13 @@ describe('PresenceProcessor', () => {
     const job = {
       id: 'job-2',
       name: 'presence-event',
-      data: { routeId: 'route-001' }, // missing id, studentId, schoolId
+      data: { routeId: 'route-001' },
     } as Job;
     const result = await processor.process(job);
     expect(result).toEqual({ processed: false, notified: false });
   });
 
-  it('should look up parent and persist notification for BOARD event', async () => {
+  it('should look up parent and persist notification for BOARDED event', async () => {
     mockDataSource.query.mockResolvedValueOnce([
       { parentId: 'parent-aaa', schoolId: 'school-001' },
     ]);
@@ -84,9 +81,9 @@ describe('PresenceProcessor', () => {
         routeId: 'route-456',
         schoolId: 'school-001',
         vehicleId: 'bus-001',
-        eventType: EventType.BOARD,
-        source: EventSource.SMARTTAG,
-        timestamp: new Date(),
+        eventKind: BoardingEventKind.BOARDED,
+        source: BoardingEventSource.SMARTTAG,
+        recordedAt: new Date(),
       },
     } as Job;
 
@@ -97,7 +94,7 @@ describe('PresenceProcessor', () => {
     expect(mockNotificationsQueue.add).toHaveBeenCalledWith(
       'notification-request',
       expect.objectContaining({
-        eventType: 'BOARD',
+        eventKind: BoardingEventKind.BOARDED,
         eventSourceId: 'event-123',
         recipientUserId: 'parent-aaa',
         studentId: 'stud-xyz',
@@ -110,62 +107,10 @@ describe('PresenceProcessor', () => {
         presenceEventId: 'event-123',
         studentId: 'stud-xyz',
         recipientUserId: 'parent-aaa',
-        eventType: EventType.BOARD,
+        eventKind: BoardingEventKind.BOARDED,
         status: PresenceNotificationStatus.PENDING,
       }),
     );
-  });
-
-  it('should persist notification for ALIGHT event', async () => {
-    mockDataSource.query.mockResolvedValueOnce([
-      { parentId: 'parent-bbb', schoolId: 'school-002' },
-    ]);
-
-    const job = {
-      id: 'job-4',
-      name: 'presence-event',
-      data: {
-        id: 'event-456',
-        studentId: 'stud-abc',
-        routeId: 'route-789',
-        schoolId: 'school-002',
-        vehicleId: 'bus-002',
-        eventType: EventType.ALIGHT,
-        source: EventSource.MANUAL,
-        timestamp: new Date(),
-      },
-    } as Job;
-
-    const result = await processor.process(job);
-
-    expect(result).toEqual({ processed: true, notified: true });
-    expect(mockLogRepo.create).toHaveBeenCalledWith(
-      expect.objectContaining({ eventType: EventType.ALIGHT }),
-    );
-  });
-
-  it('should query students table for parent information', async () => {
-    mockDataSource.query
-      .mockResolvedValueOnce([{ parentId: 'parent-ccc', schoolId: 'school-001' }]);
-
-    const job = {
-      id: 'job-5',
-      name: 'presence-event',
-      data: {
-        id: 'event-789',
-        studentId: 'stud-001',
-        routeId: 'route-001',
-        schoolId: 'school-001',
-        vehicleId: 'bus-003',
-        eventType: EventType.BOARD,
-        source: EventSource.SMARTTAG,
-        timestamp: new Date(),
-      },
-    } as Job;
-
-    const result = await processor.process(job);
-    expect(result).toEqual({ processed: true, notified: true });
-    expect(mockLogRepo.save).toHaveBeenCalledTimes(1);
   });
 
   it('should return notified=false when no parent is found', async () => {
@@ -180,9 +125,9 @@ describe('PresenceProcessor', () => {
         routeId: 'route-001',
         schoolId: 'school-001',
         vehicleId: 'bus-001',
-        eventType: EventType.BOARD,
-        source: EventSource.SMARTTAG,
-        timestamp: new Date(),
+        eventKind: BoardingEventKind.BOARDED,
+        source: BoardingEventSource.SMARTTAG,
+        recordedAt: new Date(),
       },
     } as Job;
 

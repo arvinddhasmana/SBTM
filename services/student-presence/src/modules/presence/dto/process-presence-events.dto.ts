@@ -1,34 +1,50 @@
-
-import { IsString, IsNotEmpty, IsArray, ValidateNested, IsDateString } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsArray,
+  ValidateNested,
+  IsDateString,
+  IsUUID,
+  IsNumber,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class BLEDetectionDto {
-    @IsString()
-    @IsNotEmpty()
-    tagId: string;
+  @IsString()
+  @IsNotEmpty()
+  tagId: string;
 
-    @IsNotEmpty()
-    signalStrength: number;
+  @IsNumber()
+  signalStrength: number;
 }
 
 export class ProcessPresenceEventsDto {
-    @IsString()
-    @IsNotEmpty()
-    schoolId: string;
+  @IsString()
+  @IsNotEmpty()
+  schoolId: string;
 
-    @IsString()
-    @IsNotEmpty()
-    vehicleId: string;
+  @IsString()
+  @IsNotEmpty()
+  vehicleId: string;
 
-    @IsString()
-    @IsNotEmpty()
-    routeId: string;
+  @IsString()
+  @IsNotEmpty()
+  routeId: string;
 
-    @IsDateString()
-    timestamp: string;
+  /** v2 GTFS-aligned run id (stx_runs.id). Required — no v1 fallback. */
+  @IsUUID()
+  runId: string;
 
-    @IsArray()
-    @ValidateNested({ each: true })
-    @Type(() => BLEDetectionDto)
-    detections: BLEDetectionDto[];
+  /** v2 stop id (stx_stops.id; text per boarding-event.entity). Required. */
+  @IsString()
+  @IsNotEmpty()
+  stopId: string;
+
+  @IsDateString()
+  timestamp: string;
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => BLEDetectionDto)
+  detections: BLEDetectionDto[];
 }

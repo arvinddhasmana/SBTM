@@ -32,8 +32,8 @@ export class PresenceNotificationLog {
   @Column()
   recipientUserId: string;
 
-  @Column()
-  eventType: string;
+  @Column({ name: 'event_kind' })
+  eventKind: string;
 
   @Column({
     type: 'enum',

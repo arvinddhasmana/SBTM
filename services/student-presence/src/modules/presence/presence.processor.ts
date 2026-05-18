@@ -3,7 +3,7 @@ import { Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { Job, Queue } from 'bullmq';
-import { PresenceEvent, EventType } from './entities/presence-event.entity';
+import { BoardingEvent, BoardingEventKind } from './entities/boarding-event.entity';
 import {
   PresenceNotificationLog,
   PresenceNotificationChannel,
@@ -35,8 +35,12 @@ export class PresenceProcessor extends WorkerHost {
       return { processed: true, notified: false };
     }
 
-    const event = job.data as Partial<PresenceEvent>;
-    const { id: eventId, studentId, routeId, schoolId, eventType } = event;
+    const event = job.data as Partial<BoardingEvent> & {
+      schoolId?: string;
+      routeId?: string;
+      vehicleId?: string;
+    };
+    const { id: eventId, studentId, routeId, schoolId, eventKind } = event;
 
     if (!eventId || !studentId || !routeId || !schoolId) {
       this.logger.warn(`Presence job ${job.id} missing required fields — skipping`);
@@ -55,12 +59,12 @@ export class PresenceProcessor extends WorkerHost {
       routeId,
       schoolId,
       recipientUserId: parent.parentId,
-      eventType: eventType ?? 'UNKNOWN',
+      eventKind: eventKind ?? 'UNKNOWN',
       status: PresenceNotificationStatus.PENDING,
     });
 
     await this.notificationsQueue.add('notification-request', {
-      eventType: eventType === EventType.BOARD ? 'BOARD' : 'ALIGHT',
+      eventKind,
       eventSourceId: eventId,
       recipientUserId: parent.parentId,
       studentId,
@@ -69,14 +73,15 @@ export class PresenceProcessor extends WorkerHost {
     });
 
     this.logger.log(
-      `Presence notification queued: eventType=${eventType}, routeId=${routeId}, userId=${parent.parentId}`,
+      `Presence notification queued: eventKind=${eventKind}, routeId=${routeId}, userId=${parent.parentId}`,
     );
 
     return { processed: true, notified: true };
   }
 
   /**
-   * Look up the parent user ID for a given student from the students table.
+   * Look up the parent user ID for a given student from v2 stx_students.
+   * Primary parent is the first guardian linked via stx_student_guardians.
    */
   private async findParentForStudent(
     studentId: string,
@@ -84,10 +89,15 @@ export class PresenceProcessor extends WorkerHost {
   ): Promise<ParentRow | null> {
     try {
       const rows: ParentRow[] = await this.dataSource.query(
-        `SELECT parent_user_id AS "parentId", school_id AS "schoolId"
-                 FROM students
-                 WHERE id = $1 AND school_id = $2 AND parent_user_id IS NOT NULL
-                 LIMIT 1`,
+        `SELECT g.user_id AS "parentId", s.school_id AS "schoolId"
+           FROM stx_students s
+           JOIN stx_student_guardians sg ON sg.student_id = s.id
+           JOIN stx_guardians g ON g.id = sg.guardian_id
+          WHERE s.id = $1::uuid
+            AND s.school_id = $2::uuid
+            AND g.user_id IS NOT NULL
+          ORDER BY sg.is_primary DESC NULLS LAST
+          LIMIT 1`,
         [studentId, schoolId],
       );
       return rows && rows.length > 0 ? rows[0] : null;
@@ -103,12 +113,18 @@ export class PresenceProcessor extends WorkerHost {
     routeId: string;
     schoolId: string;
     recipientUserId: string;
-    eventType: string;
+    eventKind: BoardingEventKind | string;
     status: PresenceNotificationStatus;
   }): Promise<void> {
     const log = this.notificationLogRepo.create({
-      ...data,
+      presenceEventId: data.presenceEventId,
+      studentId: data.studentId,
+      routeId: data.routeId,
+      schoolId: data.schoolId,
+      recipientUserId: data.recipientUserId,
+      eventKind: String(data.eventKind),
       channel: PresenceNotificationChannel.PUSH,
+      status: data.status,
     });
     await this.notificationLogRepo.save(log);
   }

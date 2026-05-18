@@ -1,34 +1,41 @@
-import { IsString, IsNotEmpty, IsDateString, IsEnum, IsOptional, IsNumber } from 'class-validator';
-import { EventType, EventSource } from '../entities/presence-event.entity';
+import { IsString, IsNotEmpty, IsDateString, IsEnum, IsOptional, IsUUID } from 'class-validator';
+import { BoardingEventKind, BoardingEventSource } from '../entities/boarding-event.entity';
 
 export class ManualPresenceEventDto {
-    @IsString()
-    @IsNotEmpty()
-    schoolId: string;
+  @IsString()
+  @IsNotEmpty()
+  schoolId: string;
 
-    @IsString()
-    @IsNotEmpty()
-    studentId: string;
+  /**
+   * Legacy free-text id (e.g. board_student_number). Resolved at write time
+   * to the v2 `stx_students.id` uuid via `external_ids->>'board_student_number'`.
+   */
+  @IsString()
+  @IsNotEmpty()
+  studentId: string;
 
-    @IsString()
-    @IsNotEmpty()
-    vehicleId: string;
+  @IsString()
+  @IsNotEmpty()
+  vehicleId: string;
 
-    @IsString()
-    @IsNotEmpty()
-    routeId: string;
+  @IsString()
+  @IsNotEmpty()
+  routeId: string;
 
-    @IsEnum(EventType)
-    eventType: EventType;
+  @IsUUID()
+  runId: string;
 
-    @IsDateString()
-    timestamp: string;
+  @IsString()
+  @IsNotEmpty()
+  stopId: string;
 
-    @IsOptional()
-    @IsEnum(EventSource)
-    source?: EventSource;
+  @IsEnum(BoardingEventKind)
+  eventKind: BoardingEventKind;
 
-    @IsOptional()
-    @IsNumber()
-    signalStrength?: number;
+  @IsDateString()
+  timestamp: string;
+
+  @IsOptional()
+  @IsEnum(BoardingEventSource)
+  source?: BoardingEventSource;
 }

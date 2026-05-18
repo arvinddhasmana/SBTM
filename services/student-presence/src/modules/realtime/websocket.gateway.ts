@@ -1,6 +1,7 @@
 import { WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Server } from 'socket.io';
 import { Logger } from '@nestjs/common';
+import { BoardingEventKind } from '../presence/entities/boarding-event.entity';
 
 @WebSocketGateway({
   // Distinct HTTP path so the cluster ingress can route this Socket.IO
@@ -25,19 +26,20 @@ export class WebsocketGateway {
   broadcastPresenceEvent(event: {
     studentId: string;
     routeId: string;
-    eventType: string;
+    runId: string;
+    stopId: string;
+    eventKind: BoardingEventKind | string;
     timestamp: string;
   }): void {
     this.logger.log(
-      `Broadcasting presence event: ${event.eventType} for student ${event.studentId}`,
+      `Broadcasting presence event: ${event.eventKind} for student ${event.studentId}`,
     );
 
     this.server.emit('presence:updated', event);
 
-    // Emit specific events based on type
-    if (event.eventType === 'BOARD') {
+    if (event.eventKind === BoardingEventKind.BOARDED) {
       this.server.emit('student:boarded', event);
-    } else if (event.eventType === 'ALIGHT') {
+    } else if (event.eventKind === BoardingEventKind.ALIGHTED) {
       this.server.emit('student:alighted', event);
     }
   }
