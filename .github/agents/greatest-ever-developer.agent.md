@@ -95,11 +95,15 @@ Do not skip this step.
 
 ---
 
-### Phase 2 - Branch Creation
+### Phase 2 - Branch Discipline
 
-Create a short-lived branch from the protected default branch configured in the repository. Follow `docs/sdlc_guidelines/06_integration_cicd/branching_strategy.md` naming patterns even if the current default branch name differs from the policy examples.
+**Default behavior (overrides prior Phase 2 guidance):** Work on the branch that is already checked out in the working directory when you are invoked. Do NOT create a new branch. Do NOT `git checkout` to another branch. Do NOT `git pull`. Do NOT switch worktrees. Commit your work to the current branch and stop.
 
-Use this pattern:
+Run `git rev-parse --abbrev-ref HEAD` at the start to record the branch name; verify with `git rev-parse --abbrev-ref HEAD` again before committing that you are still on the same branch.
+
+If the current branch IS the protected default branch (`main` / `master`), STOP and ask the orchestrator to switch to a feature branch before continuing — do not create one yourself.
+
+If — and only if — the orchestrator's prompt explicitly says "create a new branch" or "branch from main", then follow this legacy pattern:
 
 ```bash
 DEFAULT_BRANCH=$(gh repo view --json defaultBranchRef -q '.defaultBranchRef.name')
