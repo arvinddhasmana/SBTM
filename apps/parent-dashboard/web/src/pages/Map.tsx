@@ -9,7 +9,6 @@ import { parentApi } from '../services/api';
 import { queryKeys } from '../services/query-keys';
 import { useAlerts } from '../hooks/useAlerts';
 import { useGpsLocation } from '../hooks/useGpsLocation';
-import { decodePolyline } from '../utils/polyline';
 import { getTileLayerConfig } from '../lib/mapTiles';
 import type { BusLocationUpdate, Child } from '../types';
 import { ArrowLeft, Navigation, RotateCcw } from 'lucide-react';
@@ -269,11 +268,8 @@ const MapPage: React.FC = () => {
     refetchInterval: 60_000,
   });
 
-  // Decode polyline to coordinates
-  const routePath = useMemo(() => {
-    if (routeDetails?.polyline) return decodePolyline(routeDetails.polyline);
-    return null;
-  }, [routeDetails]);
+  // Path is already decoded [lat, lng][] from the shapes table
+  const routePath = routeDetails?.path ?? null;
 
   // Parse stops positions
   const stopPositions = useMemo(() => {

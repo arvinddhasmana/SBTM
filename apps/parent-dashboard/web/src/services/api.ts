@@ -134,7 +134,7 @@ export interface RouteDetails {
   name: string;
   direction: string;
   vehicleId?: string;
-  polyline?: string;
+  path?: [number, number][];
   stops: RouteStop[];
   schoolLat?: number;
   schoolLng?: number;

@@ -103,9 +103,9 @@ describe('AuthContext', () => {
     expect(localStorage.getItem('parent_user')).toBeNull();
   });
 
-  it('clears session when getMe returns OSTA_ADMIN role', async () => {
+  it('clears session when getMe returns STA_ADMIN role', async () => {
     localStorage.setItem('parent_user', STORED_PARENT);
-    mockGetMe.mockResolvedValue({ id: 'osta-1', email: 'osta@sbtm.demo', role: 'OSTA_ADMIN' });
+    mockGetMe.mockResolvedValue({ id: 'sta-1', email: 'sta@sbtm.demo', role: 'STA_ADMIN' });
 
     const { result } = renderHook(() => useAuth(), { wrapper });
 

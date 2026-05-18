@@ -432,6 +432,18 @@ export class GpsGatewayService {
         [routeId],
       )) as RouteStopRow[];
 
+      const shapeRows = (await tx.query(
+        `
+        SELECT sh.shape_pt_lat AS lat, sh.shape_pt_lon AS lon, sh.shape_pt_sequence AS seq
+        FROM shapes sh
+        JOIN trips t ON t.shape_id = sh.shape_id
+        WHERE t.route_id = $1
+        ORDER BY sh.shape_pt_sequence
+        `,
+        [routeId],
+      )) as Array<{ lat: number; lon: number; seq: number }>;
+      const path: [number, number][] = shapeRows.map((s) => [s.lat, s.lon]);
+
       return this.buildRouteSummary(
         {
           route_id: r.route_id,
@@ -445,6 +457,7 @@ export class GpsGatewayService {
           direction: r.direction,
         },
         stopRows,
+        path,
       );
     });
   }
@@ -585,6 +598,7 @@ export class GpsGatewayService {
   private buildRouteSummary(
     r: ActiveRouteRow,
     stops: RouteStopRow[],
+    path?: [number, number][],
   ): Record<string, unknown> {
     const direction =
       r.direction || (r.route_id.toUpperCase().includes('PM') ? 'PM' : 'AM');
@@ -615,6 +629,7 @@ export class GpsGatewayService {
       estimatedDuration: 60,
       stops: orderedStops,
       status: 'active',
+      ...(path && path.length > 0 ? { path } : {}),
     };
   }
 }
