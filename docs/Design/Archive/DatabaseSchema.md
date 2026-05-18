@@ -1,6 +1,6 @@
 # SBTM v1 Database Schema Reference
 
-> **⚠ Historical — v1 Era.** This document describes the pre-v2 schema (`school_boards`, `schools`, `EmergencyAlert`, etc.) and has been superseded by the v2 cutover. For the current v2 schema see [DataModel-v2.md](./DataModel-v2.md).
+> **⚠ Historical — v1 Era.** This document describes the pre-v2 schema (`school_boards`, `schools`, `EmergencyAlert`, etc.) and has been superseded by the v2 cutover. For the current v2 schema see [DataModel-v2.md](../DataModel-v2.md).
 
 - Document owner: Engineering and Architecture
 - Last reviewed: 2026-03-30

@@ -1,6 +1,6 @@
 # SBTM v1 – Event Catalog
 
-> **⚠ Historical — v1 Era.** This catalog was written for the v1 event model (`EmergencyAlert`, `NotificationPreference`, etc.). For the current v2 alert event model see [Alerts.md](./Alerts.md).
+> **⚠ Historical — v1 Era.** This catalog was written for the v1 event model (`EmergencyAlert`, `NotificationPreference`, etc.). For the current v2 alert event model see [Alerts.md](../Alerts.md).
 
 - Document owner: Engineering and Architecture
 - Last reviewed: 2026-03-30

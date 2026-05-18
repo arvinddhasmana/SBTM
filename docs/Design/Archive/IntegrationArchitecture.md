@@ -1,6 +1,6 @@
 # SBTM v1 Integration Architecture
 
-> **⚠ Historical — v1 Era.** This document describes the v1 request and event flows. For the current v2 import pipeline and integration contract see [Integrations-STA.md](./Integrations-STA.md).
+> **⚠ Historical — v1 Era.** This document describes the v1 request and event flows. For the current v2 import pipeline and integration contract see [Integrations-STA.md](../Integrations-STA.md).
 
 - Document owner: Engineering and Architecture
 - Last reviewed: 2026-03-30

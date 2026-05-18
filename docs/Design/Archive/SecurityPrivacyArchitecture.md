@@ -1,6 +1,6 @@
 # SBTM v1 Security and Privacy Architecture
 
-> **⚠ Historical — v1 Era.** This document describes the v1 identity and RLS model. For the current v2 RBAC, RLS policies, and privacy design see [DataModel-v2.md](./DataModel-v2.md) §6 and §10.
+> **⚠ Historical — v1 Era.** This document describes the v1 identity and RLS model. For the current v2 RBAC, RLS policies, and privacy design see [DataModel-v2.md](../DataModel-v2.md) §6 and §10.
 
 - Document owner: Engineering and Architecture
 - Last reviewed: 2026-03-30

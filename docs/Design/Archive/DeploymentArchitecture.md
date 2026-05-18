@@ -1,6 +1,6 @@
 # SBTM v1 Deployment Architecture
 
-> **⚠ Historical — v1 Era.** This document describes the v1 Docker Compose and AKS deployment topology. For current v2 deployment configuration see [Architecture.md](./Architecture.md) and `docker-compose.yml` in the repo root.
+> **⚠ Historical — v1 Era.** This document describes the v1 Docker Compose and AKS deployment topology. For current v2 deployment configuration see [Architecture.md](../Architecture.md) and `docker-compose.yml` in the repo root.
 
 - Document owner: Engineering and Architecture
 - Last reviewed: 2026-04-21

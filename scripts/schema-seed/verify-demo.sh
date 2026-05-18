@@ -1,7 +1,21 @@
 #!/usr/bin/env bash
 # =============================================================================
-# SBTM Demo Verification (6-School Demo)
-# Verifies seeded users/roles, tenant entities, and login credentials.
+# SBTM v2 — Demo Verification
+#
+# Verifies seeded STAs/users, post-import transport data (if loaded), and
+# login credentials against a running stack.
+#
+# Usage:
+#   ./scripts/schema-seed/verify-demo.sh [DB_USER] [DB_NAME] [API_BASE]
+#
+# Defaults:
+#   DB_USER  = postgres
+#   DB_NAME  = sbms
+#   API_BASE = http://localhost:3001/api/v1
+#
+# Seed-only rows are always verified.  Transport rows (boards, schools,
+# students, routes) are checked but reported as INFO when absent — import
+# has not been run yet.
 # =============================================================================
 set -euo pipefail
 
@@ -12,7 +26,7 @@ CONTAINER_NAME="sbtm-postgres-1"
 
 ALL_PASSED=true
 
-echo -e "\033[36m--- SBTM Demo Verification (6-School) ---\033[0m"
+echo -e "\033[36m--- SBTM v2 Demo Verification ---\033[0m"
 
 run_query() {
   local label="$1"
@@ -52,12 +66,11 @@ test_api_get() {
   local expected_status="${4:-200}"
   local http_code
 
-  http_code=$(curl -sf -o /dev/null -w "%{http_code}" -X GET "$url" \
-    -H "Authorization: Bearer $token" 2>/dev/null) || http_code=$(curl -o /dev/null -w "%{http_code}" -X GET "$url" \
+  http_code=$(curl -o /dev/null -w "%{http_code}" -X GET "$url" \
     -H "Authorization: Bearer $token" 2>/dev/null)
 
   if [ "$http_code" = "$expected_status" ]; then
-    echo -e "  \033[32mOK: $label (expected $expected_status)\033[0m"
+    echo -e "  \033[32mOK: $label (HTTP $http_code)\033[0m"
     return 0
   else
     echo -e "  \033[31mFAIL: $label -> HTTP $http_code (expected $expected_status)\033[0m"
@@ -84,133 +97,140 @@ wait_api_health() {
   return 1
 }
 
-# --- Database Checks ---
+# =============================================================================
+# DATABASE CHECKS — SEED DATA (always present after init-db.sh)
+# =============================================================================
 
-run_query "Tenant entities:" \
-  "SELECT 'school_boards', COUNT(*) FROM school_boards;
-SELECT 'schools', COUNT(*) FROM schools;"
+echo -e "\033[36m[DB] Seed data checks\033[0m"
 
-run_query "Users by role:" \
-  "SELECT role, COUNT(*) FROM users WHERE email LIKE '%@sbtm.demo' GROUP BY role ORDER BY role;"
+run_query "STAs (expect 2 — OSTA and RCJTC):" \
+  "SELECT id, short_code, name FROM stx_sta ORDER BY short_code;"
 
-run_query "Seeded demo users (sample):" \
-  "SELECT email, role, \"schoolId\" FROM users WHERE email LIKE '%@sbtm.demo' ORDER BY email LIMIT 30;"
+run_query "Users by role (expect 1 SUPER_ADMIN + 2 STA_ADMIN):" \
+  "SELECT role, COUNT(*) FROM users GROUP BY role ORDER BY role;"
 
-run_query "Route counts by school (60 expected total):" \
-  "SELECT s.name, COUNT(r.id) AS route_count FROM routes r JOIN schools s ON r.\"schoolId\" = s.id GROUP BY s.name ORDER BY s.name;"
+run_query "Seeded users:" \
+  "SELECT email, role, anchor_kind, anchor_id FROM users ORDER BY email;"
 
-run_query "Route sample (UUID ids):" \
-  "SELECT id, name, \"vehicleId\", \"schoolId\", direction FROM routes ORDER BY name LIMIT 12;"
+# =============================================================================
+# DATABASE CHECKS — TRANSPORT DATA (present only after import)
+# =============================================================================
 
-run_query "Students (90 expected):" \
-  "SELECT COUNT(*) AS student_count FROM students;"
+echo -e "\033[36m[DB] Transport data checks (INFO — requires import)\033[0m"
 
-run_query "Route stops (expected ~300-400):" \
-  "SELECT COUNT(*) AS stop_count FROM route_stops;"
+run_query "Boards per STA:" \
+  "SELECT sta.short_code, COUNT(b.id) AS board_count
+   FROM stx_sta sta
+   LEFT JOIN stx_boards b ON b.sta_id = sta.id
+   GROUP BY sta.short_code ORDER BY sta.short_code;"
 
-# --- Login Checks ---
+run_query "Schools per STA:" \
+  "SELECT sta.short_code, COUNT(sc.id) AS school_count
+   FROM stx_sta sta
+   LEFT JOIN stx_boards b ON b.sta_id = sta.id
+   LEFT JOIN stx_schools sc ON sc.board_id = b.id
+   GROUP BY sta.short_code ORDER BY sta.short_code;"
 
-echo -e "\033[33mLogin verification (Admin123!):\033[0m"
+run_query "Students per STA:" \
+  "SELECT sta.short_code, COUNT(st.id) AS student_count
+   FROM stx_sta sta
+   LEFT JOIN stx_students st ON st.sta_id = sta.id
+   GROUP BY sta.short_code ORDER BY sta.short_code;"
+
+run_query "Routes per STA (with shape source):" \
+  "SELECT sta.short_code, r.stx_shape_source, COUNT(r.id) AS route_count
+   FROM stx_sta sta
+   LEFT JOIN routes r ON r.sta_id = sta.id
+   GROUP BY sta.short_code, r.stx_shape_source ORDER BY sta.short_code, r.stx_shape_source;"
+
+run_query "Stop-times count:" \
+  "SELECT COUNT(*) AS stop_time_count FROM stop_times;"
+
+run_query "Shapes rows count:" \
+  "SELECT COUNT(*) AS shape_point_count FROM shapes;"
+
+# =============================================================================
+# DATABASE CHECKS — ALERTS (present only after import or manual creation)
+# =============================================================================
+
+echo -e "\033[36m[DB] Alert checks\033[0m"
+
+run_query "Alerts by category and status:" \
+  "SELECT category, status, COUNT(*) FROM stx_alerts GROUP BY category, status ORDER BY category, status;"
+
+run_query "Alert audit entries (most recent 10):" \
+  "SELECT alert_id, event_type, actor_role, created_at
+   FROM stx_alert_audit ORDER BY created_at DESC LIMIT 10;"
+
+# =============================================================================
+# LOGIN CHECKS
+# =============================================================================
+
+echo -e "\033[36m[API] Login verification (password: Admin123!)\033[0m"
+
 if ! wait_api_health "$API_BASE/health"; then
-  echo -e "  \033[31mFAIL: API gateway is not reachable at $API_BASE\033[0m"
+  echo -e "  \033[31mFAIL: API gateway not reachable at $API_BASE\033[0m"
   exit 1
 fi
 
-# Test representative logins across roles
-EMAILS=(
-  "osta.admin@sbtm.demo"
-  "ocdsb.admin@sbtm.demo"
-  "ocsb.admin@sbtm.demo"
-  "admin.stbern@sbtm.demo"
-  "admin.jyoung@sbtm.demo"
-  "driver.stbern@sbtm.demo"
-  "driver.allsnt@sbtm.demo"
-  "parent1.stbern@sbtm.demo"
-  "parent1.jyoung@sbtm.demo"
+SEEDED_EMAILS=(
+  "super.admin@sbtm.demo"
+  "sta.admin@osta.sbtm.demo"
+  "sta.admin@rcjtc.sbtm.demo"
 )
 
-for email in "${EMAILS[@]}"; do
+for email in "${SEEDED_EMAILS[@]}"; do
   if ! test_login "$email"; then
     ALL_PASSED=false
   fi
 done
 
-# --- API Data Checks ---
+# =============================================================================
+# API DATA CHECKS — OSTA STA ADMIN
+# =============================================================================
 
-echo -e "\033[33mAPI demo data checks (as OSTA admin):\033[0m"
-OSTA_TOKEN=$(get_token "osta.admin@sbtm.demo")
+echo -e "\033[36m[API] STA Admin endpoint checks (OSTA)\033[0m"
+
+OSTA_TOKEN=$(get_token "sta.admin@osta.sbtm.demo")
 
 if [ -z "$OSTA_TOKEN" ]; then
-  echo -e "  \033[31mFAIL: Could not get OSTA admin token\033[0m"
+  echo -e "  \033[31mFAIL: Could not get OSTA STA Admin token\033[0m"
   ALL_PASSED=false
 else
-  if ! test_api_get "OSTA Admin: /students" "$API_BASE/students" "$OSTA_TOKEN"; then
+  if ! test_api_get "STA Admin: GET /boards" "$API_BASE/boards" "$OSTA_TOKEN"; then
+    ALL_PASSED=false
+  fi
+  if ! test_api_get "STA Admin: GET /alerts" "$API_BASE/alerts" "$OSTA_TOKEN"; then
     ALL_PASSED=false
   fi
 fi
 
-# --- Parent API Checks ---
+# =============================================================================
+# API DATA CHECKS — SUPER ADMIN
+# =============================================================================
 
-echo -e "\033[33mParent API checks:\033[0m"
-PARENT_TOKEN=$(get_token "parent1.stbern@sbtm.demo")
-if [ -n "$PARENT_TOKEN" ]; then
-  if ! test_api_get "Parent (stbern): /parent/children" "$API_BASE/parent/children" "$PARENT_TOKEN"; then
-    ALL_PASSED=false
-  fi
-  # Resolve a real route UUID from the DB for the live-location smoke test
-  STBERN_ROUTE_UUID=$(docker exec "$CONTAINER_NAME" psql -U "$DATABASE_USER" -d "$DATABASE_NAME" -t -A -c \
-    "SELECT r.id FROM routes r JOIN schools s ON r.\"schoolId\" = s.id WHERE s.name ILIKE '%bernadette%' AND r.direction = 'AM' LIMIT 1;" 2>/dev/null || true)
-  if [ -n "$STBERN_ROUTE_UUID" ]; then
-    if ! test_api_get "Parent (stbern): /routes/$STBERN_ROUTE_UUID/live-location" "$API_BASE/routes/$STBERN_ROUTE_UUID/live-location" "$PARENT_TOKEN" 200; then
-      ALL_PASSED=false
-    fi
-  fi
-fi
+echo -e "\033[36m[API] Super Admin endpoint checks\033[0m"
 
-# --- Driver API Checks ---
+SUPER_TOKEN=$(get_token "super.admin@sbtm.demo")
 
-echo -e "\033[33mDriver API checks:\033[0m"
-DRIVER_TOKEN=$(get_token "driver.stbern@sbtm.demo")
-if [ -n "$DRIVER_TOKEN" ]; then
-  if ! test_api_get "Driver (stbern): /driver/me/schedule" "$API_BASE/driver/me/schedule" "$DRIVER_TOKEN"; then
+if [ -z "$SUPER_TOKEN" ]; then
+  echo -e "  \033[31mFAIL: Could not get Super Admin token\033[0m"
+  ALL_PASSED=false
+else
+  if ! test_api_get "Super Admin: GET /boards" "$API_BASE/boards" "$SUPER_TOKEN"; then
     ALL_PASSED=false
   fi
 fi
 
-# --- Alert Governance Checks (Phase B) ---
+# =============================================================================
+# RESULT
+# =============================================================================
 
-echo -e "\033[33mAlert governance checks:\033[0m"
-
-run_query "Alert counts by tier:" \
-  "SELECT tier, COUNT(*) FROM emergency_alert GROUP BY tier ORDER BY tier;"
-
-run_query "Alert counts by status:" \
-  "SELECT status, COUNT(*) FROM emergency_alert GROUP BY status ORDER BY status;"
-
-run_query "Audit log summary:" \
-  "SELECT \"eventType\", COUNT(*) FROM alert_audit_log GROUP BY \"eventType\" ORDER BY \"eventType\";"
-
-run_query "Recent audit log entries:" \
-  "SELECT \"alertId\", \"eventType\", \"actorRole\", \"escalationLevel\", \"eventTimestamp\" FROM alert_audit_log ORDER BY \"eventTimestamp\" DESC LIMIT 10;"
-
-run_query "Confirmed/False-alarm alerts:" \
-  "SELECT id, \"eventType\", status, tier, \"confirmedBy\", \"confirmedAt\" FROM emergency_alert WHERE status IN ('CONFIRMED', 'FALSE_ALARM') ORDER BY \"createdAt\" DESC LIMIT 5;"
-
-if [ -n "$OSTA_TOKEN" ]; then
-  if ! test_api_get "OSTA Admin: /alerts" "$API_BASE/alerts" "$OSTA_TOKEN"; then
-    ALL_PASSED=false
-  fi
-  if ! test_api_get "OSTA Admin: /alerts/active" "$API_BASE/alerts/active" "$OSTA_TOKEN"; then
-    ALL_PASSED=false
-  fi
-fi
-
-# --- Result ---
-
+echo ""
 if [ "$ALL_PASSED" = true ]; then
-  echo -e "\033[32mVerification passed.\033[0m"
+  echo -e "\033[32m✅ Verification passed.\033[0m"
   exit 0
 else
-  echo -e "\033[31mVerification found issues.\033[0m"
+  echo -e "\033[31m❌ Verification found issues.\033[0m"
   exit 1
 fi

@@ -1,6 +1,6 @@
 # SBTM v1 System Architecture
 
-> **⚠ Historical — v1 Era.** This document describes the v1 service topology. For the current v2 service topology and design documents see [Architecture.md](./Architecture.md).
+> **⚠ Historical — v1 Era.** This document describes the v1 service topology. For the current v2 service topology and design documents see [Architecture.md](../Architecture.md).
 
 - Document owner: Engineering and Architecture
 - Last reviewed: 2026-03-30

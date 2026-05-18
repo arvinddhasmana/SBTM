@@ -1,6 +1,6 @@
 # SBTM v1 Data Architecture
 
-> **⚠ Historical — v1 Era.** This document describes the v1 data domain model. For the current v2 data model and tenant hierarchy (`stx_sta` → `stx_boards` → `stx_schools`) see [DataModel-v2.md](./DataModel-v2.md).
+> **⚠ Historical — v1 Era.** This document describes the v1 data domain model. For the current v2 data model and tenant hierarchy (`stx_sta` → `stx_boards` → `stx_schools`) see [DataModel-v2.md](../DataModel-v2.md).
 
 - Document owner: Engineering and Architecture
 - Last reviewed: 2026-03-30

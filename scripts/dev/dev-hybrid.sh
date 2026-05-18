@@ -33,6 +33,7 @@ ALL_SERVICES=(
     "student-management"
     "compliance-management"
     "notification-service"
+    "integration-importer"
 )
 
 SERVICE_COMMANDS=(
@@ -44,6 +45,7 @@ SERVICE_COMMANDS=(
     "student-management:pnpm run start:dev"
     "compliance-management:pnpm run start:dev"
     "notification-service:pnpm run start:dev"
+    "integration-importer:pnpm run start:dev"
 )
 
 # Per-service local-dev PORT (matches docker-compose.yml + admin-dashboard
@@ -58,6 +60,7 @@ SERVICE_PORTS=(
     "student-management:3006"
     "compliance-management:3007"
     "notification-service:3008"
+    "integration-importer:3010"
 )
 
 INFRA_ONLY=false
@@ -227,6 +230,7 @@ for svc in "${SELECTED_SERVICES[@]}"; do
         STUDENT_SERVICE_URL=http://localhost:3006 \
         COMPLIANCE_SERVICE_URL=http://localhost:3007 \
         NOTIFICATION_SERVICE_URL=http://localhost:3008 \
+        IMPORTER_SERVICE_URL=http://localhost:3010 \
         OSRM_BASE_URL=http://localhost:5000 \
         STORAGE_TYPE="${STORAGE_TYPE:-local}" \
         STORAGE_BASE_URL="${STORAGE_BASE_URL:-http://localhost:3005}" \

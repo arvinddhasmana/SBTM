@@ -1,6 +1,6 @@
 # SBTM v1 – Technical Specifications
 
-> **⚠ Historical — v1 Era.** This document captures v1 technical constraints and interface definitions. For the current v2 architecture and service topology see [Architecture.md](./Architecture.md).
+> **⚠ Historical — v1 Era.** This document captures v1 technical constraints and interface definitions. For the current v2 architecture and service topology see [Architecture.md](../Architecture.md).
 
 - Document owner: Engineering
 - Last reviewed: 2026-03-30
