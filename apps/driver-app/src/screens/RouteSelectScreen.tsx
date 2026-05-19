@@ -87,6 +87,7 @@ export default function RouteSelectScreen({ navigation }: any) {
         style={[styles.card, isInProgress && { borderColor: '#00ff88', borderWidth: 2 }]}
         onPress={() => handleSelectRoute(item)}
         activeOpacity={0.7}
+        testID={`route-card-${item.id}`}
       >
         <View style={styles.cardContent}>
           <View style={styles.cardLeft}>
@@ -140,7 +141,7 @@ export default function RouteSelectScreen({ navigation }: any) {
     >
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
-      <View style={styles.headerProfile}>
+      <View style={styles.headerProfile} testID="route-select-screen">
         <View style={styles.avatarPlaceholder}>
           <MaterialCommunityIcons name="account" size={32} color="#fff" />
         </View>
@@ -156,11 +157,13 @@ export default function RouteSelectScreen({ navigation }: any) {
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
         contentContainerStyle={styles.list}
+        testID="route-list"
       />
 
       <TouchableOpacity
         style={styles.logoutButton}
         onPress={() => useDriverStore.getState().logout()}
+        testID="logout-button"
       >
         <Text style={styles.logoutText}>{t('routes.logOut')}</Text>
       </TouchableOpacity>

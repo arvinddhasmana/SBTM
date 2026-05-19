@@ -117,7 +117,7 @@ describe('Routes Page', () => {
   it('shows active routes count in subtitle', async () => {
     renderRoutes();
     await waitFor(() => {
-      expect(screen.getByText('1 active routes')).toBeInTheDocument();
+      expect(screen.getByText('1 active route')).toBeInTheDocument();
     });
   });
 

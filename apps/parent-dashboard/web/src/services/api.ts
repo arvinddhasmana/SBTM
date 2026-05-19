@@ -55,6 +55,7 @@ export interface LiveLocationResponse {
 export interface ActiveAlert {
   id: string;
   routeId: string;
+  routeName?: string;
   vehicleId: string;
   eventType: string;
   description?: string;

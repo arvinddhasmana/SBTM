@@ -115,10 +115,10 @@ describe('Compliance Page', () => {
   it('switches to inspections tab and shows data', async () => {
     renderCompliance();
     await waitFor(() => {
-      expect(screen.getByText('inspections')).toBeInTheDocument();
+      expect(screen.getByText('Inspections')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText('inspections'));
+    fireEvent.click(screen.getByText('Inspections'));
 
     await waitFor(() => {
       expect(screen.getByText('Recent Vehicle Inspections')).toBeInTheDocument();
@@ -130,10 +130,10 @@ describe('Compliance Page', () => {
   it('switches to audit tab and shows log data', async () => {
     renderCompliance();
     await waitFor(() => {
-      expect(screen.getByText('audit')).toBeInTheDocument();
+      expect(screen.getByText('Audit')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText('audit'));
+    fireEvent.click(screen.getByText('Audit'));
 
     await waitFor(() => {
       expect(screen.getByText('System Audit Logs')).toBeInTheDocument();

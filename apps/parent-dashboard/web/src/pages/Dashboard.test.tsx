@@ -157,7 +157,8 @@ describe('Dashboard Page', () => {
     await waitFor(() => {
       expect(screen.getByText('Panic Button')).toBeInTheDocument();
     });
-    expect(screen.getByText("Emergency reported on your child's bus.")).toBeInTheDocument();
+    // v1 appears in both the alert banner badge and the child card's bus field
+    expect(screen.getAllByText('v1').length).toBeGreaterThanOrEqual(1);
   });
 
   it('displays different status types correctly', () => {

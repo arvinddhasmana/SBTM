@@ -114,9 +114,24 @@ export async function loginAs(page: Page, role: TestRole): Promise<void> {
   // Obtain a real access_token cookie so backend API calls are authorised.
   const password = ADMIN_PASSWORDS[role];
   if (password) {
-    await page.request.post(`${E2E_API_URL}/api/v1/auth/login`, {
+    const loginRes = await page.request.post(`${E2E_API_URL}/api/v1/auth/login`, {
       data: { email: TEST_USERS[role].email, password },
     });
+    // Also store the Bearer token so the api-client's Bearer fallback works.
+    // Without this, API calls fail with 401 when the cookie is not forwarded
+    // by the Vite proxy (cross-port cookie scope), which triggers the 401
+    // interceptor to clear localStorage and redirect to /login mid-test.
+    try {
+      const body = await loginRes.json();
+      if (body.accessToken) {
+        await page.evaluate(
+          (token) => localStorage.setItem('auth_token', token),
+          body.accessToken as string,
+        );
+      }
+    } catch {
+      /* ignore – cookie-only auth is still attempted */
+    }
   }
 
   // Store the local user state used by AuthContext to set isAuthenticated.

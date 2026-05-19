@@ -38,10 +38,8 @@ describe('useParentStore', () => {
 
       mockParentApiService.login.mockResolvedValue({
         user: mockUser,
-        token: 'test-token',
-      });
-      mockAuthService.setToken.mockResolvedValue(undefined);
-      mockAuthService.setUser.mockResolvedValue(undefined);
+        accessToken: 'test-token',
+      } as any);
       mockParentApiService.getChildren.mockResolvedValue(mockChildren);
 
       const { result } = renderHook(() => useParentStore());
@@ -51,8 +49,6 @@ describe('useParentStore', () => {
       });
 
       expect(mockParentApiService.login).toHaveBeenCalledWith('parent@test.com', 'password123');
-      expect(mockAuthService.setToken).toHaveBeenCalledWith('test-token');
-      expect(mockAuthService.setUser).toHaveBeenCalledWith(mockUser);
       expect(mockParentApiService.getChildren).toHaveBeenCalled();
       expect(result.current.user).toEqual(mockUser);
       expect(result.current.isAuthenticated).toBe(true);
@@ -68,7 +64,7 @@ describe('useParentStore', () => {
       await expect(
         act(async () => {
           await result.current.login('parent@test.com', 'wrong-password');
-        })
+        }),
       ).rejects.toThrow('Invalid credentials');
 
       expect(result.current.isAuthenticated).toBe(false);
@@ -82,10 +78,12 @@ describe('useParentStore', () => {
       useParentStore.setState({
         user: { id: '1', email: 'test@test.com', firstName: 'Test', lastName: 'User' },
         isAuthenticated: true,
-        children: [{ id: 'child-1', firstName: 'John', lastName: 'Doe', status: 'at_home' as const }],
+        children: [
+          { id: 'child-1', firstName: 'John', lastName: 'Doe', status: 'at_home' as const },
+        ],
       });
 
-      mockAuthService.clearAuth.mockResolvedValue(undefined);
+      mockAuthService.logout.mockResolvedValue(undefined);
 
       const { result } = renderHook(() => useParentStore());
 
@@ -93,7 +91,7 @@ describe('useParentStore', () => {
         await result.current.logout();
       });
 
-      expect(mockAuthService.clearAuth).toHaveBeenCalled();
+      expect(mockAuthService.logout).toHaveBeenCalled();
       expect(result.current.user).toBeNull();
       expect(result.current.isAuthenticated).toBe(false);
       expect(result.current.children).toEqual([]);
@@ -123,7 +121,7 @@ describe('useParentStore', () => {
 
     it('should set loading state during fetch', async () => {
       mockParentApiService.getChildren.mockImplementation(
-        () => new Promise((resolve) => setTimeout(() => resolve([]), 100))
+        () => new Promise((resolve) => setTimeout(() => resolve([]), 100)),
       );
 
       const { result } = renderHook(() => useParentStore());
@@ -148,7 +146,7 @@ describe('useParentStore', () => {
       await expect(
         act(async () => {
           await result.current.refreshChildren();
-        })
+        }),
       ).rejects.toThrow('Failed to fetch children');
 
       expect(result.current.isLoadingChildren).toBe(false);
@@ -194,16 +192,18 @@ describe('useParentStore', () => {
         await result.current.refreshAlerts();
       });
 
-      expect(mockParentApiService.getActiveAlerts).toHaveBeenCalledWith([
-        'route-am-1',
-        'route-pm-1',
-        'route-am-2',
-      ]);
+      // Store dedupes route IDs using a Set, order may vary — check all expected IDs are included
+      const calledWith = mockParentApiService.getActiveAlerts.mock.calls[0][0] as string[];
+      expect(calledWith).toEqual(
+        expect.arrayContaining(['route-am-1', 'route-pm-1', 'route-am-2']),
+      );
+      expect(calledWith).toHaveLength(3);
       expect(result.current.activeAlerts).toEqual(mockAlerts);
     });
 
     it('should not fetch alerts when no children', async () => {
       useParentStore.setState({ children: [] });
+      mockParentApiService.getActiveAlerts.mockResolvedValue([]);
 
       const { result } = renderHook(() => useParentStore());
 

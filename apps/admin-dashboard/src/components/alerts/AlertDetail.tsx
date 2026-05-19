@@ -369,7 +369,9 @@ const AlertDetail: React.FC<AlertDetailProps> = ({
               <MapPin size={14} className="text-primary-500" />
               <div>
                 <p className="text-[10px] text-slate-500">{t('alerts:detail.routeLabel')}</p>
-                <p className="text-xs font-semibold text-white">{routeName || 'Unknown Route'}</p>
+                <p className="text-xs font-semibold text-white">
+                  {routeName || alert.routeId || 'Unknown Route'}
+                </p>
               </div>
             </div>
             <div className="col-span-2 flex items-center gap-2 p-3 bg-dashboard-bg rounded-xl">

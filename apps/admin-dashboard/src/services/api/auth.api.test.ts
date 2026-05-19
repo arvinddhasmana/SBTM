@@ -3,6 +3,7 @@ import { authApi } from './auth.api';
 import { apiClient } from './api-client';
 
 vi.mock('./api-client', () => ({
+  AUTH_TOKEN_KEY: 'auth_token',
   apiClient: {
     post: vi.fn(),
     get: vi.fn(),

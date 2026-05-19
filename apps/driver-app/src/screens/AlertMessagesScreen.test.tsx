@@ -57,7 +57,7 @@ describe('AlertMessagesScreen', () => {
     render(<AlertMessagesScreen />);
 
     await waitFor(() => {
-      expect(screen.getByText('No active alerts on this route.')).toBeTruthy();
+      expect(screen.getByText('No active alerts')).toBeTruthy();
     });
   });
 

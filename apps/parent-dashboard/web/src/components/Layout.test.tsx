@@ -37,6 +37,9 @@ vi.mock('lucide-react', () => ({
   X: () => 'XIcon',
   ClipboardX: () => 'ClipboardXIcon',
   Settings: () => 'SettingsIcon',
+  Languages: () => 'LanguagesIcon',
+  Globe: () => 'GlobeIcon',
+  ChevronDown: () => 'ChevronDownIcon',
 }));
 
 // Disable EventSource

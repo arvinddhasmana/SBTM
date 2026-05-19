@@ -332,7 +332,7 @@ describe('Dashboard Page', () => {
 
     await waitFor(
       () => {
-        expect(screen.getByText('SingleBus PM')).toBeInTheDocument();
+        expect(screen.getAllByText('SingleBus PM').length).toBeGreaterThanOrEqual(1);
       },
       { timeout: 3000 },
     );
@@ -343,7 +343,7 @@ describe('Dashboard Page', () => {
     fireEvent.change(routeSearchInput, { target: { value: 'Greenfield' } });
 
     await waitFor(() => {
-      expect(screen.getByText('SingleBus PM')).toBeInTheDocument();
+      expect(screen.getAllByText('SingleBus PM').length).toBeGreaterThanOrEqual(1);
     });
   });
 
@@ -352,7 +352,7 @@ describe('Dashboard Page', () => {
 
     await waitFor(
       () => {
-        expect(screen.getByText('SingleBus PM')).toBeInTheDocument();
+        expect(screen.getAllByText('SingleBus PM').length).toBeGreaterThanOrEqual(1);
       },
       { timeout: 3000 },
     );
@@ -363,7 +363,7 @@ describe('Dashboard Page', () => {
     fireEvent.change(routeSearchInput, { target: { value: 'BUS-01' } });
 
     await waitFor(() => {
-      expect(screen.getByText('SingleBus PM')).toBeInTheDocument();
+      expect(screen.getAllByText('SingleBus PM').length).toBeGreaterThanOrEqual(1);
     });
   });
 });

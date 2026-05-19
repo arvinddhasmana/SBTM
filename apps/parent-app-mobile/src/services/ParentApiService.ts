@@ -264,6 +264,56 @@ class ParentApiServiceClass {
       console.warn('Device token unregistration failed:', error);
     }
   }
+
+  /**
+   * Notification preference row as returned by the server.
+   */
+
+  /**
+   * Get notification preferences.
+   * Server returns flat rows: [{ eventType, channel, enabled }].
+   * Inflated to grouped: { events: [{ eventType, channels, enabled }] }.
+   */
+  async getNotificationPreferences(): Promise<{
+    events: { eventType: string; channels: string[]; enabled: boolean }[];
+  }> {
+    const rows = await ApiService.get<{ eventType: string; channel: string; enabled: boolean }[]>(
+      '/notification-preferences',
+    );
+    if (!Array.isArray(rows)) return { events: [] };
+    const map = new Map<string, { channels: string[]; enabled: boolean }>();
+    for (const row of rows) {
+      const entry = map.get(row.eventType);
+      if (entry) {
+        entry.channels.push(row.channel);
+        entry.enabled = entry.enabled || row.enabled;
+      } else {
+        map.set(row.eventType, { channels: [row.channel], enabled: row.enabled });
+      }
+    }
+    const events = Array.from(map.entries()).map(([eventType, { channels, enabled }]) => ({
+      eventType,
+      channels,
+      enabled,
+    }));
+    return { events };
+  }
+
+  /**
+   * Update notification preferences.
+   * Flattens grouped events to flat rows and PUT to the server.
+   */
+  async updateNotificationPreferences(preferences: {
+    events: { eventType: string; channels: string[]; enabled: boolean }[];
+  }): Promise<void> {
+    const rows: { eventType: string; channel: string; enabled: boolean }[] = [];
+    for (const event of preferences.events) {
+      for (const channel of event.channels) {
+        rows.push({ eventType: event.eventType, channel, enabled: event.enabled });
+      }
+    }
+    await ApiService.put('/notification-preferences', { preferences: rows });
+  }
 }
 
 export const ParentApiService = new ParentApiServiceClass();

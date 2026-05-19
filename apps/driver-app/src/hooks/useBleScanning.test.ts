@@ -26,7 +26,7 @@ describe('useBleScanning', () => {
   it('should start scanning when enabled with all required params', () => {
     renderHook(() => useBleScanning('route-1', 'bus-1', 'school-1', true));
 
-    expect(BleService.startScanning).toHaveBeenCalledWith('route-1', 'bus-1', 'school-1');
+    expect(BleService.startScanning).toHaveBeenCalledWith('route-1', 'bus-1', 'school-1', '', '');
   });
 
   it('should stop scanning and unsubscribe on unmount', () => {

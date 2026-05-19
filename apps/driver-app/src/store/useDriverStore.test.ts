@@ -217,7 +217,7 @@ describe('useDriverStore', () => {
 
     // Should have sent ALIGHT event for student-a
     expect(mockPresence.sendPresenceEvent).toHaveBeenCalledWith(
-      expect.objectContaining({ studentId: 'student-a', eventType: 'ALIGHT' }),
+      expect.objectContaining({ studentId: 'student-a', eventKind: 'alighted' }),
     );
     // State should be fully reset
     expect(useDriverStore.getState().activeRoute).toBeNull();
@@ -246,7 +246,7 @@ describe('useDriverStore', () => {
 
     // Should have sent ALIGHT events for both students
     expect(mockPresence.sendPresenceEvent).toHaveBeenCalledWith(
-      expect.objectContaining({ eventType: 'ALIGHT' }),
+      expect.objectContaining({ eventKind: 'alighted' }),
     );
     expect(useDriverStore.getState().activeRoute).toBeNull();
     expect(useDriverStore.getState().students).toHaveLength(0);
@@ -285,8 +285,8 @@ describe('useDriverStore', () => {
         vehicleId: 'vehicle-test-1', // from route, not hardcoded 'bus-123'
         routeId: 'route-test-1',
         schoolId: 'school-test-1',
-        eventType: 'BOARD',
-        source: 'MANUAL',
+        eventKind: 'boarded',
+        source: 'driver_app',
       }),
     );
   });

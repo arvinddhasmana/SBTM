@@ -33,7 +33,7 @@ describe('Notifications page', () => {
   it('shows loading state initially', () => {
     mockGetAlertHistory.mockReturnValue(new Promise(() => {}));
     renderWithProviders(<Notifications />);
-    expect(screen.getByLabelText('Refresh alerts')).toBeInTheDocument();
+    expect(screen.getByLabelText('Refresh')).toBeInTheDocument();
   });
 
   it('shows empty state when there are no alerts', async () => {
@@ -124,7 +124,7 @@ describe('Notifications page', () => {
       },
     ]);
 
-    await userEvent.click(screen.getByLabelText('Refresh alerts'));
+    await userEvent.click(screen.getByLabelText('Refresh'));
 
     await waitFor(() => {
       expect(screen.getByText('Incident')).toBeInTheDocument();

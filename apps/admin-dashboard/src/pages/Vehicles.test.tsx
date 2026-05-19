@@ -58,7 +58,7 @@ describe('Vehicles Page', () => {
     await waitFor(() => {
       expect(screen.getByText('BUS-01')).toBeInTheDocument();
       expect(screen.getByText('ONT-1234')).toBeInTheDocument();
-      expect(screen.getByText('ACTIVE')).toBeInTheDocument();
+      expect(screen.getByText('Active')).toBeInTheDocument();
     });
   });
 

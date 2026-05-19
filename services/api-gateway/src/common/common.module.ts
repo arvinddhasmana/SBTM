@@ -27,6 +27,7 @@ import { RlsContextService } from './services/rls-context.service';
     },
   ],
   exports: [
+    JwtModule,
     HttpClientService,
     ServiceTokenService,
     RequestContextService,

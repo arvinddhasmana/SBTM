@@ -71,7 +71,7 @@ describe('AbsenceReport', () => {
         <AbsenceReport />
       </BrowserRouter>,
     );
-    expect(screen.getByText(/report an absence/i)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /report absence/i })).toBeInTheDocument();
     expect(screen.getByText(/^Child$/i)).toBeInTheDocument();
     expect(screen.getByText(/^Date$/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /report absence/i })).toBeInTheDocument();

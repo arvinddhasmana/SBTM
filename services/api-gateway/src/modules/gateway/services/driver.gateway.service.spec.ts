@@ -83,21 +83,23 @@ describe('DriverGatewayService.getScheduleForDriver', () => {
   });
 
   it('returns runs for the anchored driver on today', async () => {
-    const { svc, ctx, calls } = makeService(
-      rowsFor([
-        {
-          route_id: 'R-OCDSB-101',
-          route_short_name: '101',
-          route_long_name: 'Maplewood AM',
-          direction: 'am',
-          start_time: '07:30:00',
-          vehicle_id: 'veh-1',
-          school_id: 'sch-1',
-          school_name: 'Maplewood Secondary',
-          school_lat: 45.42,
-          school_lng: -75.69,
-        },
-      ]),
+    const scheduleRows = [
+      {
+        route_id: 'R-OCDSB-101',
+        route_short_name: '101',
+        route_long_name: 'Maplewood AM',
+        direction: 'am',
+        start_time: '07:30:00',
+        vehicle_id: 'veh-1',
+        run_id: undefined,
+        school_id: 'sch-1',
+        school_name: 'Maplewood Secondary',
+        school_lat: 45.42,
+        school_lng: -75.69,
+      },
+    ];
+    const { svc, ctx, calls } = makeService((sql) =>
+      /FROM shapes/i.test(sql) ? [] : scheduleRows,
     );
     const out = await ctx.runWith(driver, () =>
       svc.getScheduleForDriver(driver),
@@ -109,10 +111,12 @@ describe('DriverGatewayService.getScheduleForDriver', () => {
         direction: 'am',
         startTime: '07:30:00',
         vehicleId: 'veh-1',
+        runId: undefined,
         schoolId: 'sch-1',
         schoolName: 'Maplewood Secondary',
         schoolLat: 45.42,
         schoolLng: -75.69,
+        path: undefined,
       },
     ]);
     // First two queries are SET LOCAL (RLS GUCs), then the main schedule query.

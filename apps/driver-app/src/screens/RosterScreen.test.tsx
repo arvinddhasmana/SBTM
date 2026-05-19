@@ -35,6 +35,7 @@ function setMockState(overrides: Partial<typeof mockState>) {
     rosterLoadState: 'loaded',
     rosterError: null,
     isOffline: false,
+    visitedStopIds: [],
     toggleStudentStatus: mockToggleStudentStatus,
     refreshRoster: mockRefreshRoster,
     routeDirection: 'AM',
@@ -74,8 +75,8 @@ describe('RosterScreen', () => {
     render(<RosterScreen />);
     expect(screen.getByText('Alice Johnson')).toBeTruthy();
     expect(screen.getByText('Bob Smith')).toBeTruthy();
-    expect(screen.getByText('NOT BOARDED')).toBeTruthy();
-    expect(screen.getByText('BOARDED')).toBeTruthy();
+    expect(screen.getByText('Not Boarded')).toBeTruthy();
+    expect(screen.getByText('Boarded')).toBeTruthy();
   });
 
   it('shows offline banner when isOffline is true', () => {

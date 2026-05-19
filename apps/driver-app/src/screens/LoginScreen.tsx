@@ -73,7 +73,7 @@ export default function LoginScreen() {
     >
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
-      <View style={styles.card}>
+      <View style={styles.card} testID="login-screen">
         <View style={styles.header}>
           <Text style={styles.title}>{t('app.title')}</Text>
           <LanguageSwitcher />
@@ -94,6 +94,7 @@ export default function LoginScreen() {
             onChangeText={setEmail}
             autoCapitalize="none"
             keyboardType="email-address"
+            testID="login-email"
           />
         </View>
 
@@ -111,10 +112,11 @@ export default function LoginScreen() {
             value={password}
             onChangeText={setPassword}
             secureTextEntry
+            testID="login-password"
           />
         </View>
 
-        <TouchableOpacity onPress={handleLogin} disabled={isLoading}>
+        <TouchableOpacity onPress={handleLogin} disabled={isLoading} testID="login-submit">
           <LinearGradient
             colors={['#020617', '#3b82f6', '#4c1d95']}
             locations={[0, 0.5, 1]}

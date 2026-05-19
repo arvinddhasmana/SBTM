@@ -62,7 +62,7 @@ describe('RouteSelectScreen', () => {
 
   it('renders the driver welcome message', () => {
     render(<RouteSelectScreen navigation={mockNavigation} />);
-    expect(screen.getByText('Welcome, John Doe')).toBeTruthy();
+    expect(screen.getByText('John Doe')).toBeTruthy();
   });
 
   it('renders the list of assigned routes', () => {

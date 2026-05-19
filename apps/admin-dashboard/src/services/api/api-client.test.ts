@@ -9,6 +9,7 @@ vi.mock('axios', () => ({
       mockCreate(...args);
       return {
         interceptors: {
+          request: { use: vi.fn() },
           response: {
             use: mockUse,
           },

@@ -85,7 +85,7 @@ describe('ParentGatewayService (v2)', () => {
       dataSource.query.mockResolvedValueOnce([
         {
           studentId: 'student-1',
-          eventType: 'BOARD',
+          eventKind: 'boarded',
           routeId: 'R-AM',
           direction: 'AM',
         },
@@ -165,7 +165,7 @@ describe('ParentGatewayService (v2)', () => {
       dataSource.query.mockResolvedValueOnce([
         {
           studentId: 'student-1',
-          eventType: 'BOARD',
+          eventKind: 'boarded',
           routeId: 'R-AM',
           direction: 'AM',
         },
@@ -179,7 +179,7 @@ describe('ParentGatewayService (v2)', () => {
       dataSource.query.mockResolvedValueOnce([
         {
           studentId: 'student-1',
-          eventType: 'ALIGHT',
+          eventKind: 'alighted',
           routeId: 'R-AM',
           direction: 'AM',
         },
@@ -193,7 +193,7 @@ describe('ParentGatewayService (v2)', () => {
       dataSource.query.mockResolvedValueOnce([
         {
           studentId: 'student-1',
-          eventType: 'ALIGHT',
+          eventKind: 'alighted',
           routeId: 'R-PM',
           direction: 'PM',
         },
@@ -207,7 +207,7 @@ describe('ParentGatewayService (v2)', () => {
       dataSource.query.mockResolvedValueOnce([
         {
           studentId: 'student-1',
-          eventType: 'ALIGHT',
+          eventKind: 'alighted',
           routeId: 'R-PM',
           direction: null,
         },

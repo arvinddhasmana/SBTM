@@ -1,6 +1,9 @@
 // Jest setup for Parent Mobile App
 import '@testing-library/jest-native/extend-expect';
 
+// Set required env vars for tests
+process.env.EXPO_PUBLIC_API_URL = 'http://localhost:3001';
+
 // Mock console methods to reduce noise in test output
 global.console = {
   ...console,

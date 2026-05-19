@@ -174,7 +174,9 @@ export class ParentGatewayService {
         if (row.eventKind === 'boarded') {
           statusMap.set(row.studentId, 'on_bus');
         } else if (row.eventKind === 'alighted') {
-          const isPmRoute = row.direction === 'PM';
+          const isPmRoute =
+            row.direction === 'PM' ||
+            (row.direction == null && /pm/i.test(row.routeId ?? ''));
           statusMap.set(row.studentId, isPmRoute ? 'at_home' : 'at_school');
         }
       }

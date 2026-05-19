@@ -6,7 +6,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "test": "jest"
+    "test": "echo 'No tests for @sbtm/i18n' && exit 0"
   },
   "dependencies": {
     "i18next": "^23.15.2",

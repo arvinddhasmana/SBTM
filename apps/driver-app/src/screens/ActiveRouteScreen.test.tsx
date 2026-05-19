@@ -140,6 +140,7 @@ function setStoreState(overrides: Partial<typeof mockStoreState>) {
     endRoute: jest.fn(),
     stops: [],
     routeDirection: 'AM',
+    visitedStopIds: [],
     ...overrides,
   };
 }

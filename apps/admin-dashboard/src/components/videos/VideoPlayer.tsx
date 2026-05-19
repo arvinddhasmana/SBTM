@@ -59,7 +59,9 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, onClose, routeName }) 
         <div className="p-4 grid grid-cols-3 gap-4 text-sm">
           <div>
             <p className="text-slate-500">Route</p>
-            <p className="text-white font-medium">{routeName || 'Unknown Route'}</p>
+            <p className="text-white font-medium">
+              {routeName || video.routeId || 'Unknown Route'}
+            </p>
           </div>
           <div>
             <p className="text-slate-500">Vehicle</p>

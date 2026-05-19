@@ -90,14 +90,14 @@ describe('FleetAssignments Page', () => {
     await waitFor(() => {
       expect(screen.getByText('school-1')).toBeInTheDocument();
       expect(screen.getByText('BUS-01')).toBeInTheDocument();
-      expect(screen.getByText('PROPOSED')).toBeInTheDocument();
+      expect(screen.getByText('Proposed')).toBeInTheDocument();
     });
   });
 
   it('displays accepted status and PDF download for accepted assignments', async () => {
     renderComponent();
     await waitFor(() => {
-      expect(screen.getByText('ACCEPTED')).toBeInTheDocument();
+      expect(screen.getByText('Accepted')).toBeInTheDocument();
       expect(screen.getByText('PDF')).toBeInTheDocument();
     });
   });
