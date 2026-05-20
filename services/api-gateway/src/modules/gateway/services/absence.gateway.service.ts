@@ -165,7 +165,9 @@ export class AbsenceGatewayService {
     if (caller.role === Role.DRIVER) {
       return this.listAbsencesForDriver(caller, tripDate);
     }
-    if (!caller.anchorKind) {
+    const effectiveAnchorKind =
+      caller.role === Role.SUPER_ADMIN ? 'super' : caller.anchorKind;
+    if (!effectiveAnchorKind) {
       throw new ForbiddenException('Caller has no anchor');
     }
 
@@ -181,7 +183,7 @@ export class AbsenceGatewayService {
         push('a.trip_date = $$::date', tripDate);
       }
 
-      switch (caller.anchorKind) {
+      switch (effectiveAnchorKind) {
         case 'super':
           if (schoolId) push('stu.school_id = $$::uuid', schoolId);
           break;

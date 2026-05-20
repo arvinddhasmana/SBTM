@@ -42,7 +42,13 @@ export class AbsenceController {
    * Query param: date (YYYY-MM-DD), schoolId (optional, required for board/STA admins)
    */
   @Get()
-  @Roles(Role.DRIVER, Role.SCHOOL_ADMIN, Role.BOARD_ADMIN, Role.STA_ADMIN)
+  @Roles(
+    Role.DRIVER,
+    Role.SCHOOL_ADMIN,
+    Role.BOARD_ADMIN,
+    Role.STA_ADMIN,
+    Role.SUPER_ADMIN,
+  )
   async listAbsences(
     @Query('date') date: string,
     @Query('schoolId') schoolId: string | undefined,
@@ -55,7 +61,7 @@ export class AbsenceController {
    * Admin dashboard overview of all absences (optional date filter).
    */
   @Get('admin')
-  @Roles(Role.SCHOOL_ADMIN, Role.BOARD_ADMIN, Role.STA_ADMIN)
+  @Roles(Role.SCHOOL_ADMIN, Role.BOARD_ADMIN, Role.STA_ADMIN, Role.SUPER_ADMIN)
   async adminAbsences(
     @Query('date') date: string | undefined,
     @Query('schoolId') schoolId: string | undefined,
