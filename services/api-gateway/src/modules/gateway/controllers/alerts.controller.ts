@@ -178,6 +178,16 @@ export class AlertsController {
     const schoolId: string | undefined =
       (dto as any).schoolId ??
       (user.anchorKind === 'school' ? user.anchorId : undefined);
+    // Resolve the STA that owns this school so the alerts service can correctly
+    // set sta_id (FK to stx_sta). School UUID ≠ STA UUID.
+    let staId: string | undefined;
+    if (schoolId) {
+      const school = await this.schoolRepository.findOne({
+        where: { id: schoolId },
+        relations: ['board'],
+      });
+      staId = school?.board?.staId;
+    }
     // Support both flat lat/lng and nested location object from older clients
     const location = (dto as any).location as
       | { lat: number; lng: number }
@@ -193,6 +203,7 @@ export class AlertsController {
       lat,
       lng,
       schoolId,
+      staId,
       driverId:
         dto.driverId ??
         (user.anchorKind === 'driver' ? user.anchorId : user.id),

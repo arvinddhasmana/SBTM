@@ -51,7 +51,7 @@ export class AlertsService {
    * v1 → v2 mapping:
    *   • scope_kind  = 'route'
    *   • scope_ref   = routeId
-   *   • sta_id      = schoolId (free-form on the v1 wire; v2 column is uuid)
+   *   • sta_id      = dto.staId (resolved by api-gateway from school→board→sta)
    *   • category/severity from the classifier
    *   • status      = 'active' (v1 PENDING_CONFIRMATION/Tier escalation
    *                   workflow removed — see Phase B decisions)
@@ -64,7 +64,7 @@ export class AlertsService {
     const { category, severity } = this.classifier.classify(dto.eventType);
 
     const alert = this.alertsRepo.create({
-      staId: dto.schoolId,
+      staId: dto.staId,
       category,
       severity,
       scopeKind: AlertScopeKind.ROUTE,

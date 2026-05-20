@@ -68,35 +68,56 @@ export async function mockApiRoutes(
   const alerts = overrides.alerts ?? [];
 
   // Auth login
-  await page.route(`${API_URL}/api/v1/auth/login`, (route) => {
+  await page.route('**/api/v1/auth/login', (route) => {
     if (overrides.loginSuccess === false) {
       return route.fulfill({ status: 401, json: { message: 'Invalid credentials' } });
     }
     return route.fulfill({ status: 200, json: MOCK_DRIVER_AUTH_RESPONSE });
   });
 
-  // Driver schedule / assigned routes
-  await page.route(`${API_URL}/api/v1/driver/schedule`, (route) =>
-    route.fulfill({ status: 200, json: routes }),
+  // Auth me (used by restoreSession on RouteSelect mount)
+  await page.route('**/api/v1/auth/me', (route) =>
+    route.fulfill({
+      status: 200,
+      json: {
+        id: TEST_DRIVER.id,
+        driverId: TEST_DRIVER.id,
+        email: TEST_DRIVER.email,
+        firstName: 'Test',
+        lastName: 'Driver',
+      },
+    }),
+  );
+
+  // Driver schedule / assigned routes (both paths used by the app).
+  // mapScheduleToDriver in auth.service reads `routeId`, so we add it alongside `id`.
+  const scheduledRoutes = routes.map((r: any) => ({ ...r, routeId: r.id ?? r.routeId }));
+  await page.route('**/api/v1/driver/schedule', (route) =>
+    route.fulfill({ status: 200, json: scheduledRoutes }),
+  );
+  await page.route('**/api/v1/driver/me/schedule', (route) =>
+    route.fulfill({ status: 200, json: scheduledRoutes }),
   );
 
   // Active alerts for a route
-  await page.route(`${API_URL}/api/v1/alerts/driver-view/**`, (route) =>
+  await page.route('**/api/v1/alerts/driver-view/**', (route) =>
     route.fulfill({ status: 200, json: alerts }),
   );
 
   // GPS update (fire-and-forget)
-  await page.route(`${API_URL}/api/v1/gps/**`, (route) => route.fulfill({ status: 204, body: '' }));
+  await page.route('**/api/v1/gps/**', (route) => route.fulfill({ status: 204, body: '' }));
 
   // Presence updates
-  await page.route(`${API_URL}/api/v1/presence/**`, (route) =>
-    route.fulfill({ status: 204, body: '' }),
-  );
+  await page.route('**/api/v1/presence/**', (route) => route.fulfill({ status: 204, body: '' }));
 }
 
 /**
  * Inject a mock authenticated driver session into localStorage.
- * Zustand persists state under the 'driver-storage' key.
+ *
+ * Sets both `auth_token` (so App.tsx's session-restore useEffect fires the
+ * mocked /auth/me → /driver/me/schedule path) and `driver-storage` (Zustand
+ * persist fallback).  Relying on Zustand async rehydration alone races with
+ * setIsRestoring(false) in headless Playwright and never wins.
  */
 export async function injectDriverSession(page: Page): Promise<void> {
   const state = {
@@ -119,10 +140,11 @@ export async function injectDriverSession(page: Page): Promise<void> {
   };
 
   await page.evaluate(
-    ([key, value]) => {
-      localStorage.setItem(key, value);
+    ([storageKey, storageValue, tokenKey, tokenValue]) => {
+      localStorage.setItem(storageKey, storageValue);
+      localStorage.setItem(tokenKey, tokenValue);
     },
-    ['driver-storage', JSON.stringify(state)],
+    ['driver-storage', JSON.stringify(state), 'auth_token', MOCK_DRIVER_AUTH_RESPONSE.access_token],
   );
 }
 

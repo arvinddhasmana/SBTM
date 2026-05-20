@@ -26,7 +26,7 @@ test.describe('AT: Authentication', () => {
 
     /** AT01 — Login form renders all required elements */
     test('AT01 – renders login form with email, password and sign-in button', async ({ page }) => {
-      await expect(page.getByRole('heading', { name: /OSTA Admin Dashboard/i })).toBeVisible();
+      await expect(page.getByRole('heading', { name: /STA Admin Dashboard/i })).toBeVisible();
       await expect(page.locator('input[type="email"]')).toBeVisible();
       await expect(page.locator('input[type="password"]')).toBeVisible();
       await expect(page.getByRole('button', { name: /Sign In/i })).toBeVisible();

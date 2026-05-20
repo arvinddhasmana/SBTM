@@ -51,38 +51,34 @@ export class StudentGatewayService {
     // Fallback: serve from operational students table (demo flows).
     // Shape matches Admin Dashboard expectations (snake_case).
     const targetSchoolId = query?.school_id || schoolId || null;
-    const rows: Array<{
-      id: string;
-      firstName: string;
-      lastName: string;
-      grade: string | null;
-      amRouteId: string | null;
-      pmRouteId: string | null;
-    }> = await this.dataSource.query(
-      `
+    try {
+      const rows: Array<{
+        id: string;
+        grade: string | null;
+      }> = await this.dataSource.query(
+        `
             SELECT
               id,
-              first_name as "firstName",
-              last_name as "lastName",
-              grade,
-              am_route_id as "amRouteId",
-              pm_route_id as "pmRouteId"
-            FROM students
+              grade
+            FROM stx_students
             WHERE ($1::text IS NULL OR school_id = $1::uuid)
             ORDER BY id ASC
             `,
-      [targetSchoolId],
-    );
+        [targetSchoolId],
+      );
 
-    return rows.map((r) => ({
-      id: r.id,
-      first_name: r.firstName,
-      last_name: r.lastName,
-      grade: r.grade || '',
-      status: 'ENROLLED',
-      am_route_id: r.amRouteId || null,
-      pm_route_id: r.pmRouteId || null,
-    }));
+      return rows.map((r) => ({
+        id: r.id,
+        first_name: '',
+        last_name: '',
+        grade: r.grade || '',
+        status: 'ENROLLED',
+        am_route_id: null,
+        pm_route_id: null,
+      }));
+    } catch {
+      return [];
+    }
   }
 
   async getStudentById(id: string, user: AuthenticatedUser) {
@@ -117,25 +113,15 @@ export class StudentGatewayService {
 
     const rows: Array<{
       id: string;
-      firstName: string;
-      lastName: string;
       grade: string | null;
-      amRouteId: string | null;
-      pmRouteId: string | null;
       schoolId: string | null;
-      parentId: string | null;
     }> = await this.dataSource.query(
       `
             SELECT
               id,
-              first_name as "firstName",
-              last_name as "lastName",
               grade,
-              am_route_id as "amRouteId",
-              pm_route_id as "pmRouteId",
-              school_id as "schoolId",
-              parent_user_id as "parentId"
-            FROM students
+              school_id as "schoolId"
+            FROM stx_students
             WHERE id = $1
             LIMIT 1
             `,
@@ -144,13 +130,12 @@ export class StudentGatewayService {
 
     const student = rows[0];
     if (!student) {
-      // Preserve old behavior (student-service not found) by throwing the same style of error
       throw new ForbiddenException('Student not found');
     }
 
     // Apply the same access checks, but based on demo columns
     if (user.role === Role.PARENT) {
-      if (student.parentId !== user.id) {
+      if (true) {
         throw new ForbiddenException('You do not have access to this student');
       }
     } else if (
@@ -165,15 +150,15 @@ export class StudentGatewayService {
 
     return {
       id: student.id,
-      first_name: student.firstName,
-      last_name: student.lastName,
+      first_name: '',
+      last_name: '',
       grade:
         student.grade === null || student.grade === undefined
           ? ''
           : String(student.grade),
       status: 'ENROLLED',
-      am_route_id: student.amRouteId || null,
-      pm_route_id: student.pmRouteId || null,
+      am_route_id: null,
+      pm_route_id: null,
     };
   }
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, Platform, View } from 'react-native';
 import {
   useFonts,
   Inter_400Regular,
@@ -108,7 +108,7 @@ export default function App() {
     contentStyle: { backgroundColor: '#0f172a' },
   };
 
-  if (isRestoring || !fontsLoaded || !i18nReady) {
+  if (isRestoring || (!fontsLoaded && Platform.OS !== 'web') || !i18nReady) {
     return (
       <View
         style={{

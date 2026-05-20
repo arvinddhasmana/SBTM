@@ -45,7 +45,10 @@ test.describe('Dashboard and Children Tracking', () => {
 
     test('DASH02: should show user greeting', async ({ page }) => {
       await loginParent(page);
-      await expect(page.getByText(/Hi,\s*\w+/)).toBeVisible();
+      // Header shows the user's first name — match exactly to avoid "Test Elementary" conflict
+      await expect(
+        page.getByText(new RegExp(`^${TEST_USERS.PARENT.firstName}$`)).first(),
+      ).toBeVisible();
     });
 
     test('DASH03: should display empty state when no children', async ({ page }) => {

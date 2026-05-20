@@ -1,5 +1,5 @@
 import api from './api.service';
-import * as SecureStore from 'expo-secure-store';
+import { tokenStorage } from './token-storage';
 import { Driver, LoginResponse } from '../types';
 
 function mapScheduleToDriver(
@@ -45,7 +45,7 @@ function mapScheduleToDriver(
 export const AuthService = {
   login: async (email: string, password: string): Promise<Driver> => {
     const response = await api.post<LoginResponse>('/auth/login', { email, password });
-    await SecureStore.setItemAsync('auth_token', response.data.accessToken);
+    await tokenStorage.set(response.data.accessToken);
 
     const schedule = await api.get<
       Array<{
@@ -90,10 +90,10 @@ export const AuthService = {
   },
 
   logout: async () => {
-    await SecureStore.deleteItemAsync('auth_token');
+    await tokenStorage.remove();
   },
 
   getToken: async () => {
-    return await SecureStore.getItemAsync('auth_token');
+    return await tokenStorage.get();
   },
 };

@@ -31,11 +31,26 @@ const singletonRequire = require('module').createRequire(
   path.join(projectRoot, 'noop.js'),
 );
 
+// Web stubs for native-only modules that cannot bundle on web platform
+const webStubs = {
+  'react-native-maps': path.resolve(projectRoot, 'src/stubs/react-native-maps.web.js'),
+};
+
+// Prefer CJS over ESM so packages using import.meta (Vite-style) don't crash Metro.
+// The 'react-native' condition maps to CJS builds in packages that ship both.
+config.resolver.unstable_conditionNames = ['react-native', 'browser', 'require', 'default'];
+
 config.resolver.resolveRequest = (context, moduleName, platform) => {
   if (singletonNames.includes(moduleName)) {
     return {
       type: 'sourceFile',
       filePath: singletonRequire.resolve(moduleName),
+    };
+  }
+  if (platform === 'web' && webStubs[moduleName]) {
+    return {
+      type: 'sourceFile',
+      filePath: webStubs[moduleName],
     };
   }
   return context.resolveRequest(context, moduleName, platform);

@@ -138,8 +138,9 @@ export class PresenceService {
           SELECT e.*
           FROM stx_boarding_events e
           JOIN stx_runs r ON r.id = e.run_id
+          JOIN trips t ON t.trip_id = ANY(r.trip_ids)
           JOIN stx_students s ON s.id = e.student_id
-          WHERE r.route_id = $1 ${schoolFilter}
+          WHERE t.route_id = $1 ${schoolFilter}
         )
         SELECT DISTINCT ON (student_id)
           student_id   AS "studentId",
@@ -399,9 +400,10 @@ export class PresenceService {
     const routeStatsRaw = await this.dataSource.query(
       `
         WITH LatestEvents AS (
-          SELECT DISTINCT ON (e.student_id) e.*, r.route_id
+          SELECT DISTINCT ON (e.student_id) e.*, t.route_id
           FROM stx_boarding_events e
           JOIN stx_runs r ON r.id = e.run_id
+          JOIN trips t ON t.trip_id = ANY(r.trip_ids)
           JOIN stx_students s ON s.id = e.student_id
           WHERE 1=1 ${eventSchoolJoinFilter}
           ORDER BY e.student_id, e.recorded_at DESC
@@ -461,7 +463,7 @@ export class PresenceService {
     }
 
     if (query.routeId) {
-      whereClause += ` AND r.route_id = $${params.length + 1}`;
+      whereClause += ` AND t.route_id = $${params.length + 1}`;
       params.push(query.routeId);
     }
 
@@ -491,10 +493,11 @@ export class PresenceService {
           e.event_kind    AS "eventKind",
           e.recorded_at   AS "recordedAt",
           e.source,
-          r.route_id      AS "routeId",
+          t.route_id      AS "routeId",
           s.grade
         FROM stx_boarding_events e
         JOIN stx_runs r ON r.id = e.run_id
+        JOIN trips t ON t.trip_id = ANY(r.trip_ids)
         JOIN stx_students s ON s.id = e.student_id
         ${whereClause}
         ORDER BY e.recorded_at DESC
@@ -508,6 +511,7 @@ export class PresenceService {
         SELECT COUNT(*) as count
         FROM stx_boarding_events e
         JOIN stx_runs r ON r.id = e.run_id
+        JOIN trips t ON t.trip_id = ANY(r.trip_ids)
         JOIN stx_students s ON s.id = e.student_id
         ${whereClause}
       `,

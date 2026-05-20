@@ -47,4 +47,8 @@ export class CreateEmergencyEventDto {
   @IsOptional()
   @IsString()
   description?: string;
+
+  @IsOptional()
+  @IsString()
+  staId?: string;
 }

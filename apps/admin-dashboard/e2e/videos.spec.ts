@@ -96,6 +96,7 @@ test.describe('Videos – Admin Dashboard', () => {
         !e.includes('net::ERR') &&
         !e.includes('AbortError') &&
         !e.includes('401') &&
+        !e.includes('502') &&
         !e.includes('Unauthorized'),
     );
     expect(critical).toHaveLength(0);

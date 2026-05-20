@@ -8,8 +8,11 @@ import { defineConfig, devices } from '@playwright/test';
 export default defineConfig({
   testDir: './e2e',
 
-  // Maximum time one test can run
-  timeout: 30 * 1000,
+  // Pre-warm Expo Metro bundle so tests don't time out on cold start
+  globalSetup: './e2e/global-setup.ts',
+
+  // Allow 90 s per test — Expo cold-bundle takes 30-60 s on first request
+  timeout: 90 * 1000,
 
   // Run tests in parallel
   fullyParallel: true,
@@ -31,6 +34,9 @@ export default defineConfig({
     // Base URL for the app (Expo web default port)
     baseURL: process.env.E2E_BASE_URL ?? 'http://localhost:8081',
 
+    // Allow 45 s for element assertions to handle warm-up latency
+    actionTimeout: 45_000,
+
     // Collect trace when retrying the failed test
     trace: 'on-first-retry',
 
@@ -40,6 +46,9 @@ export default defineConfig({
     // Video on failure
     video: 'retain-on-failure',
   },
+
+  // Global expect timeout (overrides per-test inline timeouts as the floor)
+  expect: { timeout: 45_000 },
 
   // Configure projects for major browsers
   projects: [

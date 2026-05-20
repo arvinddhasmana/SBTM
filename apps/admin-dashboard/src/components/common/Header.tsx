@@ -56,7 +56,7 @@ const Header: React.FC<HeaderProps> = ({ title, subtitle, action, className }) =
           <div className="hidden sm:block">
             <p className="text-sm font-bold text-white leading-tight">{user?.name || 'Admin'}</p>
             <p className="text-xs text-slate-500 font-medium truncate max-w-[100px]">
-              {user?.role?.replace(/_/g, ' ') || 'Administrator'}
+              {user?.role || 'Administrator'}
             </p>
           </div>
         </div>

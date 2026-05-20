@@ -16,7 +16,7 @@ export const WorkflowConfigPage: React.FC = () => {
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<Partial<WorkflowConfig>>({
-    actionName: '',
+    actionName: 'CONFIRM',
     allowedForTier: 'TIER_1',
     allowedForStatus: 'PENDING',
     requiredRole: 'SCHOOL_ADMIN',
@@ -62,7 +62,7 @@ export const WorkflowConfigPage: React.FC = () => {
 
   const resetForm = () => {
     setFormData({
-      actionName: '',
+      actionName: 'CONFIRM',
       allowedForTier: 'TIER_1',
       allowedForStatus: 'PENDING',
       requiredRole: 'SCHOOL_ADMIN',
@@ -155,14 +155,18 @@ export const WorkflowConfigPage: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   {t('alertConfig:workflow.form.actionName')}
                 </label>
-                <input
-                  type="text"
+                <select
                   value={formData.actionName}
                   onChange={(e) => setFormData({ ...formData, actionName: e.target.value })}
-                  placeholder={t('alertConfig:workflow.form.actionNamePlaceholder')}
                   className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
                   required
-                />
+                >
+                  <option value="CONFIRM">CONFIRM</option>
+                  <option value="FALSE_ALARM">FALSE_ALARM</option>
+                  <option value="REQUEST_INFO">REQUEST_INFO</option>
+                  <option value="RESOLVE">RESOLVE</option>
+                  <option value="STATUS_UPDATE">STATUS_UPDATE</option>
+                </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">

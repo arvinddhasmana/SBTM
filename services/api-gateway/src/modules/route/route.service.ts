@@ -113,6 +113,9 @@ export class RouteService {
   }
 
   async findAll(schoolId: string): Promise<Route[]> {
+    if (!schoolId) {
+      return this.routeRepository.find();
+    }
     return this.routeRepository.find({
       where: { stxSchoolId: schoolId },
     });

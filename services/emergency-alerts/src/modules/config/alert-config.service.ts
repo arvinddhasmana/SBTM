@@ -472,24 +472,42 @@ export class AlertConfigService implements OnModuleInit {
     dto: any,
     actorUserId?: string,
   ): Promise<AlertEventTypeConfig> {
-    const existing = await this.eventTypeConfigRepo.findOne({
-      where: { eventType: dto.eventType },
+    const existingActive = await this.eventTypeConfigRepo.findOne({
+      where: { eventType: dto.eventType, isActive: true },
     });
 
-    if (existing) {
+    if (existingActive) {
       throw new BadRequestException(
         `Event type configuration already exists: ${dto.eventType}`,
       );
     }
 
-    const config = this.eventTypeConfigRepo.create(
-      dto as Partial<AlertEventTypeConfig>,
-    );
-    const saved = await this.eventTypeConfigRepo.save(config);
+    const displayName: string =
+      dto.displayName ||
+      String(dto.eventType)
+        .replace(/_/g, ' ')
+        .replace(/\b\w/g, (c: string) => c.toUpperCase());
+
+    // Reactivate a soft-deleted record if one exists (unique constraint on event_type)
+    const softDeleted = await this.eventTypeConfigRepo.findOne({
+      where: { eventType: dto.eventType, isActive: false },
+    });
+
+    let saved: AlertEventTypeConfig;
+    if (softDeleted) {
+      Object.assign(softDeleted, { ...dto, displayName, isActive: true });
+      saved = await this.eventTypeConfigRepo.save(softDeleted);
+    } else {
+      const config = this.eventTypeConfigRepo.create({
+        ...dto,
+        displayName,
+      } as Partial<AlertEventTypeConfig>);
+      saved = await this.eventTypeConfigRepo.save(config);
+    }
 
     await this.logConfigChange(
       'alert_event_type_config',
-      saved.eventType,
+      saved.id,
       'CREATE',
       actorUserId || 'system',
       'SUPER_ADMIN',
@@ -522,7 +540,7 @@ export class AlertConfigService implements OnModuleInit {
 
     await this.logConfigChange(
       'alert_event_type_config',
-      eventType,
+      saved.id,
       'UPDATE',
       actorUserId || 'system',
       'SUPER_ADMIN',
@@ -554,7 +572,7 @@ export class AlertConfigService implements OnModuleInit {
 
     await this.logConfigChange(
       'alert_event_type_config',
-      eventType,
+      config.id,
       'DELETE',
       actorUserId || 'system',
       'SUPER_ADMIN',

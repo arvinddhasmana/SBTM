@@ -58,7 +58,9 @@ test.describe('Alert Configuration Validation', () => {
     await loginAs(page, 'SUPER_ADMIN');
     await page.goto('/alert-config/escalation-timing', { waitUntil: 'domcontentloaded' });
 
-    await expect(page.locator('h1').last()).toContainText('Escalation Timing', { timeout: 15_000 });
+    await expect(page.locator('h2').first()).toContainText('Escalation Timing', {
+      timeout: 15_000,
+    });
     await expect(page.getByText('TIER_1', { exact: false }).first()).toBeVisible({
       timeout: 15_000,
     });
@@ -75,7 +77,7 @@ test.describe('Alert Configuration Validation', () => {
     await loginAs(page, 'SUPER_ADMIN');
     await page.goto('/alert-config/event-types', { waitUntil: 'domcontentloaded' });
 
-    await expect(page.locator('h1').last()).toContainText('Event Type', { timeout: 15_000 });
+    await expect(page.locator('h2').first()).toContainText('Event Type', { timeout: 15_000 });
     await expect(page.getByText('PANIC_BUTTON', { exact: false }).first()).toBeVisible({
       timeout: 15_000,
     });
@@ -91,7 +93,7 @@ test.describe('Alert Configuration Validation', () => {
     await loginAs(page, 'SUPER_ADMIN');
     await page.goto('/alert-config/notification-routing', { waitUntil: 'domcontentloaded' });
 
-    await expect(page.locator('h1').last()).toContainText('Notification Routing', {
+    await expect(page.locator('h2').first()).toContainText('Notification Routing', {
       timeout: 15_000,
     });
     await expect(page.getByText('TIER_1', { exact: false }).first()).toBeVisible({
@@ -108,7 +110,7 @@ test.describe('Alert Configuration Validation', () => {
     await loginAs(page, 'SUPER_ADMIN');
     await page.goto('/alert-config/workflow', { waitUntil: 'domcontentloaded' });
 
-    await expect(page.locator('h1').last()).toContainText('Workflow', { timeout: 15_000 });
+    await expect(page.locator('h2').first()).toContainText('Workflow', { timeout: 15_000 });
     await expect(page.getByText(/CONFIRM|ACKNOWLEDGE|RESOLVE/i).first()).toBeVisible({
       timeout: 15_000,
     });

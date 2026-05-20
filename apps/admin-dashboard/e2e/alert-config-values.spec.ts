@@ -48,7 +48,7 @@ test.describe('Alert Config UI matches backend logic values', () => {
     await loginAs(page, 'SUPER_ADMIN');
     await page.goto('/alert-config/escalation-timing', { waitUntil: 'domcontentloaded' });
 
-    await expect(page.locator('h1').last()).toContainText('Escalation Timing', {
+    await expect(page.locator('h2').first()).toContainText('Escalation Timing', {
       timeout: 15_000,
     });
 
@@ -108,7 +108,7 @@ test.describe('Alert Config UI matches backend logic values', () => {
 
       await loginAs(page, 'SUPER_ADMIN');
       await page.goto('/alert-config/escalation-timing', { waitUntil: 'domcontentloaded' });
-      await expect(page.locator('h1').last()).toContainText('Escalation Timing', {
+      await expect(page.locator('h2').first()).toContainText('Escalation Timing', {
         timeout: 15_000,
       });
       await expect(page.getByText(`${targetMs / 1000}s`).first()).toBeVisible({

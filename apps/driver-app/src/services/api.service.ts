@@ -1,5 +1,5 @@
 import axios from 'axios';
-import * as SecureStore from 'expo-secure-store';
+import { tokenStorage } from './token-storage';
 import { API_REQUEST_TIMEOUT_MS } from '../config/constants';
 
 const BASE_URL = (() => {
@@ -15,7 +15,7 @@ const api = axios.create({
 
 // Attach JWT to every outgoing request
 api.interceptors.request.use(async (config) => {
-  const token = await SecureStore.getItemAsync('auth_token');
+  const token = await tokenStorage.get();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -34,7 +34,7 @@ api.interceptors.response.use(
   async (error) => {
     if (error.response?.status === 401) {
       // Token expired or invalid – clear stored token and notify app
-      await SecureStore.deleteItemAsync('auth_token');
+      await tokenStorage.remove();
       onUnauthorized?.();
     }
     return Promise.reject(error);

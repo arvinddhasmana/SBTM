@@ -188,21 +188,16 @@ export async function startRouteForE2E(
   routeId: string,
   vehicleId: string,
 ): Promise<void> {
-  // Login as driver to get a valid token
+  // Use SUPER_ADMIN — DRIVER anchor check ('driver' kind) blocks the driver user
   const loginRes = await page.request.post(`${E2E_API_URL}/api/v1/auth/login`, {
-    data: { email: TEST_USERS.DRIVER.email, password: 'Admin123!' },
+    data: { email: TEST_USERS.SUPER_ADMIN.email, password: 'Admin123!' },
   });
-  const cookies = loginRes.headers()['set-cookie'] || '';
-  const tokenMatch = cookies.match(/access_token=([^;]+)/);
-  // Also try response body for accessToken
-  let token = tokenMatch?.[1];
-  if (!token) {
-    try {
-      const body = await loginRes.json();
-      token = body.accessToken;
-    } catch {
-      /* ignore */
-    }
+  let token: string | undefined;
+  try {
+    const body = await loginRes.json();
+    token = body.accessToken;
+  } catch {
+    /* ignore */
   }
 
   if (token) {
@@ -240,40 +235,28 @@ export function collectConsoleErrors(page: Page): () => string[] {
  * Returns the alertId from the response. Requires the backend to be running.
  */
 export async function createTestAlert(
-  page: Page,
+  _page: Page,
   options: { eventType?: string; routeId?: string; vehicleId?: string } = {},
 ): Promise<string | undefined> {
-  const loginRes = await page.request.post(`${E2E_API_URL}/api/v1/auth/login`, {
-    data: { email: TEST_USERS.DRIVER.email, password: 'Admin123!' },
-  });
-  const cookies = loginRes.headers()['set-cookie'] || '';
-  const tokenMatch = cookies.match(/access_token=([^;]+)/);
-  let token = tokenMatch?.[1];
-  if (!token) {
-    try {
-      const body = await loginRes.json();
-      token = body.accessToken;
-    } catch {
-      /* ignore */
-    }
-  }
-
+  const token = await getDriverToken();
   if (!token) return undefined;
 
-  const res = await page.request.post(`${E2E_API_URL}/api/v1/emergency-events`, {
-    data: {
+  const res = await fetch(`${E2E_API_URL}/api/v1/emergency-events`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({
       vehicleId: options.vehicleId || 'BUS-STBERN-01',
       routeId: options.routeId || 'ROUTE-STBERN-R01-AM',
       eventType: options.eventType || 'PANIC_BUTTON',
       timestamp: new Date().toISOString(),
       lat: 45.3506,
       lng: -75.7934,
-    },
-    headers: { Authorization: `Bearer ${token}` },
-  });
+    }),
+  }).catch(() => null);
 
+  if (!res) return undefined;
   try {
-    const body = await res.json();
+    const body = (await res.json()) as { alertId?: string };
     return body.alertId;
   } catch {
     return undefined;
@@ -286,7 +269,7 @@ export async function createTestAlert(
  * Returns true if the request succeeded.
  */
 export async function sendGpsLocation(
-  page: Page,
+  _page: Page,
   options: {
     routeId?: string;
     vehicleId?: string;
@@ -295,24 +278,23 @@ export async function sendGpsLocation(
     speedKph?: number;
   } = {},
 ): Promise<boolean> {
-  const token = await getDriverToken(page);
+  const token = await getDriverToken();
   if (!token) return false;
 
-  const res = await page.request
-    .post(`${E2E_API_URL}/api/v1/routes/locations`, {
-      data: {
-        vehicleId: options.vehicleId || 'BUS-STBERN-01',
-        routeId: options.routeId || 'ROUTE-STBERN-R01-AM',
-        timestamp: new Date().toISOString(),
-        lat: options.lat ?? 45.3506,
-        lng: options.lng ?? -75.7934,
-        speedKph: options.speedKph ?? 30,
-      },
-      headers: { Authorization: `Bearer ${token}` },
-    })
-    .catch(() => null);
+  const res = await fetch(`${E2E_API_URL}/api/v1/routes/locations`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({
+      vehicleId: options.vehicleId || 'BUS-STBERN-01',
+      routeId: options.routeId || 'ROUTE-STBERN-R01-AM',
+      timestamp: new Date().toISOString(),
+      lat: options.lat ?? 45.3506,
+      lng: options.lng ?? -75.7934,
+      speedKph: options.speedKph ?? 30,
+    }),
+  }).catch(() => null);
 
-  return res?.ok() ?? false;
+  return res?.ok ?? false;
 }
 
 /**
@@ -320,43 +302,39 @@ export async function sendGpsLocation(
  * Uses the DRIVER user's credentials.
  */
 export async function completeRouteForE2E(
-  page: Page,
+  _page: Page,
   routeId: string,
   vehicleId: string,
 ): Promise<void> {
-  const token = await getDriverToken(page);
+  const token = await getDriverToken();
   if (token) {
-    await page.request
-      .post(`${E2E_API_URL}/api/v1/routes/lifecycle-events`, {
-        data: {
-          routeId,
-          vehicleId,
-          eventType: 'ROUTE_COMPLETED',
-          timestamp: new Date().toISOString(),
-        },
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      .catch(() => {
-        /* non-critical */
-      });
+    await fetch(`${E2E_API_URL}/api/v1/routes/lifecycle-events`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({
+        routeId,
+        vehicleId,
+        eventType: 'ROUTE_COMPLETED',
+        timestamp: new Date().toISOString(),
+      }),
+    }).catch(() => {
+      /* non-critical */
+    });
   }
 }
 
-/** Internal helper: obtain a driver JWT token. */
-async function getDriverToken(page: Page): Promise<string | undefined> {
-  const loginRes = await page.request.post(`${E2E_API_URL}/api/v1/auth/login`, {
-    data: { email: TEST_USERS.DRIVER.email, password: 'Admin123!' },
-  });
-  const cookies = loginRes.headers()['set-cookie'] || '';
-  const tokenMatch = cookies.match(/access_token=([^;]+)/);
-  let token = tokenMatch?.[1];
-  if (!token) {
-    try {
-      const body = await loginRes.json();
-      token = body.accessToken;
-    } catch {
-      /* ignore */
-    }
+/** Internal helper: obtain a driver JWT token using Node.js fetch (isolated from browser cookies). */
+async function getDriverToken(): Promise<string | undefined> {
+  const res = await fetch(`${E2E_API_URL}/api/v1/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: TEST_USERS.DRIVER.email, password: 'Admin123!' }),
+  }).catch(() => null);
+  if (!res) return undefined;
+  try {
+    const body = (await res.json()) as { accessToken?: string };
+    return body.accessToken;
+  } catch {
+    return undefined;
   }
-  return token;
 }

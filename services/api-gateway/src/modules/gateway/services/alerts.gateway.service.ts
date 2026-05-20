@@ -30,6 +30,7 @@ export interface CreateEmergencyEventDto {
   routeId: string;
   driverId: string;
   schoolId: string;
+  staId?: string;
   timestamp: string;
   lat: number;
   lng: number;

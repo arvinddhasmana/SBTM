@@ -27,7 +27,7 @@ test.describe('Settings – Admin Dashboard', () => {
     await page.goto('/settings', { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(500);
     // The Settings page renders the authenticated user's name
-    const nameText = page.getByText(TEST_USERS['SUPER_ADMIN'].name);
+    const nameText = page.getByText(TEST_USERS['SUPER_ADMIN'].name).first();
     await expect(nameText).toBeVisible({ timeout: 10_000 });
   });
 
@@ -44,14 +44,14 @@ test.describe('Settings – Admin Dashboard', () => {
     await page.goto('/settings', { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(500);
     // Role badge shows role name (with spaces instead of underscores)
-    await expect(page.locator('text=/SUPER ADMIN/i')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('text=/SUPER ADMIN/i').first()).toBeVisible({ timeout: 10_000 });
   });
 
   test('ST05: GPS Source Settings link is visible for SUPER_ADMIN', async ({ page }) => {
     await loginAs(page, 'SUPER_ADMIN');
     await page.goto('/settings', { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(500);
-    const gpsLink = page.locator('a[href="/settings/gps-source"]');
+    const gpsLink = page.locator('a[href="/settings/gps-source"]').first();
     await expect(gpsLink).toBeVisible({ timeout: 10_000 });
   });
 

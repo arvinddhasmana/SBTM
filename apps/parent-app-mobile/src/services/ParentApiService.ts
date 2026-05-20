@@ -314,6 +314,12 @@ class ParentApiServiceClass {
     }
     await ApiService.put('/notification-preferences', { preferences: rows });
   }
+
+  async updateNotificationPreferencesRaw(
+    rows: Array<{ eventType: string; channel: string; enabled: boolean }>,
+  ): Promise<void> {
+    await ApiService.put('/notification-preferences', { preferences: rows });
+  }
 }
 
 export const ParentApiService = new ParentApiServiceClass();

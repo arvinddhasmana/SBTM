@@ -54,9 +54,13 @@ export class RlsContextService {
   ): Promise<T> {
     return this.dataSource.transaction(async (tx) => {
       const kind = anchor.anchorKind ?? 'super';
-      const id = anchor.anchorId ?? '';
-      await tx.query(`SET LOCAL sbtm.user_anchor_kind = $1`, [kind]);
-      await tx.query(`SET LOCAL sbtm.user_anchor_id = $1`, [id]);
+      const id = anchor.anchorId ?? '00000000-0000-0000-0000-000000000000';
+      await tx.query(`SELECT set_config('sbtm.user_anchor_kind', $1, true)`, [
+        kind,
+      ]);
+      await tx.query(`SELECT set_config('sbtm.user_anchor_id', $1, true)`, [
+        id,
+      ]);
       return fn(tx);
     });
   }

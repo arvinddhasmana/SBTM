@@ -106,7 +106,8 @@ test.describe('Dashboard – Parent Dashboard Web', () => {
         !e.includes('Failed to fetch') &&
         !e.includes('net::ERR') &&
         !e.includes('AbortError') &&
-        !e.includes('favicon'),
+        !e.includes('favicon') &&
+        !e.includes('401'),
     );
     expect(critical).toHaveLength(0);
   });

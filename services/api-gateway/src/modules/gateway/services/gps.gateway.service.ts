@@ -222,15 +222,37 @@ export class GpsGatewayService {
       await this.checkRouteAccess(dto.routeId, user);
     }
 
+    const schoolId = await this.getSchoolIdForRoute(dto.routeId);
+
     const url = `${this.gpsServiceUrl}/api/v1/routes/lifecycle`;
     return this.httpClient.post<{ status: string }>(url, {
       routeId: dto.routeId,
       vehicleId: dto.vehicleId,
       driverId: user.id,
+      schoolId: schoolId ?? '',
       eventType: dto.eventType,
       timestamp: dto.timestamp,
       stopId: dto.stopId,
     });
+  }
+
+  private async getSchoolIdForRoute(routeId: string): Promise<string | null> {
+    try {
+      const rows = (await this.rlsContext.runAsCurrent(async (tx) =>
+        tx.query(
+          `SELECT s.id::text AS school_id
+           FROM routes r
+           LEFT JOIN stx_schools s ON s.id = r.stx_school_id
+           WHERE r.route_id = $1
+             AND r.deleted_at IS NULL
+           LIMIT 1`,
+          [routeId],
+        ),
+      )) as Array<{ school_id: string | null }>;
+      return rows[0]?.school_id ?? null;
+    } catch {
+      return null;
+    }
   }
 
   /**
@@ -330,7 +352,7 @@ export class GpsGatewayService {
           s.name                     AS school_name,
           ST_Y(s.location::geometry) AS school_lat,
           ST_X(s.location::geometry) AS school_lng,
-          COALESCE(r.stx_direction_kind, '') AS direction
+          COALESCE(r.stx_direction_kind::text, '') AS direction
         FROM stx_runs run
         JOIN trips t        ON t.trip_id = ANY(run.trip_ids)
         JOIN routes r       ON r.route_id = t.route_id
@@ -398,7 +420,7 @@ export class GpsGatewayService {
           s.name                     AS school_name,
           ST_Y(s.location::geometry) AS school_lat,
           ST_X(s.location::geometry) AS school_lng,
-          COALESCE(r.stx_direction_kind, '') AS direction
+          COALESCE(r.stx_direction_kind::text, '') AS direction
         FROM routes r
         LEFT JOIN stx_schools s ON s.id = r.stx_school_id
         WHERE r.route_id = $1

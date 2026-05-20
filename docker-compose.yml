@@ -128,6 +128,7 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
+      - INTERNAL_SERVICE_SECRET=${INTERNAL_SERVICE_SECRET:-dev_internal_secret}
     depends_on:
       postgres:
         condition: service_healthy
@@ -147,6 +148,7 @@ services:
       - DB_PASSWORD=${DB_PASSWORD:?DB_PASSWORD is required}
       - DB_DATABASE=${DB_DATABASE:-sbms}
       - STORAGE_TYPE=local
+      - STORAGE_BASE_URL=http://localhost:3005
       - PORT=3005
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
     depends_on:

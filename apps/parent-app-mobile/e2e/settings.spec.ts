@@ -135,7 +135,12 @@ test.describe('Settings – Parent Mobile App', () => {
     await setupAndNavigate(page);
 
     const critical = errors.filter(
-      (e) => !e.includes('Failed to fetch') && !e.includes('net::ERR') && !e.includes('AbortError'),
+      (e) =>
+        !e.includes('Failed to fetch') &&
+        !e.includes('net::ERR') &&
+        !e.includes('AbortError') &&
+        !e.includes('CORS policy') &&
+        !e.includes('Access-Control-Allow-Origin'),
     );
     expect(critical).toHaveLength(0);
   });

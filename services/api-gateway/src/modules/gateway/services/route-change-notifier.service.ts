@@ -46,7 +46,7 @@ export class RouteChangeNotifierService {
     // Find all distinct parent user IDs for students on this route
     const rows: Array<{ parentId: string }> = await this.dataSource.query(
       `SELECT DISTINCT parent_user_id as "parentId"
-       FROM students
+       FROM stx_students
        WHERE (am_route_id = $1 OR pm_route_id = $1)
          AND parent_user_id IS NOT NULL`,
       [routeId],
