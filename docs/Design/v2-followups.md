@@ -99,6 +99,23 @@ Open work items deferred from the aggressive cutover (commits 497497c Phase A, 3
 - **Status**: **done on `feat/sbtm-refocus-data-model`**. Audit found `SchemaAudit-And-Migration.md` and `DataModel-v2.md` §10 already aligned (every dual-write reference is an explicit negation; no OSTA Admin alias row exists). `RoutePlanner.md` §4 lost its stale "read-only after Phase B dual-read flip; removed in Phase C" line — `Route.polyline` is dropped outright in Phase A. `Reference-Complete.md` (31 occurrences) and `ServiceContracts.md` (1 occurrence) renamed `OSTA_ADMIN` → `STA_ADMIN` since they describe the current API contract. The three historical PRDs (`PRD-Complete.md`, `UpgradePlan.md`, `ImplementationPlanForPhaseBAlertGovernanceandConfirmation.md`) gained a "Historical record (pre-v2 cutover)" banner pointing readers to `DataModel-v2.md` §10 + `Reference-Complete.md` for current truth — those docs still reference v1 entity names by design (they describe pre-v2 work). The Phase F verification grep in `SchemaAudit-And-Migration.md` was sharpened to exclude the intentional negations and the banner-tagged PRDs.
 - **Size**: closed.
 
+### 12. Dev seed: missing board/school/driver/parent credentials and NULL anchor_ids
+
+- **Where**: `scripts/schema-seed/seed-v2.sql`.
+- **Symptom**: three pre-existing fixture users had `anchor_id = NULL` despite having a non-null `anchor_kind`, causing RLS context to evaluate as "no anchor" and return empty rows or Forbidden. No seed users existed for OCSB/RCDSB/RCCDSB board admins, Maplewood/Pinecrest/Cathedral school admins, or any of the 8 parent/guardian users imported from the two-sta-bundle sample data. Drivers had `anchor_kind='school'` instead of `anchor_kind='driver'`, which doesn't match the RLS policy shape.
+- **Fix (2026-05-20)**: rewrote `seed-v2.sql` with:
+  - All `ON CONFLICT (email) DO NOTHING` clauses on `users` rows that carry a scope anchor changed to `DO UPDATE SET anchor_kind = EXCLUDED.anchor_kind, anchor_id = EXCLUDED.anchor_id` so re-runs fix previously-NULL anchors.
+  - Added 4× BOARD_ADMIN (OCDSB, OCSB, RCDSB, RCCDSB) anchored to `stx_boards` by `external_ids->>'board_code'`.
+  - Added 4× SCHOOL_ADMIN (Maplewood, St. Bernadette, Pinecrest, Cathedral) anchored to `stx_schools` by `external_ids->>'school_code'`.
+  - Added 4× `stx_drivers` rows (fixed UUIDs `40000000-…`) under the `OP-STOCK` operator; each populated with `user_id` via `UPDATE` after the users row exists.
+  - Fixed `driver.stbern@sbtm.demo`: `anchor_kind` corrected from `'school'` to `'driver'`; `anchor_id` points to the new `stx_drivers` row.
+  - Added 3 additional DRIVER users (Maplewood, Pinecrest, Cathedral), each linked to their `stx_drivers` row.
+  - Added 8× PARENT users using guardian email addresses from `guardians.csv`; each anchored to `stx_guardians` by `external_ids->>'guardian_code'`.
+  - Each guardian `user_id` back-link populated via `UPDATE stx_guardians` after user row insertion.
+  - Legacy E2E fixture `parent1.stbern@sbtm.demo` anchor updated to point to OSTA-GRD-0001 instead of NULL.
+- **Status**: **done on `feat/sbtm-refocus-data-model`** (2026-05-20). Seed is idempotent; stx_boards/stx_schools rows must exist (i.e. integration-importer must have been run at least once before the user rows resolve their anchor subqueries).
+- **Note**: if seeding a fresh DB where the importer hasn't run yet, stx_boards/stx_schools subqueries return NULL. Run `pnpm --filter integration-importer run import:sample -- --commit` first, or run `init-db.sh` (which invokes both `seed-v2.sql` and the importer) to get a fully wired state.
+
 ## How to use this file
 
 - When work starts on an item, add `**Status**: in progress (owner: …, branch: …)` under it.

@@ -123,13 +123,31 @@ pnpm run dev
 
 Set `VITE_API_URL` to `http://localhost:3001` for both.
 
-### Schema and Seed data Data
+### Schema, Sample Data, and Dev Credentials
 
-Drop and create schema and populate seed data to start with:
+Setting up the v2 database is a **two-step process**. Step 1 applies the schema and seeds system/STA users. Step 2 imports the sample STA bundles (OSTA + RCJTC), which creates all transport data and resolves the board/school/driver/parent account anchor IDs.
+
+**Step 1 — Schema + system users** (run once after `dev-hybrid.sh`):
 
 ```bash
-./scripts/init-db.sh
+./scripts/schema-seed/init-db.sh
 ```
+
+**Step 2 — Import sample bundles + seed all dev credentials**:
+
+```bash
+./scripts/schema-seed/import-and-seed.sh
+```
+
+> **OSRM road-snapped shapes** — By default the importer uses stop coordinates for route shapes (straight-line). To generate accurate road-snapped polylines using the OSRM container started by `dev-hybrid.sh`:
+>
+> ```bash
+> OSRM_BASE_URL=http://localhost:5000 ./scripts/schema-seed/import-and-seed.sh
+> ```
+
+After step 2 completes, all transport tables, ridership data, and dev credentials are ready. The script prints every account email and password on exit.
+
+Both scripts are idempotent — safe to re-run (all inserts use `ON CONFLICT DO UPDATE`).
 
 ---
 
@@ -143,18 +161,58 @@ docker compose up -d --build
 
 ---
 
-## 🔑 User Accounts (Seed Data)
+## User Accounts (Dev Seed Data)
 
-All accounts use password **`Admin123!`**.
+> Populated by `scripts/schema-seed/import-and-seed.sh` (Step 2 above).
+> Run that script first — it prints all accounts on exit.
 
-| Role         | Email                    | Notes                                            |
-| :----------- | :----------------------- | :----------------------------------------------- |
-| SUPER_ADMIN  | `super.admin@sbtm.demo`  | Full system access                               |
-| BOARD_ADMIN  | `board.admin@sbtm.demo`  | Board-level administration (OSDSB)               |
-| STA_ADMIN    | `sta.admin@sbtm.demo`    | Fleet & route management                         |
-| SCHOOL_ADMIN | `school.admin@sbtm.demo` | School-scoped operations (Greenfield Elementary) |
-| DRIVER       | `driver1@sbtm.demo`      | Driver for BUS-01                                |
-| PARENT       | `parent1@sbtm.demo`      | Parent portal (also parent2, parent4, parent5)   |
+**System / STA** — password `Admin123!`
+
+| Role        | Email                       | Scope       |
+| :---------- | :-------------------------- | :---------- |
+| SUPER_ADMIN | `super.admin@sbtm.demo`     | Full system |
+| STA_ADMIN   | `sta.admin@osta.sbtm.demo`  | OSTA        |
+| STA_ADMIN   | `sta.admin@rcjtc.sbtm.demo` | RCJTC       |
+
+**Board Admins** — password `Admin123!`
+
+| Email                    | Board  |
+| :----------------------- | :----- |
+| `ocdsb.admin@sbtm.demo`  | OCDSB  |
+| `ocsb.admin@sbtm.demo`   | OCSB   |
+| `rcdsb.admin@sbtm.demo`  | RCDSB  |
+| `rccdsb.admin@sbtm.demo` | RCCDSB |
+
+**School Admins** — password `Admin123!`
+
+| Email                       | School                |
+| :-------------------------- | :-------------------- |
+| `admin.maplewood@sbtm.demo` | Maplewood PS (OCDSB)  |
+| `admin.stbern@sbtm.demo`    | St. Bernadette (OCSB) |
+| `admin.pinecrest@sbtm.demo` | Pinecrest ES (RCDSB)  |
+| `admin.cathedral@sbtm.demo` | Cathedral HS (RCCDSB) |
+
+**Drivers** — password `Admin123!`
+
+| Email                        | Route          |
+| :--------------------------- | :------------- |
+| `driver.maplewood@sbtm.demo` | Maplewood PS   |
+| `driver.stbern@sbtm.demo`    | St. Bernadette |
+| `driver.pinecrest@sbtm.demo` | Pinecrest ES   |
+| `driver.cathedral@sbtm.demo` | Cathedral HS   |
+
+**Parents / Guardians** — password `Parent123!`
+
+| Email                          | Guardian ID    |
+| :----------------------------- | :------------- |
+| `sam.demo@example.test`        | OSTA-GRD-0001  |
+| `chris.specimen@example.test`  | OSTA-GRD-0002  |
+| `pat.sample@example.test`      | OSTA-GRD-0003  |
+| `kerry.example@example.test`   | OSTA-GRD-0004  |
+| `jordan.pembroke@example.test` | RCJTC-GRD-0001 |
+| `robin.renfrew@example.test`   | RCJTC-GRD-0002 |
+| `alex.cathedral@example.test`  | RCJTC-GRD-0003 |
+| `sage.pinecrest@example.test`  | RCJTC-GRD-0004 |
 
 ---
 

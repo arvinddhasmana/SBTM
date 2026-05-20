@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
 # =============================================================================
-# SBTM v2 — Init & Seed Database
+# SBTM v2 — Init & Seed Database  (Step 1 of 2)
 #
-# Applies the v2 schema (20260518_v2_cutover.sql + staging tables) to the
-# running sbtm-postgres-1 container and seeds a minimal set of dev users.
-# Full transport + ridership data must be loaded via the integration-importer
-# (see docs/Design/Integrations-STA.md and docs/Design/ImportMappings.md):
+# Applies the v2 schema (20260518_v2_cutover.sql + staging tables) and seeds
+# super-admin + STA admin users. Board/school/driver/parent credentials are
+# seeded in step 2 once the integration-importer has populated stx_boards,
+# stx_schools, stx_guardians, etc.
 #
-#   pnpm --filter integration-importer run import:dry-run \
-#     --bundle docs/Design/samples/two-sta-bundle/osta
-#   # then commit via POST /imports/commit
+# Full setup sequence:
+#   1. ./scripts/schema-seed/init-db.sh         ← this script
+#   2. ./scripts/schema-seed/import-and-seed.sh ← imports OSTA + RCJTC bundles,
+#                                                  then seeds all remaining creds
 #
 # Usage:
 #   ./scripts/schema-seed/init-db.sh
@@ -60,16 +61,13 @@ fi
 
 echo -e "\033[32m✅ v2 database initialized!\033[0m"
 echo ""
-echo "Minimal dev credentials (password: Admin123! for all):"
+echo "Minimal dev credentials (password: Admin123!):"
 echo ""
 echo "  System Admins:"
 echo "    super.admin@sbtm.demo    (SUPER_ADMIN)"
 echo "    sta.admin@osta.sbtm.demo (STA_ADMIN — OSTA)"
 echo ""
-echo "Full transport + ridership data must be imported via integration-importer."
-echo "See docs/Design/Integrations-STA.md for the import workflow, or run:"
+echo "Next step — import sample bundles and seed all board/school/driver/parent credentials:"
 echo ""
-echo "  pnpm --filter integration-importer run import:dry-run \\"
-echo "    --bundle docs/Design/samples/two-sta-bundle/osta"
+echo "  ./scripts/schema-seed/import-and-seed.sh"
 echo ""
-echo "Sample bundle path: docs/Design/samples/two-sta-bundle/"
