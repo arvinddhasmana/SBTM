@@ -121,16 +121,22 @@ export async function loginAs(page: Page, role: TestRole): Promise<void> {
     // Without this, API calls fail with 401 when the cookie is not forwarded
     // by the Vite proxy (cross-port cookie scope), which triggers the 401
     // interceptor to clear localStorage and redirect to /login mid-test.
+    let body: Record<string, unknown>;
     try {
-      const body = await loginRes.json();
-      if (body.accessToken) {
-        await page.evaluate(
-          (token) => localStorage.setItem('auth_token', token),
-          body.accessToken as string,
-        );
-      }
-    } catch {
-      /* ignore – cookie-only auth is still attempted */
+      body = (await loginRes.json()) as Record<string, unknown>;
+    } catch (err) {
+      throw new Error(
+        `loginAs(${role}): could not parse login response (status ${loginRes.status()}): ${err}`,
+      );
+    }
+    if (!loginRes.ok()) {
+      throw new Error(`loginAs(${role}) failed: ${loginRes.status()} ${JSON.stringify(body)}`);
+    }
+    if (body.accessToken) {
+      await page.evaluate(
+        (token) => localStorage.setItem('auth_token', token),
+        body.accessToken as string,
+      );
     }
   }
 
@@ -214,6 +220,29 @@ export async function startRouteForE2E(
       .catch(() => {
         /* non-critical */
       });
+  }
+}
+
+/**
+ * Verify that the current browser session has a valid, accepted JWT by calling
+ * GET /auth/me. Throws if the response is not 2xx.
+ *
+ * Usage: call after loginAs() in test.beforeEach for data-dependent tests.
+ * This catches the failure mode where loginAs() injected hardcoded localStorage
+ * but the real backend did not authenticate (e.g. user not in DB, wrong password).
+ */
+export async function assertSessionValid(page: Page): Promise<void> {
+  const token = await page.evaluate(() => localStorage.getItem('auth_token'));
+  if (!token) {
+    throw new Error('assertSessionValid: no auth_token in localStorage after loginAs()');
+  }
+  const res = await page.request.get(`${E2E_API_URL}/api/v1/auth/me`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok()) {
+    throw new Error(
+      `assertSessionValid: GET /auth/me returned ${res.status()} — session is not valid`,
+    );
   }
 }
 
