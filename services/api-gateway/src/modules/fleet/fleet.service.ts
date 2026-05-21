@@ -41,10 +41,10 @@ export class FleetService {
     return this.vehicleRepository.save(vehicle);
   }
 
-  async findAll(operatorId: string): Promise<Vehicle[]> {
-    return this.vehicleRepository.find({
-      where: { operatorId },
-    });
+  async findAll(operatorId?: string): Promise<Vehicle[]> {
+    return this.vehicleRepository.find(
+      operatorId ? { where: { operatorId } } : {},
+    );
   }
 
   async findOne(id: string, operatorId: string): Promise<Vehicle> {

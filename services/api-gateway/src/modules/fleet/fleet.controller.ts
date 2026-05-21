@@ -22,23 +22,27 @@ interface AuthedReq {
   query?: { operatorId?: string };
 }
 
+const UNSCOPED_ROLES = [Role.SUPER_ADMIN, Role.STA_ADMIN];
+
 /**
  * Resolve the operatorId scope for a fleet operation. OPERATOR_ADMIN is locked to their own
- * anchor; STA/BOARD/SUPER admins may pass ?operatorId=… explicitly.
- * TODO(phase-B): also accept SCHOOL_ADMIN via a school→operator-contract lookup once
- * OperatorContractService exists.
+ * anchor; SUPER_ADMIN/STA_ADMIN may omit operatorId to see all vehicles.
  */
-function resolveOperatorId(req: AuthedReq, fallback?: string): string {
+function resolveOperatorId(
+  req: AuthedReq,
+  fallback?: string,
+): string | undefined {
   if (req.user.anchorKind === 'operator' && req.user.anchorId) {
     return req.user.anchorId;
   }
   const provided = fallback ?? req.query?.operatorId;
-  if (!provided) {
-    throw new BadRequestException(
-      'operatorId is required (pass ?operatorId=… or use an OPERATOR-anchored account)',
-    );
+  if (provided) return provided;
+  if (UNSCOPED_ROLES.includes(req.user.role as Role)) {
+    return undefined;
   }
-  return provided;
+  throw new BadRequestException(
+    'operatorId is required (pass ?operatorId=… or use an OPERATOR-anchored account)',
+  );
 }
 
 @Controller('vehicles')

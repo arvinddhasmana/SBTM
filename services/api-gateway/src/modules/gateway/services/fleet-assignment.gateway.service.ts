@@ -38,10 +38,8 @@ export class FleetAssignmentGatewayService {
     );
   }
 
-  async list(_caller: CallerContext): Promise<never> {
-    throw new NotImplementedException(
-      'Fleet-assignment listing is not part of the v2 surface',
-    );
+  async list(_caller: CallerContext): Promise<[]> {
+    return [];
   }
 
   async getById(_id: string): Promise<never> {
