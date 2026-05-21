@@ -3,6 +3,12 @@ import { ConfigService } from '@nestjs/config';
 import { HttpClientService } from '../../../common/utils/http-client.service';
 import { RlsContextService } from '../../../common/services/rls-context.service';
 
+// ---------------------------------------------------------------------------
+// DTOs — wire shape sent to the admin / parent dashboard (v1 legacy format).
+// The emergency-alerts service now uses a refactored v2 schema; the mapping
+// functions below translate v2 → v1 so all existing frontend code keeps working.
+// ---------------------------------------------------------------------------
+
 export interface AlertDto {
   id: string;
   schoolId?: string;
@@ -25,6 +31,17 @@ export interface AlertDto {
   escalationLevel?: 'SCHOOL' | 'BOARD' | 'STA';
 }
 
+export interface AlertAuditDto {
+  id: string;
+  alertId: string;
+  eventType: string;
+  actorUserId: string | null;
+  actorRole: string | null;
+  notes: string | null;
+  escalationLevel: string | null;
+  eventTimestamp: string;
+}
+
 export interface CreateEmergencyEventDto {
   vehicleId: string;
   routeId: string;
@@ -37,6 +54,42 @@ export interface CreateEmergencyEventDto {
   eventType: string;
   description?: string;
 }
+
+// ---------------------------------------------------------------------------
+// v2 → v1 mapping constants
+// ---------------------------------------------------------------------------
+
+const CATEGORY_TO_EVENT_TYPE: Record<string, string> = {
+  safety: 'PANIC_BUTTON',
+  route_deviation: 'ROUTE_DEVIATION',
+  route_cancelled: 'ROUTE_DIVERSION',
+  route_delayed: 'LATE_ARRIVAL',
+  weather: 'OTHER',
+  general: 'OTHER',
+};
+
+const SEVERITY_TO_TIER: Record<string, 'TIER_1' | 'TIER_2' | 'TIER_3'> = {
+  critical: 'TIER_1',
+  warning: 'TIER_2',
+  info: 'TIER_3',
+};
+
+const STATUS_MAP: Record<string, AlertDto['status']> = {
+  active: 'ACTIVE',
+  resolved: 'RESOLVED',
+  draft: 'PENDING_CONFIRMATION',
+  cancelled: 'FALSE_ALARM',
+  expired: 'RESOLVED',
+};
+
+const ACTION_TO_EVENT_TYPE: Record<string, string> = {
+  created: 'CREATED',
+  resolved: 'RESOLVED',
+  confirmed: 'CONFIRMED',
+  cancelled: 'FALSE_ALARM',
+  info_requested: 'INFO_REQUESTED',
+  status_update: 'STATUS_UPDATE',
+};
 
 @Injectable()
 export class AlertsGatewayService {
@@ -51,16 +104,20 @@ export class AlertsGatewayService {
       this.configService.getOrThrow<string>('ALERTS_SERVICE_URL');
   }
 
+  // ─── Public API ────────────────────────────────────────────────────────────
+
   async getAllAlerts(schoolId?: string): Promise<AlertDto[]> {
     const url = `${this.alertsServiceUrl}/api/v1/alerts`;
     const params = schoolId ? { schoolId } : undefined;
-    return this.httpClient.get<AlertDto[]>(url, { params });
+    const raw = await this.httpClient.get<any[]>(url, { params });
+    return raw.map((a) => this.mapToAlertDto(a));
   }
 
   async getActiveAlerts(schoolId?: string): Promise<AlertDto[]> {
     const url = `${this.alertsServiceUrl}/api/v1/alerts/active`;
     const params = schoolId ? { schoolId } : undefined;
-    return this.httpClient.get<AlertDto[]>(url, { params });
+    const raw = await this.httpClient.get<any[]>(url, { params });
+    return raw.map((a) => this.mapToAlertDto(a));
   }
 
   async resolveAlert(
@@ -72,17 +129,32 @@ export class AlertsGatewayService {
     } = {},
   ): Promise<AlertDto> {
     const url = `${this.alertsServiceUrl}/api/v1/alerts/${id}/resolve`;
-    return this.httpClient.patch<AlertDto>(url, body);
+    const raw = await this.httpClient.patch<any>(url, body);
+    return this.mapToAlertDto(raw);
   }
 
   async getAlertsForRoute(routeId: string): Promise<any> {
     const url = `${this.alertsServiceUrl}/api/v1/alerts/parent-view/${routeId}`;
-    return this.httpClient.get<any>(url);
+    const raw = await this.httpClient.get<any>(url);
+    if (!raw || !raw.alertActive) {
+      return { alertActive: false, message: 'No active alert' };
+    }
+    return {
+      ...this.mapToAlertDto(raw),
+      alertActive: true,
+      message: raw.message ?? raw.title ?? raw.body ?? '',
+      routeName: raw.routeName,
+    };
   }
 
   async getAlertById(id: string): Promise<AlertDto> {
+    const raw = await this.getRawAlertById(id);
+    return this.mapToAlertDto(raw);
+  }
+
+  async getRawAlertById(id: string): Promise<any> {
     const url = `${this.alertsServiceUrl}/api/v1/alerts/${id}`;
-    return this.httpClient.get<AlertDto>(url);
+    return this.httpClient.get<any>(url);
   }
 
   async createEmergencyEvent(
@@ -94,9 +166,10 @@ export class AlertsGatewayService {
 
   async getAlertsByRoutes(routeIds: string[]): Promise<AlertDto[]> {
     const url = `${this.alertsServiceUrl}/api/v1/alerts/by-routes`;
-    return this.httpClient.get<AlertDto[]>(url, {
+    const raw = await this.httpClient.get<any[]>(url, {
       params: { routeIds: routeIds.join(',') },
     });
+    return raw.map((a) => this.mapToAlertDto(a));
   }
 
   async confirmAlert(
@@ -104,7 +177,8 @@ export class AlertsGatewayService {
     body: { actorUserId?: string; actorRole?: string },
   ): Promise<AlertDto> {
     const url = `${this.alertsServiceUrl}/api/v1/alerts/${id}/confirm`;
-    return this.httpClient.patch<AlertDto>(url, body);
+    const raw = await this.httpClient.patch<any>(url, body);
+    return this.mapToAlertDto(raw);
   }
 
   async falseAlarmAlert(
@@ -112,7 +186,8 @@ export class AlertsGatewayService {
     body: { actorUserId?: string; actorRole?: string; notes?: string },
   ): Promise<AlertDto> {
     const url = `${this.alertsServiceUrl}/api/v1/alerts/${id}/false-alarm`;
-    return this.httpClient.patch<AlertDto>(url, body);
+    const raw = await this.httpClient.patch<any>(url, body);
+    return this.mapToAlertDto(raw);
   }
 
   async requestInfoAlert(
@@ -120,7 +195,8 @@ export class AlertsGatewayService {
     body: { actorUserId?: string; actorRole?: string },
   ): Promise<AlertDto> {
     const url = `${this.alertsServiceUrl}/api/v1/alerts/${id}/request-info`;
-    return this.httpClient.patch<AlertDto>(url, body);
+    const raw = await this.httpClient.patch<any>(url, body);
+    return this.mapToAlertDto(raw);
   }
 
   async addStatusUpdate(
@@ -131,9 +207,10 @@ export class AlertsGatewayService {
     return this.httpClient.patch<any>(url, body);
   }
 
-  async getAuditTrail(alertId: string): Promise<any[]> {
+  async getAuditTrail(alertId: string): Promise<AlertAuditDto[]> {
     const url = `${this.alertsServiceUrl}/api/v1/alerts/audit/${alertId}`;
-    return this.httpClient.get<any[]>(url);
+    const raw = await this.httpClient.get<any[]>(url);
+    return raw.map((e) => this.mapToAuditDto(e));
   }
 
   /**
@@ -167,5 +244,45 @@ export class AlertsGatewayService {
     });
     if (routeIds.length === 0) return [];
     return this.getAlertsByRoutes(routeIds);
+  }
+
+  // ─── Private mapping helpers ────────────────────────────────────────────────
+
+  private mapToAlertDto(raw: any): AlertDto {
+    if (!raw) return raw;
+    return {
+      id: raw.id,
+      // staId serves as the scoping identifier; schoolId is kept for ownership
+      // checks in the controller (SCHOOL_ADMIN/BOARD_ADMIN paths).
+      schoolId: raw.staId,
+      routeId:
+        raw.scopeKind === 'route' ? (raw.scopeRef ?? '') : (raw.scopeRef ?? ''),
+      vehicleId: raw.vehicleId ?? '',
+      timestamp: raw.startsAt ?? raw.createdAt,
+      createdAt: raw.createdAt,
+      eventType: CATEGORY_TO_EVENT_TYPE[raw.category] ?? 'OTHER',
+      description: raw.body ?? raw.title,
+      status: STATUS_MAP[raw.status] ?? 'ACTIVE',
+      tier: SEVERITY_TO_TIER[raw.severity],
+      confirmedBy: undefined,
+      confirmedAt: undefined,
+      escalationLevel: undefined,
+    };
+  }
+
+  private mapToAuditDto(raw: any): AlertAuditDto {
+    if (!raw) return raw;
+    const action: string = raw.action ?? '';
+    return {
+      id: raw.id,
+      alertId: raw.alertId,
+      eventType:
+        ACTION_TO_EVENT_TYPE[action] ?? action.toUpperCase().replace(/-/g, '_'),
+      actorUserId: raw.actorUserId ?? null,
+      actorRole: raw.payload?.actorRole ?? null,
+      notes: raw.payload?.notes ?? null,
+      escalationLevel: null,
+      eventTimestamp: raw.createdAt,
+    };
   }
 }

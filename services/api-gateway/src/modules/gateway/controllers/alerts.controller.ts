@@ -19,6 +19,7 @@ import {
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard, Roles, Role } from '@sbtm/common';
 import { School } from '../../organization/entities/school.entity';
+import { Board } from '../../organization/entities/board.entity';
 import type { AuthenticatedUser } from '../../auth/types/authenticated-user';
 
 type AuthenticatedRequest = { user: AuthenticatedUser };
@@ -30,6 +31,8 @@ export class AlertsController {
     private readonly alertsGatewayService: AlertsGatewayService,
     @InjectRepository(School)
     private readonly schoolRepository: Repository<School>,
+    @InjectRepository(Board)
+    private readonly boardRepository: Repository<Board>,
   ) {}
 
   @Get('alerts')
@@ -213,9 +216,10 @@ export class AlertsController {
   // ---------- private helpers ----------
 
   /**
-   * Enforce alert ownership: SCHOOL_ADMIN can only act on alerts from their own school,
-   * BOARD_ADMIN can only act on alerts from schools within their board.
-   * SUPER_ADMIN and STA_ADMIN bypass this check (via role hierarchy).
+   * Enforce alert ownership using the v2 `staId` field on the raw alert.
+   * SUPER_ADMIN and STA_ADMIN bypass this check.
+   * SCHOOL_ADMIN: must belong to a school whose board shares the alert's staId.
+   * BOARD_ADMIN: must belong to a board that shares the alert's staId.
    */
   private async assertAlertOwnership(
     alertId: string,
@@ -225,13 +229,20 @@ export class AlertsController {
       return;
     }
 
-    const alert = await this.alertsGatewayService.getAlertById(alertId);
-    if (!alert) return;
+    const rawAlert = await this.alertsGatewayService.getRawAlertById(alertId);
+    if (!rawAlert) return;
+
+    const alertStaId: string | undefined = rawAlert.staId;
+    if (!alertStaId) return;
 
     if (user.role === Role.SCHOOL_ADMIN) {
-      const userSchoolId =
-        user.anchorKind === 'school' ? user.anchorId : undefined;
-      if (alert.schoolId && alert.schoolId !== userSchoolId) {
+      if (user.anchorKind !== 'school' || !user.anchorId) return;
+      const school = await this.schoolRepository.findOne({
+        where: { id: user.anchorId },
+        relations: ['board'],
+      });
+      const userStaId = school?.board?.staId;
+      if (userStaId && alertStaId !== userStaId) {
         throw new ForbiddenException(
           'You can only manage alerts from your own school',
         );
@@ -239,17 +250,15 @@ export class AlertsController {
     }
 
     if (user.role === Role.BOARD_ADMIN) {
-      const userBoardId =
-        user.anchorKind === 'board' ? user.anchorId : undefined;
-      if (alert.schoolId) {
-        const school = await this.schoolRepository.findOne({
-          where: { id: alert.schoolId },
-        });
-        if (school && school.boardId !== userBoardId) {
-          throw new ForbiddenException(
-            'You can only manage alerts from schools within your board',
-          );
-        }
+      if (user.anchorKind !== 'board' || !user.anchorId) return;
+      const board = await this.boardRepository.findOne({
+        where: { id: user.anchorId },
+      });
+      const userStaId = board?.staId;
+      if (userStaId && alertStaId !== userStaId) {
+        throw new ForbiddenException(
+          'You can only manage alerts from schools within your board',
+        );
       }
     }
   }
