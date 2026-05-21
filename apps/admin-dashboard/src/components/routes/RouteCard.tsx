@@ -71,7 +71,7 @@ const RouteCard: React.FC<RouteCardProps> = ({ route, liveLocation, onClick }) =
 
       <div className="flex items-center gap-2 mt-3 text-xs text-slate-500">
         <MapPin size={12} />
-        <span>{t('routes:routeCard.stops', { count: route.stops.length })}</span>
+        <span>{t('routes:routeCard.stops', { count: route.stops?.length ?? 0 })}</span>
       </div>
     </div>
   );
