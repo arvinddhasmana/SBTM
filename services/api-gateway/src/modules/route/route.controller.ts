@@ -21,6 +21,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '@sbtm/common';
 import { Roles, Role } from '@sbtm/common';
 import { MultiTenancyGuard } from '../../common/guards/multi-tenancy.guard';
+import { Route } from '../gtfs/entities/route.entity';
 
 /**
  * v2 helper: derive the school scope from the JWT-attached user. SCHOOL_ADMIN's anchor
@@ -32,6 +33,20 @@ function resolveSchoolId(req: any): string {
     return req.user.anchorId;
   }
   return req.query?.schoolId ?? '';
+}
+
+/** Map GTFS Route entity to the frontend-expected wire shape. */
+function toFrontendRoute(r: Route) {
+  return {
+    id: r.routeId,
+    name: r.routeLongName ?? r.routeShortName ?? r.routeId,
+    schoolId: r.stxSchoolId,
+    direction: (r.stxDirectionKind ?? 'am').toUpperCase() as 'AM' | 'PM',
+    stops: [],
+    status: 'active' as const,
+    startTime: '',
+    estimatedDuration: 0,
+  };
 }
 
 @Controller('routes')
@@ -49,9 +64,10 @@ export class RouteController {
   }
 
   @Get()
-  findAll(@Req() req: any) {
+  async findAll(@Req() req: any) {
     const schoolId = resolveSchoolId(req);
-    return this.routeService.findAll(schoolId);
+    const routes = await this.routeService.findAll(schoolId);
+    return routes.map(toFrontendRoute);
   }
 
   @Get(':id')
@@ -62,7 +78,7 @@ export class RouteController {
     const schoolId = resolveSchoolId(req);
     this.routeService
       .findOne(id, schoolId)
-      .then((data) => res.json(data))
+      .then((data) => res.json(toFrontendRoute(data)))
       .catch((err) => {
         const status = err.getStatus ? err.getStatus() : 500;
         res.status(status).json({ message: err.message, error: err.name });
