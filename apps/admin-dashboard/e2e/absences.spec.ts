@@ -7,7 +7,7 @@
  * Test IDs: AM01–AM08
  */
 import { test, expect } from '@playwright/test';
-import { loginAs, collectConsoleErrors, type TestRole } from './fixtures';
+import { loginAs, assertSessionValid, collectConsoleErrors, type TestRole } from './fixtures';
 
 test.describe('Absence Management – Admin Dashboard', () => {
   const roles: TestRole[] = ['SUPER_ADMIN', 'STA_ADMIN', 'BOARD_ADMIN', 'SCHOOL_ADMIN'];
@@ -15,6 +15,7 @@ test.describe('Absence Management – Admin Dashboard', () => {
   for (const role of roles) {
     test(`AM01-${role}: /absences page loads for ${role}`, async ({ page }) => {
       await loginAs(page, role);
+      await assertSessionValid(page);
 
       // Arm API waiter before navigation
       const absencePromise = page
@@ -29,6 +30,8 @@ test.describe('Absence Management – Admin Dashboard', () => {
 
       const resp = await absencePromise;
       if (resp) {
+        // Must not be 403 — SUPER_ADMIN 403 was the bug identified in e2e-gap-analysis.md Gap 5
+        expect(resp.status()).not.toBe(403);
         expect(resp.status()).toBeLessThan(500);
       }
     });
