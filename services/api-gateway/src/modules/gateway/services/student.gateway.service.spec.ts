@@ -164,26 +164,19 @@ describe('StudentGatewayService', () => {
       expect(query.school_id).toBe('school-1');
     });
 
-    it('should fall back to demo reference data when service returns empty', async () => {
+    it('should fall back to operational DB when service returns empty — returns v2 shape (no PII fields)', async () => {
       mockHttpClient.get.mockResolvedValue([]);
-      mockDataSource.query.mockResolvedValue([
-        {
-          id: 's1',
-          firstName: 'Alice',
-          lastName: 'Smith',
-          grade: 5,
-          assignedRouteId: 'ROUTE-A',
-          amRouteId: 'ROUTE-A',
-          pmRouteId: null,
-        },
-      ]);
+      mockDataSource.query.mockResolvedValue([{ id: 's1', grade: '5' }]);
 
       const result = await service.getStudents({}, adminUser);
 
       expect(result).toHaveLength(1);
-      expect(result[0].first_name).toBe('Alice');
+      // v2 fallback: first_name/last_name are empty strings (PII not stored here)
+      expect(result[0].first_name).toBe('');
+      expect(result[0].last_name).toBe('');
       expect(result[0].status).toBe('ENROLLED');
-      expect(result[0].am_route_id).toBe('ROUTE-A');
+      // v2: route assignment is not on the student row
+      expect(result[0].am_route_id).toBeNull();
     });
 
     it('should return route data from student service response', async () => {
@@ -237,25 +230,20 @@ describe('StudentGatewayService', () => {
       );
     });
 
-    it('should fall back to demo data when service fails', async () => {
+    it('should throw ForbiddenException when service fails and caller is PARENT — v2 blocks parent direct access', async () => {
       mockHttpClient.get.mockRejectedValue(new Error('Service unavailable'));
       mockDataSource.query.mockResolvedValue([
         {
           id: 's1',
-          firstName: 'Alice',
-          lastName: 'Smith',
-          grade: 3,
-          amRouteId: 'a0000000-0000-0000-0000-000000000a01',
-          pmRouteId: null,
+          grade: '3',
           schoolId: 'school-1',
-          parentId: 'parent-1',
         },
       ]);
 
-      const result = await service.getStudentById('s1', parentUser);
-
-      expect(result.first_name).toBe('Alice');
-      expect(result.am_route_id).toBe('a0000000-0000-0000-0000-000000000a01');
+      // v2: parents cannot access student detail directly — must go via /parent/children
+      await expect(service.getStudentById('s1', parentUser)).rejects.toThrow(
+        ForbiddenException,
+      );
     });
   });
 

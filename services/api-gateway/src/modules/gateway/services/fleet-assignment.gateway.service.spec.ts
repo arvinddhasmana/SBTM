@@ -33,8 +33,8 @@ describe('FleetAssignmentGatewayService (v2 — parked 501 contract)', () => {
     ).rejects.toThrow(NotImplementedException);
   });
 
-  it('list throws NotImplementedException', async () => {
-    await expect(service.list(caller)).rejects.toThrow(NotImplementedException);
+  it('list returns empty array (workflow parked — no stx_run_proposals table)', async () => {
+    await expect(service.list(caller)).resolves.toEqual([]);
   });
 
   it('getById throws NotImplementedException', async () => {

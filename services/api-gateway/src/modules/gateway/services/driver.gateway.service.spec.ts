@@ -119,10 +119,9 @@ describe('DriverGatewayService.getScheduleForDriver', () => {
         path: undefined,
       },
     ]);
-    // First two queries are SET LOCAL (RLS GUCs), then the main schedule query.
-    expect(calls[0].sql).toMatch(/SET LOCAL sbtm\.user_anchor_kind/);
+    expect(calls[0].sql).toMatch(/set_config\('sbtm\.user_anchor_kind'/);
     expect(calls[0].params).toEqual(['driver']);
-    expect(calls[1].sql).toMatch(/SET LOCAL sbtm\.user_anchor_id/);
+    expect(calls[1].sql).toMatch(/set_config\('sbtm\.user_anchor_id'/);
     expect(calls[1].params).toEqual(['drv-1']);
     expect(calls[2].sql).toMatch(/FROM stx_runs run/);
     expect(calls[2].params?.[0]).toBe('drv-1');
@@ -281,7 +280,7 @@ describe('DriverGatewayService.getRouteStudents', () => {
       },
     ]);
     // RLS GUCs set, then stops query, then ridership query — all under runAsCurrent.
-    expect(calls[0].sql).toMatch(/SET LOCAL sbtm\.user_anchor_kind/);
+    expect(calls[0].sql).toMatch(/set_config\('sbtm\.user_anchor_kind'/);
     expect(calls[2].sql).toMatch(/FROM stx_runs run/);
     expect(calls[2].params).toEqual([
       'drv-1',

@@ -32,7 +32,7 @@ function makeDataSource(): {
 
 describe('RlsContextService', () => {
   describe('runAs', () => {
-    it('sets sbtm.user_anchor_kind/id via SET LOCAL', async () => {
+    it('sets sbtm.user_anchor_kind/id via set_config', async () => {
       const { ds, queries } = makeDataSource();
       const svc = new RlsContextService(ds, new RequestContextService());
       const out = await svc.runAs(
@@ -41,17 +41,25 @@ describe('RlsContextService', () => {
       );
       expect(out).toBe(42);
       expect(queries).toEqual([
-        { sql: `SET LOCAL sbtm.user_anchor_kind = $1`, params: ['sta'] },
-        { sql: `SET LOCAL sbtm.user_anchor_id = $1`, params: ['sta-1'] },
+        {
+          sql: `SELECT set_config('sbtm.user_anchor_kind', $1, true)`,
+          params: ['sta'],
+        },
+        {
+          sql: `SELECT set_config('sbtm.user_anchor_id', $1, true)`,
+          params: ['sta-1'],
+        },
       ]);
     });
 
-    it('defaults a null anchor to super with empty id', async () => {
+    it('defaults a null anchor to super with sentinel UUID id', async () => {
       const { ds, queries } = makeDataSource();
       const svc = new RlsContextService(ds, new RequestContextService());
       await svc.runAs({ anchorKind: null, anchorId: null }, async () => null);
       expect(queries[0].params).toEqual(['super']);
-      expect(queries[1].params).toEqual(['']);
+      expect(queries[1].params).toEqual([
+        '00000000-0000-0000-0000-000000000000',
+      ]);
     });
   });
 
