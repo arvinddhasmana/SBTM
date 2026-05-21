@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NotificationSettingsGatewayService } from './notification-settings.gateway.service';
 import { HttpClientService } from '../../../common/utils/http-client.service';
 import { ConfigService } from '@nestjs/config';
+import { DataSource } from 'typeorm';
 
 describe('NotificationSettingsGatewayService', () => {
   let service: NotificationSettingsGatewayService;
@@ -27,18 +28,16 @@ describe('NotificationSettingsGatewayService', () => {
     }),
   };
 
+  let dsQuery: jest.Mock;
+
   beforeEach(async () => {
+    dsQuery = jest.fn().mockResolvedValue([]);
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         NotificationSettingsGatewayService,
-        {
-          provide: HttpClientService,
-          useValue: mockHttpClient,
-        },
-        {
-          provide: ConfigService,
-          useValue: mockConfigService,
-        },
+        { provide: HttpClientService, useValue: mockHttpClient },
+        { provide: ConfigService, useValue: mockConfigService },
+        { provide: DataSource, useValue: { query: dsQuery } },
       ],
     }).compile();
 
@@ -118,6 +117,50 @@ describe('NotificationSettingsGatewayService', () => {
       expect(httpClient.get).toHaveBeenCalledWith(
         'http://notification-service:3008/api/v1/delivery-log',
         { params: { userId: 'user-1' } },
+      );
+    });
+  });
+
+  describe('getNotificationPreferences', () => {
+    it('returns parsed preferences from system_settings', async () => {
+      const prefs = [
+        { eventType: 'PANIC_BUTTON', channel: 'push', enabled: true },
+      ];
+      dsQuery.mockResolvedValueOnce([{ value: JSON.stringify(prefs) }]);
+
+      const result = await service.getNotificationPreferences('user-1');
+      expect(result).toEqual(prefs);
+      expect(dsQuery).toHaveBeenCalledWith(
+        expect.stringContaining('system_settings'),
+        ['notification_prefs:user-1'],
+      );
+    });
+
+    it('returns [] when no preference row found', async () => {
+      dsQuery.mockResolvedValueOnce([]);
+      const result = await service.getNotificationPreferences('user-1');
+      expect(result).toEqual([]);
+    });
+
+    it('returns [] when stored value is not valid JSON', async () => {
+      dsQuery.mockResolvedValueOnce([{ value: 'broken{json' }]);
+      const result = await service.getNotificationPreferences('user-1');
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe('updateNotificationPreferences', () => {
+    it('upserts preferences into system_settings with ON CONFLICT', async () => {
+      const prefs = [
+        { eventType: 'PANIC_BUTTON', channel: 'push', enabled: false },
+      ];
+      dsQuery.mockResolvedValueOnce([]);
+
+      await service.updateNotificationPreferences('user-1', prefs);
+
+      expect(dsQuery).toHaveBeenCalledWith(
+        expect.stringContaining('ON CONFLICT'),
+        ['notification_prefs:user-1', JSON.stringify(prefs), 'user-1'],
       );
     });
   });

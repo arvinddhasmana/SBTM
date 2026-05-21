@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { DataSource } from 'typeorm';
 import { HttpClientService } from '../../../common/utils/http-client.service';
 
 export interface RegisterDeviceTokenPayload {
@@ -13,6 +14,12 @@ export interface RegisterDeviceTokenPayload {
   platform: string;
 }
 
+export interface NotificationPreference {
+  eventType: string;
+  channel: string;
+  enabled: boolean;
+}
+
 @Injectable()
 export class NotificationSettingsGatewayService {
   private readonly notificationServiceUrl: string;
@@ -20,6 +27,7 @@ export class NotificationSettingsGatewayService {
   constructor(
     private readonly httpClient: HttpClientService,
     private readonly configService: ConfigService,
+    private readonly dataSource: DataSource,
   ) {
     this.notificationServiceUrl = this.configService.getOrThrow<string>(
       'NOTIFICATION_SERVICE_URL',
@@ -56,5 +64,34 @@ export class NotificationSettingsGatewayService {
     return this.httpClient.get(url, {
       params: { userId },
     });
+  }
+
+  async getNotificationPreferences(
+    userId: string,
+  ): Promise<NotificationPreference[]> {
+    const rows = await this.dataSource.query<Array<{ value: string }>>(
+      `SELECT value FROM system_settings WHERE key = $1`,
+      [`notification_prefs:${userId}`],
+    );
+    if (!rows.length) return [];
+    try {
+      return JSON.parse(rows[0].value) as NotificationPreference[];
+    } catch {
+      return [];
+    }
+  }
+
+  async updateNotificationPreferences(
+    userId: string,
+    preferences: NotificationPreference[],
+  ): Promise<void> {
+    const key = `notification_prefs:${userId}`;
+    const value = JSON.stringify(preferences);
+    await this.dataSource.query(
+      `INSERT INTO system_settings (key, value, updated_by)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (key) DO UPDATE SET value = $2, updated_by = $3, updated_at = now()`,
+      [key, value, userId],
+    );
   }
 }

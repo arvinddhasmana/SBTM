@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Put,
   Delete,
   Body,
   Param,
@@ -26,10 +27,6 @@ export class NotificationSettingsController {
     @Request() req: { user: AuthenticatedUser },
     @Body() body: { token: string; platform: string },
   ) {
-    // v2-followups #1/#6: parents still authenticate as users.id today, so
-    // kind='user' + id=user.id is correct. When the parent-app cutover (#10)
-    // migrates parents to guardian-only (no users row), switch to
-    // kind='guardian', id=user.anchorId.
     return this.notificationSettingsService.registerDeviceToken({
       recipientKind: 'user',
       recipientId: req.user.id,
@@ -64,5 +61,35 @@ export class NotificationSettingsController {
   @Roles(Role.PARENT)
   async getDeliveryLog(@Request() req: { user: AuthenticatedUser }) {
     return this.notificationSettingsService.getDeliveryLog(req.user.id);
+  }
+
+  @Get('notification-preferences')
+  @Roles(Role.PARENT)
+  async getNotificationPreferences(
+    @Request() req: { user: AuthenticatedUser },
+  ) {
+    return this.notificationSettingsService.getNotificationPreferences(
+      req.user.id,
+    );
+  }
+
+  @Put('notification-preferences')
+  @Roles(Role.PARENT)
+  async updateNotificationPreferences(
+    @Request() req: { user: AuthenticatedUser },
+    @Body()
+    body: {
+      preferences: Array<{
+        eventType: string;
+        channel: string;
+        enabled: boolean;
+      }>;
+    },
+  ) {
+    await this.notificationSettingsService.updateNotificationPreferences(
+      req.user.id,
+      body.preferences,
+    );
+    return { success: true };
   }
 }
