@@ -23,6 +23,13 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 echo -e "\033[36mInitializing v2 Database...\033[0m"
 
+# 0. Drop and recreate sbms so migrations always start clean
+echo -e "\033[33m  Recreating database sbms ...\033[0m"
+# Terminate existing connections first
+docker exec "$CONTAINER_NAME" psql -U postgres -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'sbms' AND pid <> pg_backend_pid();" || true
+docker exec "$CONTAINER_NAME" psql -U postgres -c "DROP DATABASE IF EXISTS sbms;"
+docker exec "$CONTAINER_NAME" psql -U postgres -c "CREATE DATABASE sbms;"
+
 run_sql_file() {
   local label="$1"
   local host_path="$2"
@@ -42,9 +49,25 @@ docker exec "$CONTAINER_NAME" psql -U postgres -d sbms -v ON_ERROR_STOP=1 -c \
 run_sql_file "v2 schema migration" \
   "$REPO_ROOT/services/api-gateway/migrations/20260518_v2_cutover.sql"
 
+# 2b. Additional service tables (compliance, GPS, system_settings)
+run_sql_file "service tables" \
+  "$REPO_ROOT/services/api-gateway/migrations/20260519_create_service_tables.sql"
+
+# 2c. Page visibility table + default rows
+run_sql_file "page visibility" \
+  "$REPO_ROOT/services/api-gateway/migrations/20260514_create_page_visibility.sql"
+
+# 2d. Emergency-alerts config tables (alert_event_type_config, escalation, routing, etc.)
+run_sql_file "alert config tables" \
+  "$REPO_ROOT/services/emergency-alerts/src/migrations/001-create-alert-config-tables.sql"
+
 # 3. Integration-importer staging tables
 run_sql_file "staging tables" \
   "$REPO_ROOT/services/integration-importer/migrations/20260601_create_stage_tables.sql"
+
+# 3a. Active-run projection index (see ADR-0001)
+run_sql_file "active-run projection" \
+  "$REPO_ROOT/services/api-gateway/migrations/20260529_active_run_projection.sql"
 
 # 4. Minimal dev seed (super admin + OSTA STA + STA admin)
 run_sql_file "v2 dev seed" "$SCRIPT_DIR/seed-v2.sql"

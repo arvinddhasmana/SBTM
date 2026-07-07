@@ -70,9 +70,13 @@ const Dashboard: React.FC = () => {
         routesApi.getActiveRoutes(),
       ]);
 
-      const studentsData = await presenceApi.getAllBoardedStudents(
-        routesData.map((route) => route.id),
-      );
+      // Presence service may be unavailable in partial deployments — fail gracefully.
+      let studentsData: any[] = [];
+      try {
+        studentsData = await presenceApi.getAllBoardedStudents(routesData.map((route) => route.id));
+      } catch {
+        /* student-presence service unavailable — show empty passenger list */
+      }
 
       const routeNameMap = new Map(routesData.map((r) => [r.id, r.name]));
       const enrichedStudents = studentsData.map((s: any) => ({
@@ -85,7 +89,7 @@ const Dashboard: React.FC = () => {
     refetchInterval: 2_000,
   });
 
-  const isLoading = alertsLoading || fleetLoading;
+  const isLoading = fleetLoading;
 
   const { data: allRoutesData = [] } = useQuery({
     queryKey: queryKeys.routes.all,

@@ -1,10 +1,12 @@
 import {
   Controller,
   Get,
+  Param,
   UseGuards,
   Request,
   Sse,
   MessageEvent,
+  ForbiddenException,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
@@ -20,6 +22,22 @@ export class ParentController {
   @Roles(Role.PARENT)
   async getChildren(@Request() req: { user: any }): Promise<unknown> {
     return this.parentGatewayService.getChildrenForParent(req.user);
+  }
+
+  @Get('students/:id')
+  @Roles(Role.PARENT)
+  async getStudentDetail(
+    @Request() req: { user: any },
+    @Param('id') id: string,
+  ): Promise<unknown> {
+    const detail = await this.parentGatewayService.getStudentDetail(
+      req.user,
+      id,
+    );
+    if (!detail) {
+      throw new ForbiddenException('Student is not linked to this guardian.');
+    }
+    return detail;
   }
 
   @Get('notifications')

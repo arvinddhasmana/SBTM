@@ -52,7 +52,9 @@ function makeService(): { svc: OrganizationGatewayService } & Mocks {
     count: mocks.schoolCount,
   } as unknown as Repository<School>;
   return {
-    svc: new OrganizationGatewayService(schoolRepo, boardRepo),
+    svc: new OrganizationGatewayService(schoolRepo, boardRepo, {
+      query: jest.fn().mockResolvedValue([]),
+    } as any),
     ...mocks,
   };
 }

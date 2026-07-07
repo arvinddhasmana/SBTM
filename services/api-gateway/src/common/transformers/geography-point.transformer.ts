@@ -34,6 +34,7 @@ export const geographyPointTransformer: ValueTransformer = {
   from: (value: unknown): LatLng | null => {
     if (value == null) return null;
     if (typeof value === 'string') return parseEwkbPoint(value);
+    if (Buffer.isBuffer(value)) return parseEwkbPoint(value.toString('hex'));
     return null;
   },
   to: (value: LatLng | null | undefined): string | null => {

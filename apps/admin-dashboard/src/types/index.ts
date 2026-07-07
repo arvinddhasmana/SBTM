@@ -121,6 +121,8 @@ export interface RouteStop {
   id: string;
   routeId: string;
   sequence: number;
+  /** 'school' = render via school marker, no number. 'stop' = numbered pin. */
+  kind?: 'school' | 'stop';
   address: string;
   location: string | { type: string; coordinates: number[] }; // WKT POINT or GeoJSON Point
 }
@@ -141,6 +143,9 @@ export interface Route {
   schoolLng?: number;
   direction: 'AM' | 'PM';
   vehicleId?: string;
+  vehicleCode?: string;
+  operatorCode?: string;
+  tripIds?: string[];
   vehicle?: Vehicle;
   startTime: string;
   estimatedDuration: number;

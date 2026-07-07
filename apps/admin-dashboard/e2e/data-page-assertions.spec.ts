@@ -74,7 +74,7 @@ test.describe('Data-page regression — Vehicles (Fleet)', () => {
     await assertSessionValid(page);
 
     const token = await page.evaluate(() => localStorage.getItem('auth_token'));
-    const res = await page.request.get(`${E2E_API_URL}/api/v1/fleet/vehicles`, {
+    const res = await page.request.get(`${E2E_API_URL}/api/v1/vehicles`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     // Must not be 403 — SUPER_ADMIN should see all vehicles without operatorId scope
@@ -87,7 +87,7 @@ test.describe('Data-page regression — Vehicles (Fleet)', () => {
     await assertSessionValid(page);
 
     const token = await page.evaluate(() => localStorage.getItem('auth_token'));
-    const res = await page.request.get(`${E2E_API_URL}/api/v1/fleet/vehicles`, {
+    const res = await page.request.get(`${E2E_API_URL}/api/v1/vehicles`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     expect(res.status()).not.toBe(403);

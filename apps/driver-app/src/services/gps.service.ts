@@ -33,8 +33,12 @@ function buildPayload(coords: Location.LocationObjectCoords, timestamp: number) 
 async function sendOrBuffer(body: Record<string, unknown>): Promise<void> {
   try {
     await api.post('/routes/locations', body);
-  } catch (error) {
-    console.error('Failed to send GPS location, buffering for retry', error);
+  } catch (error: any) {
+    if (error.response?.status === 503 || !error.response) {
+      console.warn('Network unavailable (503), buffering GPS location for retry.');
+    } else {
+      console.error('Failed to send GPS location, buffering for retry', error);
+    }
     await OfflineQueueService.enqueue('gps', '/routes/locations', body);
   }
 }

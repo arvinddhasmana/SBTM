@@ -74,6 +74,7 @@ interface RoutePlannerSidebarProps {
 
   // Snap state
   isSnapping: boolean;
+  isPathManuallyAdjusted?: boolean;
 
   // User context
   isSchoolAdmin: boolean;
@@ -235,6 +236,7 @@ const RoutePlannerSidebar: React.FC<RoutePlannerSidebarProps> = (props) => {
             optimize={props.optimize}
             snapToRoad={props.snapToRoad}
             isSnapping={props.isSnapping}
+            isPathManuallyAdjusted={props.isPathManuallyAdjusted}
             saveRoute={props.saveRoute}
             cancelEdit={cancelEdit}
             deleteRoute={props.deleteRoute}

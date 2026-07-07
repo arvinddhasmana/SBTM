@@ -17,7 +17,8 @@ tmpclaude-*
 package-lock.json
 
 # Project Specific
-infra/osrm-data/
+infra/osrm-data/*
+!infra/osrm-data/README.md
 *.log
 scripts/dynamic-config.json
 
@@ -50,3 +51,5 @@ docs/UiDesign/parent-mobile-mockups/previews/
 .env.demo
 .env.*
 pnpm-lock.yaml
+pw-results.json
+pw-stderr.txt

@@ -61,6 +61,7 @@ const RoutePlanner: React.FC = () => {
           optimize={planner.optimize}
           snapToRoad={planner.snapToRoad}
           isSnapping={planner.isSnapping}
+          isPathManuallyAdjusted={planner.isPathManuallyAdjusted}
           saveRoute={planner.saveRoute}
           deleteRoute={planner.deleteRoute}
           isSchoolAdmin={isSchoolAdmin}

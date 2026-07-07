@@ -36,13 +36,13 @@ test.describe('Alert Config UI matches backend logic values', () => {
     const cfg = (await apiResp.json()) as {
       confirmationTimeoutMs: number;
       boardEscalationMs: number;
-      ostaEscalationMs: number;
+      staEscalationMs: number;
     };
     expect(cfg.confirmationTimeoutMs).toBeGreaterThan(0);
 
     const expectedConfirmSec = cfg.confirmationTimeoutMs / 1000;
     const expectedBoardSec = cfg.boardEscalationMs / 1000;
-    const expectedOstaSec = cfg.ostaEscalationMs / 1000;
+    const expectedOstaSec = cfg.staEscalationMs / 1000;
 
     // 2. Drive the Escalation Timing page in the browser.
     await loginAs(page, 'SUPER_ADMIN');

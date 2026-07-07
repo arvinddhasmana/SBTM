@@ -1,0 +1,6 @@
+board_student_number,oen,legal_name,preferred_name,grade,date_of_birth,school_code,home_address,home_lat,home_lon,eligibility_kind,medical_flags_json,transport_flags_json
+OCSB-STU-0001,345678901,Morgan Demo,Morgan,2,2018-01-15,OCSB-S200,"51 Axel Cres, Stittsville, ON K2S 0V8",45.280317,-75.867412,mandatory,,
+OCSB-STU-0002,456789012,Riley Demo,Riley,4,2016-06-22,OCSB-S200,"51 Axel Cres, Stittsville, ON K2S 0V8",45.281182,-75.889831,mandatory,"{""epipen"":true}",
+OCSB-STU-0003,567890123,Avery Specimen,Avery,1,2019-03-08,OCSB-S200,"525 Dressage Ave, Stittsville, ON K2S 2T8",45.275408,-75.880575,mandatory,,
+OCSB-STU-0004,600000004,Blake Sample,Blake,3,2017-09-14,OCSB-S200,"511 Dressage Ave, Stittsville, ON K2S 2T8",45.268299,-75.878795,mandatory,,
+OCSB-STU-0005,600000005,Casey Sample,Casey,5,2015-11-30,OCSB-S200,"139-129 Tapadero Ave, Stittsville, ON K2S 2T6",45.275443,-75.904397,mandatory,,

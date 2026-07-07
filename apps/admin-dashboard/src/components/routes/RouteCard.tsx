@@ -1,5 +1,5 @@
 import React from 'react';
-import { MapPin, Clock, AlertTriangle, Bus } from 'lucide-react';
+import { MapPin, Clock, AlertTriangle, Building2, Hash } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { Route, LiveLocation } from '../../types';
 import { formatEta } from '../../utils/formatters';
@@ -18,6 +18,8 @@ const RouteCard: React.FC<RouteCardProps> = ({ route, liveLocation, onClick }) =
     if (liveLocation?.status === 'delay' || liveLocation?.deviationFlag) return 'bg-yellow-500';
     return 'bg-green-500';
   };
+
+  const runId = route.tripIds?.[0];
 
   return (
     <div
@@ -48,26 +50,32 @@ const RouteCard: React.FC<RouteCardProps> = ({ route, liveLocation, onClick }) =
         </span>
       </div>
 
-      {liveLocation && (
-        <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-dashboard-border">
-          <div className="flex items-center gap-2 text-sm text-slate-400">
-            <Bus size={14} className="text-primary-500" />
-            <span>{liveLocation.vehicleId}</span>
-          </div>
-          <div className="flex items-center gap-2 text-sm text-slate-400">
-            <Clock size={14} className="text-primary-500" />
-            <span>
-              {t('routes:routeCard.eta', { eta: formatEta(liveLocation.etaToNextStopMinutes) })}
-            </span>
-          </div>
-          {liveLocation.deviationFlag && (
-            <div className="col-span-2 flex items-center gap-2 text-sm text-yellow-400">
-              <AlertTriangle size={14} />
-              <span>{t('routes:routeCard.routeDeviation')}</span>
-            </div>
-          )}
+      <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-dashboard-border">
+        <div className="flex items-center gap-2 text-sm text-slate-400">
+          <Building2 size={14} className="text-primary-500" />
+          <span>{route.operatorCode || '—'}</span>
         </div>
-      )}
+        <div className="flex items-center gap-2 text-sm text-slate-400">
+          <Hash size={14} className="text-primary-500" />
+          <span>{runId || '—'}</span>
+        </div>
+        {liveLocation && (
+          <>
+            <div className="flex items-center gap-2 text-sm text-slate-400">
+              <Clock size={14} className="text-primary-500" />
+              <span>
+                {t('routes:routeCard.eta', { eta: formatEta(liveLocation.etaToNextStopMinutes) })}
+              </span>
+            </div>
+            {liveLocation.deviationFlag && (
+              <div className="col-span-2 flex items-center gap-2 text-sm text-yellow-400">
+                <AlertTriangle size={14} />
+                <span>{t('routes:routeCard.routeDeviation')}</span>
+              </div>
+            )}
+          </>
+        )}
+      </div>
 
       <div className="flex items-center gap-2 mt-3 text-xs text-slate-500">
         <MapPin size={12} />

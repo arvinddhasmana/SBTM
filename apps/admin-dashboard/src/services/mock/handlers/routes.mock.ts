@@ -2,7 +2,7 @@ import { MOCK_LOCATIONS, MOCK_ROUTES } from '../data/routes.data';
 
 export const mockRoutesApi = {
   getAllLiveLocations: async () => MOCK_LOCATIONS,
-  getActiveRoutes: async () => MOCK_ROUTES,
+  getActiveRoutes: async () => MOCK_ROUTES.filter((r) => r.status === 'active'),
   getAllRoutes: async () => MOCK_ROUTES,
   getRouteById: async (id: string) => MOCK_ROUTES.find((r) => r.id === id) || MOCK_ROUTES[0],
   getRouteShape: async (id: string) => {

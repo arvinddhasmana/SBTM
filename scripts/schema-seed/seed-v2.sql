@@ -231,14 +231,35 @@ ON CONFLICT (email) DO UPDATE SET
   anchor_id   = EXCLUDED.anchor_id;
 
 -- ═══════════════════════════════════════════════════════════════════════════
+-- OPERATOR (pre-seed)
+--
+-- OP-STOCK is seeded with a fixed UUID so driver inserts below can resolve
+-- operator_id without waiting for integration-importer. When import-and-seed.sh
+-- runs, the importer finds this row by legal_entity_id and UPDATEs it in-place,
+-- preserving the fixed UUID.
+-- ═══════════════════════════════════════════════════════════════════════════
+
+INSERT INTO stx_operators (id, legal_name, contact_email, contact_phone, external_ids)
+VALUES (
+  '20000000-0000-0000-0000-000000000001',
+  'Stock Transportation Ltd',
+  'dispatch.ottawa@example.test',
+  '+16135551200',
+  '{"operator_code": "OP-STOCK", "legal_entity_id": "CA-ON-1234567"}'::jsonb
+)
+ON CONFLICT (id) DO UPDATE SET
+  legal_name    = EXCLUDED.legal_name,
+  contact_email = EXCLUDED.contact_email,
+  contact_phone = EXCLUDED.contact_phone,
+  external_ids  = EXCLUDED.external_ids;
+
+-- ═══════════════════════════════════════════════════════════════════════════
 -- DRIVERS
 --
 -- stx_drivers rows use fixed UUIDs (prefixed 40000000) so users.anchor_id
--- can reference them without a subquery that might return NULL if the operator
--- has not been imported yet.
+-- can reference them without a subquery that might return NULL.
 --
--- operator_id → Stock Transportation Ltd (only operator in two-sta-bundle;
--- imported by integration-importer from sample data).
+-- operator_id → OP-STOCK pre-seeded above (fixed UUID 20000000-...).
 -- ═══════════════════════════════════════════════════════════════════════════
 
 INSERT INTO stx_drivers (id, operator_id, external_ids)
@@ -369,7 +390,7 @@ INSERT INTO users (id, email, "passwordHash", role, "firstName", "lastName",
                    anchor_kind, anchor_id)
 VALUES (
   '50000000-0000-0000-0001-000000000001',
-  'sam.demo@example.test',
+  'parent.stbern@sbtm.demo',
   crypt('Parent123!', gen_salt('bf')),
   'PARENT',
   'Sam', 'Demo',
@@ -380,15 +401,15 @@ ON CONFLICT (email) DO UPDATE SET
   anchor_id   = EXCLUDED.anchor_id;
 
 UPDATE stx_guardians
-SET user_id = (SELECT id FROM users WHERE email = 'sam.demo@example.test')
+SET user_id = (SELECT id FROM users WHERE email = 'parent.stbern@sbtm.demo')
 WHERE external_ids->>'guardian_code' = 'OSTA-GRD-0001';
 
--- OSTA-GRD-0002 — Chris Specimen
+-- OSTA-GRD-0002 — Chris Specimen (cross-board: stbern + maplewood)
 INSERT INTO users (id, email, "passwordHash", role, "firstName", "lastName",
                    anchor_kind, anchor_id)
 VALUES (
   '50000000-0000-0000-0001-000000000002',
-  'chris.specimen@example.test',
+  'parent2.stbern@sbtm.demo',
   crypt('Parent123!', gen_salt('bf')),
   'PARENT',
   'Chris', 'Specimen',
@@ -399,7 +420,7 @@ ON CONFLICT (email) DO UPDATE SET
   anchor_id   = EXCLUDED.anchor_id;
 
 UPDATE stx_guardians
-SET user_id = (SELECT id FROM users WHERE email = 'chris.specimen@example.test')
+SET user_id = (SELECT id FROM users WHERE email = 'parent2.stbern@sbtm.demo')
 WHERE external_ids->>'guardian_code' = 'OSTA-GRD-0002';
 
 -- OSTA-GRD-0003 — Pat Sample
@@ -407,7 +428,7 @@ INSERT INTO users (id, email, "passwordHash", role, "firstName", "lastName",
                    anchor_kind, anchor_id)
 VALUES (
   '50000000-0000-0000-0001-000000000003',
-  'pat.sample@example.test',
+  'parent.maplewood@sbtm.demo',
   crypt('Parent123!', gen_salt('bf')),
   'PARENT',
   'Pat', 'Sample',
@@ -418,7 +439,7 @@ ON CONFLICT (email) DO UPDATE SET
   anchor_id   = EXCLUDED.anchor_id;
 
 UPDATE stx_guardians
-SET user_id = (SELECT id FROM users WHERE email = 'pat.sample@example.test')
+SET user_id = (SELECT id FROM users WHERE email = 'parent.maplewood@sbtm.demo')
 WHERE external_ids->>'guardian_code' = 'OSTA-GRD-0003';
 
 -- OSTA-GRD-0004 — Kerry Example
@@ -426,7 +447,7 @@ INSERT INTO users (id, email, "passwordHash", role, "firstName", "lastName",
                    anchor_kind, anchor_id)
 VALUES (
   '50000000-0000-0000-0001-000000000004',
-  'kerry.example@example.test',
+  'parent2.maplewood@sbtm.demo',
   crypt('Parent123!', gen_salt('bf')),
   'PARENT',
   'Kerry', 'Example',
@@ -437,7 +458,7 @@ ON CONFLICT (email) DO UPDATE SET
   anchor_id   = EXCLUDED.anchor_id;
 
 UPDATE stx_guardians
-SET user_id = (SELECT id FROM users WHERE email = 'kerry.example@example.test')
+SET user_id = (SELECT id FROM users WHERE email = 'parent2.maplewood@sbtm.demo')
 WHERE external_ids->>'guardian_code' = 'OSTA-GRD-0004';
 
 -- RCJTC-GRD-0001 — Jordan Pembroke
@@ -445,7 +466,7 @@ INSERT INTO users (id, email, "passwordHash", role, "firstName", "lastName",
                    anchor_kind, anchor_id)
 VALUES (
   '50000000-0000-0000-0002-000000000001',
-  'jordan.pembroke@example.test',
+  'parent.pinecrest@sbtm.demo',
   crypt('Parent123!', gen_salt('bf')),
   'PARENT',
   'Jordan', 'Pembroke',
@@ -456,15 +477,15 @@ ON CONFLICT (email) DO UPDATE SET
   anchor_id   = EXCLUDED.anchor_id;
 
 UPDATE stx_guardians
-SET user_id = (SELECT id FROM users WHERE email = 'jordan.pembroke@example.test')
+SET user_id = (SELECT id FROM users WHERE email = 'parent.pinecrest@sbtm.demo')
 WHERE external_ids->>'guardian_code' = 'RCJTC-GRD-0001';
 
--- RCJTC-GRD-0002 — Robin Renfrew
+-- RCJTC-GRD-0002 — Robin Renfrew (cross-board: pinecrest + cathedral)
 INSERT INTO users (id, email, "passwordHash", role, "firstName", "lastName",
                    anchor_kind, anchor_id)
 VALUES (
   '50000000-0000-0000-0002-000000000002',
-  'robin.renfrew@example.test',
+  'parent2.pinecrest@sbtm.demo',
   crypt('Parent123!', gen_salt('bf')),
   'PARENT',
   'Robin', 'Renfrew',
@@ -475,7 +496,7 @@ ON CONFLICT (email) DO UPDATE SET
   anchor_id   = EXCLUDED.anchor_id;
 
 UPDATE stx_guardians
-SET user_id = (SELECT id FROM users WHERE email = 'robin.renfrew@example.test')
+SET user_id = (SELECT id FROM users WHERE email = 'parent2.pinecrest@sbtm.demo')
 WHERE external_ids->>'guardian_code' = 'RCJTC-GRD-0002';
 
 -- RCJTC-GRD-0003 — Alex Cathedral
@@ -483,7 +504,7 @@ INSERT INTO users (id, email, "passwordHash", role, "firstName", "lastName",
                    anchor_kind, anchor_id)
 VALUES (
   '50000000-0000-0000-0002-000000000003',
-  'alex.cathedral@example.test',
+  'parent.cathedral@sbtm.demo',
   crypt('Parent123!', gen_salt('bf')),
   'PARENT',
   'Alex', 'Cathedral',
@@ -494,15 +515,15 @@ ON CONFLICT (email) DO UPDATE SET
   anchor_id   = EXCLUDED.anchor_id;
 
 UPDATE stx_guardians
-SET user_id = (SELECT id FROM users WHERE email = 'alex.cathedral@example.test')
+SET user_id = (SELECT id FROM users WHERE email = 'parent.cathedral@sbtm.demo')
 WHERE external_ids->>'guardian_code' = 'RCJTC-GRD-0003';
 
--- RCJTC-GRD-0004 — Sage Pinecrest
+-- RCJTC-GRD-0004 — Sage Pinecrest (cross-board: cathedral + pinecrest)
 INSERT INTO users (id, email, "passwordHash", role, "firstName", "lastName",
                    anchor_kind, anchor_id)
 VALUES (
   '50000000-0000-0000-0002-000000000004',
-  'sage.pinecrest@example.test',
+  'parent2.cathedral@sbtm.demo',
   crypt('Parent123!', gen_salt('bf')),
   'PARENT',
   'Sage', 'Pinecrest',
@@ -513,23 +534,65 @@ ON CONFLICT (email) DO UPDATE SET
   anchor_id   = EXCLUDED.anchor_id;
 
 UPDATE stx_guardians
-SET user_id = (SELECT id FROM users WHERE email = 'sage.pinecrest@example.test')
+SET user_id = (SELECT id FROM users WHERE email = 'parent2.cathedral@sbtm.demo')
 WHERE external_ids->>'guardian_code' = 'RCJTC-GRD-0004';
 
--- Legacy E2E parent fixture (parent1.stbern@sbtm.demo) — links to OSTA-GRD-0001
--- anchor updated from NULL to match Sam Demo's guardian row so RLS works.
-INSERT INTO users (id, email, "passwordHash", role, "firstName", "lastName",
-                   anchor_kind, anchor_id)
-VALUES (
-  '30000000-0000-0001-0000-000000000001',
-  'parent1.stbern@sbtm.demo',
-  crypt('Admin123!', gen_salt('bf')),
-  'PARENT',
-  'Michael', 'Anderson',
-  'parent', (SELECT id FROM stx_guardians WHERE external_ids->>'guardian_code' = 'OSTA-GRD-0001')
+-- ═══════════════════════════════════════════════════════════════════════════
+-- SYSTEM SETTINGS
+-- ═══════════════════════════════════════════════════════════════════════════
+
+INSERT INTO system_settings (key, value, updated_at)
+VALUES ('GPS_TRACKING_SOURCE', 'DRIVER_APP', NOW())
+ON CONFLICT (key) DO NOTHING;
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- STX RUNS — one Run per (trip × day) for today + next 13 days, assigned to
+-- the driver anchored to that trip's school. Without this, the driver app
+-- shows an empty schedule (and parent/GPS gateways fall back to "no run").
+-- The importer populates routes/trips/vehicles but never writes stx_runs;
+-- driver→school mapping is by driver_code → school_code below.
+-- Idempotent: NOT EXISTS guard keeps re-runs safe across days.
+-- ═══════════════════════════════════════════════════════════════════════════
+
+WITH driver_school AS (
+  SELECT d.id AS driver_id,
+         d.operator_id,
+         s.id AS school_id
+  FROM stx_drivers d
+  JOIN stx_schools s ON s.external_ids->>'school_code' = (
+    CASE d.external_ids->>'driver_code'
+      WHEN 'DRV-STBERN-001'   THEN 'OCSB-S200'
+      WHEN 'DRV-MAPLE-001'    THEN 'OCDSB-S100'
+      WHEN 'DRV-PINE-001'     THEN 'RCDSB-S300'
+      WHEN 'DRV-CATH-001'     THEN 'RCCDSB-S400'
+    END
+  )
+),
+vehicle_pick AS (
+  SELECT DISTINCT ON (operator_id) operator_id, id AS vehicle_id
+  FROM stx_vehicles
+  ORDER BY operator_id, id
+),
+days AS (
+  SELECT generate_series(CURRENT_DATE, CURRENT_DATE + INTERVAL '13 days', '1 day')::date AS service_date
 )
-ON CONFLICT (email) DO UPDATE SET
-  anchor_kind = EXCLUDED.anchor_kind,
-  anchor_id   = EXCLUDED.anchor_id;
+INSERT INTO stx_runs (service_date, trip_ids, vehicle_id, driver_id, status)
+SELECT
+  d.service_date,
+  ARRAY[t.trip_id]::text[],
+  vp.vehicle_id,
+  ds.driver_id,
+  'scheduled'::stx_run_status_enum
+FROM days d
+CROSS JOIN trips t
+JOIN routes r       ON r.route_id = t.route_id AND r.deleted_at IS NULL
+JOIN driver_school ds ON ds.school_id = r.stx_school_id
+JOIN vehicle_pick vp ON vp.operator_id = ds.operator_id
+WHERE NOT EXISTS (
+  SELECT 1 FROM stx_runs ex
+  WHERE ex.driver_id = ds.driver_id
+    AND ex.service_date = d.service_date
+    AND ex.trip_ids @> ARRAY[t.trip_id]::text[]
+);
 
 COMMIT;

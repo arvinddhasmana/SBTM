@@ -1,0 +1,56 @@
+{
+  "sta_short_code": "OSTA",
+  "export_id": "OCSB-STB-2026-Q2-001",
+  "export_at": "2026-05-25T00:00:00-04:00",
+  "files": {
+    "sta-routes.csv": {
+      "sha256": "<computed-at-export>",
+      "row_count": 2
+    },
+    "sta-stops.csv": {
+      "sha256": "<computed-at-export>",
+      "row_count": 7
+    },
+    "sta-stop-times.csv": {
+      "sha256": "<computed-at-export>",
+      "row_count": 8
+    },
+    "sta-trips.csv": {
+      "sha256": "<computed-at-export>",
+      "row_count": 2
+    },
+    "sta-shapes.csv": {
+      "sha256": "<computed-at-export>",
+      "row_count": 181
+    },
+    "sta-operators.csv": {
+      "sha256": "<computed-at-export>",
+      "row_count": 1
+    },
+    "sta-vehicles.csv": {
+      "sha256": "<computed-at-export>",
+      "row_count": 2
+    },
+    "board-school.csv": {
+      "sha256": "<computed-at-export>",
+      "row_count": 1
+    },
+    "students.csv": {
+      "sha256": "<computed-at-export>",
+      "row_count": 5
+    },
+    "guardians.csv": {
+      "sha256": "<computed-at-export>",
+      "row_count": 3
+    },
+    "student-guardians.csv": {
+      "sha256": "<computed-at-export>",
+      "row_count": 5
+    },
+    "ridership.csv": {
+      "sha256": "<computed-at-export>",
+      "row_count": 10
+    }
+  },
+  "notes": "Minimal single-school OCSB fixture: St. Bernadette School. 3 shared pickup stops: STU-0001+STU-0002 share Westridge Dr stop; STU-0003+STU-0004 share Carleton Cathcart stop; STU-0005 alone at Granite Ridge. AM: stops 1→3 then school. PM: school then stops 1→3. Shapes empty; OSRM road-snap fallback populates them at commit time."
+}

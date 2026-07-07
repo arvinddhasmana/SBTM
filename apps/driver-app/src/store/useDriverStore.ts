@@ -90,8 +90,20 @@ export const useDriverStore = create<DriverState>()(
 
       setActiveRoute: async (route) => {
         const { driver } = get();
+        // Persisted activeRoute from earlier sessions may be missing runId/vehicleId
+        // because the schedule shape grew over time. Always reconcile against the
+        // freshly-fetched schedule so downstream presence calls have a valid runId.
+        const fresh = driver?.assignedRoutes.find((r) => r.id === route.id);
+        const reconciled: typeof route = fresh
+          ? {
+              ...route,
+              runId: fresh.runId ?? route.runId,
+              vehicleId: fresh.vehicleId || route.vehicleId,
+              schoolId: fresh.schoolId || route.schoolId,
+            }
+          : route;
         set({
-          activeRoute: route,
+          activeRoute: reconciled,
           students: [],
           stops: [],
           rosterLoadState: 'loading',
@@ -101,12 +113,12 @@ export const useDriverStore = create<DriverState>()(
 
         // Record route start lifecycle event (fire-and-forget; logged on failure)
         if (driver) {
-          void RouteLifecycleService.startRoute(route.id, route.vehicleId, driver.id);
+          void RouteLifecycleService.startRoute(reconciled.id, reconciled.vehicleId, driver.id);
         }
 
         // Fetch server-confirmed roster with stop data
         try {
-          const { students, stops, direction } = await RosterService.getRouteRoster(route.id);
+          const { students, stops, direction } = await RosterService.getRouteRoster(reconciled.id);
 
           // Reset students to the default state for this route direction:
           //   AM Route → all students NOT_BOARDED (driver picks them up)

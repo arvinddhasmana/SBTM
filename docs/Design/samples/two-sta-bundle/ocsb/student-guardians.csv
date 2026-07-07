@@ -1,0 +1,6 @@
+board_student_number,guardian_code,relationship,is_primary_pickup,effective_from
+OCSB-STU-0001,OSTA-GRD-0001,parent,true,2025-09-02
+OCSB-STU-0002,OSTA-GRD-0001,parent,true,2025-09-02
+OCSB-STU-0003,OSTA-GRD-0002,parent,true,2025-09-02
+OCSB-STU-0004,OSTA-GRD-0002,parent,true,2025-09-02
+OCSB-STU-0005,OSTA-GRD-0003,parent,true,2025-09-02

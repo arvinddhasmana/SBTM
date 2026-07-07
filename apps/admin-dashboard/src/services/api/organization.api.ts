@@ -1,12 +1,13 @@
 import { apiClient } from './api-client';
 
 function mapSchoolResponse(s: any): School {
-  return {
-    id: s.id,
-    name: s.name,
-    boardId: s.boardId,
-    location: s.lat != null && s.lng != null ? { lat: s.lat, lng: s.lng } : undefined,
-  };
+  let location: { lat: number; lng: number } | undefined;
+  if (s.location?.lat != null && s.location?.lng != null) {
+    location = { lat: s.location.lat, lng: s.location.lng };
+  } else if (s.lat != null && s.lng != null) {
+    location = { lat: s.lat, lng: s.lng };
+  }
+  return { id: s.id, name: s.name, boardId: s.boardId, location };
 }
 
 export interface Board {

@@ -1,7 +1,0 @@
-sta_stop_id,name,latitude,longitude,stop_kind,hazard_zone
-OSTA-STP-2001,Richmond Rd & Churchill,45.395100,-75.751200,pickup,false
-OSTA-STP-2002,Richmond Rd & Athlone,45.394200,-75.755300,pickup,false
-OSTA-STP-2003,St. Bernadette School,45.392000,-75.760000,school,false
-OSTA-STP-1001,Bank St & 3rd Ave,45.401234,-75.685678,pickup,false
-OSTA-STP-1002,Bank St & 5th Ave,45.403456,-75.687890,pickup,false
-OSTA-STP-1003,Maplewood Secondary School,45.410000,-75.690000,school,false

@@ -17,6 +17,7 @@ export interface RosterStopDto {
   id: string;
   stopName: string;
   sequence: number;
+  kind?: 'school' | 'stop';
   arrivalTime: string;
   lat?: number;
   lng?: number;

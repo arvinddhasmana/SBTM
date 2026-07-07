@@ -14,6 +14,10 @@ import { defineConfig, devices } from '@playwright/test';
  */
 export default defineConfig({
   testDir: './e2e',
+  // Real-backend smoke specs live under e2e/real-backend/ and have a separate
+  // config (playwright.real.config.ts) because they require the full live
+  // stack + seeded parent user. Exclude them from the default mock-safe run.
+  testIgnore: ['**/real-backend/**'],
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,

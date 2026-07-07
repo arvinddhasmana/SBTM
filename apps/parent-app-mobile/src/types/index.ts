@@ -69,6 +69,7 @@ export interface Stop {
   id: string;
   name: string;
   sequence: number;
+  kind?: 'school' | 'stop';
   lat: number;
   lng: number;
   arrivalTime?: string;

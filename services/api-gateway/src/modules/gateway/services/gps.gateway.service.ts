@@ -70,6 +70,7 @@ interface RouteStopRow {
   stop_lat: number | null;
   stop_lon: number | null;
   arrival_time: string;
+  stop_kind: string | null;
 }
 
 /**
@@ -162,7 +163,7 @@ export class GpsGatewayService {
     // (DRIVER anchors at 'driver' kind, not 'school'); SCHOOL_ADMIN ingests
     // scoped to their school. Any other anchor (board / parent / operator)
     // is rejected.
-    const schoolId = schoolIdFromAnchor(user);
+    let schoolId = schoolIdFromAnchor(user);
     const allowed =
       user.role === Role.SUPER_ADMIN ||
       user.role === Role.STA_ADMIN ||
@@ -170,6 +171,12 @@ export class GpsGatewayService {
       schoolId !== null;
     if (!allowed) {
       throw new ForbiddenException('Caller cannot ingest GPS locations');
+    }
+
+    // DRIVER/SUPER/STA users do not anchor at a school — resolve schoolId from
+    // the route so the GPS service can scope the location point correctly.
+    if (!schoolId && dto.routeId) {
+      schoolId = await this.getSchoolIdForRoute(dto.routeId);
     }
 
     const url = `${this.gpsServiceUrl}/api/v1/locations`;
@@ -280,6 +287,9 @@ export class GpsGatewayService {
     }
 
     if (user.role === Role.PARENT) {
+      if (user.anchorKind !== 'parent' || !user.anchorId) {
+        throw new ForbiddenException('Parent is not anchored to a guardian');
+      }
       const today = new Date().toISOString().slice(0, 10);
       const rows = (await this.rlsContext.runAsCurrent(async (tx) =>
         tx.query(
@@ -293,7 +303,7 @@ export class GpsGatewayService {
              AND rd.effective_from <= $3::date
              AND (rd.effective_to IS NULL OR rd.effective_to >= $3::date)
            LIMIT 1`,
-          [user.id, routeId, today],
+          [user.anchorId, routeId, today],
         ),
       )) as unknown[];
       if (rows.length === 0) {
@@ -360,7 +370,7 @@ export class GpsGatewayService {
         LEFT JOIN stx_schools s ON s.id = r.stx_school_id
         WHERE run.service_date = $1::date
           AND run.deleted_at   IS NULL
-          AND run.status NOT IN ('completed', 'cancelled')
+          AND run.status       = 'in_progress'
           AND r.deleted_at     IS NULL
           ${whereClause}
         GROUP BY r.route_id, r.route_long_name, r.route_short_name,
@@ -381,7 +391,8 @@ export class GpsGatewayService {
           s.stop_name         AS stop_name,
           s.stop_lat          AS stop_lat,
           s.stop_lon          AS stop_lon,
-          st.arrival_time     AS arrival_time
+          st.arrival_time     AS arrival_time,
+          s.stx_stop_kind::text AS stop_kind
         FROM stop_times st
         JOIN trips t ON t.trip_id = st.trip_id
         JOIN stops s ON s.stop_id = st.stop_id
@@ -444,7 +455,8 @@ export class GpsGatewayService {
           s.stop_name         AS stop_name,
           s.stop_lat          AS stop_lat,
           s.stop_lon          AS stop_lon,
-          st.arrival_time     AS arrival_time
+          st.arrival_time     AS arrival_time,
+          s.stx_stop_kind::text AS stop_kind
         FROM stop_times st
         JOIN trips t ON t.trip_id = st.trip_id
         JOIN stops s ON s.stop_id = st.stop_id
@@ -466,11 +478,22 @@ export class GpsGatewayService {
       )) as Array<{ lat: number; lon: number; seq: number }>;
       const path: [number, number][] = shapeRows.map((s) => [s.lat, s.lon]);
 
+      const vehicleRows = (await tx.query(
+        `SELECT run.vehicle_id::text AS vehicle_id
+           FROM stx_runs run
+           JOIN trips t ON t.trip_id = ANY(run.trip_ids)
+          WHERE t.route_id = $1 AND run.deleted_at IS NULL
+          ORDER BY run.service_date DESC, run.created_at DESC
+          LIMIT 1`,
+        [routeId],
+      )) as Array<{ vehicle_id: string | null }>;
+      const vehicleId = vehicleRows[0]?.vehicle_id ?? null;
+
       return this.buildRouteSummary(
         {
           route_id: r.route_id,
           route_name: r.route_name,
-          vehicle_id: null,
+          vehicle_id: vehicleId,
           start_time: null,
           school_id: r.school_id,
           school_name: r.school_name,
@@ -548,6 +571,7 @@ export class GpsGatewayService {
     user: AuthenticatedUser,
   ): Promise<string[] | undefined> {
     if (user.role === Role.PARENT) {
+      if (user.anchorKind !== 'parent' || !user.anchorId) return [];
       const today = new Date().toISOString().slice(0, 10);
       const rows = (await this.rlsContext.runAsCurrent(async (tx) =>
         tx.query(
@@ -559,7 +583,7 @@ export class GpsGatewayService {
              AND rd.status = 'active'
              AND rd.effective_from <= $2::date
              AND (rd.effective_to IS NULL OR rd.effective_to >= $2::date)`,
-          [user.id, today],
+          [user.anchorId, today],
         ),
       )) as Array<{ route_id: string }>;
       return rows.map((r) => r.route_id);
@@ -625,6 +649,9 @@ export class GpsGatewayService {
     const direction =
       r.direction || (r.route_id.toUpperCase().includes('PM') ? 'PM' : 'AM');
     const startTime = r.start_time || '07:30';
+    // Return the real DB stop_sequence as the single source of truth (ADR: Option 2).
+    // School stays in its real sequence position; the UI uses `kind` to render the
+    // school marker instead of a numbered pin, and to render a smaller badge.
     const orderedStops = stops
       .slice()
       .sort((a, b) => a.stop_sequence - b.stop_sequence)
@@ -632,6 +659,7 @@ export class GpsGatewayService {
         id: s.stop_id,
         routeId: r.route_id,
         sequence: s.stop_sequence,
+        kind: s.stop_kind === 'school' ? 'school' : 'stop',
         address: s.stop_name,
         location:
           s.stop_lat !== null && s.stop_lon !== null

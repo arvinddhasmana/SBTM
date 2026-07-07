@@ -12,35 +12,22 @@
  *   - Radius and spacing warnings
  *   - Optimization
  *
- * Uses mock mode (?mock=true) so no backend is required.
+ * Uses mock mode (?mock=true) for route/school API data, but performs a real
+ * backend login so that pageVisibilityApi (which bypasses the mock layer) can
+ * authenticate and not trigger a 401→wipe-auth redirect.
  */
 import { test, expect, type Page } from '@playwright/test';
-
-const MOCK_USER = {
-  id: 'usr-001',
-  name: 'Mock Admin',
-  email: 'admin@osta.ca',
-  role: 'BOARD_ADMIN',
-  boardId: 'BRD-001',
-};
+import { loginAs } from './fixtures';
 
 /**
- * Log in with mock credentials and navigate to planner.
+ * Authenticate via the real backend (so pageVisibilityApi has a valid JWT),
+ * then navigate to the planner with ?mock=true to activate the mock data layer
+ * for routes, schools, and other domain APIs.
  */
 async function loginMockAndGoToPlanner(page: Page) {
-  await page.goto('/login?mock=true', { waitUntil: 'domcontentloaded' });
-  await page.waitForTimeout(500);
-
-  // Check if already logged in (redirected to dashboard)
-  if (page.url().includes('/login')) {
-    await page.fill('input[placeholder*="admin@osta.ca"]', 'admin@osta.ca');
-    await page.fill('input[placeholder*="••••"]', 'password');
-    await page.click('button:has-text("Sign In")');
-    await page.waitForTimeout(1000);
-  }
-
+  await loginAs(page, 'BOARD_ADMIN');
   await page.goto('/routes/planner?mock=true', { waitUntil: 'domcontentloaded' });
-  await page.waitForTimeout(1500); // wait for React Query to load data
+  await page.waitForTimeout(1500); // wait for React Query + mock data to load
 }
 
 test.describe('RP: Route Planner', () => {

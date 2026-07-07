@@ -344,6 +344,7 @@ export default function MapScreen() {
         )}
 
         {stops.map((stop) => {
+          if (stop.kind === 'school') return null;
           const isChildStop = stop.id === childStopId;
           return (
             <Marker
@@ -373,7 +374,7 @@ export default function MapScreen() {
             anchor={{ x: 0.5, y: 0.5 }}
             zIndex={600}
           >
-            <SchoolMarker />
+            <SchoolMarker sequence={stops.find((s) => s.kind === 'school')?.sequence} />
           </Marker>
         )}
 

@@ -219,3 +219,16 @@ Each step gates on the previous step's verification. There is no per-tenant roll
 - Parent OAuth federation (OCSB/OCDSB) — interface stub only; full design when those IdPs are confirmed.
 - RFID/NFC student tap-on/tap-off — Phase 2.
 - Routing/optimisation engine — never; STA owns this.
+
+## 10. Implementation Status (2026-07-06)
+
+Based on a codebase analysis, the implementation of the aggressive cutover is **mostly complete (up through Phase D)**, with final integration and clean-up steps remaining:
+
+### Current State
+
+- **Phase A (Schema reset):** ✅ **Completed.** The `20260518_v2_cutover.sql` migration exists and sets up the strict v2 tables (`stx_boards`, `stx_schools`, `stx_ridership`, etc.). The new `stx_sta` multi-tenancy anchor is in place.
+- **Phase B (Entity & service rewrite):** ✅ **Completed.** A repository-wide check confirms `OSTA_ADMIN` has been eradicated and `Route.polyline` no longer exists. TypeORM entities (like `BoardEntity` mapped to `stx_boards`) reflect the v2 schema.
+- **Phase C (Importer + adapters + sample seed):** ⚠️ **In Progress / Completed.** The `integration-importer` service exists with `gtfs-schedule` and `sta-csv` adapters. While the base adapter structure is present, the specific `kml-busplanner` adapter logic detailed in the `BusPlanner-KML-ETL-MapLibre-Valhalla.md` plan is still entirely missing. The system currently lacks the implementation necessary to extract, transform, and load KML datasets into the V2 schemas.
+- **Phase D (Three-app cutover):** ✅ **Completed.** All three apps have completed the cutover. The `admin-dashboard` and `driver-app` are utilizing the V2 API endpoints that query against the v2 tables. Similarly, both the `parent-dashboard` (web) and `parent-app-mobile` have been updated; while the frontend apps do not directly run SQL queries against tables like `stx_ridership`, they properly consume the updated proxy endpoints (e.g., `GET /parent/children`, `GET /alerts/parent-view/:id`, etc.) that the `parent.gateway.service.ts` fulfills via V2 `DataSource.query` logic involving true multi-table joins.
+- **Phase E (Integration & soak):** ⏳ **Pending.** The CI integration tests and 24-hr load soak.
+- **Phase F (Doc + history clean-up):** ⏳ **Pending.** Final documentation sweeps and archiving of V1 design docs.

@@ -6,6 +6,22 @@ import type { AbsenceRecord } from '../../services/api/absence.api';
 import { useAuth } from '../../context/AuthContext';
 import { getSchoolScope } from '../../types';
 import { queryKeys } from '../../services/query-keys';
+import { studentManagementApi } from '../../services/api/student-management.api';
+
+const StudentNameDisplay: React.FC<{ studentId: string }> = ({ studentId }) => {
+  const { data: student } = useQuery({
+    queryKey: ['student', studentId],
+    queryFn: () => studentManagementApi.getStudentById(studentId),
+    enabled: !!studentId,
+    staleTime: 5 * 60 * 1000,
+  });
+  if (!student) return <span className="font-mono text-xs">Loading...</span>;
+  return (
+    <span className="font-semibold text-white">
+      {student.preferred_name || student.first_name + ' ' + student.last_name}
+    </span>
+  );
+};
 import { Header } from '../../components/common';
 
 export const AbsenceManagement: React.FC = () => {
@@ -95,7 +111,9 @@ export const AbsenceManagement: React.FC = () => {
             <table className="w-full text-left text-white">
               <thead className="bg-white/5 uppercase text-xs font-semibold">
                 <tr>
-                  <th className="px-6 py-4">{t('absences:columns.studentId')}</th>
+                  <th className="px-6 py-4">
+                    {t('absences:columns.studentName', { defaultValue: 'Student Name' })}
+                  </th>
                   <th className="px-6 py-4">{t('absences:columns.tripDate')}</th>
                   <th className="px-6 py-4">{t('absences:columns.route')}</th>
                   <th className="px-6 py-4">{t('absences:columns.status')}</th>
@@ -114,7 +132,9 @@ export const AbsenceManagement: React.FC = () => {
                   };
                   return (
                     <tr key={absence.id} className="hover:bg-white/5 transition-colors">
-                      <td className="px-6 py-4 font-mono text-xs">{absence.studentId}</td>
+                      <td className="px-6 py-4">
+                        <StudentNameDisplay studentId={absence.studentId} />
+                      </td>
                       <td className="px-6 py-4 text-sm">{absence.tripDate}</td>
                       <td className="px-6 py-4">
                         <span className="text-xs bg-amber-900/40 text-amber-300 px-2 py-1 rounded">

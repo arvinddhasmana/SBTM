@@ -67,6 +67,14 @@ export function useRoutePlanner() {
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isSnapping, setIsSnapping] = useState(false);
+  const [isPathManuallyAdjusted, setIsPathManuallyAdjusted] = useState(false);
+
+  // Track manual midpoints introduced by dragging segments.
+  // Record<segmentIndex, [lat, lng][]>. A single segment could have multiple drags in complex scenarios,
+  // but let's just keep a list of manual points per segment.
+  const [manualWaypoints, setManualWaypoints] = useState<
+    Record<number, { lat: number; lng: number }>
+  >({});
 
   // --- Map reset key: only changes on selectRoute / startCreate / startEdit ---
   const [mapResetKey, setMapResetKey] = useState(0);
@@ -162,6 +170,7 @@ export function useRoutePlanner() {
   // --- Snap-to-road helper (debounced) ---
   const snapRouteToRoad = useCallback(
     (stopsToSnap: PlannerStop[]) => {
+      setIsPathManuallyAdjusted(false);
       if (snapTimerRef.current) {
         clearTimeout(snapTimerRef.current);
       }
@@ -211,10 +220,16 @@ export function useRoutePlanner() {
     setOptimizationResult(null);
     setEditingRouteId(null);
     setMapMode('view');
+    setManualWaypoints({});
   }, []);
 
   const selectRoute = useCallback(async (route: Route) => {
-    setSelectedRoute(route);
+    try {
+      const fullRoute = await routesApi.getRouteById(route.id);
+      setSelectedRoute(fullRoute);
+    } catch {
+      setSelectedRoute(route);
+    }
     setMode('list');
     setMapResetKey((k) => k + 1);
   }, []);
@@ -237,6 +252,7 @@ export function useRoutePlanner() {
 
   const startEdit = useCallback(async (route: Route) => {
     setMode('edit');
+    setManualWaypoints({});
     setSelectedRoute(null);
     setEditingRouteId(route.id);
     setFormSchoolId(route.schoolId);
@@ -245,11 +261,11 @@ export function useRoutePlanner() {
     setStartTime(route.startTime.slice(0, 5));
     setNumberOfStops(route.stops.length);
 
-    const plannerStops: PlannerStop[] = route.stops.map((s) => {
+    const plannerStops: PlannerStop[] = route.stops.map((s, idx) => {
       const [lat, lng] = parseWktPoint(s.location);
       return {
         id: s.id || nextStopId(),
-        sequence: s.sequence,
+        sequence: idx + 1,
         address: s.address,
         lat,
         lng,
@@ -391,17 +407,32 @@ export function useRoutePlanner() {
     async (_segmentIndex: number, lat: number, lng: number) => {
       // Get current valid stops plus the dragged waypoint for re-snapping
       const validStops = stops.filter((s) => s.lat !== 0 && s.lng !== 0);
-      if (validStops.length < 2) return;
+      if (validStops.length === 0) return;
 
-      // Build waypoint list: include the dragged point between the right pair of stops
+      const orderedPoints: { lat: number; lng: number }[] = [];
+      if (schoolLocation && direction === 'PM') {
+        orderedPoints.push({ lat: schoolLocation.lat, lng: schoolLocation.lng });
+      }
+      validStops.forEach((s) => orderedPoints.push({ lat: s.lat, lng: s.lng }));
+      if (schoolLocation && direction === 'AM') {
+        orderedPoints.push({ lat: schoolLocation.lat, lng: schoolLocation.lng });
+      }
+
+      if (orderedPoints.length < 2) return;
+
+      // Register the new manual point
+      const newManualWaypoints = { ...manualWaypoints };
+      newManualWaypoints[_segmentIndex] = {
+        lat: Math.round(lat * 100000) / 100000,
+        lng: Math.round(lng * 100000) / 100000,
+      };
+      setManualWaypoints(newManualWaypoints);
+
       const waypoints: { lat: number; lng: number }[] = [];
-      for (let i = 0; i < validStops.length; i++) {
-        waypoints.push({ lat: validStops[i].lat, lng: validStops[i].lng });
-        if (i === _segmentIndex) {
-          waypoints.push({
-            lat: Math.round(lat * 100000) / 100000,
-            lng: Math.round(lng * 100000) / 100000,
-          });
+      for (let i = 0; i < orderedPoints.length; i++) {
+        waypoints.push(orderedPoints[i]);
+        if (newManualWaypoints[i]) {
+          waypoints.push(newManualWaypoints[i]);
         }
       }
 
@@ -415,6 +446,7 @@ export function useRoutePlanner() {
             totalDistance: result.totalDistance,
             totalDuration: result.totalDuration,
           }));
+          setIsPathManuallyAdjusted(true);
         }
       } catch {
         // Keep current state
@@ -422,17 +454,35 @@ export function useRoutePlanner() {
         setIsSnapping(false);
       }
     },
-    [stops],
+    [stops, manualWaypoints, schoolLocation, direction],
   );
 
   /** Force snap entire route to road. */
   const snapToRoad = useCallback(async () => {
     const validStops = stops.filter((s) => s.lat !== 0 && s.lng !== 0);
-    if (validStops.length < 2) return;
+    if (validStops.length === 0) return;
+
+    const orderedPoints: { lat: number; lng: number }[] = [];
+    if (schoolLocation && direction === 'PM') {
+      orderedPoints.push({ lat: schoolLocation.lat, lng: schoolLocation.lng });
+    }
+    validStops.forEach((s) => orderedPoints.push({ lat: s.lat, lng: s.lng }));
+    if (schoolLocation && direction === 'AM') {
+      orderedPoints.push({ lat: schoolLocation.lat, lng: schoolLocation.lng });
+    }
+
+    if (orderedPoints.length < 2) return;
 
     setIsSnapping(true);
     try {
-      const waypoints = validStops.map((s) => ({ lat: s.lat, lng: s.lng }));
+      const waypoints: { lat: number; lng: number }[] = [];
+      for (let i = 0; i < orderedPoints.length; i++) {
+        waypoints.push(orderedPoints[i]);
+        if (manualWaypoints[i]) {
+          waypoints.push(manualWaypoints[i]);
+        }
+      }
+
       const result = await routesApi.snapToRoad(waypoints);
       if (result.polylineGeoJson) {
         setOptimizationResult((prev) => ({
@@ -447,7 +497,7 @@ export function useRoutePlanner() {
     } finally {
       setIsSnapping(false);
     }
-  }, [stops]);
+  }, [stops, manualWaypoints, schoolLocation, direction]);
 
   const autoGenerate = useCallback(async () => {
     if (!schoolLocation) {
@@ -614,7 +664,7 @@ export function useRoutePlanner() {
       if (editingRouteId) {
         await routesApi.updateRoute(editingRouteId, {
           name: routeName,
-          direction,
+          direction: direction.toLowerCase(),
           startTime,
           estimatedDuration: Math.max(1, Math.round(optimizationResult?.totalDuration || 60)),
           shapePoints,
@@ -623,7 +673,7 @@ export function useRoutePlanner() {
       } else {
         await routesApi.createRoute({
           name: routeName,
-          direction,
+          direction: direction.toLowerCase(),
           schoolId: formSchoolId,
           startTime,
           estimatedDuration: Math.max(1, Math.round(optimizationResult?.totalDuration || 60)),
@@ -712,6 +762,7 @@ export function useRoutePlanner() {
     isOptimizing,
     isSaving,
     isSnapping,
+    isPathManuallyAdjusted,
     routesLoading,
     editingRouteId,
     stopWarnings,

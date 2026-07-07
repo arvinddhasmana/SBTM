@@ -57,22 +57,22 @@ describe('StagingWriter (slice 2a)', () => {
       board: 2,
       school: 2,
       operator: 1,
-      vehicle: 2,
-      route: 2,
-      stop: 6,
-      shape: 5,
-      trip: 2,
-      stopTime: 6,
-      student: 6,
-      guardian: 4,
-      studentGuardian: 6,
-      ridership: 6,
+      vehicle: 6,
+      route: 12,
+      stop: 38,
+      shape: 1460,
+      trip: 12,
+      stopTime: 84,
+      student: 24,
+      guardian: 10,
+      studentGuardian: 24,
+      ridership: 48,
     });
 
     const tableHits = (re: RegExp) => pg.calls.filter((c) => re.test(c.text)).length;
     expect(tableHits(/INSERT INTO stage_board_school/)).toBe(4); // 2 boards + 2 schools
     expect(tableHits(/INSERT INTO stage_operators/)).toBe(1);
-    expect(tableHits(/INSERT INTO stage_ridership/)).toBe(6);
+    expect(tableHits(/INSERT INTO stage_ridership/)).toBe(48);
 
     await writer.markStatus(sessionId, 'validated', { errors: 0, warnings: 12 });
     expect(

@@ -25,10 +25,19 @@ export const PresenceService = {
       const response = await api.post<{ presenceEventId: string }>(PRESENCE_ENDPOINT, dto);
       await OfflineQueueService.flush(postEvent);
       return response.data;
-    } catch {
+    } catch (error: unknown) {
+      // Surface backend validation/network detail so the buffered failure mode
+      // is actually diagnosable. Common cause: empty runId / stopId carried
+      // over from a stale persisted activeRoute — driver should re-login.
+      const ax = error as { response?: { status?: number; data?: unknown }; message?: string };
       console.error('Failed to send presence event, buffering for retry', {
         routeId: dto.routeId,
+        runId: dto.runId,
+        stopId: dto.stopId,
         eventKind: dto.eventKind,
+        status: ax.response?.status,
+        serverError: ax.response?.data,
+        message: ax.message,
       });
       await OfflineQueueService.enqueue('presence', PRESENCE_ENDPOINT, dto);
       return {};

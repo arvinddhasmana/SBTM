@@ -209,26 +209,23 @@
       "tiers": {
         "TIER_1": "Niveau 1 (Critique pour la sécurité)",
         "TIER_2": "Niveau 2 (Opérationnel)",
-        "TIER_3": "Niveau 3 (Informationnel)",
-        "ALL": "Tous les niveaux"
+        "TIER_3": "Niveau 3 (Informationnel)"
       },
       "allowedStatus": "Statut autorisé",
       "statuses": {
-        "PENDING": "En attente",
+        "PENDING_CONFIRMATION": "En attente de confirmation",
         "CONFIRMED": "Confirmé",
-        "ESCALATED_TO_BOARD": "Escaladé au conseil",
-        "ESCALATED_TO_STA": "Escaladé à l'STA",
+        "AUTO_ESCALATED": "Escaladé automatiquement",
+        "ACTIVE": "Actif",
         "RESOLVED": "Résolu",
-        "FALSE_ALARM": "Fausse alarme",
-        "ALL": "Tous les statuts"
+        "FALSE_ALARM": "Fausse alarme"
       },
       "requiredRole": "Rôle requis",
       "roles": {
         "SCHOOL_ADMIN": "Admin École",
         "BOARD_ADMIN": "Admin Conseil",
         "STA_ADMIN": "Admin STA",
-        "SUPER_ADMIN": "Super Admin",
-        "ANY_ADMIN": "Tout administrateur"
+        "SUPER_ADMIN": "Super Admin"
       },
       "statusTransition": "Transition de statut",
       "statusTransitionPlaceholder": "Optionnel - ex. RÉSOLU",

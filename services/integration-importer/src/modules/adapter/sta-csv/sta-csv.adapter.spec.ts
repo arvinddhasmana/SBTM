@@ -69,16 +69,16 @@ describe('StaCsvAdapter', () => {
       expect(counts.board).toBe(2);
       expect(counts.school).toBe(2);
       expect(counts.operator).toBe(1);
-      expect(counts.vehicle).toBe(2);
-      expect(counts.route).toBe(2);
-      expect(counts.stop).toBe(6);
-      expect(counts.shape).toBe(5);
-      expect(counts.trip).toBe(2);
-      expect(counts.stopTime).toBe(6);
-      expect(counts.student).toBe(6);
-      expect(counts.guardian).toBe(4);
-      expect(counts.studentGuardian).toBe(6);
-      expect(counts.ridership).toBe(6);
+      expect(counts.vehicle).toBe(6);
+      expect(counts.route).toBe(12);
+      expect(counts.stop).toBe(38);
+      expect(counts.shape).toBe(1460);
+      expect(counts.trip).toBe(12);
+      expect(counts.stopTime).toBe(84);
+      expect(counts.student).toBe(24);
+      expect(counts.guardian).toBe(10);
+      expect(counts.studentGuardian).toBe(24);
+      expect(counts.ridership).toBe(48);
 
       // Dependency order: every school must follow its board's first appearance.
       const kindOrder = records.map((r) => r.kind);
@@ -98,9 +98,9 @@ describe('StaCsvAdapter', () => {
       expect(counts.board).toBe(2);
       expect(counts.school).toBe(2);
       expect(counts.operator).toBe(1);
-      expect(counts.route).toBe(2);
-      expect(counts.student).toBe(6);
-      expect(counts.ridership).toBe(6);
+      expect(counts.route).toBe(12);
+      expect(counts.student).toBe(24);
+      expect(counts.ridership).toBe(48);
     });
   });
 

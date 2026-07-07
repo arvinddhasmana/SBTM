@@ -124,6 +124,7 @@ export interface RouteStop {
   id: string;
   routeId: string;
   sequence: number;
+  kind?: 'school' | 'stop';
   address: string;
   location?: string; // WKT "POINT(lng lat)"
   lat?: number;
@@ -135,11 +136,55 @@ export interface RouteDetails {
   name: string;
   direction: string;
   vehicleId?: string;
+  vehicleCode?: string;
+  operatorCode?: string;
+  tripIds?: string[];
   path?: [number, number][];
   stops: RouteStop[];
   schoolLat?: number;
   schoolLng?: number;
   schoolName?: string;
+}
+
+export interface StudentTransportLeg {
+  time: string | null;
+  stopId: string;
+  stopName: string;
+  routeId: string;
+  routeName: string;
+  tripId: string;
+  operatorCode: string | null;
+  vehicleCode: string | null;
+  effectiveFrom: string;
+}
+
+export interface StudentDetailAddress {
+  raw: string | null;
+  streetNumber: string | null;
+  streetName: string | null;
+  apt: string | null;
+  municipality: string | null;
+  province: string | null;
+  postalCode: string | null;
+}
+
+export interface StudentDetail {
+  id: string;
+  preferredName: string | null;
+  firstName: string;
+  lastName: string;
+  grade: string | null;
+  schoolName: string | null;
+  districtName: string | null;
+  studentNumber: string | null;
+  oen: string | null;
+  address: StudentDetailAddress;
+  transportation: {
+    amPickup?: StudentTransportLeg;
+    amDropoff?: StudentTransportLeg;
+    pmPickup?: StudentTransportLeg;
+    pmDropoff?: StudentTransportLeg;
+  };
 }
 
 export const parentApi = {
@@ -225,6 +270,11 @@ export const parentApi = {
 
   async getRouteDetails(routeId: string): Promise<RouteDetails> {
     const response = await apiClient.get<RouteDetails>(`/api/v1/routes/${routeId}`);
+    return response.data;
+  },
+
+  async getStudentDetail(studentId: string): Promise<StudentDetail> {
+    const response = await apiClient.get<StudentDetail>(`/api/v1/parent/students/${studentId}`);
     return response.data;
   },
 

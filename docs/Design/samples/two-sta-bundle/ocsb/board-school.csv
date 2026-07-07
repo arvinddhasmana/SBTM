@@ -1,0 +1,2 @@
+sta_short_code,board_code,board_name,school_code,school_name,address,latitude,longitude,bell_schedule_code,alerts_enabled
+OSTA,OCSB,Ottawa Catholic School Board,OCSB-S200,St. Bernadette School,"60 Defence St, Stittsville, ON K2V 0N3",45.270563,-75.885013,BELL-0830,true

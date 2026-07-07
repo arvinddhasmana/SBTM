@@ -509,9 +509,9 @@ export default function ActiveRouteScreen({ navigation }: any) {
           />
         )}
 
-        {/* Stop markers */}
+        {/* Stop markers (skip the school stop — rendered separately as the school icon) */}
         {stops
-          .filter((s) => s.lat != null && s.lng != null)
+          .filter((s) => s.kind !== 'school' && s.lat != null && s.lng != null)
           .map((stop) => (
             <Marker
               key={stop.id}
@@ -536,7 +536,7 @@ export default function ActiveRouteScreen({ navigation }: any) {
             title={activeRoute.schoolName ?? t('activeRoute.school')}
             zIndex={10}
           >
-            <SchoolMarkerView />
+            <SchoolMarkerView sequence={stops.find((s) => s.kind === 'school')?.sequence} />
           </Marker>
         )}
       </MapView>

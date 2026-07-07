@@ -279,7 +279,7 @@ test.describe('Alert Configuration', () => {
       // Fill form — actionName is now a select constrained to valid DB values
       await page.selectOption('select >> nth=0', 'STATUS_UPDATE');
       await page.selectOption('select >> nth=1', 'TIER_2');
-      await page.selectOption('select >> nth=2', 'ESCALATED_TO_BOARD');
+      await page.selectOption('select >> nth=2', 'ACTIVE');
       await page.selectOption('select >> nth=3', 'BOARD_ADMIN');
 
       // Submit
@@ -291,7 +291,7 @@ test.describe('Alert Configuration', () => {
 
       // Clean up — find the newly added row and delete it
       const rows = page.locator(
-        'tbody tr:has-text("STATUS_UPDATE"):has-text("TIER_2"):has-text("ESCALATED_TO_BOARD")',
+        'tbody tr:has-text("STATUS_UPDATE"):has-text("TIER_2"):has-text("ACTIVE")',
       );
       if ((await rows.count()) > 0) {
         await rows.first().locator('button').nth(1).click();

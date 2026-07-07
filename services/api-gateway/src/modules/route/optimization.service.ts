@@ -9,8 +9,8 @@ import { CreateRouteStopDto } from './dto/route.dto';
 
 export interface OptimizationResult {
   optimizedStops: CreateRouteStopDto[];
-  encodedPolyline: string; // Google-encoded OSRM route geometry (internal; not stored in v2 schema)
-  encodedPolylineGeoJson: GeoJsonLineString | null; // Decoded GeoJSON for map rendering
+  polyline: string; // Google-encoded OSRM route geometry (internal; not stored in v2 schema)
+  polylineGeoJson: GeoJsonLineString | null; // Decoded GeoJSON for map rendering
   totalDistance: number; // km
   totalDuration: number; // minutes
 }
@@ -23,6 +23,12 @@ export interface GeoJsonLineString {
 interface OsrmRouteResponse {
   code: string;
   routes: OsrmRoute[];
+  waypoints: OsrmWaypoint[];
+}
+
+interface OsrmTripResponse {
+  code: string;
+  trips: OsrmRoute[];
   waypoints: OsrmWaypoint[];
 }
 
@@ -113,8 +119,8 @@ function decodePolyline(encoded: string): [number, number][] {
 }
 
 export interface SnapToRoadResult {
-  encodedPolyline: string;
-  encodedPolylineGeoJson: GeoJsonLineString | null;
+  polyline: string;
+  polylineGeoJson: GeoJsonLineString | null;
   totalDistance: number; // km
   totalDuration: number; // minutes
 }
@@ -141,8 +147,8 @@ export class OptimizationService {
   ): Promise<SnapToRoadResult> {
     if (waypoints.length < 2) {
       return {
-        encodedPolyline: '',
-        encodedPolylineGeoJson: null,
+        polyline: '',
+        polylineGeoJson: null,
         totalDistance: 0,
         totalDuration: 0,
       };
@@ -166,8 +172,8 @@ export class OptimizationService {
           `OSRM snap-to-road returned code=${response.data.code}`,
         );
         return {
-          encodedPolyline: '',
-          encodedPolylineGeoJson: null,
+          polyline: '',
+          polylineGeoJson: null,
           totalDistance: 0,
           totalDuration: 0,
         };
@@ -177,8 +183,8 @@ export class OptimizationService {
       const decodedCoords = decodePolyline(route.geometry);
 
       return {
-        encodedPolyline: route.geometry,
-        encodedPolylineGeoJson: {
+        polyline: route.geometry,
+        polylineGeoJson: {
           type: 'LineString',
           coordinates: decodedCoords,
         },
@@ -189,8 +195,8 @@ export class OptimizationService {
       const message = err instanceof Error ? err.message : String(err);
       this.logger.warn(`OSRM snap-to-road failed (${message})`);
       return {
-        encodedPolyline: '',
-        encodedPolylineGeoJson: null,
+        polyline: '',
+        polylineGeoJson: null,
         totalDistance: 0,
         totalDuration: 0,
       };
@@ -248,7 +254,7 @@ export class OptimizationService {
     const coordStr = coords.map(([lng, lat]) => `${lng},${lat}`).join(';');
     const url = `${this.osrmBaseUrl}/trip/v1/driving/${coordStr}`;
 
-    const response = await axios.get<OsrmRouteResponse>(url, {
+    const response = await axios.get<OsrmTripResponse>(url, {
       params: {
         overview: 'full',
         geometries: 'polyline',
@@ -259,11 +265,11 @@ export class OptimizationService {
       timeout: OptimizationService.OSRM_REQUEST_TIMEOUT_MS,
     });
 
-    if (response.data.code !== 'Ok' || !response.data.routes.length) {
+    if (response.data.code !== 'Ok' || !response.data.trips?.length) {
       throw new Error(`OSRM returned code=${response.data.code}`);
     }
 
-    const route = response.data.routes[0];
+    const route = response.data.trips[0];
     const waypoints = response.data.waypoints ?? [];
 
     // Re-order stops to match the OSRM waypoint ordering
@@ -278,8 +284,8 @@ export class OptimizationService {
 
     return {
       optimizedStops,
-      encodedPolyline: route.geometry,
-      encodedPolylineGeoJson: {
+      polyline: route.geometry,
+      polylineGeoJson: {
         type: 'LineString',
         coordinates: decodedCoords,
       },
@@ -308,8 +314,8 @@ export class OptimizationService {
 
     return {
       optimizedStops: optimized,
-      encodedPolyline: '',
-      encodedPolylineGeoJson: null,
+      polyline: '',
+      polylineGeoJson: null,
       totalDistance: 0,
       totalDuration: 0,
     };

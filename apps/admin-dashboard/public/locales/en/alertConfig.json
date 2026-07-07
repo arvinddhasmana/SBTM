@@ -209,26 +209,23 @@
       "tiers": {
         "TIER_1": "Tier 1 (Safety-Critical)",
         "TIER_2": "Tier 2 (Operational)",
-        "TIER_3": "Tier 3 (Informational)",
-        "ALL": "All Tiers"
+        "TIER_3": "Tier 3 (Informational)"
       },
       "allowedStatus": "Allowed Status",
       "statuses": {
-        "PENDING": "Pending",
+        "PENDING_CONFIRMATION": "Pending Confirmation",
         "CONFIRMED": "Confirmed",
-        "ESCALATED_TO_BOARD": "Escalated to Board",
-        "ESCALATED_TO_STA": "Escalated to STA",
+        "AUTO_ESCALATED": "Auto Escalated",
+        "ACTIVE": "Active",
         "RESOLVED": "Resolved",
-        "FALSE_ALARM": "False Alarm",
-        "ALL": "All Statuses"
+        "FALSE_ALARM": "False Alarm"
       },
       "requiredRole": "Required Role",
       "roles": {
         "SCHOOL_ADMIN": "School Admin",
         "BOARD_ADMIN": "Board Admin",
         "STA_ADMIN": "STA Admin",
-        "SUPER_ADMIN": "Super Admin",
-        "ANY_ADMIN": "Any Admin"
+        "SUPER_ADMIN": "Super Admin"
       },
       "statusTransition": "Status Transition",
       "statusTransitionPlaceholder": "Optional - e.g., RESOLVED",

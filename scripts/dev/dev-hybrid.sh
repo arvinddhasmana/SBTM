@@ -222,6 +222,7 @@ for svc in "${SELECTED_SERVICES[@]}"; do
         JWT_SECRET="${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}" \
         JWT_EXPIRATION="${JWT_EXPIRATION:-24h}" \
         INTERNAL_SERVICE_SECRET="${INTERNAL_SERVICE_SECRET:-dev_internal_secret_change_me_in_prod}" \
+        SBTM_PII_KEY="${SBTM_PII_KEY:-A86xdo4A+EWjTJ2zwz6JNIt5Ck8ncd9Ut3rkgq7JBD8=}" \
         CORS_ORIGINS="${CORS_ORIGINS:-http://localhost:5173,http://localhost:5174,http://localhost:5175}" \
         GPS_SERVICE_URL=http://localhost:3002 \
         ALERTS_SERVICE_URL=http://localhost:3003 \
@@ -311,3 +312,4 @@ echo -e "${YELLOW}API:${NC}               http://localhost:3001/api/v1"
 echo ""
 echo -e "${DIM}Logs: .dev-logs/<service>.log${NC}"
 echo -e "${DIM}Stop: ./scripts/dev-stop.sh${NC}"
+echo -e "${DIM}Credentials: run ./scripts/schema-seed/import-and-seed.sh to see dev accounts${NC}"

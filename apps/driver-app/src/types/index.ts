@@ -58,6 +58,8 @@ export interface Stop {
   id: string;
   stopName: string;
   sequence: number;
+  /** 'school' = render with school icon, no number. 'stop' = numbered pickup/dropoff. */
+  kind?: 'school' | 'stop';
   arrivalTime: string;
   lat?: number;
   lng?: number;

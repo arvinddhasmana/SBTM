@@ -1,0 +1,3 @@
+vehicle_code,operator_code,license_plate,capacity_seated,capacity_wheelchair,equipment_json
+BUS-OCSB-201-AM,OP-STOCK,ON-OCSB-201A,71,2,"{""camera"":true,""har_alert"":true,""gps_device_id"":""GPS-OCSB-201A""}"
+BUS-OCSB-201-PM,OP-STOCK,ON-OCSB-201P,71,2,"{""camera"":true,""har_alert"":true,""gps_device_id"":""GPS-OCSB-201P""}"

@@ -1,7 +1,0 @@
-board_student_number,guardian_code,relationship,is_primary_pickup,effective_from
-RCDSB-STU-0001,RCJTC-GRD-0001,parent,true,2025-09-02
-RCDSB-STU-0002,RCJTC-GRD-0001,parent,true,2025-09-02
-RCDSB-STU-0003,RCJTC-GRD-0002,parent,true,2025-09-02
-RCCDSB-STU-0001,RCJTC-GRD-0002,parent,true,2025-09-02
-RCCDSB-STU-0002,RCJTC-GRD-0003,parent,true,2025-09-02
-RCCDSB-STU-0003,RCJTC-GRD-0004,parent,true,2025-09-02

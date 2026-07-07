@@ -5,7 +5,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { School } from '../../organization/entities/school.entity';
 import { Board } from '../../organization/entities/board.entity';
 import { CreateSchoolDto, UpdateSchoolDto } from '../dto/create-school.dto';
@@ -33,7 +33,26 @@ export class OrganizationGatewayService {
     private readonly schoolRepository: Repository<School>,
     @InjectRepository(Board)
     private readonly boardRepository: Repository<Board>,
+    private readonly dataSource: DataSource,
   ) {}
+
+  private async enrichWithLocation(
+    schools: School[],
+  ): Promise<(School & { location: { lat: number; lng: number } | null })[]> {
+    if (!schools.length) return schools as any;
+    const rows: { id: string; lat: string; lng: string }[] =
+      await this.dataSource.query(
+        `SELECT id,
+                ST_Y(location::geometry)::text AS lat,
+                ST_X(location::geometry)::text AS lng
+         FROM stx_schools
+         WHERE location IS NOT NULL`,
+      );
+    const coords = new Map(
+      rows.map((r) => [r.id, { lat: Number(r.lat), lng: Number(r.lng) }]),
+    );
+    return schools.map((s) => ({ ...s, location: coords.get(s.id) ?? null }));
+  }
 
   // ---------- Board CRUD ----------
 
@@ -148,25 +167,31 @@ export class OrganizationGatewayService {
       if (caller.anchorKind !== 'school' || !caller.anchorId) {
         throw new ForbiddenException('User is not anchored to a school');
       }
-      return this.schoolRepository.find({
-        where: { id: caller.anchorId },
-        order: { name: 'ASC' },
-      });
+      return this.enrichWithLocation(
+        await this.schoolRepository.find({
+          where: { id: caller.anchorId },
+          order: { name: 'ASC' },
+        }),
+      );
     }
 
     if (caller.role === Role.BOARD_ADMIN) {
       if (caller.anchorKind !== 'board' || !caller.anchorId) {
         throw new ForbiddenException('User is not anchored to a board');
       }
-      return this.schoolRepository.find({
-        where: { boardId: caller.anchorId },
-        order: { name: 'ASC' },
-      });
+      return this.enrichWithLocation(
+        await this.schoolRepository.find({
+          where: { boardId: caller.anchorId },
+          order: { name: 'ASC' },
+        }),
+      );
     }
 
     // STA_ADMIN / SUPER_ADMIN: return all, optionally filtered by boardId
     const where = boardId ? { boardId } : {};
-    return this.schoolRepository.find({ where, order: { name: 'ASC' } });
+    return this.enrichWithLocation(
+      await this.schoolRepository.find({ where, order: { name: 'ASC' } }),
+    );
   }
 
   async getSchool(id: string, caller: CallerContext): Promise<School> {
@@ -175,7 +200,8 @@ export class OrganizationGatewayService {
 
     this.assertSchoolScope(school, caller);
 
-    return school;
+    const [enriched] = await this.enrichWithLocation([school]);
+    return enriched;
   }
 
   async createSchool(

@@ -1,8 +1,14 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
-export default function SchoolMarkerView() {
+interface Props {
+  /** Optional DB stop_sequence; rendered as a small badge so school stays
+   *  visually distinct from numbered pickup/dropoff pins. */
+  sequence?: number;
+}
+
+export default function SchoolMarkerView({ sequence }: Props) {
   return (
     <View style={styles.container}>
       <Svg width={18} height={18} viewBox="0 0 24 24">
@@ -11,6 +17,11 @@ export default function SchoolMarkerView() {
           fill="white"
         />
       </Svg>
+      {sequence !== undefined && sequence > 0 && (
+        <View style={styles.badge}>
+          <Text style={styles.badgeText}>{sequence}</Text>
+        </View>
+      )}
     </View>
   );
 }
@@ -30,5 +41,23 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
     elevation: 6,
+  },
+  badge: {
+    position: 'absolute',
+    bottom: -4,
+    right: -4,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: '#fff',
+    borderWidth: 1.5,
+    borderColor: '#8b5cf6',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  badgeText: {
+    fontSize: 8,
+    fontWeight: '900',
+    color: '#8b5cf6',
   },
 });

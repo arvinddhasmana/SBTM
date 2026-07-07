@@ -184,30 +184,64 @@ const Dashboard: React.FC = () => {
                 </div>
 
                 <div className="mt-6 border-t border-white/5 pt-6">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <dt className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                        {t('children.details.amRoute')}
-                      </dt>
-                      <dd className="mt-1 text-sm font-semibold text-emerald-400">
-                        {child.amRouteName || '—'}
-                      </dd>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-4">
+                    <div className="space-y-3 border-r border-white/10 pr-4">
+                      <h4 className="text-xs font-bold text-emerald-400 uppercase tracking-wider border-b border-emerald-500/20 pb-1 mb-2">
+                        {t('children.details.amDirection', { defaultValue: 'AM Route' })}
+                      </h4>
+                      <div>
+                        <dt className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                          {t('children.details.route', { defaultValue: 'Route' })}
+                        </dt>
+                        <dd className="text-sm font-semibold text-slate-200 mt-0.5">
+                          {child.amRouteName || '—'}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                          {t('children.details.run', { defaultValue: 'Run' })}
+                        </dt>
+                        <dd className="text-sm font-semibold text-slate-200 mt-0.5">
+                          {child.amTripId || '—'}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                          {t('children.details.operator', { defaultValue: 'Operator' })}
+                        </dt>
+                        <dd className="text-sm font-semibold text-slate-200 mt-0.5">
+                          {child.amOperatorCode || '—'}
+                        </dd>
+                      </div>
                     </div>
-                    <div>
-                      <dt className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                        {t('children.details.pmRoute')}
-                      </dt>
-                      <dd className="mt-1 text-sm font-semibold text-blue-400">
-                        {child.pmRouteName || '—'}
-                      </dd>
-                    </div>
-                    <div className="col-span-2">
-                      <dt className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                        {t('children.details.bus')}
-                      </dt>
-                      <dd className="mt-1 text-sm font-semibold text-slate-200">
-                        {child.vehicleId || '—'}
-                      </dd>
+                    <div className="space-y-3 pl-2">
+                      <h4 className="text-xs font-bold text-blue-400 uppercase tracking-wider border-b border-blue-500/20 pb-1 mb-2">
+                        {t('children.details.pmDirection', { defaultValue: 'PM Route' })}
+                      </h4>
+                      <div>
+                        <dt className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                          {t('children.details.route', { defaultValue: 'Route' })}
+                        </dt>
+                        <dd className="text-sm font-semibold text-slate-200 mt-0.5">
+                          {child.pmRouteName || '—'}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                          {t('children.details.run', { defaultValue: 'Run' })}
+                        </dt>
+                        <dd className="text-sm font-semibold text-slate-200 mt-0.5">
+                          {child.pmTripId || '—'}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                          {t('children.details.operator', { defaultValue: 'Operator' })}
+                        </dt>
+                        <dd className="text-sm font-semibold text-slate-200 mt-0.5">
+                          {child.pmOperatorCode || '—'}
+                        </dd>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -223,7 +257,13 @@ const Dashboard: React.FC = () => {
                   </div>
                 </div>
               </div>
-              <div className="bg-white/5 px-6 py-4 border-t border-white/5">
+              <div className="bg-white/5 px-6 py-4 border-t border-white/5 space-y-2">
+                <button
+                  onClick={() => navigate(`/student/${child.id}`)}
+                  className="w-full flex justify-center items-center py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-sm transition-all"
+                >
+                  {t('children.viewDetail', { defaultValue: 'View Detail' })}
+                </button>
                 <button
                   onClick={() => navigate('/map', { state: { childId: child.id } })}
                   className="w-full flex justify-center items-center py-2.5 rounded-xl tactical-gradient-active text-white font-bold text-sm shadow-[0_4px_20px_rgba(99,102,241,0.3)] hover:shadow-[0_4px_25px_rgba(99,102,241,0.5)] transition-all transform hover:scale-[1.02] active:scale-95"

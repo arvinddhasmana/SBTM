@@ -12,6 +12,10 @@
  *   npm run import:sample             # dry-run both OSTA + RCJTC (in-memory)
  *   npm run import:sample -- osta     # dry-run one bundle
  *   npm run import:sample -- --commit # validate + commit both (needs DATABASE_URL)
+ *   npm run import:sample -- --commit --verify-shapes
+ *                                     # fail non-zero if any committed route
+ *                                     # ends up with zero shape rows (i.e. the
+ *                                     # map would render blank for it).
  */
 import { promises as fs } from 'node:fs';
 import { randomBytes } from 'node:crypto';
@@ -67,6 +71,7 @@ async function loadBundle(bundlePath: string): Promise<SourceFiles> {
 
 interface RunOpts {
   commit: boolean;
+  verifyShapes: boolean;
   pg: PgQueryable;
   pii: PiiCrypto;
 }
@@ -103,6 +108,12 @@ async function importOne(name: string, opts: RunOpts): Promise<boolean> {
       staShortCode: input.manifest.sta_short_code,
     });
     console.log(`    commit counts=${JSON.stringify(counts)}`);
+    if (opts.verifyShapes && counts.zeroShapeRoutes > 0) {
+      console.error(
+        `FAIL: ${name} has ${counts.zeroShapeRoutes} route(s) with no shape after fallback — see commit log for route_ids`,
+      );
+      return false;
+    }
   }
   return true;
 }
@@ -110,8 +121,9 @@ async function importOne(name: string, opts: RunOpts): Promise<boolean> {
 async function main() {
   const args = process.argv.slice(2);
   const commit = args.includes('--commit');
+  const verifyShapes = args.includes('--verify-shapes');
   const targets = args.filter((a) => !a.startsWith('--'));
-  const list = targets.length > 0 ? targets : ['osta', 'rcjtc'];
+  const list = targets.length > 0 ? targets : ['ocsb'];
 
   let pg: PgQueryable;
   let pool: Pool | undefined;
@@ -142,7 +154,7 @@ async function main() {
   let allOk = true;
   try {
     for (const t of list) {
-      const ok = await importOne(t, { commit, pg, pii });
+      const ok = await importOne(t, { commit, verifyShapes, pg, pii });
       allOk = allOk && ok;
     }
   } finally {

@@ -18,6 +18,8 @@ export interface OsrmShapePoint {
  */
 export interface OsrmClient {
   routeSnappedPath(coords: LatLon[]): Promise<OsrmShapePoint[]>;
+  /** Snap a single point to the nearest drivable curb. Returns null on error. */
+  nearest?(coord: LatLon): Promise<LatLon | null>;
 }
 
 export class StubOsrmClient implements OsrmClient {
@@ -29,5 +31,9 @@ export class StubOsrmClient implements OsrmClient {
       shapePtSequence: i + 1,
       shapeDistTraveled: i === 0 ? 0 : null,
     }));
+  }
+  // eslint-disable-next-line @typescript-eslint/require-await
+  async nearest(coord: LatLon): Promise<LatLon | null> {
+    return coord;
   }
 }

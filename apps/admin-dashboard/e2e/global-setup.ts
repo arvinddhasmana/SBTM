@@ -10,25 +10,23 @@ import { execSync } from 'child_process';
  * Idempotent: ON CONFLICT DO NOTHING on all inserts.
  */
 export default async function globalSetup() {
-  const DRIVER_ID = 'e2e00000-0000-0000-0000-000000000001';
   const RUN_ID = 'e2e00000-0000-0000-0000-000000000002';
-  const OPERATOR_ID = 'ce6f3b50-7e36-4f62-aeba-a4831e798498';
-  const VEHICLE_ID = '04869eb6-b146-47fc-90a0-ae4722c9f1da';
 
+  // Use SELECT form: if vehicle (BUS-OSTA-201) or driver (DRV-STBERN-001) are
+  // not yet imported the SELECT returns no rows and nothing is inserted
+  // (no FK violation). This makes the setup non-fatal for fresh DBs.
   const sql = `
-    INSERT INTO stx_drivers (id, operator_id)
-    VALUES ('${DRIVER_ID}', '${OPERATOR_ID}')
-    ON CONFLICT (id) DO NOTHING;
-
     INSERT INTO stx_runs (id, service_date, trip_ids, vehicle_id, driver_id, status)
-    VALUES (
+    SELECT
       '${RUN_ID}',
       CURRENT_DATE,
       ARRAY['T-OCSB-201-AM'],
-      '${VEHICLE_ID}',
-      '${DRIVER_ID}',
+      v.id,
+      d.id,
       'in_progress'
-    )
+    FROM stx_vehicles v, stx_drivers d
+    WHERE v.external_ids->>'vehicle_code' = 'BUS-OSTA-201'
+      AND d.external_ids->>'driver_code' = 'DRV-STBERN-001'
     ON CONFLICT (id) DO NOTHING;
   `;
 

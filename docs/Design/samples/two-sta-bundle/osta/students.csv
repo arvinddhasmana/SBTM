@@ -1,7 +1,0 @@
-board_student_number,oen,legal_name,preferred_name,grade,date_of_birth,school_code,home_address,home_lat,home_lon,eligibility_kind,medical_flags_json,transport_flags_json
-OCSB-STU-0001,345678901,Morgan Demo,Morgan,2,2018-01-15,OCSB-S200,300 Richmond Rd Ottawa ON,45.395100,-75.751200,mandatory,,
-OCSB-STU-0002,456789012,Riley Specimen,Riley,4,2016-06-22,OCSB-S200,420 Richmond Rd Ottawa ON,45.394200,-75.755300,mandatory,"{""epipen"":true}",
-OCSB-STU-0003,567890123,Avery Mock,Avery,1,2019-03-08,OCSB-S200,510 Richmond Rd Ottawa ON,45.394700,-75.753200,mandatory,,
-OCDSB-STU-0001,678901234,Cameron Stub,Cam,9,2010-11-02,OCDSB-S100,75 Bank St Ottawa ON,45.401234,-75.685678,mandatory,,
-OCDSB-STU-0002,789012345,Drew Specimen,Drew,11,2008-07-19,OCDSB-S100,140 Bank St Ottawa ON,45.403456,-75.687890,mandatory,,
-OCDSB-STU-0003,890123456,Quinn Fixture,Quinn,10,2009-05-30,OCDSB-S100,210 Bank St Ottawa ON,45.402300,-75.686700,courtesy,,

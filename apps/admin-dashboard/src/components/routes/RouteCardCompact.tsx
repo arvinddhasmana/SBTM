@@ -1,5 +1,13 @@
 import React from 'react';
-import { Route as RouteIcon, MapPin, Bus, Clock, AlertTriangle, Edit3 } from 'lucide-react';
+import {
+  Route as RouteIcon,
+  MapPin,
+  Building2,
+  Hash,
+  Clock,
+  AlertTriangle,
+  Edit3,
+} from 'lucide-react';
 import type { Route, LiveLocation } from '../../types';
 import { formatEta } from '../../utils/formatters';
 
@@ -90,17 +98,19 @@ const RouteCardCompact: React.FC<RouteCardCompactProps> = ({
                 <MapPin size={7} />
                 <span>{route.stops.length}</span>
               </div>
-              {liveLocation && (
-                <>
-                  <div className="flex items-center gap-0.5 text-[7px] font-black text-slate-400">
-                    <Bus size={7} />
-                    <span>{liveLocation.vehicleId}</span>
-                  </div>
-                  {liveLocation.deviationFlag && (
-                    <AlertTriangle size={8} className="text-amber-400" />
-                  )}
-                </>
+              {route.operatorCode && (
+                <div className="flex items-center gap-0.5 text-[7px] font-black text-slate-400">
+                  <Building2 size={7} />
+                  <span>{route.operatorCode}</span>
+                </div>
               )}
+              {route.tripIds?.[0] && (
+                <div className="flex items-center gap-0.5 text-[7px] font-black text-slate-400">
+                  <Hash size={7} />
+                  <span>{route.tripIds[0]}</span>
+                </div>
+              )}
+              {liveLocation?.deviationFlag && <AlertTriangle size={8} className="text-amber-400" />}
             </div>
             <div className="flex items-center gap-1">
               {liveLocation && (

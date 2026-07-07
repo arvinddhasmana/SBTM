@@ -20,6 +20,7 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard, Roles, Role } from '@sbtm/common';
 import { School } from '../../organization/entities/school.entity';
 import { Board } from '../../organization/entities/board.entity';
+import { Route } from '../../gtfs/entities/route.entity';
 import type { AuthenticatedUser } from '../../auth/types/authenticated-user';
 
 type AuthenticatedRequest = { user: AuthenticatedUser };
@@ -33,6 +34,8 @@ export class AlertsController {
     private readonly schoolRepository: Repository<School>,
     @InjectRepository(Board)
     private readonly boardRepository: Repository<Board>,
+    @InjectRepository(Route)
+    private readonly routeRepository: Repository<Route>,
   ) {}
 
   @Get('alerts')
@@ -190,6 +193,13 @@ export class AlertsController {
         relations: ['board'],
       });
       staId = school?.board?.staId;
+    }
+    // Fallback: resolve staId from routeId (covers DRIVER users anchored to driver, not school)
+    if (!staId && dto.routeId) {
+      const route = await this.routeRepository.findOne({
+        where: { routeId: dto.routeId },
+      });
+      staId = route?.stxStaId;
     }
     // Support both flat lat/lng and nested location object from older clients
     const location = (dto as any).location as

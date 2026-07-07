@@ -22,8 +22,8 @@ import {
 } from './dto/route.dto';
 import { RouteChangeNotifierService } from '../gateway/services/route-change-notifier.service';
 
-/** Default everyday Mon-Fri service synthesised when no `serviceId` is supplied. */
-const DEFAULT_SERVICE_ID = 'SVC-WEEKDAY';
+/** Default everyday Mon-Fri service — must match a row in the `calendar` table. */
+const DEFAULT_SERVICE_ID = 'WEEKDAY-2025-26';
 
 /** Default per-stop dwell when a CreateTripDto doesn't model arrival/departure deltas. */
 const DEFAULT_DWELL_SECONDS = 30;
@@ -122,9 +122,9 @@ export class RouteService {
   }
 
   async findOne(id: string, schoolId: string): Promise<Route> {
-    const route = await this.routeRepository.findOne({
-      where: { routeId: id, stxSchoolId: schoolId },
-    });
+    const where: any = { routeId: id };
+    if (schoolId) where.stxSchoolId = schoolId;
+    const route = await this.routeRepository.findOne({ where });
 
     if (!route) {
       throw new NotFoundException('Route not found');
@@ -146,6 +146,122 @@ export class RouteService {
       where: { shapeId: trip.shapeId },
       order: { shapePtSequence: 'ASC' },
     });
+  }
+
+  /**
+   * Helper: derive the assigned bus for a route via the most recent stx_runs
+   * row whose trip_ids include any trip of this route. Returns null when no
+   * run has been provisioned yet (UI shows "BUS: —").
+   */
+  async getVehicleIdForRoute(routeId: string): Promise<string | null> {
+    const row = await this.dataSource.query(
+      `SELECT r.vehicle_id AS "vehicleId"
+         FROM stx_runs r
+         JOIN trips t ON t.trip_id = ANY(r.trip_ids)
+        WHERE t.route_id = $1 AND r.deleted_at IS NULL
+        ORDER BY r.service_date DESC, r.created_at DESC
+        LIMIT 1`,
+      [routeId],
+    );
+    return row?.[0]?.vehicleId ?? null;
+  }
+
+  /**
+   * Resolve operator code + trip id(s) + vehicle code for a route.
+   *
+   * Prefers stx_runs (a real fleet assignment for the day). When no run row
+   * exists yet (seed/demo data without provisioned runs), falls back to a
+   * naming-convention lookup: vehicle whose external_ids.vehicle_code begins
+   * with `BUS-<route-id-without-leading-R->`. The convention is established
+   * by the OCSB seed bundle (e.g. R-OCSB-201 → BUS-OCSB-201-AM).
+   *
+   * Returns operatorCode as the human-readable `OP-STOCK`-style identifier
+   * the UI shows alongside the trip id.
+   */
+  async getFleetInfoForRoute(routeId: string): Promise<{
+    tripIds: string[];
+    vehicleCode: string | null;
+    operatorCode: string | null;
+  }> {
+    const trips = await this.tripRepository.find({
+      where: { routeId },
+      order: { tripId: 'ASC' },
+    });
+    const tripIds = trips.map((t) => t.tripId);
+
+    const runRow = await this.dataSource.query(
+      `SELECT v.external_ids->>'vehicle_code' AS "vehicleCode",
+              op.external_ids->>'operator_code' AS "operatorCode"
+         FROM stx_runs r
+         JOIN trips t ON t.trip_id = ANY(r.trip_ids)
+         JOIN stx_vehicles v ON v.id = r.vehicle_id
+         JOIN stx_operators op ON op.id = v.operator_id
+        WHERE t.route_id = $1 AND r.deleted_at IS NULL
+        ORDER BY r.service_date DESC, r.created_at DESC
+        LIMIT 1`,
+      [routeId],
+    );
+    if (runRow?.[0]) {
+      return {
+        tripIds,
+        vehicleCode: runRow[0].vehicleCode ?? null,
+        operatorCode: runRow[0].operatorCode ?? null,
+      };
+    }
+
+    // Fallback for demo seed: BUS-<route-suffix> naming convention.
+    const routeSuffix = routeId.replace(/^R-/, '');
+    const fallback = await this.dataSource.query(
+      `SELECT v.external_ids->>'vehicle_code' AS "vehicleCode",
+              op.external_ids->>'operator_code' AS "operatorCode"
+         FROM stx_vehicles v
+         JOIN stx_operators op ON op.id = v.operator_id
+        WHERE v.external_ids->>'vehicle_code' ILIKE 'BUS-' || $1 || '%'
+          AND v.deleted_at IS NULL
+        ORDER BY v.external_ids->>'vehicle_code' ASC
+        LIMIT 1`,
+      [routeSuffix],
+    );
+    return {
+      tripIds,
+      vehicleCode: fallback?.[0]?.vehicleCode ?? null,
+      operatorCode: fallback?.[0]?.operatorCode ?? null,
+    };
+  }
+
+  /**
+   * Load the ordered pickup stops for a route by joining trips → stop_times → stops.
+   * Excludes school stops so the frontend edit form only shows student pickup stops.
+   */
+  async getStopsForRoute(
+    routeId: string,
+  ): Promise<
+    Array<{
+      id: string;
+      sequence: number;
+      address: string;
+      location: string;
+      arrivalTime: string;
+    }>
+  > {
+    const trip = await this.tripRepository.findOne({ where: { routeId } });
+    if (!trip) return [];
+
+    const stopTimes = await this.dataSource.getRepository(StopTime).find({
+      where: { tripId: trip.tripId },
+      relations: ['stop'],
+      order: { stopSequence: 'ASC' },
+    });
+
+    return stopTimes
+      .filter((st) => st.stop && st.stop.stxStopKind !== StopKind.SCHOOL)
+      .map((st) => ({
+        id: st.stopId,
+        sequence: st.stopSequence,
+        address: st.stop!.stopName,
+        location: `POINT(${st.stop!.stopLon} ${st.stop!.stopLat})`,
+        arrivalTime: st.arrivalTime,
+      }));
   }
 
   /**
@@ -203,6 +319,14 @@ export class RouteService {
               : ShapeSource.STA_ADMIN_EDITED,
           },
         );
+      } else {
+        // Preserve existing shape_id if we aren't rewriting it
+        const existingTrip = await tx
+          .getRepository(Trip)
+          .findOne({ where: { routeId: id } });
+        if (existingTrip) {
+          nextShapeId = existingTrip.shapeId;
+        }
       }
 
       if (wantsTripRewrite) {
@@ -221,16 +345,25 @@ export class RouteService {
         }
         const resolvedStops = await this.resolveStops(
           tx,
-          schoolId,
+          existing.stxSchoolId,
           stopsForRewrite,
         );
 
-        // Wipe existing stop_times for this route's trips, then trips, then re-create.
+        // Wipe existing stop_times for this route's trips, then re-create.
         await tx.query(
           `DELETE FROM stop_times WHERE trip_id IN (SELECT trip_id FROM trips WHERE route_id = $1)`,
           [id],
         );
-        await tx.getRepository(Trip).delete({ routeId: id });
+
+        const newTripIds = trips.map((_, i) => `T-${id}-${i + 1}`);
+        if (newTripIds.length > 0) {
+          await tx.query(
+            `DELETE FROM trips WHERE route_id = $1 AND trip_id != ALL($2)`,
+            [id, newTripIds],
+          );
+        } else {
+          await tx.getRepository(Trip).delete({ routeId: id });
+        }
 
         for (let i = 0; i < trips.length; i++) {
           const trip = trips[i];

@@ -18,7 +18,7 @@ export const WorkflowConfigPage: React.FC = () => {
   const [formData, setFormData] = useState<Partial<WorkflowConfig>>({
     actionName: 'CONFIRM',
     allowedForTier: 'TIER_1',
-    allowedForStatus: 'PENDING',
+    allowedForStatus: 'PENDING_CONFIRMATION',
     requiredRole: 'SCHOOL_ADMIN',
     requiresNotes: false,
     statusTransition: '',
@@ -64,7 +64,7 @@ export const WorkflowConfigPage: React.FC = () => {
     setFormData({
       actionName: 'CONFIRM',
       allowedForTier: 'TIER_1',
-      allowedForStatus: 'PENDING',
+      allowedForStatus: 'PENDING_CONFIRMATION',
       requiredRole: 'SCHOOL_ADMIN',
       requiresNotes: false,
       statusTransition: '',
@@ -181,7 +181,6 @@ export const WorkflowConfigPage: React.FC = () => {
                   <option value="TIER_1">{t('alertConfig:workflow.form.tiers.TIER_1')}</option>
                   <option value="TIER_2">{t('alertConfig:workflow.form.tiers.TIER_2')}</option>
                   <option value="TIER_3">{t('alertConfig:workflow.form.tiers.TIER_3')}</option>
-                  <option value="ALL">{t('alertConfig:workflow.form.tiers.ALL')}</option>
                 </select>
               </div>
               <div>
@@ -194,23 +193,22 @@ export const WorkflowConfigPage: React.FC = () => {
                   className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
                   required
                 >
-                  <option value="PENDING">{t('alertConfig:workflow.form.statuses.PENDING')}</option>
+                  <option value="PENDING_CONFIRMATION">
+                    {t('alertConfig:workflow.form.statuses.PENDING_CONFIRMATION')}
+                  </option>
                   <option value="CONFIRMED">
                     {t('alertConfig:workflow.form.statuses.CONFIRMED')}
                   </option>
-                  <option value="ESCALATED_TO_BOARD">
-                    {t('alertConfig:workflow.form.statuses.ESCALATED_TO_BOARD')}
+                  <option value="AUTO_ESCALATED">
+                    {t('alertConfig:workflow.form.statuses.AUTO_ESCALATED')}
                   </option>
-                  <option value="ESCALATED_TO_STA">
-                    {t('alertConfig:workflow.form.statuses.ESCALATED_TO_STA')}
-                  </option>
+                  <option value="ACTIVE">{t('alertConfig:workflow.form.statuses.ACTIVE')}</option>
                   <option value="RESOLVED">
                     {t('alertConfig:workflow.form.statuses.RESOLVED')}
                   </option>
                   <option value="FALSE_ALARM">
                     {t('alertConfig:workflow.form.statuses.FALSE_ALARM')}
                   </option>
-                  <option value="ALL">{t('alertConfig:workflow.form.statuses.ALL')}</option>
                 </select>
               </div>
               <div>
@@ -234,9 +232,6 @@ export const WorkflowConfigPage: React.FC = () => {
                   </option>
                   <option value="SUPER_ADMIN">
                     {t('alertConfig:workflow.form.roles.SUPER_ADMIN')}
-                  </option>
-                  <option value="ANY_ADMIN">
-                    {t('alertConfig:workflow.form.roles.ANY_ADMIN')}
                   </option>
                 </select>
               </div>

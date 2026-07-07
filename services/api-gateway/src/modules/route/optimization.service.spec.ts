@@ -61,9 +61,9 @@ describe('OptimizationService (Unit)', () => {
 
       expect(result.totalDistance).toBe(3.5);
       expect(result.totalDuration).toBe(8);
-      expect(result.encodedPolylineGeoJson).not.toBeNull();
-      expect(result.encodedPolylineGeoJson?.type).toBe('LineString');
-      expect(result.encodedPolyline).toBeTruthy();
+      expect(result.polylineGeoJson).not.toBeNull();
+      expect(result.polylineGeoJson?.type).toBe('LineString');
+      expect(result.polyline).toBeTruthy();
     });
 
     it('should return fallback result when OSRM returns non-Ok code', async () => {
@@ -73,7 +73,7 @@ describe('OptimizationService (Unit)', () => {
 
       const result = await service.optimizeStops(stopsWithCoords);
 
-      expect(result.encodedPolylineGeoJson).toBeNull();
+      expect(result.polylineGeoJson).toBeNull();
       expect(result.totalDistance).toBe(0);
     });
 
@@ -82,7 +82,7 @@ describe('OptimizationService (Unit)', () => {
 
       const result = await service.optimizeStops(stopsWithCoords);
 
-      expect(result.encodedPolylineGeoJson).toBeNull();
+      expect(result.polylineGeoJson).toBeNull();
       expect(result.optimizedStops).toHaveLength(2);
     });
 
@@ -94,7 +94,7 @@ describe('OptimizationService (Unit)', () => {
 
       const result = await service.optimizeStops(stopsNoCoords);
 
-      expect(result.encodedPolylineGeoJson).toBeNull();
+      expect(result.polylineGeoJson).toBeNull();
       expect(result.optimizedStops).toHaveLength(2);
     });
 
@@ -107,7 +107,7 @@ describe('OptimizationService (Unit)', () => {
         },
       ]);
 
-      expect(result.encodedPolylineGeoJson).toBeNull();
+      expect(result.polylineGeoJson).toBeNull();
       expect(result.optimizedStops).toHaveLength(1);
       // OSRM should NOT have been called
       expect(mockedAxios.get).not.toHaveBeenCalled();

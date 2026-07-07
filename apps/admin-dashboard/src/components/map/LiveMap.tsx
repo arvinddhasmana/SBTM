@@ -16,6 +16,35 @@ interface LiveMapProps {
   routeNames?: Record<string, string>;
 }
 
+function createReadOnlyStopIcon(sequence: number, direction: 'AM' | 'PM'): L.DivIcon {
+  const color = direction === 'AM' ? '#3b82f6' : '#f59e0b';
+  return L.divIcon({
+    className: '',
+    html: `<div style="
+      width:28px;height:28px;
+      background:${color};
+      border:2px solid #fff;
+      border-radius:50%;
+      display:flex;align-items:center;justify-content:center;
+      box-shadow:0 0 15px ${color}44, 0 2px 8px rgba(0,0,0,0.4);
+      position:relative;
+    ">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="white">
+        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+      </svg>
+      <div style="
+        position:absolute; bottom:-4px; right:-4px;
+        width:16px;height:16px; background:#fff; border:2px solid ${color};
+        border-radius:50%; display:flex; align-items:center; justify-content:center;
+        font-size:8px; font-weight:900; color:${color};
+        box-shadow:0 2px 4px rgba(0,0,0,0.2);
+      ">${sequence}</div>
+    </div>`,
+    iconSize: [28, 28],
+    iconAnchor: [14, 14],
+  });
+}
+
 const LiveMap: React.FC<LiveMapProps> = ({
   locations,
   selectedRoute,
@@ -131,9 +160,10 @@ const LiveMap: React.FC<LiveMapProps> = ({
       }).addTo(mapInstanceRef.current);
     }
 
-    // 2b. Render Stops for Selected Route
+    // 2b. Render Stops for Selected Route (skip the school stop — rendered separately as school marker)
     if (selectedRoute?.stops) {
       selectedRoute.stops.forEach((stop, idx) => {
+        if ((stop as any).kind === 'school') return;
         let pos: [number, number] = [0, 0];
 
         if (stop.location) {
@@ -145,35 +175,7 @@ const LiveMap: React.FC<LiveMapProps> = ({
         if (pos[0] === 0 && pos[1] === 0) return;
 
         const seq = stop.sequence ?? idx + 1;
-        const color = selectedRoute?.direction === 'AM' ? '#3b82f6' : '#f59e0b';
-        const stopIcon = L.divIcon({
-          className: '',
-          html: `<div style="
-                        width:28px;height:28px;
-                        background:${color};
-                        border:2px solid #fff;
-                        border-radius:50%;
-                        display:flex;align-items:center;justify-content:center;
-                        box-shadow:0 0 15px ${color}44, 0 2px 8px rgba(0,0,0,0.4);
-                        position:relative;
-                    ">
-                        <!-- Children Stop Icon (Marked with more detail) -->
-                        <div style="display:flex; flex-direction:column; align-items:center; transform:translateY(-1px);">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="white">
-                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                          </svg>
-                        </div>
-                        <div style="
-                            position:absolute; bottom:-4px; right:-4px;
-                            width:16px;height:16px; background:#fff; border:2px solid ${color};
-                            border-radius:50%; display:flex; align-items:center; justify-content:center;
-                            font-size:8px; font-weight:900; color:${color};
-                            box-shadow:0 2px 4px rgba(0,0,0,0.2);
-                        ">${seq}</div>
-                    </div>`,
-          iconSize: [28, 28],
-          iconAnchor: [14, 14],
-        });
+        const stopIcon = createReadOnlyStopIcon(seq, selectedRoute?.direction || 'AM');
 
         const stopMarker = L.marker(pos, { icon: stopIcon, zIndexOffset: 500 }).addTo(
           mapInstanceRef.current!,
@@ -191,11 +193,17 @@ const LiveMap: React.FC<LiveMapProps> = ({
       });
     }
 
-    // 2c. Render School Marker for Selected Route
+    // 2c. Render School Marker for Selected Route (with the school's real DB sequence as a small badge)
     if (selectedRoute?.schoolLat && selectedRoute?.schoolLng) {
+      const schoolSeq = (selectedRoute.stops || []).find((s: any) => s.kind === 'school')?.sequence;
+      const badgeHtml =
+        schoolSeq != null && schoolSeq > 0
+          ? `<div style="position:absolute; bottom:-3px; right:-3px; width:14px; height:14px; background:#fff; border:2px solid #8b5cf6; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:8px; font-weight:900; color:#8b5cf6; box-shadow:0 2px 4px rgba(0,0,0,0.2);">${schoolSeq}</div>`
+          : '';
       const schoolIcon = L.divIcon({
         className: '',
         html: `<div style="
+                    position:relative;
                     width:32px;height:32px;
                     background:#8b5cf6;
                     border:3px solid #fff;
@@ -206,6 +214,7 @@ const LiveMap: React.FC<LiveMapProps> = ({
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
                       <path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82zM12 3L1 9l11 6 9-4.91V17h2V9L12 3z"/>
                     </svg>
+                    ${badgeHtml}
                 </div>`,
         iconSize: [32, 32],
         iconAnchor: [16, 16],
@@ -248,6 +257,11 @@ const LiveMap: React.FC<LiveMapProps> = ({
     [...deduplicatedLocations.values()]
       .filter((l) => l.position?.lat != null)
       .forEach((location) => {
+        const isSelected = selectedRoute?.id === location.routeId;
+        const scale = isSelected ? 1.2 : 1.0;
+
+        const routeNameFull = routeNames ? routeNames[location.routeId] || '?' : '?';
+
         const statusClass = getStatusColorClass(location.status);
         const colorMap: Record<string, string> = {
           'bg-green-500': '#22c55e',
@@ -255,29 +269,47 @@ const LiveMap: React.FC<LiveMapProps> = ({
           'bg-red-500': '#ef4444',
           'bg-gray-500': '#6b7280',
         };
-        const color = colorMap[statusClass] || '#6b7280';
-        const isSelected = selectedRoute?.id === location.routeId;
+        const statusColor = colorMap[statusClass] || '#6b7280';
+
+        // Base color on Route Name string heuristic to get AM/PM, else default to blue
+        const isAm = routeNameFull.toUpperCase().includes('AM');
+        const isPm = routeNameFull.toUpperCase().includes('PM');
+        const routeColor = isAm
+          ? '#3b82f6'
+          : isPm
+            ? '#f59e0b'
+            : location.routeId.includes('PM')
+              ? '#f59e0b'
+              : '#3b82f6';
+
         const borderColor = isSelected ? '#3b82f6' : 'white';
         const borderWidth = isSelected ? '4px' : '2px';
-        const scale = isSelected ? 1.2 : 1.0;
 
         const iconHtml = `
         <div style="
           width: ${32 * scale}px;
           height: ${32 * scale}px;
-          background: ${color};
+          background: ${routeColor};
           border-radius: 50%;
           border: ${borderWidth} solid ${borderColor};
           box-shadow: 0 4px 12px rgba(0,0,0,0.5);
           display: flex;
           align-items: center;
           justify-content: center;
+          position: relative;
           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
           ${isSelected ? 'transform: scale(1.1);' : ''}
         ">
           <svg width="${16 * scale}" height="${16 * scale}" viewBox="0 0 24 24" fill="white">
             <path d="M4 16c0 .88.39 1.67 1 2.22V20c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h8v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1.78c.61-.55 1-1.34 1-2.22V6c0-3.5-3.58-4-8-4s-8 .5-8 4v10zm3.5 1c-.83 0-1.5-.67-1.5-1.5S6.67 14 7.5 14s1.5.67 1.5 1.5S8.33 17 7.5 17zm9 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm1.5-6H6V6h12v5z"/>
           </svg>
+          <div style="
+            position:absolute; bottom:-3px; right:-3px;
+            width:10px; height:10px;
+            background:${statusColor}; border:2px solid #fff;
+            border-radius:50%;
+            box-shadow:0 2px 4px rgba(0,0,0,0.2);
+          "></div>
         </div>
       `;
 

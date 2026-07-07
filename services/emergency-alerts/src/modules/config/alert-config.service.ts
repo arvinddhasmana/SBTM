@@ -929,7 +929,7 @@ export class AlertConfigService implements OnModuleInit {
   ): Promise<AlertConfigChangeRequest[]> {
     const where: any = {};
     if (status) where.status = status;
-    if (requestorId) where.requestorId = requestorId;
+    if (requestorId) where.requestedByUserId = requestorId;
 
     return this.changeRequestRepo.find({
       where,

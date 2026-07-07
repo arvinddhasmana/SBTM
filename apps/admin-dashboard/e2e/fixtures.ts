@@ -138,6 +138,17 @@ export async function loginAs(page: Page, role: TestRole): Promise<void> {
         body.accessToken as string,
       );
     }
+    // Prefer the real user object from the backend (has anchorKind/anchorId needed
+    // by role-scoped hooks); fall back to the static fixture if absent.
+    const realUser = body.user as Record<string, unknown> | undefined;
+    if (realUser) {
+      await page.evaluate(
+        (user) => localStorage.setItem('auth_user', JSON.stringify(user)),
+        realUser,
+      );
+      await page.goto('/dashboard', { waitUntil: 'load' }).catch(() => {});
+      return;
+    }
   }
 
   // Store the local user state used by AuthContext to set isAuthenticated.
@@ -275,7 +286,7 @@ export async function createTestAlert(
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: JSON.stringify({
       vehicleId: options.vehicleId || 'BUS-STBERN-01',
-      routeId: options.routeId || 'ROUTE-STBERN-R01-AM',
+      routeId: options.routeId || 'R-OCSB-201',
       eventType: options.eventType || 'PANIC_BUTTON',
       timestamp: new Date().toISOString(),
       lat: 45.3506,
@@ -315,7 +326,7 @@ export async function sendGpsLocation(
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: JSON.stringify({
       vehicleId: options.vehicleId || 'BUS-STBERN-01',
-      routeId: options.routeId || 'ROUTE-STBERN-R01-AM',
+      routeId: options.routeId || 'R-OCSB-201',
       timestamp: new Date().toISOString(),
       lat: options.lat ?? 45.3506,
       lng: options.lng ?? -75.7934,

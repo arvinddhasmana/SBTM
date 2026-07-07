@@ -62,4 +62,28 @@ export class HttpOsrmClient implements OsrmClient {
       shapeDistTraveled: i === 0 ? 0 : null,
     }));
   }
+
+  async nearest(coord: LatLon): Promise<LatLon | null> {
+    const url = `${this.baseUrl.replace(/\/$/, '')}/nearest/v1/${this.profile}/${coord.lon.toFixed(6)},${coord.lat.toFixed(6)}?number=1`;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), this.timeoutMs);
+    let res: Response;
+    try {
+      res = await this.fetchImpl(url, { signal: controller.signal });
+    } finally {
+      clearTimeout(timer);
+    }
+    if (!res.ok) {
+      this.logger.warn(`OSRM nearest ${res.status} for ${url}`);
+      return null;
+    }
+    const body = (await res.json()) as {
+      code?: string;
+      waypoints?: Array<{ location?: [number, number] }>;
+    };
+    if (body.code !== 'Ok') return null;
+    const loc = body.waypoints?.[0]?.location;
+    if (!loc) return null;
+    return { lon: loc[0], lat: loc[1] };
+  }
 }

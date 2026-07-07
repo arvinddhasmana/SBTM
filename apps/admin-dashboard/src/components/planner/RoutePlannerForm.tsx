@@ -55,6 +55,7 @@ interface RoutePlannerFormProps {
   optimize: () => void;
   snapToRoad: () => void;
   isSnapping: boolean;
+  isPathManuallyAdjusted?: boolean;
   saveRoute: () => void;
   cancelEdit: () => void;
   deleteRoute?: (id: string) => void;
@@ -97,6 +98,7 @@ const RoutePlannerForm: React.FC<RoutePlannerFormProps> = ({
   optimize,
   snapToRoad,
   isSnapping,
+  isPathManuallyAdjusted,
   saveRoute,
   cancelEdit,
   deleteRoute,
@@ -398,9 +400,15 @@ const RoutePlannerForm: React.FC<RoutePlannerFormProps> = ({
           <button
             type="button"
             onClick={snapToRoad}
-            disabled={!canOptimize || isSnapping}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-xs font-bold transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            disabled={!canOptimize || isSnapping || isPathManuallyAdjusted}
+            className="flex-1 flex items-center justify-center gap-1.5 py-1.5 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 rounded text-xs font-semibold transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
             data-testid="snap-to-road-btn"
+            title={
+              isPathManuallyAdjusted
+                ? t('routes:planner.form.pathManuallyAdjusted') ||
+                  'Path has been manually adjusted, no re-snap needed'
+                : undefined
+            }
           >
             <MapPin size={14} />
             {isSnapping

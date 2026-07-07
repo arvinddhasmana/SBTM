@@ -265,7 +265,7 @@ describe('RouteService (v2)', () => {
       const trip = txTripRepo.save.mock.calls[0][0];
       expect(trip).toMatchObject({
         routeId: savedRoute.routeId,
-        serviceId: 'SVC-WEEKDAY',
+        serviceId: 'WEEKDAY-2025-26',
         directionId: 0,
       });
 

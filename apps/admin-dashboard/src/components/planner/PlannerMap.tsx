@@ -344,7 +344,7 @@ const PlannerMap: React.FC<PlannerMapProps> = ({
         }
         if (pos[0] === 0 && pos[1] === 0) return;
 
-        const seq = stop.sequence ?? idx + 1;
+        const seq = idx + 1;
         const marker = L.marker(pos, {
           icon: createReadOnlyStopIcon(seq, selectedRoute.direction),
           zIndexOffset: 500,
@@ -529,49 +529,62 @@ const PlannerMap: React.FC<PlannerMapProps> = ({
     });
 
     // Midpoint drag handles for polyline path adjustment (4 per segment)
-    if (validStops.length >= 2) {
-      // When a routePath is available, sample midpoints along the actual polyline
-      const usePolyline = routePath.length >= 2;
-      const stopPathIndices = usePolyline
-        ? validStops.map((s) => findClosestPathIndex(routePath, s.lat, s.lng))
-        : [];
+    if (isEditing && validStops.length >= 1) {
+      const orderedPoints: { lat: number; lng: number }[] = [];
+      if (schoolLocation && direction === 'PM') {
+        orderedPoints.push({ lat: schoolLocation.lat, lng: schoolLocation.lng });
+      }
+      validStops.forEach((s) => orderedPoints.push({ lat: s.lat, lng: s.lng }));
+      if (schoolLocation && direction === 'AM') {
+        orderedPoints.push({ lat: schoolLocation.lat, lng: schoolLocation.lng });
+      }
 
-      for (let i = 0; i < validStops.length - 1; i++) {
-        const fractions = [0.2, 0.4, 0.6, 0.8];
-        for (const frac of fractions) {
-          let handleLat: number;
-          let handleLng: number;
+      if (orderedPoints.length >= 2) {
+        // When a routePath is available, sample midpoints along the actual polyline
+        const usePolyline = routePath.length >= 2;
+        const stopPathIndices = usePolyline
+          ? orderedPoints.map((s) => findClosestPathIndex(routePath, s.lat, s.lng))
+          : [];
 
-          if (usePolyline) {
-            let sIdx = stopPathIndices[i];
-            let eIdx = stopPathIndices[i + 1];
-            if (sIdx > eIdx) [sIdx, eIdx] = [eIdx, sIdx];
-            const pt = sampleAlongPath(routePath, sIdx, eIdx, frac);
-            handleLat = pt[0];
-            handleLng = pt[1];
-          } else {
-            handleLat = validStops[i].lat + (validStops[i + 1].lat - validStops[i].lat) * frac;
-            handleLng = validStops[i].lng + (validStops[i + 1].lng - validStops[i].lng) * frac;
+        for (let i = 0; i < orderedPoints.length - 1; i++) {
+          const fractions = [0.2, 0.4, 0.6, 0.8];
+          for (const frac of fractions) {
+            let handleLat: number;
+            let handleLng: number;
+
+            if (usePolyline) {
+              let sIdx = stopPathIndices[i];
+              let eIdx = stopPathIndices[i + 1];
+              if (sIdx > eIdx) [sIdx, eIdx] = [eIdx, sIdx];
+              const pt = sampleAlongPath(routePath, sIdx, eIdx, frac);
+              handleLat = pt[0];
+              handleLng = pt[1];
+            } else {
+              handleLat =
+                orderedPoints[i].lat + (orderedPoints[i + 1].lat - orderedPoints[i].lat) * frac;
+              handleLng =
+                orderedPoints[i].lng + (orderedPoints[i + 1].lng - orderedPoints[i].lng) * frac;
+            }
+
+            const midMarker = L.marker([handleLat, handleLng], {
+              icon: MIDPOINT_ICON,
+              draggable: true,
+              zIndexOffset: 300,
+            }).addTo(map);
+
+            midMarker.bindTooltip('Drag to change path', {
+              direction: 'top',
+              offset: [0, -8],
+            });
+
+            const segmentIdx = i;
+            midMarker.on('dragend', () => {
+              const pos = midMarker.getLatLng();
+              onPathAdjusted(segmentIdx, pos.lat, pos.lng);
+            });
+
+            midpointMarkersRef.current.push(midMarker);
           }
-
-          const midMarker = L.marker([handleLat, handleLng], {
-            icon: MIDPOINT_ICON,
-            draggable: true,
-            zIndexOffset: 300,
-          }).addTo(map);
-
-          midMarker.bindTooltip('Drag to change path', {
-            direction: 'top',
-            offset: [0, -8],
-          });
-
-          const segmentIdx = i;
-          midMarker.on('dragend', () => {
-            const pos = midMarker.getLatLng();
-            onPathAdjusted(segmentIdx, pos.lat, pos.lng);
-          });
-
-          midpointMarkersRef.current.push(midMarker);
         }
       }
     }

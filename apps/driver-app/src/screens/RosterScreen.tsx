@@ -73,6 +73,8 @@ function buildSections(
     }
   }
 
+  // Sequence is the real DB stop_sequence (ADR: Option 2). School appears at
+  // its true position in the route flow with its real number.
   const sections: Section[] = stops
     .slice()
     .sort((a, b) => a.sequence - b.sequence)

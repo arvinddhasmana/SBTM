@@ -17,6 +17,7 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "import:sample": "ts-node scripts/import-sample.ts",
+    "regenerate:seeds": "ts-node scripts/regenerate-seeds.ts",
     "import:dry-run": "ts-node scripts/import-dry-run.ts"
   },
   "dependencies": {

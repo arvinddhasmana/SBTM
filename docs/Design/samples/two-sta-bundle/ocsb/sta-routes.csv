@@ -1,0 +1,3 @@
+sta_route_number,description,board_code,school_code,direction,operator_code,effective_from,effective_to
+R-OCSB-201,St. Bernadette Route 1 AM,OCSB,OCSB-S200,AM,OP-STOCK,2025-09-02,2026-06-26
+R-OCSB-201-PM,St. Bernadette Route 1 PM,OCSB,OCSB-S200,PM,OP-STOCK,2025-09-02,2026-06-26

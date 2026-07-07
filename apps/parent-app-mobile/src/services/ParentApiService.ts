@@ -136,6 +136,7 @@ class ParentApiServiceClass {
       id: s.id,
       name: s.name ?? s.stopName ?? s.address ?? '',
       sequence: s.sequence ?? s.sequenceOrder ?? 0,
+      kind: s.kind === 'school' ? 'school' : 'stop',
       lat,
       lng,
       arrivalTime: s.arrivalTime,

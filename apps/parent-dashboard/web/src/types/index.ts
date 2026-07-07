@@ -9,7 +9,12 @@ export interface Child {
   pmRouteName?: string;
   amStopId?: string;
   pmStopId?: string;
+  amTripId?: string;
+  pmTripId?: string;
   vehicleId: string;
+  vehicleCode?: string;
+  amOperatorCode?: string;
+  pmOperatorCode?: string;
   status: 'on_bus' | 'at_school' | 'at_home' | 'unknown';
   avatarUrl?: string;
 }

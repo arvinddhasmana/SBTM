@@ -120,24 +120,33 @@ function createStopIcon(sequence: number, isChildStop: boolean) {
   });
 }
 
-const SCHOOL_ICON = L.divIcon({
-  className: '',
-  html: `<div style="
-    width:36px;height:36px;
-    background:#8b5cf6;
-    border:3px solid #fff;
-    border-radius:50%;
-    display:flex;align-items:center;justify-content:center;
-    box-shadow:0 0 20px rgba(139,92,246,0.4), 0 4px 12px rgba(0,0,0,0.4);
-  ">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
-      <path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82zM12 3L1 9l11 6 9-4.91V17h2V9L12 3z"/>
-    </svg>
-  </div>`,
-  iconSize: [36, 36],
-  iconAnchor: [18, 18],
-  popupAnchor: [0, -18],
-});
+/** School icon variant with the school's DB stop_sequence rendered as a small badge. */
+function createSchoolIcon(sequence: number | undefined) {
+  const badgeHtml =
+    sequence != null && sequence > 0
+      ? `<div style="position:absolute; bottom:-3px; right:-3px; width:14px; height:14px; background:#fff; border:2px solid #8b5cf6; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:8px; font-weight:900; color:#8b5cf6; box-shadow:0 2px 4px rgba(0,0,0,0.2);">${sequence}</div>`
+      : '';
+  return L.divIcon({
+    className: '',
+    html: `<div style="
+      position:relative;
+      width:36px;height:36px;
+      background:#8b5cf6;
+      border:3px solid #fff;
+      border-radius:50%;
+      display:flex;align-items:center;justify-content:center;
+      box-shadow:0 0 20px rgba(139,92,246,0.4), 0 4px 12px rgba(0,0,0,0.4);
+    ">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
+        <path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82zM12 3L1 9l11 6 9-4.91V17h2V9L12 3z"/>
+      </svg>
+      ${badgeHtml}
+    </div>`,
+    iconSize: [36, 36],
+    iconAnchor: [18, 18],
+    popupAnchor: [0, -18],
+  });
+}
 
 /** Parse WKT POINT(lng lat) to [lat, lng] */
 function parseWktPoint(wkt: string): [number, number] | null {
@@ -418,8 +427,17 @@ const MapPage: React.FC = () => {
           {isAM ? t('tracking.map.am') : t('tracking.map.pm')})
         </p>
         <p className="text-xs text-gray-400">
-          {t('tracking.map.vehicle')}{' '}
-          {routeDetails?.vehicleId || child.vehicleId || t('tracking.map.notAvailable')}
+          {t('tracking.map.operator', { defaultValue: 'Operator' })}:{' '}
+          {routeDetails?.operatorCode ||
+            child.amOperatorCode ||
+            child.pmOperatorCode ||
+            t('tracking.map.notAvailable')}
+          {' · '}
+          {t('tracking.map.run', { defaultValue: 'Run' })}:{' '}
+          {routeDetails?.tripIds?.[0] ||
+            child.amTripId ||
+            child.pmTripId ||
+            t('tracking.map.notAvailable')}
         </p>
         {isLive && busLocation && (
           <div className="mt-2 flex items-center justify-between border-t border-gray-100 pt-2">
@@ -539,8 +557,9 @@ const MapPage: React.FC = () => {
           />
         )}
 
-        {/* Stop markers — admin-style divIcon with person SVG and sequence badge */}
+        {/* Stop markers — admin-style divIcon with person SVG and sequence badge (school excluded; rendered separately as school icon) */}
         {stopPositions.map((stop) => {
+          if ((stop as any).kind === 'school') return null;
           const isChildStop = stop.id === childStopId;
           const seq = stop.sequence ?? 0;
           const stopIcon = createStopIcon(seq, isChildStop);
@@ -581,10 +600,20 @@ const MapPage: React.FC = () => {
                       </span>
                     </span>
                     <span style={{ color: '#64748b' }}>
-                      {t('tracking.map.vehicle')}
+                      {t('tracking.map.operator', { defaultValue: 'Operator' })}:{' '}
                       <span style={{ color: '#1e293b', fontWeight: 600 }}>
-                        {routeDetails?.vehicleId ||
-                          child.vehicleId ||
+                        {routeDetails?.operatorCode ||
+                          child.amOperatorCode ||
+                          child.pmOperatorCode ||
+                          t('tracking.map.notAvailable')}
+                      </span>
+                    </span>
+                    <span style={{ color: '#64748b' }}>
+                      {t('tracking.map.run', { defaultValue: 'Run' })}:{' '}
+                      <span style={{ color: '#1e293b', fontWeight: 600 }}>
+                        {routeDetails?.tripIds?.[0] ||
+                          child.amTripId ||
+                          child.pmTripId ||
                           t('tracking.map.notAvailable')}
                       </span>
                     </span>
@@ -616,9 +645,15 @@ const MapPage: React.FC = () => {
           </Marker>
         )}
 
-        {/* School marker */}
+        {/* School marker (with DB stop_sequence rendered as small badge) */}
         {schoolPosition && (
-          <Marker position={schoolPosition} icon={SCHOOL_ICON} zIndexOffset={600}>
+          <Marker
+            position={schoolPosition}
+            icon={createSchoolIcon(
+              (stopPositions.find((s: any) => s.kind === 'school') as any)?.sequence,
+            )}
+            zIndexOffset={600}
+          >
             <Popup>
               <div className="text-center">
                 <p className="font-bold" style={{ color: '#8b5cf6' }}>

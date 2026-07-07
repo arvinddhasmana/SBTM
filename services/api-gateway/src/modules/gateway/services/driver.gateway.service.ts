@@ -49,6 +49,8 @@ export interface RouteStopDto {
   id: string;
   stopName: string;
   sequence: number;
+  /** 'school' for the school stop (UI renders school icon, hides number); 'stop' otherwise. */
+  kind: 'school' | 'stop';
   arrivalTime: string;
   lat?: number;
   lng?: number;
@@ -131,7 +133,7 @@ export class DriverGatewayService {
           r.stx_direction_kind        AS direction,
           MIN(st.arrival_time)::text  AS start_time,
           run.vehicle_id::text        AS vehicle_id,
-          run.run_id::text            AS run_id,
+          run.id::text                AS run_id,
           s.id::text                  AS school_id,
           s.name                      AS school_name,
           ST_Y(s.location::geometry)  AS school_lat,
@@ -146,7 +148,7 @@ export class DriverGatewayService {
           AND run.deleted_at IS NULL
           AND r.deleted_at IS NULL
           AND s.deleted_at IS NULL
-        GROUP BY r.route_id, run.vehicle_id, run.run_id, s.id
+        GROUP BY r.route_id, run.vehicle_id, run.id, s.id
         ORDER BY MIN(st.arrival_time)
         `,
         [driverId, serviceDate],
@@ -224,6 +226,7 @@ export class DriverGatewayService {
           st.arrival_time     AS arrival_time,
           s.stop_lat          AS lat,
           s.stop_lon          AS lng,
+          s.stx_stop_kind::text AS stop_kind,
           r.stx_direction_kind AS direction
         FROM stx_runs run
         JOIN trips t        ON t.trip_id = ANY(run.trip_ids)
@@ -245,6 +248,7 @@ export class DriverGatewayService {
         arrival_time: string;
         lat: number | null;
         lng: number | null;
+        stop_kind: string | null;
         direction: string;
       }>;
 
@@ -288,6 +292,9 @@ export class DriverGatewayService {
 
       const direction = stopRows[0]?.direction ?? '';
 
+      // Return the real DB stop_sequence as the single source of truth (ADR: Option 2).
+      // School stays in its real sequence position with kind='school' so the UI can
+      // render it with the school glyph instead of a numbered pin.
       const stops: RouteStopDto[] = stopRows
         .slice()
         .sort((a, b) => a.sequence - b.sequence)
@@ -295,6 +302,7 @@ export class DriverGatewayService {
           id: row.id,
           stopName: row.stop_name,
           sequence: row.sequence,
+          kind: row.stop_kind === 'school' ? 'school' : 'stop',
           arrivalTime: row.arrival_time,
           lat: row.lat ?? undefined,
           lng: row.lng ?? undefined,
@@ -336,11 +344,17 @@ export class DriverGatewayService {
       );
       return studentId;
     }
-    const decryptedPreferred = this.pii.decrypt(preferred);
-    if (decryptedPreferred && decryptedPreferred.length > 0) {
-      return decryptedPreferred;
+
+    try {
+      const decryptedPreferred = this.pii.decrypt(preferred);
+      if (decryptedPreferred && decryptedPreferred.length > 0) {
+        return decryptedPreferred;
+      }
+      const decryptedLegal = this.pii.decrypt(legal);
+      return decryptedLegal ?? studentId;
+    } catch (e) {
+      this.logger.error(`Failed to decrypt PII for student ${studentId}`, e);
+      return 'Unknown (Decryption Error)';
     }
-    const decryptedLegal = this.pii.decrypt(legal);
-    return decryptedLegal ?? studentId;
   }
 }

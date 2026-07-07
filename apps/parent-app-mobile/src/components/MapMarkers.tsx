@@ -66,18 +66,27 @@ export function StopMarker({ sequence }: { sequence: number }) {
   );
 }
 
-export function SchoolMarker() {
+export function SchoolMarker({ sequence }: { sequence?: number }) {
   // Mirrors web portal SCHOOL_ICON: purple circle with white border and a
-  // graduation-cap glyph (lucide School / Material school).
+  // graduation-cap glyph (lucide School / Material school). Optional small
+  // sequence badge so school keeps its real DB stop_sequence position.
   return (
-    <Svg width={36} height={36} viewBox="0 0 36 36">
-      <Circle cx={18} cy={18} r={16.5} fill="#8b5cf6" stroke="#fff" strokeWidth={3} />
+    <Svg width={40} height={40} viewBox="0 0 40 40">
+      <Circle cx={20} cy={20} r={16.5} fill="#8b5cf6" stroke="#fff" strokeWidth={3} />
       {/* Same path as apps/parent-dashboard/web/src/pages/Map.tsx SCHOOL_ICON */}
       <Path
-        transform="translate(9 9) scale(0.75)"
+        transform="translate(11 11) scale(0.75)"
         d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82zM12 3L1 9l11 6 9-4.91V17h2V9L12 3z"
         fill="#fff"
       />
+      {sequence !== undefined && sequence > 0 && (
+        <>
+          <Circle cx={33} cy={33} r={6} fill="#fff" stroke="#8b5cf6" strokeWidth={1.5} />
+          <SvgText x={33} y={36} fontSize={8} fontWeight="bold" fill="#8b5cf6" textAnchor="middle">
+            {String(sequence)}
+          </SvgText>
+        </>
+      )}
     </Svg>
   );
 }

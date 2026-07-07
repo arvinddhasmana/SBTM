@@ -1,7 +1,0 @@
-sta_stop_id,name,latitude,longitude,stop_kind,hazard_zone
-RCJTC-STP-4001,River Rd & Cecelia,45.826800,-77.110600,pickup,false
-RCJTC-STP-4002,River Rd & Pembroke,45.824100,-77.115200,pickup,false
-RCJTC-STP-4003,Pinecrest Public School,45.820500,-77.120000,school,false
-RCJTC-STP-5001,Mackay St & 1st Ave,45.830200,-77.105400,pickup,false
-RCJTC-STP-5002,Mackay St & 3rd Ave,45.832700,-77.103100,pickup,false
-RCJTC-STP-5003,Cathedral Catholic School,45.835000,-77.100000,school,false

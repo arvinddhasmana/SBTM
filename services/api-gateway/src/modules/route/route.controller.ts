@@ -67,22 +67,76 @@ export class RouteController {
   async findAll(@Req() req: any) {
     const schoolId = resolveSchoolId(req);
     const routes = await this.routeService.findAll(schoolId);
-    return routes.map(toFrontendRoute);
+    return Promise.all(
+      routes.map(async (r) => {
+        const base = toFrontendRoute(r);
+        const stops = await this.routeService.getStopsForRoute(r.routeId);
+        const fleet = await this.routeService.getFleetInfoForRoute(r.routeId);
+        let startTime = '07:00';
+        if (stops.length > 0 && stops[0].arrivalTime) {
+          startTime = stops[0].arrivalTime.slice(0, 5);
+        }
+        return {
+          ...base,
+          stops,
+          operatorCode: fleet.operatorCode,
+          vehicleCode: fleet.vehicleCode,
+          tripIds: fleet.tripIds,
+          startTime,
+        };
+      }),
+    );
+  }
+
+  @Get(':id/shape')
+  async getShape(@Param('id') id: string, @Req() req: any) {
+    const schoolId = resolveSchoolId(req);
+    await this.routeService.findOne(id, schoolId);
+    const shapes = await this.routeService.getShapeForRoute(id);
+    return shapes.map((s) => ({
+      lat: Number(s.shapePtLat),
+      lon: Number(s.shapePtLon),
+      sequence: Number(s.shapePtSequence),
+      distTraveled: s.shapeDistTraveled ? Number(s.shapeDistTraveled) : null,
+    }));
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string, @Req() req: any, @Res() res: any) {
+  async findOne(@Param('id') id: string, @Req() req: any, @Res() res: any) {
     if (id.startsWith('ROUTE-')) {
       return res.redirect(`/api/v1/routes/reference/${id}`);
     }
     const schoolId = resolveSchoolId(req);
-    this.routeService
-      .findOne(id, schoolId)
-      .then((data) => res.json(toFrontendRoute(data)))
-      .catch((err) => {
-        const status = err.getStatus ? err.getStatus() : 500;
-        res.status(status).json({ message: err.message, error: err.name });
+    try {
+      const route = await this.routeService.findOne(id, schoolId);
+      const stops = await this.routeService.getStopsForRoute(id);
+      const shapes = await this.routeService.getShapeForRoute(id);
+      const path = shapes.map(
+        (s) => [Number(s.shapePtLat), Number(s.shapePtLon)] as [number, number],
+      );
+      const vehicleId = await this.routeService.getVehicleIdForRoute(id);
+      const fleet = await this.routeService.getFleetInfoForRoute(id);
+      const base = toFrontendRoute(route);
+
+      let startTime = '07:00';
+      if (stops.length > 0 && stops[0].arrivalTime) {
+        startTime = stops[0].arrivalTime.slice(0, 5);
+      }
+
+      res.json({
+        ...base,
+        stops,
+        startTime,
+        path,
+        vehicleId,
+        operatorCode: fleet.operatorCode,
+        vehicleCode: fleet.vehicleCode,
+        tripIds: fleet.tripIds,
       });
+    } catch (err: any) {
+      const status = err.getStatus ? err.getStatus() : 500;
+      res.status(status).json({ message: err.message, error: err.name });
+    }
   }
 
   @Patch(':id')

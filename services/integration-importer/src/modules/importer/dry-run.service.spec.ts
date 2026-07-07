@@ -47,8 +47,8 @@ describe('DryRunService (slice 2a)', () => {
     expect(result.ok).toBe(true);
     expect(result.importSessionId).toMatch(/^s-/);
     expect(result.validation.errors).toEqual([]);
-    expect(result.counts?.student).toBe(6);
-    expect(result.counts?.ridership).toBe(6);
+    expect(result.counts?.student).toBe(24);
+    expect(result.counts?.ridership).toBe(48);
   });
 
   it('short-circuits when validation fails (no session opened)', async () => {

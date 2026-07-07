@@ -21,6 +21,12 @@
 #
 # Usage:
 #   ./scripts/schema-seed/import-and-seed.sh
+#   ./scripts/schema-seed/import-and-seed.sh --regenerate
+#                     # rebuild stop coordinates and shapes against a live
+#                     # OSRM before importing (see infra/osrm-data/README.md)
+#   ./scripts/schema-seed/import-and-seed.sh --verify-shapes
+#                     # fail non-zero if any committed route still has no
+#                     # shape rows after the fallback runs
 #
 # Optional env overrides:
 #   SBTM_PII_KEY    — base64-encoded 32-byte AES key for PII columns.
@@ -48,6 +54,19 @@ CONTAINER_NAME="sbtm-postgres-1"
 # ─── Defaults ──────────────────────────────────────────────────────────────
 DATABASE_URL="${DATABASE_URL:-postgresql://postgres:mysecretpassword@localhost:5433/sbms}"
 OSRM_BASE_URL="${OSRM_BASE_URL:-}"   # empty → StubOsrmClient (passthrough)
+
+# --regenerate  Rebuild the bundled CSVs against a live OSRM before importing.
+#               Requires OSRM_BASE_URL (or the docker-compose `osrm` service
+#               at http://localhost:5000) to be up — see
+#               infra/osrm-data/README.md for one-time setup.
+REGENERATE=0
+VERIFY_SHAPES=0
+for arg in "$@"; do
+  case "$arg" in
+    --regenerate)    REGENERATE=1 ;;
+    --verify-shapes) VERIFY_SHAPES=1 ;;
+  esac
+done
 
 echo ""
 echo -e "${CYAN}╔═══════════════════════════════════════════════════╗${NC}"
@@ -77,10 +96,37 @@ else
 fi
 echo ""
 
+if [[ "$REGENERATE" == "1" ]]; then
+  if [[ -z "$OSRM_BASE_URL" ]]; then
+    echo -e "${YELLOW}  --regenerate set but OSRM_BASE_URL is empty; defaulting to http://localhost:5000${NC}"
+    OSRM_BASE_URL="http://localhost:5000"
+  fi
+  echo -e "${CYAN}  Regenerating seed CSVs against OSRM at $OSRM_BASE_URL …${NC}"
+  (cd "$REPO_ROOT" && \
+    OSRM_BASE_URL="$OSRM_BASE_URL" \
+    pnpm --filter integration-importer run regenerate:seeds)
+  echo ""
+fi
+
+IMPORT_FLAGS="-- --commit"
+if [[ "$VERIFY_SHAPES" == "1" ]]; then
+  IMPORT_FLAGS="$IMPORT_FLAGS --verify-shapes"
+fi
+
+# Default to the documented dev PII key if caller didn't set one. The importer
+# would otherwise generate a per-process ephemeral key, leaving stx_students /
+# stx_guardians PII permanently undecryptable (seen as "Unknown (Decryption
+# Error)" in the driver app).
+if [[ -z "${SBTM_PII_KEY:-}" ]]; then
+  SBTM_PII_KEY="A86xdo4A+EWjTJ2zwz6JNIt5Ck8ncd9Ut3rkgq7JBD8="
+  echo -e "${YELLOW}  SBTM_PII_KEY not set — using default dev key (matches .env / dev-hybrid.sh).${NC}"
+fi
+
 (cd "$REPO_ROOT" && \
   DATABASE_URL="$DATABASE_URL" \
   OSRM_BASE_URL="$OSRM_BASE_URL" \
-  pnpm --filter integration-importer run import:sample -- --commit)
+  SBTM_PII_KEY="$SBTM_PII_KEY" \
+  pnpm --filter integration-importer run import:sample $IMPORT_FLAGS)
 
 echo ""
 
@@ -130,12 +176,12 @@ echo "    driver.pinecrest@sbtm.demo       DRIVER (Pinecrest ES)"
 echo "    driver.cathedral@sbtm.demo       DRIVER (Cathedral HS)"
 echo ""
 echo -e "  ${DIM}Parents / Guardians (password: Parent123!)${NC}"
-echo "    sam.demo@example.test            PARENT — OSTA-GRD-0001"
-echo "    chris.specimen@example.test      PARENT — OSTA-GRD-0002"
-echo "    pat.sample@example.test          PARENT — OSTA-GRD-0003"
-echo "    kerry.example@example.test       PARENT — OSTA-GRD-0004"
-echo "    jordan.pembroke@example.test     PARENT — RCJTC-GRD-0001"
-echo "    robin.renfrew@example.test       PARENT — RCJTC-GRD-0002"
-echo "    alex.cathedral@example.test      PARENT — RCJTC-GRD-0003"
-echo "    sage.pinecrest@example.test      PARENT — RCJTC-GRD-0004"
+echo "    parent.stbern@sbtm.demo          PARENT — OSTA-GRD-0001 (STU-0001,0002 / R-OCSB-201)"
+echo "    parent2.stbern@sbtm.demo         PARENT — OSTA-GRD-0002 (cross-board: stbern+maplewood)"
+echo "    parent.maplewood@sbtm.demo       PARENT — OSTA-GRD-0003 (STU-0002 / R-OCDSB-101)"
+echo "    parent2.maplewood@sbtm.demo      PARENT — OSTA-GRD-0004 (STU-0003 / R-OCDSB-101)"
+echo "    parent.pinecrest@sbtm.demo       PARENT — RCJTC-GRD-0001 (STU-0001,0002 / R-RCDSB-401)"
+echo "    parent2.pinecrest@sbtm.demo      PARENT — RCJTC-GRD-0002 (cross-board+cross-route)"
+echo "    parent.cathedral@sbtm.demo       PARENT — RCJTC-GRD-0003 (STU-0002 / R-RCCDSB-501)"
+echo "    parent2.cathedral@sbtm.demo      PARENT — RCJTC-GRD-0004 (STU-0003 / R-RCCDSB-501)"
 echo ""
