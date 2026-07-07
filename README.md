@@ -122,7 +122,3 @@ pnpm run test
 - All services are behind the **API Gateway**.
 - Authentication is handled via **JWT**.
 - Role-Based Access Control (**RBAC**) enforces permission boundaries (Admin, Driver, Parent).
-
-## 📝 License
-
-UNLICENSED - This is a private project.

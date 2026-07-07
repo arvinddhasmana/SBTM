@@ -50,3 +50,5 @@ docs/UiDesign/parent-mobile-mockups/previews/
 .env.demo
 .env.*
 pnpm-lock.yaml
+apps/parent-dashboard/web/playwright-report/index.html
+apps/parent-dashboard/web/test-results/.last-run.json
